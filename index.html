@@ -359,6 +359,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .filter-card-title {
@@ -641,7 +642,7 @@
     }
 
     /* ========================================================
-       TABLEAU DES POINTS DE CONTRÔLE (GRILLE PRINCIPALE)
+       TABLEAU DES POINTS DE CONTRÔLE
        ======================================================== */
     .table-container {
       background: var(--barid-card);
@@ -947,8 +948,15 @@
           <div class="filter-card-title">
             <span>⚡ Filtrage en Cascade Hiérarchique</span>
           </div>
-          <div class="filter-card-meta" id="dbRecordsSummary">
-            Chargement du catalogue...
+          
+          <!-- BOUTONS HAUT DE SECTION -->
+          <div class="filter-btn-group">
+            <button type="button" class="btn btn-outline-danger btn-vider-action" title="Réinitialiser tous les filtres et vider le tableau">
+              ↺ Vider
+            </button>
+            <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
+              🔍 Afficher PC
+            </button>
           </div>
         </div>
 
@@ -990,17 +998,18 @@
 
           </div>
 
+          <!-- BOUTONS BAS DE SECTION + BREADCRUMBS -->
           <div class="filter-actions-bar">
             <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
               Filtre actif : <strong>Aucun processus sélectionné</strong>
             </div>
 
             <div class="filter-btn-group">
-              <button type="button" id="btnVider" class="btn btn-outline-danger" title="Réinitialiser tous les filtres et vider le tableau">
+              <button type="button" class="btn btn-outline-danger btn-vider-action" title="Réinitialiser tous les filtres et vider le tableau">
                 ↺ Vider
               </button>
-              <button type="button" id="btnAfficher" class="btn btn-primary" title="Valider les filtres et afficher les points de contrôle">
-                🔍 Afficher
+              <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
+                🔍 Afficher PC
               </button>
             </div>
           </div>
@@ -1084,7 +1093,6 @@
        SCRIPT JAVASCRIPT ES6 VANILLA
        ======================================================== -->
   <script>
-    // URL directe via le domaine GitHub Pages officiel (pour éviter le blocage CORS)
     const URL_BDD_DISTANTE = "https://aitbaba74-dot.github.io/FCI-audit/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
 
     const CACHE_DB_KEY = "fci_referentiel_db";
@@ -1097,8 +1105,11 @@
     const selectProcessus = document.getElementById('selectProcessus');
     const selectRisque = document.getElementById('selectRisque');
     const selectControle = document.getElementById('selectControle');
-    const btnAfficher = document.getElementById('btnAfficher');
-    const btnVider = document.getElementById('btnVider');
+    
+    // Tous les boutons Afficher PC et Vider (haut et bas)
+    const btnAfficherList = document.querySelectorAll('.btn-afficher-action');
+    const btnViderList = document.querySelectorAll('.btn-vider-action');
+    
     const tableBody = document.getElementById('tableBody');
     const headerCheckbox = document.getElementById('headerCheckbox');
     const btnSelectAll = document.getElementById('btnSelectAll');
@@ -1110,7 +1121,6 @@
     const selectionCounterText = document.getElementById('selectionCounterText');
     const serverStatusBadge = document.getElementById('serverStatusBadge');
     const serverStatusText = document.getElementById('serverStatusText');
-    const dbRecordsSummary = document.getElementById('dbRecordsSummary');
     const filterBreadcrumbs = document.getElementById('filterBreadcrumbs');
     const countProcessus = document.getElementById('countProcessus');
     const countRisques = document.getElementById('countRisques');
@@ -1215,7 +1225,6 @@
     }
 
     function onDataLoaded() {
-      dbRecordsSummary.textContent = `${referentielData.length} points de contrôle au catalogue`;
       populateProcessusDropdown();
       restoreSavedSelectedPC();
       renderTable([]);
@@ -1407,7 +1416,7 @@
             <div class="empty-state-icon">📋</div>
             <div class="empty-state-title">Aucun point de contrôle affiché</div>
             <div class="empty-state-text">
-              Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur le bouton <strong>[Afficher]</strong>.
+              Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur le bouton <strong>[Afficher PC]</strong>.
             </div>
           </td>
         `;
@@ -1673,8 +1682,9 @@
       selectRisque.addEventListener('change', onRisqueChanged);
       selectControle.addEventListener('change', updateBreadcrumbs);
 
-      btnAfficher.addEventListener('click', handleAfficher);
-      btnVider.addEventListener('click', handleVider);
+      // Attribution des événements à TOUS les boutons Afficher et Vider
+      btnAfficherList.forEach(btn => btn.addEventListener('click', handleAfficher));
+      btnViderList.forEach(btn => btn.addEventListener('click', handleVider));
 
       btnSelectAll.addEventListener('click', handleSelectAll);
       btnDeselectAll.addEventListener('click', handleDeselectAll);
