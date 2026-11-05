@@ -913,7 +913,7 @@
       </ul>
     </div>
 
-    <!-- Pied de Sidebar mis à jour -->
+    <!-- Pied de Sidebar -->
     <div class="sidebar-footer">
       <div class="sidebar-footer-user">Contrôleur</div>
       <div class="sidebar-footer-role">DIVISION CONTRÔLE PERMANENT</div>
@@ -925,7 +925,7 @@
        ======================================================== -->
   <main class="app-main">
     
-    <!-- En-tête Principal avec Titre Officiel et Badge d'état -->
+    <!-- En-tête Principal -->
     <header class="main-header">
       <div style="display: flex; align-items: center; gap: 12px;">
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
@@ -951,6 +951,12 @@
         <div class="filter-card-header">
           <div class="filter-card-title">
             <span>⚡ Filtrage en Cascade Hiérarchique</span>
+          </div>
+          <!-- NOUVEAU BOUTON : Télécharger toute la BDD -->
+          <div>
+            <button type="button" id="btnDownloadFullBDD" class="btn btn-success" title="Télécharger la base de données complète du référentiel sous format Excel (CSV)">
+              📥 Télécharger BDD (Référentiel)
+            </button>
           </div>
         </div>
 
@@ -1035,7 +1041,7 @@
           </div>
 
           <button type="button" id="btnDownloadExcel" class="btn btn-success" title="Télécharger les points affichés sous format Excel (CSV)">
-            📊 Télécharger Excel
+            📊 Télécharger Sélection/Vue
           </button>
 
           <button type="button" id="btnExportFC" class="btn btn-gold" title="Sauvegarder les points cochés dans le LocalStorage pour la Feuille 2">
@@ -1109,6 +1115,7 @@
     const btnDeselectAll = document.getElementById('btnDeselectAll');
     const btnExportFC = document.getElementById('btnExportFC');
     const btnDownloadExcel = document.getElementById('btnDownloadExcel');
+    const btnDownloadFullBDD = document.getElementById('btnDownloadFullBDD');
     const searchInput = document.getElementById('searchInput');
     const selectionCounterBadge = document.getElementById('selectionCounterBadge');
     const selectionCounterText = document.getElementById('selectionCounterText');
@@ -1649,6 +1656,55 @@
       }
     }
 
+    /**
+     * Génère et télécharge un fichier CSV compatible Excel (avec UTF-8 BOM)
+     */
+    function exportToCSV(dataList, filenamePrefix) {
+      if (!dataList || dataList.length === 0) {
+        showToast('Aucune donnée à exporter.');
+        return;
+      }
+
+      const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
+      
+      const escapeCSV = (str) => {
+        if (!str) return '""';
+        return `"${String(str).replace(/"/g, '""')}"`;
+      };
+
+      const rows = [
+        headers.map(h => `"${h}"`).join(';'),
+        ...dataList.map(item => [
+          escapeCSV(item['Processus']),
+          escapeCSV(item['Intitulé du risque']),
+          escapeCSV(item['Intitulé Contrôle']),
+          escapeCSV(item['Points de contrôle'])
+        ].join(';'))
+      ];
+
+      const csvContent = '\uFEFF' + rows.join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Télécharger toute la BDD (Référentiel complet)
+    function handleDownloadFullBDD() {
+      if (referentielData.length === 0) {
+        showToast('La base de données n\'est pas encore chargée.');
+        return;
+      }
+      exportToCSV(referentielData, 'BDD_Referentiel_BARID_AL_MAGHREB');
+      showToast(`Référentiel complet téléchargé (${referentielData.length} points)`);
+    }
+
+    // Télécharger la sélection ou la vue filtrée
     function handleDownloadExcel() {
       let exportList = [];
       const visibleKeys = new Set();
@@ -1664,38 +1720,11 @@
       exportList = selectedInView.length > 0 ? selectedInView : displayedPoints;
 
       if (exportList.length === 0) {
-        showToast('Aucune donnée à exporter.');
+        showToast('Aucune donnée affichée à exporter.');
         return;
       }
 
-      const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
-      
-      const escapeCSV = (str) => {
-        if (!str) return '""';
-        return `"${String(str).replace(/"/g, '""')}"`;
-      };
-
-      const rows = [
-        headers.map(h => `"${h}"`).join(';'),
-        ...exportList.map(item => [
-          escapeCSV(item['Processus']),
-          escapeCSV(item['Intitulé du risque']),
-          escapeCSV(item['Intitulé Contrôle']),
-          escapeCSV(item['Points de contrôle'])
-        ].join(';'))
-      ];
-
-      const csvContent = '\uFEFF' + rows.join('\r\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `FCI_Referentiel_BAM_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
+      exportToCSV(exportList, 'FCI_Referentiel_Filtre');
       showToast(`Fichier Excel téléchargé (${exportList.length} points)`);
     }
 
@@ -1730,6 +1759,7 @@
       btnDeselectAll.addEventListener('click', handleDeselectAll);
       btnExportFC.addEventListener('click', handleExportFC);
       btnDownloadExcel.addEventListener('click', handleDownloadExcel);
+      btnDownloadFullBDD.addEventListener('click', handleDownloadFullBDD);
 
       searchInput.addEventListener('input', handleSearch);
 
