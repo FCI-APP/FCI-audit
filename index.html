@@ -1,1897 +1,1797 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-50 antialiased">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FCI – Fiche de Contrôle Intelligente (Version Autonome)</title>
-  <meta name="description" content="Application autonome de contrôle interne pour la gestion des fiches de contrôle, l'enregistrement des constats et le suivi des recommandations.">
-  
-  <!-- Tailwind CSS via CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-            mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace']
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Google Fonts -->
+  <title>FCI - Barid Al-Maghrib | Feuille 1 : Référentiel de contrôle</title>
+  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel d'audit Barid Al-Maghrib">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <!-- React 18 & ReactDOM via CDN -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- Babel standalone for JSX in-browser transpilation -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-  <!-- SheetJS (xlsx) via CDN for Excel exports -->
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
   <style>
+    /* ========================================================
+       CHARTE GRAPHIQUE & DESIGN SYSTEM (Barid Al-Maghrib)
+       ======================================================== */
+    :root {
+      --barid-blue: #003366;
+      --barid-blue-dark: #002244;
+      --barid-blue-light: #0A4B8C;
+      --barid-gold: #EAAA00;
+      --barid-gold-hover: #D49900;
+      --barid-gold-light: #FFF8E6;
+      --barid-bg: #F4F6F9;
+      --barid-card: #FFFFFF;
+      --barid-text: #333333;
+      --barid-text-muted: #6B7280;
+      --barid-border: #D1D5DB;
+      --barid-border-light: #E5E7EB;
+      --sidebar-width: 250px;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--barid-bg);
+      color: var(--barid-text);
+      line-height: 1.5;
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .font-mono {
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* ========================================================
+       DISPOSITION GÉNÉRALE : SIDEBAR (250px) + MAIN CONTENT
+       ======================================================== */
+    .app-sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--barid-blue);
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      border-right: 1px solid var(--barid-blue-dark);
+      transition: transform 0.25s ease;
     }
-    @media print {
-      .no-print {
-        display: none !important;
+
+    .sidebar-header {
+      padding: 20px 16px;
+      background-color: var(--barid-blue-dark);
+      border-bottom: 2px solid var(--barid-gold);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-badge {
+      width: 42px;
+      height: 42px;
+      background: #FFFFFF;
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      flex-shrink: 0;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
+    }
+
+    .brand-logo-inner {
+      width: 36px;
+      height: 36px;
+      background: var(--barid-blue);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-logo-bam {
+      color: var(--barid-gold);
+      font-weight: 800;
+      font-size: 11px;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-logo-sub {
+      color: #FFFFFF;
+      font-size: 6px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .brand-logo-circle {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--barid-gold);
+      opacity: 0.7;
+    }
+
+    .brand-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 10px;
+      color: var(--barid-gold);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar-nav-section-title {
+      padding: 16px 16px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      padding: 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-menu-item {
+      position: relative;
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sidebar-link:hover:not(.disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      color: #FFFFFF;
+    }
+
+    /* Onglet Actif (Feuille 1) avec indicateur Or/Jaune */
+    .sidebar-link.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      font-weight: 700;
+      border-left: 4px solid var(--barid-gold);
+      padding-left: 10px;
+    }
+
+    .sidebar-link.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .sidebar-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+    }
+
+    .sidebar-badge-active {
+      background: var(--barid-gold);
+      color: var(--barid-blue-dark);
+    }
+
+    .sidebar-badge-muted {
+      background: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      background: rgba(0, 34, 68, 0.6);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 11px;
+    }
+
+    .sidebar-footer-user {
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .sidebar-footer-role {
+      color: var(--barid-gold);
+      font-size: 10px;
+    }
+
+    /* ========================================================
+       ZONE PRINCIPALE (MAIN CONTENT)
+       ======================================================== */
+    .app-main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* En-tête principal de la zone de travail */
+    .main-header {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--barid-border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .main-header-title-group h1 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--barid-blue);
+      line-height: 1.2;
+    }
+
+    .main-header-title-group p {
+      font-size: 11px;
+      color: var(--barid-text-muted);
+      margin-top: 2px;
+    }
+
+    /* Badge d'état du serveur (En ligne / Hors ligne / Chargement) */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .status-badge.online {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    .status-badge.offline {
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    .status-badge.loading {
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .status-badge.online .status-dot {
+      background: #10B981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    .status-badge.offline .status-dot {
+      background: #F59E0B;
+    }
+
+    .status-badge.loading .status-dot {
+      background: #3B82F6;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Conteneur principal */
+    .main-body {
+      padding: 24px 28px;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ========================================================
+       SECTION CASCADE DE FILTRAGE (Haut de page)
+       ======================================================== */
+    .filter-card {
+      background: var(--barid-card);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--barid-border);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .filter-card-header {
+      background: #FAFBFD;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--barid-border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .filter-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--barid-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .filter-card-meta {
+      font-size: 11px;
+      color: var(--barid-text-muted);
+    }
+
+    .filter-card-body {
+      padding: 18px 20px;
+    }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-label-num {
+      color: var(--barid-blue);
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      color: var(--barid-text);
+      background-color: #FFFFFF;
+      border: 1px solid var(--barid-border);
+      border-radius: var(--radius-sm);
+      outline: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .filter-select:hover:not(:disabled) {
+      border-color: #9CA3AF;
+    }
+
+    .filter-select:focus {
+      border-color: var(--barid-blue);
+      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15);
+    }
+
+    .filter-select:disabled {
+      background-color: #F3F4F6;
+      color: #9CA3AF;
+      border-color: #E5E7EB;
+      cursor: not-allowed;
+    }
+
+    .filter-actions-bar {
+      padding-top: 14px;
+      border-top: 1px solid var(--barid-border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .active-filter-breadcrumbs {
+      font-size: 11px;
+      color: #4B5563;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .active-filter-breadcrumbs strong {
+      color: var(--barid-blue);
+    }
+
+    .filter-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Boutons standards */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      white-space: nowrap;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .btn-primary {
+      background-color: var(--barid-blue);
+      color: #FFFFFF;
+      border-color: var(--barid-blue-dark);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--barid-blue-dark);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-gold {
+      background-color: var(--barid-gold);
+      color: var(--barid-blue-dark);
+      border-color: #D49900;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-gold:hover:not(:disabled) {
+      background-color: var(--barid-gold-hover);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-secondary {
+      background-color: #FFFFFF;
+      color: #4B5563;
+      border-color: var(--barid-border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #F9FAFB;
+      color: var(--barid-text);
+      border-color: #9CA3AF;
+    }
+
+    .btn-outline-danger {
+      background-color: #FFFFFF;
+      color: #DC2626;
+      border-color: #FCA5A5;
+    }
+
+    .btn-outline-danger:hover:not(:disabled) {
+      background-color: #FEF2F2;
+      border-color: #EF4444;
+    }
+
+    .btn-success {
+      background-color: #ECFDF5;
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      background-color: #D1FAE5;
+      border-color: #6EE7B7;
+    }
+
+    /* ========================================================
+       BARRE D'OUTILS DU TABLEAU
+       ======================================================== */
+    .table-toolbar {
+      background: var(--barid-card);
+      border: 1px solid var(--barid-border);
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .selection-counter {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      background: #F3F4F6;
+      border: 1px solid var(--barid-border);
+      font-size: 11px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    .selection-counter.has-selection {
+      background: var(--barid-gold-light);
+      border-color: var(--barid-gold);
+      color: var(--barid-blue-dark);
+    }
+
+    .selection-counter-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--barid-gold);
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      min-width: 200px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 7px 10px 7px 28px;
+      font-size: 11px;
+      font-family: inherit;
+      border: 1px solid var(--barid-border);
+      border-radius: var(--radius-sm);
+      background: #FAFBFD;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .search-input:focus {
+      background: #FFFFFF;
+      border-color: var(--barid-blue);
+      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9CA3AF;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    /* ========================================================
+       TABLEAU DES POINTS DE CONTRÔLE (GRILLE PRINCIPALE)
+       ======================================================== */
+    .table-container {
+      background: var(--barid-card);
+      border: 1px solid var(--barid-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .audit-table thead {
+      background-color: var(--barid-blue);
+      color: #FFFFFF;
+      user-select: none;
+    }
+
+    .audit-table th {
+      padding: 12px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 2px solid var(--barid-gold);
+      white-space: nowrap;
+    }
+
+    .audit-table th.col-select {
+      width: 44px;
+      text-align: center;
+    }
+
+    .audit-table th.col-processus {
+      width: 180px;
+    }
+
+    .audit-table th.col-risque {
+      width: 240px;
+    }
+
+    .audit-table th.col-controle {
+      width: 240px;
+    }
+
+    .audit-table th.col-pc {
+      min-width: 320px;
+    }
+
+    .audit-table tbody tr {
+      border-bottom: 1px solid var(--barid-border-light);
+      transition: background-color 0.1s ease;
+      cursor: pointer;
+    }
+
+    .audit-table tbody tr:hover {
+      background-color: #F8FAFC;
+    }
+
+    .audit-table tbody tr.row-selected {
+      background-color: #FFFDF0;
+    }
+
+    .audit-table tbody tr.row-selected:hover {
+      background-color: #FFF9D6;
+    }
+
+    .audit-table td {
+      padding: 12px 14px;
+      vertical-align: top;
+      color: #1F2937;
+      line-height: 1.45;
+    }
+
+    .audit-table td.col-select {
+      text-align: center;
+      padding-top: 14px;
+    }
+
+    .td-processus {
+      font-weight: 700;
+      color: var(--barid-blue);
+    }
+
+    .td-risque {
+      font-weight: 600;
+      color: #1F2937;
+    }
+
+    .td-controle {
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .td-pc {
+      color: #111827;
+      font-weight: 500;
+    }
+
+    /* Checkbox personnalisée */
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--barid-blue);
+      cursor: pointer;
+    }
+
+    /* État vide du tableau */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--barid-text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      display: inline-block;
+      color: #9CA3AF;
+    }
+
+    .empty-state-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+
+    .empty-state-text {
+      font-size: 12px;
+      max-width: 440px;
+      margin: 0 auto 16px;
+      line-height: 1.5;
+    }
+
+    .table-footer {
+      padding: 10px 16px;
+      background: #FAFBFD;
+      border-top: 1px solid var(--barid-border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--barid-text-muted);
+    }
+
+    /* ========================================================
+       TOAST NOTIFICATION
+       ======================================================== */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--barid-blue);
+      color: #FFFFFF;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--barid-gold);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.25s ease;
+      pointer-events: auto;
+      max-width: 420px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast-icon {
+      font-size: 16px;
+      color: var(--barid-gold);
+    }
+
+    /* Mobile toggle */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--barid-border);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .app-sidebar {
+        transform: translateX(-100%);
       }
-      .print-only {
-        display: block !important;
+      .app-sidebar.open {
+        transform: translateX(0);
       }
-      body {
-        background: white !important;
-        color: black !important;
+      .app-main {
+        margin-left: 0;
       }
-      .printable-sheet {
-        padding: 0 !important;
-        margin: 0 !important;
-        max-height: none !important;
-        overflow: visible !important;
+      .mobile-menu-btn {
+        display: block;
+      }
+      .filter-grid {
+        grid-template-columns: 1fr;
+      }
+      .main-body {
+        padding: 16px;
       }
     }
   </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-800 selection:bg-blue-100 selection:text-blue-900">
-  <div id="root" class="h-full"></div>
+<body>
 
-  <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
-
-    // --- ICONS (Inline SVG Icons for 100% reliable offline operation) ---
-    const Icons = {
-      ShieldCheck: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
-      ),
-      LayoutDashboard: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-      ),
-      FileCheck2: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m3 15 2 2 4-4"/></svg>
-      ),
-      FilePlus2: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M3 15h6"/><path d="M6 12v6"/></svg>
-      ),
-      AlertTriangle: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
-      ),
-      BookOpen: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      ),
-      RotateCcw: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-      ),
-      CheckCircle2: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-      ),
-      Clock: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      ),
-      ArrowUpRight: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
-      ),
-      Plus: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-      ),
-      Eye: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-      ),
-      AlertOctagon: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      ),
-      Search: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      ),
-      X: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-      ),
-      SlidersHorizontal: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>
-      ),
-      Table: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-      ),
-      LayoutGrid: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-      ),
-      Edit3: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-      ),
-      Trash2: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-      ),
-      Copy: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-      ),
-      Save: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      ),
-      ArrowLeft: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-      ),
-      Printer: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-      ),
-      Sparkles: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
-      ),
-      Download: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      ),
-      Upload: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      ),
-      Lock: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      ),
-      LogOut: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      ),
-      FileSpreadsheet: (props) => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></svg>
-      )
-    };
-
-    // --- INITIAL DATASET ---
-    const INITIAL_CONTROL_SHEETS = [
-      {
-        id: 'fci-001',
-        controleur_id: 'ctrl-a',
-        date: '2026-10-18',
-        ref: 'FCI-2026-FIN-014',
-        title: 'Rapprochement bancaire et validation des décaissements',
-        department: 'Direction Financière & Comptable',
-        process: 'Gestion de trésorerie & Décaissements',
-        controller: 'AIT BABA ISMAIL (Contrôleur A)',
-        auditee: 'Service Trésorerie & Comptabilité Fournisseurs',
-        controlDate: '2026-10-18',
-        periodicity: 'Mensuel',
-        type: 'Contrôle de 2nd niveau',
-        riskLevel: 'Élevé',
-        status: 'Conforme avec réserves',
-        objectives: 'Vérifier la double signature sur les virements supérieurs à 15 000 €, l\'exhaustivité des états de rapprochement bancaire à M-1 et l\'absence d\'écritures suspensives datant de plus de 60 jours.',
-        methodology: 'Échantillonnage aléatoire stratifié sur les 4 comptes bancaires principaux de la holding et des filiales opérationnelles. Inspection documentaire des bordereaux de virement et des justificatifs comptables.',
-        sampleSize: '45 ordres de virement examinés sur un total de 312 opérations du mois',
-        conclusion: 'Le dispositif global de double signature est respecté à 96%. Cependant, deux virements ont été validés par délégation sans preuve écrite conservée dans la GED.',
-        createdAt: '2026-10-18T10:30:00Z',
-        updatedAt: '2026-10-19T14:15:00Z',
-        findings: [
-          {
-            id: 'fnd-101',
-            ref: 'CST-FIN-01',
-            title: 'Absence de visa formel de délégation sur 2 virements de plus de 15 000 €',
-            severity: 'Majeur',
-            category: 'Exactitude financière',
-            description: 'Deux règlements fournisseurs (montants respectifs de 18 450 € et 24 100 €) ont été émis avec un seul signataire principal en raison d\'un congé imprévu, sans enregistrement du mandat d\'intérim.',
-            risk: 'Risque de décaissement non autorisé ou de contournement des règles de gouvernance bancaire.',
-            recommendation: 'Activer le module de délégation électronique automatisé dans l\'ERP avec enregistrement horodaté du suppléant et seuil strict bloquant.',
-            actionPlan: 'Mise à jour des profils bancaires EBICS et publication de la matrice des pouvoirs signataires 2026.',
-            assignee: 'Béatrice Lemoine (Directrice Trésorerie)',
-            targetDate: '2026-11-15',
-            status: 'En cours',
-            createdAt: '2026-10-18T11:00:00Z'
-          },
-          {
-            id: 'fnd-102',
-            ref: 'CST-FIN-02',
-            title: 'Écritures de rapprochement en suspens de plus de 45 jours non justifiées',
-            severity: 'Moyen',
-            category: 'Exactitude financière',
-            description: 'Trois chèques non encaissés et un débit direct non lettré figurent sur le compte BNP depuis août sans relance documentée.',
-            risk: 'Décalage de trésorerie prévisionnelle et non-détection d\'éventuelles anomalies d\'imputation.',
-            recommendation: 'Instaurer une revue bi-mensuelle obligatoire des suspens bancaires avec validation du chef comptable.',
-            actionPlan: 'Ajout d\'un point de contrôle automatique lors de la clôture comptable mensuelle.',
-            assignee: 'Julien Perrot (Chef Comptable)',
-            targetDate: '2026-11-30',
-            status: 'À traiter',
-            createdAt: '2026-10-18T11:20:00Z'
-          }
-        ]
-      },
-      {
-        id: 'fci-002',
-        controleur_id: 'ctrl-a',
-        date: '2026-10-21',
-        ref: 'FCI-2026-DSI-008',
-        title: 'Revue trimestrielle des habilitations aux systèmes critiques',
-        department: 'Systèmes d\'Information & Sécurité',
-        process: 'Gouvernance des accès & Identités (IAM)',
-        controller: 'AIT BABA ISMAIL (Contrôleur A)',
-        auditee: 'Équipe Infrastructure & Exploitation SI',
-        controlDate: '2026-10-21',
-        periodicity: 'Trimestriel',
-        type: 'Audit interne',
-        riskLevel: 'Critique',
-        status: 'Non conforme',
-        objectives: 'S\'assurer de la désactivation immédiate des comptes des collaborateurs ayant quitté l\'entreprise et du respect du principe du moindre privilège sur l\'ERP et les bases de données de production.',
-        methodology: 'Croisement automatique de la liste RH des départs du T3 2026 avec l\'annuaire Active Directory et la table des comptes actifs SAP.',
-        sampleSize: 'Exhaustif (100% des comptes administrateurs et 62 départs RH enregistrés)',
-        conclusion: 'Des écarts significatifs ont été constatés : 5 comptes d\'anciens prestataires et 2 anciens salariés disposaient encore d\'un accès valide plus de 20 jours après leur sortie effective.',
-        createdAt: '2026-10-21T09:00:00Z',
-        updatedAt: '2026-10-22T16:40:00Z',
-        findings: [
-          {
-            id: 'fnd-201',
-            ref: 'CST-DSI-01',
-            title: 'Maintien d\'accès actifs pour 7 profils après la date de rupture contractuelle',
-            severity: 'Critique',
-            category: 'Sécurité de l\'information',
-            description: 'Lenteur du circuit de notification entre les RH et le Helpdesk DSI entraînant un délai moyen de clôture des comptes de 18 jours au lieu des 24 heures réglementaires.',
-            risk: 'Fuite potentielle de données sensibles, intrusion non autorisée et non-conformité RGPD / ISO 27001.',
-            recommendation: 'Automatiser la désynchronisation des comptes via connecteur d\'API direct entre le SIRH et l\'Active Directory dès validation de la sortie.',
-            actionPlan: 'Déploiement du connecteur SSO/IAM et exécution d\'une purge immédiate de tous les comptes orphelins.',
-            assignee: 'David Rousseau (RSSI)',
-            targetDate: '2026-11-05',
-            status: 'En cours',
-            createdAt: '2026-10-21T10:15:00Z'
-          }
-        ]
-      },
-      {
-        id: 'fci-003',
-        controleur_id: 'ctrl-b',
-        date: '2026-10-10',
-        ref: 'FCI-2026-ACH-005',
-        title: 'Respect du seuil de mise en concurrence et validation des commandes d\'achats',
-        department: 'Achats & Approvisionnements',
-        process: 'Procure-to-Pay (P2P)',
-        controller: 'OUJBOUR OMAR (Contrôleur B)',
-        auditee: 'Acheteurs Pôle Prestations Intellectuelles et Services Généraux',
-        controlDate: '2026-10-10',
-        periodicity: 'Semestriel',
-        type: 'Contrôle de 2nd niveau',
-        riskLevel: 'Modéré',
-        status: 'Conforme',
-        objectives: 'Contrôler l\'application stricte de la politique d\'achat (au moins 3 devis comparatifs pour tout engagement supérieur à 20 000 € HT) et la création préalable du bon de commande.',
-        methodology: 'Extraction des bons de commande validés au cours du semestre, rapprochement avec les grilles de sélection des fournisseurs.',
-        sampleSize: '30 dossiers d\'achats d\'un montant unitaire > 20 000 €',
-        conclusion: 'Processus très bien maîtrisé. Toutes les consultations contiennent la fiche d\'analyse des offres et l\'accord préalable de la direction des achats.',
-        createdAt: '2026-10-10T14:00:00Z',
-        updatedAt: '2026-10-12T08:30:00Z',
-        findings: []
-      },
-      {
-        id: 'fci-004',
-        controleur_id: 'ctrl-b',
-        date: '2026-09-28',
-        ref: 'FCI-2026-RH-011',
-        title: 'Conformité des dossiers du personnel et suivi des visites médicales périodiques',
-        department: 'Ressources Humaines',
-        process: 'Gestion administrative du personnel & Santé au travail',
-        controller: 'OUJBOUR OMAR (Contrôleur B)',
-        auditee: 'Service Paie & Administration du Personnel',
-        controlDate: '2026-09-28',
-        periodicity: 'Semestriel',
-        type: 'Contrôle de 1er niveau',
-        riskLevel: 'Modéré',
-        status: 'Conforme avec réserves',
-        objectives: 'Vérifier la complétude des pièces obligatoires (titre de séjour, permis de conduire pour postes itinérants) et l\'actualisation des visites d\'information et de prévention.',
-        methodology: 'Revue sur pièces d\'un échantillon de 40 dossiers salariés actifs répartis sur les 3 sites logistiques.',
-        sampleSize: '40 dossiers examinés sur un effectif total de 280 collaborateurs',
-        conclusion: 'Dossiers administratifs tenus avec rigueur. Un point d\'attention concerne le suivi des visites médicales périodiques de 4 caristes nécessitant un renouvellement urgent de CACES.',
-        createdAt: '2026-09-28T09:30:00Z',
-        updatedAt: '2026-10-02T11:00:00Z',
-        findings: [
-          {
-            id: 'fnd-401',
-            ref: 'CST-RH-01',
-            title: 'Retard de planification sur 4 renouvellements d\'aptitude médicale CACES',
-            severity: 'Moyen',
-            category: 'Conformité réglementaire',
-            description: 'Les autorisations de conduite interne pour engins de manutention arrivent à échéance sans confirmation de rendez-vous auprès du service de santé interentreprises.',
-            risk: 'Mise en cause de la responsabilité de l\'employeur en cas d\'accident de travail avec un engin non couvert.',
-            recommendation: 'Mettre en place un tableau de bord d\'alerte automatique à J-60 avant l\'expiration de validité de chaque habilitation.',
-            actionPlan: 'Planification prioritaire des rendez-vous médicaux et suspension temporaire d\'affectation des 4 opérateurs sur chariots élévateurs.',
-            assignee: 'Émilie Mercier (Responsable Paie & RH)',
-            targetDate: '2026-11-10',
-            status: 'En cours',
-            createdAt: '2026-09-28T14:20:00Z'
-          }
-        ]
-      }
-    ];
-
-    const STORAGE_KEY = 'fci_control_sheets_v1';
-
-    // --- MAIN APP COMPONENT ---
-    function App() {
-      const [sheets, setSheets] = useState(() => {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-          }
-        } catch (e) {
-          console.error(e);
-        }
-        return INITIAL_CONTROL_SHEETS;
-      });
-
-      const [loginUsername, setLoginUsername] = useState('');
-      const [loginPassword, setLoginPassword] = useState('');
-      const [loginError, setLoginError] = useState(null);
-      const [currentUser, setCurrentUser] = useState(() => {
-        try {
-          const s = sessionStorage.getItem('fci_auth_user');
-          if (s) return JSON.parse(s);
-          const r = sessionStorage.getItem('fci_auth_role');
-          if (r) return { id: r, name: r === 'siege' ? 'Siège (Vue Globale)' : r === 'ctrl-b' ? 'OUJBOUR OMAR' : 'AIT BABA ISMAIL', role: r === 'siege' ? 'siege' : 'controleur', department: 'Contrôle Interne' };
-        } catch (e) {}
-        return null;
-      });
-
-      const currentRole = currentUser ? currentUser.id : null;
-
-      const handleLogin = (e) => {
-        e.preventDefault();
-        setLoginError(null);
-        const u = loginUsername.trim();
-        const p = loginPassword.trim();
-        if (!u || !p) {
-          setLoginError('Veuillez renseigner votre identifiant et votre mot de passe.');
-          return;
-        }
-
-        const normU = u.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const normP = p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-        let profile = null;
-
-        // Siège detection
-        if (normU === 'siege' || normU.includes('siege') || normU === 'direction generale audit' || normU === 'admin') {
-          if (normP === 'siege-s' || normP === 'sieges' || normP === 'siege') {
-            profile = { id: 'siege', name: 'Direction Générale Audit', role: 'siege', label: 'Siège (Vue Globale)', department: 'Supervision Globale Groupe' };
-          }
-        } else if (normU.includes('ait baba') || normU === 'ctrl-a' || normU === 'aitbaba') {
-          if (normP === 'ait baba-i' || normP === 'aitbaba-i' || normP === 'fci-2026') {
-            profile = { id: 'ctrl-a', name: 'AIT BABA ISMAIL', role: 'controleur', label: 'AIT BABA ISMAIL (Contrôleur A)', department: 'Direction Financière & Comptable' };
-          }
-        } else if (normU.includes('oujbour') || normU === 'ctrl-b') {
-          if (normP === 'oujbour-o' || normP === 'fci-2026') {
-            profile = { id: 'ctrl-b', name: 'OUJBOUR OMAR', role: 'controleur', label: 'OUJBOUR OMAR (Contrôleur B)', department: 'Achats, Moyens Généraux & Juridique' };
-          }
-        } else if (p.length >= 4) {
-          // Dynamic controller support (>20 controllers)
-          const name = u.toUpperCase();
-          const ctrlId = 'ctrl-' + normU.replace(/[^a-z0-9]/g, '-');
-          profile = { id: ctrlId, name, role: 'controleur', label: `${name} (Contrôleur Interne)`, department: 'Direction du Contrôle Interne' };
-        }
-
-        if (profile) {
-          setCurrentUser(profile);
-          try {
-            sessionStorage.setItem('fci_auth_user', JSON.stringify(profile));
-            sessionStorage.setItem('fci_auth_role', profile.id);
-          } catch (e) {}
-          showToast(`Bienvenue, ${profile.name}.`);
-          setLoginUsername('');
-          setLoginPassword('');
-        } else {
-          setLoginError('Identifiant ou mot de passe incorrect.');
-        }
-      };
-
-      const handleLogout = () => {
-        setCurrentUser(null);
-        try {
-          sessionStorage.removeItem('fci_auth_user');
-          sessionStorage.removeItem('fci_auth_role');
-        } catch (e) {}
-        setEditingSheet(null);
-        setDetailModalSheet(null);
-        showToast('Déconnexion effectuée.');
-      };
-
-      const [activeView, setActiveView] = useState('dashboard');
-      const [editingSheet, setEditingSheet] = useState(null);
-      const [detailModalSheet, setDetailModalSheet] = useState(null);
-      const [searchTerm, setSearchTerm] = useState('');
-      const [selectedStatus, setSelectedStatus] = useState('Tous');
-      const [selectedRisk, setSelectedRisk] = useState('Tous');
-      const [toast, setToast] = useState(null);
-
-      // Save to localStorage whenever sheets change
-      useEffect(() => {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(sheets));
-        } catch (e) {
-          console.error('Storage error', e);
-        }
-      }, [sheets]);
-
-      const showToast = (message) => {
-        setToast(message);
-        setTimeout(() => setToast(null), 3500);
-      };
-
-      // Visible sheets according to role:
-      // Contrôleur : ses propres contrôles (controleur_id === role)
-      // Siège : 100% des contrôles
-      const visibleSheets = useMemo(() => {
-        if (currentRole === 'siege') return sheets;
-        return sheets.filter(s => s.controleur_id === currentRole);
-      }, [sheets, currentRole]);
-
-      // Export / Backup data as JSON file
-      const handleExportJSON = () => {
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(sheets, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute('href', dataStr);
-        downloadAnchor.setAttribute('download', `FCI_Sauvegarde_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        showToast('Sauvegarde JSON téléchargée avec succès.');
-      };
-
-      // Helper to generate file timestamp
-      const getFileTimestamp = () => {
-        const d = new Date();
-        return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
-      };
-
-      const getProfileInfo = () => {
-        const pName = currentUser ? currentUser.name : (currentRole === 'siege' ? 'Direction Générale Audit' : currentRole === 'ctrl-b' ? 'OUJBOUR OMAR' : 'AIT BABA ISMAIL');
-        const pLabel = currentUser ? (currentUser.label || currentUser.name) : (currentRole === 'siege' ? 'Siège (Vue Globale)' : currentRole === 'ctrl-b' ? 'OUJBOUR OMAR (Contrôleur B)' : 'AIT BABA ISMAIL (Contrôleur A)');
-        return { name: pName, label: pLabel };
-      };
-
-      // Export Control Sheets to Excel
-      const handleExportControlSheetsExcel = (targetSheets) => {
-        if (typeof XLSX === 'undefined') {
-          showToast('Bibliothèque Excel (XLSX) indisponible.', 'error');
-          return;
-        }
-        const dataToExport = targetSheets || filteredSheets;
-        const profile = getProfileInfo();
-        const wb = XLSX.utils.book_new();
-
-        const sheetData = dataToExport.map(s => ({
-          'Réf. Contrôle': s.ref,
-          'Titre de la mission': s.title,
-          'Direction': s.department,
-          'Processus': s.process,
-          'Contrôleur': s.controller,
-          'Audité': s.auditee,
-          'Date de réalisation': s.controlDate || s.date,
-          'Périodicité': s.periodicity,
-          'Type': s.type,
-          'Niveau de risque': s.riskLevel,
-          'Statut conformité': s.status,
-          'Nb Constats': s.findings ? s.findings.length : 0,
-          'Objectifs': s.objectives || '',
-          'Méthodologie': s.methodology || '',
-          'Échantillon': s.sampleSize || '',
-          'Conclusion': s.conclusion || ''
-        }));
-        const wsSheets = XLSX.utils.json_to_sheet(sheetData);
-        XLSX.utils.book_append_sheet(wb, wsSheets, 'Fiches de Contrôle');
-
-        const findingsData = dataToExport.flatMap(s => (s.findings || []).map(f => ({
-          'Réf. Fiche': s.ref,
-          'Mission': s.title,
-          'Direction': s.department,
-          'Réf. Constat': f.ref,
-          'Intitulé': f.title,
-          'Gravité': f.severity,
-          'Catégorie': f.category,
-          'Statut': f.status,
-          'Description': f.description,
-          'Risque': f.risk,
-          'Recommandation': f.recommendation,
-          'Plan d\'action': f.actionPlan,
-          'Responsable': f.assignee,
-          'Échéance': f.targetDate
-        })));
-        const wsFindings = XLSX.utils.json_to_sheet(findingsData);
-        XLSX.utils.book_append_sheet(wb, wsFindings, 'Constats Rattachés');
-
-        const metadata = [
-          { 'Propriété': 'Application', 'Valeur': 'FCI – Fiche de Contrôle Intelligente' },
-          { 'Propriété': 'Date d\'exportation', 'Valeur': new Date().toLocaleString('fr-FR') },
-          { 'Propriété': 'Profil actif', 'Valeur': `${profile.name} (${profile.label})` },
-          { 'Propriété': 'Périmètre', 'Valeur': currentRole === 'siege' ? 'Consolidé Siège (Toutes les fiches)' : 'Contrôles personnels' },
-          { 'Propriété': 'Nombre de fiches', 'Valeur': dataToExport.length }
-        ];
-        const wsMeta = XLSX.utils.json_to_sheet(metadata);
-        XLSX.utils.book_append_sheet(wb, wsMeta, 'Métadonnées');
-
-        XLSX.writeFile(wb, `FCI_Controles_${profile.name.replace(/\s+/g, '_')}_${getFileTimestamp()}.xlsx`);
-        showToast('Export Excel des fiches de contrôle généré avec succès.');
-      };
-
-      // Export Findings to Excel
-      const handleExportFindingsExcel = () => {
-        if (typeof XLSX === 'undefined') {
-          showToast('Bibliothèque Excel (XLSX) indisponible.', 'error');
-          return;
-        }
-        const profile = getProfileInfo();
-        const wb = XLSX.utils.book_new();
-
-        const findingsData = allFindings.map(f => ({
-          'Réf. Constat': f.ref,
-          'Réf. Fiche Contrôle': f.sheetRef || 'N/A',
-          'Titre du Contrôle': f.sheetTitle || 'N/A',
-          'Intitulé de l\'écart': f.title,
-          'Gravité': f.severity,
-          'Catégorie': f.category,
-          'Statut': f.status,
-          'Description factuelle': f.description,
-          'Risque': f.risk,
-          'Recommandation': f.recommendation,
-          'Plan d\'action': f.actionPlan,
-          'Responsable': f.assignee,
-          'Échéance cible': f.targetDate
-        }));
-        const wsFindings = XLSX.utils.json_to_sheet(findingsData);
-        XLSX.utils.book_append_sheet(wb, wsFindings, 'Registre Constats');
-
-        const metadata = [
-          { 'Propriété': 'Application', 'Valeur': 'FCI – Fiche de Contrôle Intelligente' },
-          { 'Propriété': 'Date d\'exportation', 'Valeur': new Date().toLocaleString('fr-FR') },
-          { 'Propriété': 'Profil actif', 'Valeur': `${profile.name} (${profile.label})` },
-          { 'Propriété': 'Périmètre', 'Valeur': currentRole === 'siege' ? 'Consolidé Siège' : 'Constats rattachés à ses fiches' },
-          { 'Propriété': 'Total constats', 'Valeur': findingsData.length }
-        ];
-        const wsMeta = XLSX.utils.json_to_sheet(metadata);
-        XLSX.utils.book_append_sheet(wb, wsMeta, 'Métadonnées');
-
-        XLSX.writeFile(wb, `FCI_Constats_${profile.name.replace(/\s+/g, '_')}_${getFileTimestamp()}.xlsx`);
-        showToast('Export Excel du registre des constats généré avec succès.');
-      };
-
-      // Export complete synthetic 3-sheet workbook
-      const handleExportSyntheticWorkbookExcel = () => {
-        if (typeof XLSX === 'undefined') {
-          showToast('Bibliothèque Excel (XLSX) indisponible.', 'error');
-          return;
-        }
-        const profile = getProfileInfo();
-        const wb = XLSX.utils.book_new();
-
-        // 1. Calculs globaux
-        const totalControls = visibleSheets.length;
-        const compliant = visibleSheets.filter(s => s.status === 'Conforme').length;
-        const compliantWithReservations = visibleSheets.filter(s => s.status === 'Conforme avec réserves').length;
-        const nonCompliant = visibleSheets.filter(s => s.status === 'Non conforme').length;
-        const pending = visibleSheets.filter(s => s.status === 'En attente').length;
-        const compRate = totalControls > 0
-          ? Math.round(((compliant + compliantWithReservations * 0.5) / totalControls) * 100)
-          : 0;
-
-        const openFnds = allFindings.filter(f => f.status !== 'Clôturé');
-        const closedFnds = allFindings.filter(f => f.status === 'Clôturé');
-        const critFnds = openFnds.filter(f => f.severity === 'Critique');
-        const majFnds = openFnds.filter(f => f.severity === 'Majeur');
-        const medFnds = openFnds.filter(f => f.severity === 'Moyen');
-        const lowFnds = openFnds.filter(f => f.severity === 'Faible');
-
-        // Statistiques par contrôleur
-        const controllersMap = {};
-        visibleSheets.forEach(s => {
-          const ctrl = s.controller || 'Non assigné';
-          if (!controllersMap[ctrl]) {
-            controllersMap[ctrl] = { total: 0, conforme: 0, reserves: 0, nonConforme: 0, attente: 0, findingsCount: 0, findingsClosed: 0 };
-          }
-          controllersMap[ctrl].total += 1;
-          if (s.status === 'Conforme') controllersMap[ctrl].conforme += 1;
-          if (s.status === 'Conforme avec réserves') controllersMap[ctrl].reserves += 1;
-          if (s.status === 'Non conforme') controllersMap[ctrl].nonConforme += 1;
-          if (s.status === 'En attente') controllersMap[ctrl].attente += 1;
-          (s.findings || []).forEach(f => {
-            controllersMap[ctrl].findingsCount += 1;
-            if (f.status === 'Clôturé') controllersMap[ctrl].findingsClosed += 1;
-          });
-        });
-
-        const ctrlRows = Object.keys(controllersMap).map(ctrl => {
-          const st = controllersMap[ctrl];
-          const rate = st.total > 0 ? Math.round(((st.conforme + st.reserves * 0.5) / st.total) * 100) : 0;
-          return [ctrl, st.total, `${rate}%`, st.conforme, st.reserves, st.nonConforme, st.attente, st.findingsCount, st.findingsClosed];
-        });
-
-        // ONGLET 1 : Tableau de Bord & Indicateurs
-        const dashboardRows = [
-          ['FCI – FICHE DE CONTRÔLE INTELLIGENTE'],
-          ['TABLEAU DE BORD & INDICATEURS DE CONTRÔLE INTERNE'],
-          [],
-          ['1. PÉRIMÈTRE & HABILITATION'],
-          ['Profil connecté', `${profile.name} (${profile.label})`],
-          ['Périmètre d\'extraction', currentRole === 'siege' ? 'Consolidation Globale (Tous les contrôleurs)' : `Contrôleur : ${profile.name}`],
-          ['Date d\'extraction', new Date().toLocaleString('fr-FR')],
-          ['Système source', 'Base FCI Autonome (FCI.html)'],
-          [],
-          ['2. INDICATEURS CLÉS DU CONTRÔLE INTERNE'],
-          ['Indicateur', 'Valeur', 'Commentaire / Objectif'],
-          ['Total des fiches de contrôle', totalControls, 'Revues de contrôle enregistrées'],
-          ['Taux de conformité global', `${compRate}%`, 'Conformes (100%) + Réserves (50%)'],
-          ['Contrôles Conformes', compliant, 'Sans réserve'],
-          ['Contrôles Conformes avec réserves', compliantWithReservations, 'Avec points d\'attention'],
-          ['Contrôles Non conformes', nonCompliant, 'Écarts substantiels'],
-          ['Contrôles En attente', pending, 'En cours de finalisation'],
-          [],
-          ['3. SUIVI DES CONSTATS & ACTIONS CORRECTIVES'],
-          ['Indicateur', 'Valeur', 'Commentaire / Objectif'],
-          ['Total des constats identifiés', allFindings.length, 'Écarts relevés'],
-          ['Constats ouverts (À traiter / En cours)', openFnds.length, 'Actions correctives actives'],
-          ['Constats fermés (Clôturés)', closedFnds.length, 'Actions soldées'],
-          ['Taux de résolution des recommandations', allFindings.length > 0 ? `${Math.round((closedFnds.length / allFindings.length) * 100)}%` : '100%', 'Pourcentage soldé'],
-          ['Constats Critiques', critFnds.length, 'Risque maximal'],
-          ['Constats Majeurs', majFnds.length, 'Risque élevé'],
-          ['Constats Moyens', medFnds.length, 'Risque modéré'],
-          ['Constats Faibles', lowFnds.length, 'Point de vigilance'],
-          [],
-          ['4. STATISTIQUES PAR CONTRÔLEUR'],
-          ['Contrôleur responsable', 'Nombre de contrôles', 'Taux de conformité', 'Conformes', 'Avec réserves', 'Non conformes', 'En attente', 'Total constats', 'Constats clôturés'],
-          ...ctrlRows
-        ];
-
-        const wsDashboard = XLSX.utils.aoa_to_sheet(dashboardRows);
-        wsDashboard['!cols'] = [{ wch: 38 }, { wch: 22 }, { wch: 55 }, { wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 14 }, { wch: 16 }, { wch: 18 }];
-        XLSX.utils.book_append_sheet(wb, wsDashboard, 'Tableau de Bord & Indicateurs');
-
-        // ONGLET 2 : Fiches de Contrôle
-        const sheetsDetail = visibleSheets.map((s, idx) => {
-          let score = 'En attente';
-          if (s.status === 'Conforme') score = '100%';
-          else if (s.status === 'Conforme avec réserves') score = '50%';
-          else if (s.status === 'Non conforme') score = '0%';
-          return {
-            'N°': idx + 1,
-            'ID': s.ref,
-            'Date': s.controlDate || s.date,
-            'Chantier/Site': s.department,
-            'Contrôleur': s.controller,
-            'Note/Score': score,
-            'Statut': s.status,
-            'Processus audité': s.process,
-            'Titre de la mission': s.title,
-            'Audité (Interlocuteur)': s.auditee,
-            'Niveau de risque': s.riskLevel,
-            'Type de contrôle': s.type,
-            'Périodicité': s.periodicity,
-            'Nb Constats associés': (s.findings || []).length,
-            'Échantillon / Périmètre testé': s.sampleSize || 'Non précisé',
-            'Objectifs du contrôle': s.objectives || '',
-            'Conclusion & Avis général': s.conclusion || ''
-          };
-        });
-        const wsSheets = XLSX.utils.json_to_sheet(sheetsDetail.length > 0 ? sheetsDetail : [{ 'Info': 'Aucune fiche' }]);
-        XLSX.utils.book_append_sheet(wb, wsSheets, 'Fiches de Contrôle');
-
-        // ONGLET 3 : Constats & Recommandations
-        const findingsDetail = allFindings.map((f, idx) => ({
-          'N°': idx + 1,
-          'Réf. Constat': f.ref,
-          'Réf. Fiche Contrôle': f.sheetRef || '',
-          'Chantier/Site': f.parentSheet ? f.parentSheet.department : '',
-          'Titre du Contrôle': f.sheetTitle || '',
-          'Contrôleur responsable': f.parentSheet ? f.parentSheet.controller : '',
-          'Écart observé (Intitulé)': f.title,
-          'Gravité / Priorité': f.severity,
-          'Catégorie': f.category,
-          'Statut d\'avancement': f.status,
-          'Description factuelle de l\'écart': f.description,
-          'Risque identifié': f.risk,
-          'Recommandation d\'audit': f.recommendation,
-          'Actions correctives préconisées': f.actionPlan,
-          'Responsable de mise en œuvre': f.assignee,
-          'Échéance cible': f.targetDate
-        }));
-        const wsFindings = XLSX.utils.json_to_sheet(findingsDetail.length > 0 ? findingsDetail : [{ 'Info': 'Aucun constat' }]);
-        XLSX.utils.book_append_sheet(wb, wsFindings, 'Constats & Recommandations');
-
-        XLSX.writeFile(wb, `FCI_Export_${profile.name.replace(/\s+/g, '_')}_${getFileTimestamp()}.xlsx`);
-        showToast('Classeur Excel structuré (3 onglets) exporté avec succès.');
-      };
-
-      // Export Dashboard to Excel
-      const handleExportDashboardExcel = () => {
-        handleExportSyntheticWorkbookExcel();
-      };
-
-      // Export Single Control Sheet to Excel
-      const handleExportSingleSheetExcel = (s) => {
-        if (typeof XLSX === 'undefined') {
-          showToast('Bibliothèque Excel (XLSX) indisponible.', 'error');
-          return;
-        }
-        const profile = getProfileInfo();
-        const wb = XLSX.utils.book_new();
-
-        const general = [
-          { 'Champ': 'Réf. Contrôle', 'Valeur': s.ref },
-          { 'Champ': 'Titre de la mission', 'Valeur': s.title },
-          { 'Champ': 'Direction', 'Valeur': s.department },
-          { 'Champ': 'Processus audité', 'Valeur': s.process },
-          { 'Champ': 'Contrôleur responsable', 'Valeur': s.controller },
-          { 'Champ': 'Audité', 'Valeur': s.auditee },
-          { 'Champ': 'Date de réalisation', 'Valeur': s.controlDate || s.date },
-          { 'Champ': 'Périodicité', 'Valeur': s.periodicity },
-          { 'Champ': 'Type de contrôle', 'Valeur': s.type },
-          { 'Champ': 'Niveau de risque', 'Valeur': s.riskLevel },
-          { 'Champ': 'Statut conformité', 'Valeur': s.status },
-          { 'Champ': 'Échantillon', 'Valeur': s.sampleSize || '' },
-          { 'Champ': 'Objectifs', 'Valeur': s.objectives || '' },
-          { 'Champ': 'Méthodologie', 'Valeur': s.methodology || '' },
-          { 'Champ': 'Conclusion générale', 'Valeur': s.conclusion || '' }
-        ];
-        const wsGen = XLSX.utils.json_to_sheet(general);
-        XLSX.utils.book_append_sheet(wb, wsGen, 'Fiche');
-
-        const findings = (s.findings || []).map(f => ({
-          'Réf. Constat': f.ref,
-          'Intitulé': f.title,
-          'Gravité': f.severity,
-          'Catégorie': f.category,
-          'Statut': f.status,
-          'Description': f.description,
-          'Risque': f.risk,
-          'Recommandation': f.recommendation,
-          'Plan d\'action': f.actionPlan,
-          'Responsable': f.assignee,
-          'Échéance': f.targetDate
-        }));
-        const wsFindings = XLSX.utils.json_to_sheet(findings.length > 0 ? findings : [{ 'Info': 'Aucun constat' }]);
-        XLSX.utils.book_append_sheet(wb, wsFindings, 'Constats');
-
-        XLSX.writeFile(wb, `FCI_Fiche_${s.ref}_${getFileTimestamp()}.xlsx`);
-        showToast(`Fiche ${s.ref} exportée en Excel avec succès.`);
-      };
-
-      // Contextual Excel export for the active view
-      const handleExportCurrentViewExcel = () => {
-        if (activeView === 'dashboard' || activeView === 'report') {
-          handleExportSyntheticWorkbookExcel();
-        } else if (activeView === 'controls') {
-          handleExportControlSheetsExcel(filteredSheets);
-        } else if (activeView === 'findings') {
-          handleExportFindingsExcel();
-        } else if (detailModalSheet) {
-          handleExportSingleSheetExcel(detailModalSheet);
-        } else {
-          handleExportSyntheticWorkbookExcel();
-        }
-      };
-
-      // Import JSON backup
-      const handleImportJSON = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          try {
-            const imported = JSON.parse(event.target.result);
-            if (Array.isArray(imported)) {
-              setSheets(imported);
-              showToast(`${imported.length} fiches importées avec succès.`);
-            } else {
-              alert('Le fichier importé n\'est pas un format valide.');
-            }
-          } catch (err) {
-            alert('Erreur lors de la lecture du fichier JSON.');
-          }
-        };
-        reader.readAsText(file);
-      };
-
-      // Save control sheet (create or edit)
-      const handleSaveSheet = (sheetData) => {
-        const controleur_id = sheetData.controleur_id || (currentUser ? currentUser.id : 'ctrl-a');
-        const controller = sheetData.controller || (currentUser ? currentUser.name : 'AIT BABA ISMAIL');
-        const enrichedSheet = {
-          ...sheetData,
-          controleur_id,
-          controller,
-          date: sheetData.date || sheetData.controlDate || new Date().toISOString().split('T')[0]
-        };
-        const exists = sheets.some(s => s.id === enrichedSheet.id);
-        let updated;
-        if (exists) {
-          updated = sheets.map(s => s.id === enrichedSheet.id ? enrichedSheet : s);
-          showToast(`Fiche ${enrichedSheet.ref} mise à jour.`);
-        } else {
-          updated = [enrichedSheet, ...sheets];
-          showToast(`Fiche ${enrichedSheet.ref} créée avec succès.`);
-        }
-        setSheets(updated);
-        setEditingSheet(null);
-        setActiveView('controls');
-      };
-
-      // Delete sheet
-      const handleDeleteSheet = (id) => {
-        const target = sheets.find(s => s.id === id);
-        if (window.confirm(`Confirmez-vous la suppression du contrôle ${target ? target.ref : ''} ?`)) {
-          setSheets(sheets.filter(s => s.id !== id));
-          showToast('Fiche de contrôle supprimée.');
-        }
-      };
-
-      // Duplicate sheet
-      const handleDuplicateSheet = (sheet) => {
-        const newRef = `${sheet.ref.split('-').slice(0, 3).join('-')}-${Math.floor(100 + Math.random() * 900)}`;
-        const copy = {
-          ...sheet,
-          id: `fci-${Date.now()}`,
-          ref: newRef,
-          title: `${sheet.title} (Copie)`,
-          controlDate: new Date().toISOString().split('T')[0],
-          status: 'En attente',
-          findings: sheet.findings.map(f => ({
-            ...f,
-            id: `fnd-${Date.now()}-${Math.random()}`,
-            status: 'À traiter'
-          }))
-        };
-        setSheets([copy, ...sheets]);
-        showToast(`Contrôle dupliqué sous la référence ${newRef}.`);
-      };
-
-      // Update finding status
-      const handleUpdateFindingStatus = (sheetId, findingId, newStatus) => {
-        const updated = sheets.map(s => {
-          if (s.id === sheetId) {
-            return {
-              ...s,
-              findings: s.findings.map(f => f.id === findingId ? { ...f, status: newStatus } : f)
-            };
-          }
-          return s;
-        });
-        setSheets(updated);
-        showToast(`Statut du constat mis à jour : "${newStatus}".`);
-      };
-
-      // Reset to demo data
-      const handleResetDemo = () => {
-        if (window.confirm('Voulez-vous réinitialiser le jeu de données d\'exemple ?')) {
-          setSheets(INITIAL_CONTROL_SHEETS);
-          showToast('Données d\'exemple réinitialisées.');
-        }
-      };
-
-      // Aggregates for Dashboard (scoped to visible sheets according to active profile)
-      const totalCount = visibleSheets.length;
-      const compliantCount = visibleSheets.filter(s => s.status === 'Conforme').length;
-      const compliantWithResCount = visibleSheets.filter(s => s.status === 'Conforme avec réserves').length;
-      const nonCompliantCount = visibleSheets.filter(s => s.status === 'Non conforme').length;
-      const pendingCount = visibleSheets.filter(s => s.status === 'En attente').length;
-      const complianceRate = totalCount > 0 ? Math.round(((compliantCount + compliantWithResCount * 0.5) / totalCount) * 100) : 0;
-
-      const allFindings = visibleSheets.flatMap(s => s.findings.map(f => ({ ...f, sheetId: s.id, sheetRef: s.ref, sheetTitle: s.title, parentSheet: s })));
-      const openFindings = allFindings.filter(f => f.status !== 'Clôturé');
-
-      // Filtered sheets
-      const filteredSheets = visibleSheets.filter(s => {
-        if (searchTerm.trim()) {
-          const q = searchTerm.toLowerCase();
-          const matchRef = s.ref.toLowerCase().includes(q);
-          const matchTitle = s.title.toLowerCase().includes(q);
-          const matchDept = s.department.toLowerCase().includes(q);
-          const matchProc = s.process.toLowerCase().includes(q);
-          if (!matchRef && !matchTitle && !matchDept && !matchProc) return false;
-        }
-        if (selectedStatus !== 'Tous' && s.status !== selectedStatus) return false;
-        if (selectedRisk !== 'Tous' && s.riskLevel !== selectedRisk) return false;
-        return true;
-      });
-
-      // If unauthenticated, render the universal login view
-      if (!currentUser) {
-        return (
-          <div className="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
-            <div className="max-w-md w-full space-y-6">
-              <div className="text-center space-y-2">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-600 text-white shadow-md mb-2">
-                  <Icons.ShieldCheck className="w-8 h-8" />
-                </div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                  FCI – Contrôle Interne
-                </h1>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Portail d'authentification multi-utilisateurs. Connectez-vous avec vos identifiants professionnels pour accéder à votre espace de travail.
-                </p>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 space-y-5">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Identifiant / Nom d'utilisateur
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Icons.User className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        value={loginUsername}
-                        onChange={e => { setLoginUsername(e.target.value); if (loginError) setLoginError(null); }}
-                        placeholder="Ex: AIT BABA ISMAIL, OUJBOUR OMAR, Siège..."
-                        required
-                        autoFocus
-                        className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-100 focus:border-blue-600 transition-all placeholder:text-slate-400"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Mot de passe
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <Icons.Lock className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="password"
-                        value={loginPassword}
-                        onChange={e => { setLoginPassword(e.target.value); if (loginError) setLoginError(null); }}
-                        placeholder="••••••••"
-                        required
-                        className="w-full pl-10 pr-3.5 py-2.5 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-blue-100 focus:border-blue-600 transition-all placeholder:text-slate-400"
-                      />
-                    </div>
-                    {loginError && (
-                      <div className="mt-2.5 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-                        <Icons.AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                        <span>{loginError}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full mt-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-sm hover:shadow flex items-center justify-center gap-2"
-                  >
-                    <Icons.Lock className="w-4 h-4" />
-                    <span>Se connecter à l'espace FCI</span>
-                  </button>
-                </form>
-
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <Icons.Shield className="w-3.5 h-3.5 text-slate-400" />
-                    Environnement sécurisé
-                  </span>
-                  <span>Isolation des données par contrôleur</span>
-                </div>
-              </div>
-            </div>
-            {toast && (
-              <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-xl text-xs flex items-center gap-2">
-                <Icons.CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>{toast}</span>
-              </div>
-            )}
+  <!-- ========================================================
+       1. MENU LATÉRAL (SIDEBAR - 250px)
+       ======================================================== -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div>
+      <!-- Header Logo / Texte -->
+      <div class="sidebar-header">
+        <div class="brand-logo-badge">
+          <div class="brand-logo-inner">
+            <span class="brand-logo-bam">BAM</span>
+            <span class="brand-logo-sub">POSTE</span>
+            <div class="brand-logo-circle"></div>
           </div>
-        );
-      }
-
-      return (
-        <div className="flex h-screen bg-slate-50 text-slate-800 overflow-hidden font-sans">
-          {/* SIDEBAR */}
-          <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 h-screen sticky top-0 border-r border-slate-800 no-print select-none">
-            <div className="p-5 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm font-bold text-lg">
-                  <Icons.ShieldCheck className="w-6 h-6" />
-                </div>
-                <div className="min-w-0">
-                  <h1 className="text-base font-bold text-white tracking-tight leading-tight truncate">
-                    FCI Contrôle
-                  </h1>
-                  <p className="text-xs text-slate-400 truncate">
-                    Version Autonome (FCI.html)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
-              <div className="px-3 py-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-                Menu Principal
-              </div>
-
-              {[
-                { id: 'dashboard', label: 'Tableau de bord', icon: Icons.LayoutDashboard },
-                { id: 'controls', label: 'Fiches de contrôle', icon: Icons.FileCheck2, badge: sheets.length },
-                { id: 'new-control', label: 'Nouveau contrôle', icon: Icons.FilePlus2 },
-                { id: 'findings', label: 'Constats & Recommandations', icon: Icons.AlertTriangle, badge: openFindings.length },
-                { id: 'methodology', label: 'Guide & Normes', icon: Icons.BookOpen }
-              ].map(item => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.id === 'new-control') setEditingSheet(null);
-                      setActiveView(item.id);
-                    }}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${
-                      isActive ? 'bg-blue-600 text-white font-semibold shadow-sm' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 truncate">
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                      <span className="truncate">{item.label}</span>
-                    </div>
-                    {item.badge !== undefined && item.badge !== null && (
-                      <span className={`text-xs font-mono tabular-nums px-2 py-0.5 rounded ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-800 text-slate-300'}`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-
-              <div className="pt-6 px-3 py-2 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
-                Sauvegarde Fichier
-              </div>
-
-              <div className="px-2 space-y-2">
-                <button
-                  onClick={handleExportJSON}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-colors"
-                >
-                  <Icons.Download className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Exporter sauvegarde JSON</span>
-                </button>
-
-                <label className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-colors cursor-pointer">
-                  <Icons.Upload className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Importer sauvegarde JSON</span>
-                  <input type="file" accept=".json" onChange={handleImportJSON} className="hidden" />
-                </label>
-              </div>
-            </nav>
-
-            <div className="p-4 border-t border-slate-800 bg-slate-900/80 space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="truncate">Connecté : <strong className="text-white">{currentUser ? currentUser.name : '...'}</strong></span>
-                <button
-                  onClick={handleLogout}
-                  className="text-rose-400 hover:text-rose-300 text-[11px] font-medium hover:underline flex items-center gap-1 shrink-0 ml-2"
-                >
-                  <Icons.LogOut className="w-3 h-3" />
-                  <span>Déconnexion</span>
-                </button>
-              </div>
-            </div>
-          </aside>
-
-          {/* MAIN CONTENT */}
-          <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-            {/* TOP HEADER */}
-            <header className="h-16 border-b border-slate-200 bg-white px-6 flex items-center justify-between gap-8 shrink-0 no-print">
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span className="font-semibold text-slate-900">FCI Contrôle Interne</span>
-                <span>/</span>
-                <span className="capitalize">{activeView.replace('-', ' ')}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleExportCurrentViewExcel}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
-                >
-                  <Icons.FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Exporter Excel</span>
-                </button>
-
-                <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs"
-                >
-                  <Icons.Printer className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Imprimer</span>
-                </button>
-
-                {activeView !== 'new-control' && (
-                  <button
-                    onClick={() => {
-                      setEditingSheet(null);
-                      setActiveView('new-control');
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-xs"
-                  >
-                    <Icons.Plus className="w-4 h-4" />
-                    <span>Nouveau contrôle</span>
-                  </button>
-                )}
-
-                <div className="pl-3 border-l border-slate-200 flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="text-xs font-semibold text-slate-800">
-                      Connecté : {currentUser ? currentUser.name : '...'}
-                    </span>
-                    {currentUser && (
-                      <span className="hidden sm:inline-block text-[11px] text-slate-400 font-normal">
-                        ({currentUser.role === 'siege' ? 'Siège' : 'Contrôleur'})
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    title="Déconnexion"
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 border border-slate-200 rounded-lg transition-colors"
-                  >
-                    <Icons.LogOut className="w-3.5 h-3.5" />
-                    <span>Déconnexion</span>
-                  </button>
-                </div>
-              </div>
-            </header>
-
-            {/* VIEWPORT */}
-            <main className="flex-1 overflow-y-auto p-6 lg:p-8 bg-slate-50">
-              <div className="max-w-7xl mx-auto">
-                {/* 1. DASHBOARD VIEW */}
-                {activeView === 'dashboard' && (
-                  <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-                      <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                          Tableau de bord de Contrôle Interne
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Vue synthétique des missions d'inspection, niveau de conformité et suivi des recommandations.
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 no-print">
-                        <button
-                          onClick={handleExportDashboardExcel}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
-                        >
-                          <Icons.FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Exporter en Excel (.xlsx)</span>
-                        </button>
-                        <button
-                          onClick={() => window.print()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs"
-                        >
-                          <Icons.Printer className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Imprimer / PDF</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* KPI Strip */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                        <div className="flex justify-between text-xs text-slate-500 font-medium">
-                          <span>Contrôles enregistrés</span>
-                          <Icons.FileCheck2 className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                          <span className="text-2xl font-bold font-mono text-slate-900">{totalCount}</span>
-                          <span className="text-xs text-slate-500">fiches actives</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                        <div className="flex justify-between text-xs text-slate-500 font-medium">
-                          <span>Taux de conformité</span>
-                          <Icons.CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                          <span className="text-2xl font-bold font-mono text-slate-900">{complianceRate}%</span>
-                          <span className="text-xs text-emerald-700 font-medium">Global</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                        <div className="flex justify-between text-xs text-slate-500 font-medium">
-                          <span>Constats en suspens</span>
-                          <Icons.AlertTriangle className="w-4 h-4 text-amber-500" />
-                        </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                          <span className="text-2xl font-bold font-mono text-slate-900">{openFindings.length}</span>
-                          <span className="text-xs text-amber-600 font-medium">à régulariser</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-                        <div className="flex justify-between text-xs text-slate-500 font-medium">
-                          <span>Plans d'actions en cours</span>
-                          <Icons.Clock className="w-4 h-4 text-indigo-600" />
-                        </div>
-                        <div className="mt-3 flex items-baseline gap-2">
-                          <span className="text-2xl font-bold font-mono text-slate-900">
-                            {allFindings.filter(f => f.status === 'En cours').length}
-                          </span>
-                          <span className="text-xs text-slate-500">en déploiement</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Recent Controls List */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-bold text-slate-900">Fiches de contrôle récentes</h3>
-                        <button onClick={() => setActiveView('controls')} className="text-xs text-blue-600 font-semibold hover:underline">
-                          Voir la liste complète
-                        </button>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b border-slate-200 text-slate-500 font-medium bg-slate-50">
-                              <th className="py-2 px-3">Réf.</th>
-                              <th className="py-2 px-3">Intitulé</th>
-                              <th className="py-2 px-3">Direction</th>
-                              <th className="py-2 px-3">Date</th>
-                              <th className="py-2 px-3">Statut</th>
-                              <th className="py-2 px-3 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
-                            {sheets.slice(0, 5).map(sheet => (
-                              <tr key={sheet.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="py-2.5 px-3 font-mono font-bold text-slate-900">{sheet.ref}</td>
-                                <td className="py-2.5 px-3 font-medium text-slate-800">{sheet.title}</td>
-                                <td className="py-2.5 px-3 text-slate-600">{sheet.department}</td>
-                                <td className="py-2.5 px-3 font-mono text-slate-500">{sheet.controlDate}</td>
-                                <td className="py-2.5 px-3">
-                                  <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
-                                    sheet.status === 'Conforme' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                                    sheet.status === 'Conforme avec réserves' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                                    sheet.status === 'Non conforme' ? 'bg-rose-50 text-rose-800 border-rose-200' :
-                                    'bg-slate-100 text-slate-700 border-slate-200'
-                                  }`}>
-                                    {sheet.status}
-                                  </span>
-                                </td>
-                                <td className="py-2.5 px-3 text-right">
-                                  <button
-                                    onClick={() => setDetailModalSheet(sheet)}
-                                    className="p-1 text-slate-500 hover:text-blue-600 transition-colors"
-                                    title="Consulter"
-                                  >
-                                    <Icons.Eye className="w-4 h-4 inline" />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. CONTROLS LIST VIEW */}
-                {activeView === 'controls' && (
-                  <div className="space-y-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-                      <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                          Gestion des Fiches de Contrôle
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Consultez, filtrez et mettez à jour le référentiel des contrôles de conformité.
-                        </p>
-                      <div className="flex flex-wrap items-center gap-2 no-print">
-                        <button
-                          onClick={() => handleExportControlSheetsExcel(filteredSheets)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
-                        >
-                          <Icons.FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Exporter en Excel (.xlsx)</span>
-                        </button>
-                        <button
-                          onClick={() => window.print()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs"
-                        >
-                          <Icons.Printer className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Imprimer / PDF</span>
-                        </button>
-                        <button
-                          onClick={() => { setEditingSheet(null); setActiveView('new-control'); }}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-xs"
-                        >
-                          <Icons.Plus className="w-4 h-4" />
-                          <span>Nouveau contrôle</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Filter toolbar */}
-                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs space-y-3">
-                      <div className="flex flex-col md:flex-row gap-3">
-                        <div className="relative flex-1">
-                          <Icons.Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                          <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Rechercher par référence, intitulé, direction..."
-                            className="w-full text-xs pl-9 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
-
-                        <select
-                          value={selectedStatus}
-                          onChange={(e) => setSelectedStatus(e.target.value)}
-                          className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-2 text-xs"
-                        >
-                          <option value="Tous">Tous les statuts</option>
-                          <option value="Conforme">Conforme</option>
-                          <option value="Conforme avec réserves">Conforme avec réserves</option>
-                          <option value="Non conforme">Non conforme</option>
-                          <option value="En attente">En attente</option>
-                        </select>
-
-                        <select
-                          value={selectedRisk}
-                          onChange={(e) => setSelectedRisk(e.target.value)}
-                          className="bg-slate-50 border border-slate-200 text-slate-700 rounded-lg px-2.5 py-2 text-xs"
-                        >
-                          <option value="Tous">Tous les risques</option>
-                          <option value="Critique">Critique</option>
-                          <option value="Élevé">Élevé</option>
-                          <option value="Modéré">Modéré</option>
-                          <option value="Faible">Faible</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Table */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="border-b border-slate-200 text-slate-500 font-medium bg-slate-50/70">
-                            <th className="py-3 px-3">Réf.</th>
-                            <th className="py-3 px-3">Intitulé & Processus</th>
-                            <th className="py-3 px-3">Direction</th>
-                            <th className="py-3 px-3">Date</th>
-                            <th className="py-3 px-3">Risque</th>
-                            <th className="py-3 px-3">Statut</th>
-                            <th className="py-3 px-3 text-center">Constats</th>
-                            <th className="py-3 px-3 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {filteredSheets.map(sheet => (
-                            <tr key={sheet.id} className="hover:bg-slate-50/80 transition-colors">
-                              <td className="py-3 px-3 font-mono font-bold text-slate-900 whitespace-nowrap">{sheet.ref}</td>
-                              <td className="py-3 px-3">
-                                <div className="font-semibold text-slate-900">{sheet.title}</div>
-                                <div className="text-[11px] text-slate-500">{sheet.process}</div>
-                              </td>
-                              <td className="py-3 px-3 text-slate-600 whitespace-nowrap">{sheet.department}</td>
-                              <td className="py-3 px-3 font-mono text-slate-700 whitespace-nowrap">{sheet.controlDate}</td>
-                              <td className="py-3 px-3 whitespace-nowrap font-medium text-slate-700">{sheet.riskLevel}</td>
-                              <td className="py-3 px-3 whitespace-nowrap">
-                                <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
-                                  sheet.status === 'Conforme' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
-                                  sheet.status === 'Conforme avec réserves' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                                  sheet.status === 'Non conforme' ? 'bg-rose-50 text-rose-800 border-rose-200' :
-                                  'bg-slate-100 text-slate-700 border-slate-200'
-                                }`}>
-                                  {sheet.status}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3 text-center font-mono font-semibold">
-                                {sheet.findings.length}
-                              </td>
-                              <td className="py-3 px-3 text-right whitespace-nowrap">
-                                <div className="inline-flex items-center gap-1">
-                                  <button
-                                    onClick={() => setDetailModalSheet(sheet)}
-                                    className="p-1 text-slate-500 hover:text-blue-600 transition-colors"
-                                    title="Consulter"
-                                  >
-                                    <Icons.Eye className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => { setEditingSheet(sheet); setActiveView('new-control'); }}
-                                    className="p-1 text-slate-500 hover:text-slate-800 transition-colors"
-                                    title="Modifier"
-                                  >
-                                    <Icons.Edit3 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDuplicateSheet(sheet)}
-                                    className="p-1 text-slate-500 hover:text-slate-800 transition-colors"
-                                    title="Dupliquer"
-                                  >
-                                    <Icons.Copy className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteSheet(sheet.id)}
-                                    className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
-                                    title="Supprimer"
-                                  >
-                                    <Icons.Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. NEW / EDIT FORM VIEW */}
-                {activeView === 'new-control' && (
-                  <ControlForm
-                    initialSheet={editingSheet}
-                    onSave={handleSaveSheet}
-                    onCancel={() => { setEditingSheet(null); setActiveView('controls'); }}
-                  />
-                )}
-
-                {/* 4. FINDINGS REGISTRY VIEW */}
-                {activeView === 'findings' && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-                      <div>
-                        <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-                          Registre des Constats & Recommandations
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Suivi transversal des écarts relevés et des plans d'action correctifs.
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 no-print">
-                        <button
-                          onClick={handleExportFindingsExcel}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-lg hover:bg-emerald-100 transition-colors shadow-xs"
-                        >
-                          <Icons.FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Exporter en Excel (.xlsx)</span>
-                        </button>
-                        <button
-                          onClick={() => window.print()}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors shadow-xs"
-                        >
-                          <Icons.Printer className="w-3.5 h-3.5 text-slate-500" />
-                          <span>Imprimer / PDF</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {allFindings.map(finding => (
-                        <div key={finding.id} className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
-                          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                            <div>
-                              <div className="flex items-center gap-2 text-xs">
-                                <span className="font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{finding.ref}</span>
-                                <span className="font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">{finding.severity}</span>
-                                <span className="text-slate-500 font-medium">{finding.category}</span>
-                              </div>
-                              <h3 className="text-sm font-bold text-slate-900 mt-1">{finding.title}</h3>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-500">Statut :</span>
-                              <select
-                                value={finding.status}
-                                onChange={(e) => handleUpdateFindingStatus(finding.sheetId, finding.id, e.target.value)}
-                                className="text-xs font-semibold bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5"
-                              >
-                                <option value="À traiter">À traiter</option>
-                                <option value="En cours">En cours</option>
-                                <option value="Clôturé">Clôturé</option>
-                                <option value="En retard">En retard</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                              <span className="font-semibold text-slate-700 block mb-1">Constat factuel :</span>
-                              <p className="text-slate-600">{finding.description}</p>
-                            </div>
-                            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                              <span className="font-semibold text-blue-900 block mb-1">Recommandation :</span>
-                              <p className="text-slate-700">{finding.recommendation}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs text-slate-500">
-                            <div>
-                              <span>Responsable : <strong>{finding.assignee}</strong></span>
-                              <span className="mx-2">·</span>
-                              <span>Échéance : <strong className="font-mono">{finding.targetDate}</strong></span>
-                            </div>
-                            <button
-                              onClick={() => setDetailModalSheet(finding.parentSheet)}
-                              className="text-blue-600 hover:underline font-semibold"
-                            >
-                              Fiche : {finding.sheetRef}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. METHODOLOGY GUIDE */}
-                {activeView === 'methodology' && (
-                  <div className="space-y-6 max-w-4xl">
-                    <div className="pb-2 border-b border-slate-200">
-                      <h2 className="text-xl font-bold text-slate-900 tracking-tight">Guide Méthodologique du Contrôle Interne</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">Cadre de référence, définition des risques et échantillonnage (COSO & IFACI).</p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3 text-xs leading-relaxed">
-                      <h3 className="font-bold text-slate-900 text-sm">Principes directeurs</h3>
-                      <p className="text-slate-700">
-                        La Fiche de Contrôle Intelligente (FCI) formalise les vérifications de conformité et mesure l'efficacité des processus. Chaque anomalie doit comporter un niveau de gravité, un risque identifié, un plan d'action précis, un responsable opérationnel et une date cible d'échéance.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </main>
-          </div>
-
-          {/* DETAIL REPORT MODAL */}
-          {detailModalSheet && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 overflow-y-auto">
-              <div className="bg-white rounded-2xl border border-slate-200 max-w-4xl w-full shadow-2xl max-h-[92vh] flex flex-col">
-                <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between no-print">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-slate-900 bg-white px-2.5 py-1 rounded border border-slate-200">
-                      {detailModalSheet.ref}
-                    </span>
-                    <span className="text-xs text-slate-500">Rapport de Contrôle Interne</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleExportSingleSheetExcel(detailModalSheet)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-white border border-emerald-300 rounded-lg hover:bg-emerald-50 shadow-xs"
-                    >
-                      <Icons.FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Exporter Excel (.xlsx)</span>
-                    </button>
-                    <button
-                      onClick={() => window.print()}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 shadow-xs"
-                    >
-                      <Icons.Printer className="w-3.5 h-3.5" />
-                      <span>Imprimer / PDF</span>
-                    </button>
-                    <button
-                      onClick={() => setDetailModalSheet(null)}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
-                    >
-                      <Icons.X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="p-8 overflow-y-auto space-y-6 text-slate-800 printable-sheet">
-                  <div className="border border-slate-300 rounded-xl p-5 bg-slate-50/50 space-y-3">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-xs font-bold text-blue-700 uppercase">FCI · Fiche de Contrôle</span>
-                        <h1 className="text-lg font-bold text-slate-950 mt-1">{detailModalSheet.title}</h1>
-                      </div>
-                      <span className="px-3 py-1 rounded text-xs font-bold border bg-white">
-                        {detailModalSheet.status}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2 border-t border-slate-200">
-                      <div><span className="text-slate-500 block">Direction :</span><strong>{detailModalSheet.department}</strong></div>
-                      <div><span className="text-slate-500 block">Processus :</span><strong>{detailModalSheet.process}</strong></div>
-                      <div><span className="text-slate-500 block">Date :</span><strong className="font-mono">{detailModalSheet.controlDate}</strong></div>
-                      <div><span className="text-slate-500 block">Périodicité :</span><strong>{detailModalSheet.periodicity}</strong></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider mb-1">Objectifs du contrôle</h3>
-                    <p className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-slate-200">{detailModalSheet.objectives}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider mb-1">Méthodologie & Échantillonnage</h3>
-                    <p className="text-xs text-slate-700 bg-white p-3 rounded-lg border border-slate-200">{detailModalSheet.methodology} (Échantillon : {detailModalSheet.sampleSize})</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider mb-1">Conclusion de l'évaluateur</h3>
-                    <p className="text-xs text-slate-800 bg-blue-50/40 p-3 rounded-lg border border-blue-200 font-medium">{detailModalSheet.conclusion}</p>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider mb-2">Constats & Recommandations ({detailModalSheet.findings.length})</h3>
-                    {detailModalSheet.findings.map(f => (
-                      <div key={f.id} className="border border-slate-200 rounded-lg p-3 bg-white space-y-2 mb-2 text-xs">
-                        <div className="flex justify-between font-bold">
-                          <span>{f.ref} - {f.title}</span>
-                          <span className="text-rose-700">{f.severity}</span>
-                        </div>
-                        <p className="text-slate-600"><strong>Constat :</strong> {f.description}</p>
-                        <p className="text-slate-700"><strong>Recommandation :</strong> {f.recommendation}</p>
-                        <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex justify-between">
-                          <span>Responsable : {f.assignee}</span>
-                          <span>Échéance : {f.targetDate}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TOAST FEEDBACK */}
-          {toast && (
-            <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-xl text-xs flex items-center gap-2">
-              <Icons.CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{toast}</span>
-            </div>
-          )}
         </div>
-      );
-    }
+        <div>
+          <div class="brand-title">FCI - Barid Al-Maghrib</div>
+          <div class="brand-subtitle">Audit & Contrôle Interne</div>
+        </div>
+      </div>
 
-    // --- CONTROL FORM COMPONENT ---
-    function ControlForm({ initialSheet, onSave, onCancel }) {
-      const [ref, setRef] = useState(initialSheet?.ref || `FCI-2026-${Math.floor(100 + Math.random() * 900)}`);
-      const [title, setTitle] = useState(initialSheet?.title || '');
-      const [department, setDepartment] = useState(initialSheet?.department || 'Direction Financière & Comptable');
-      const [process, setProcess] = useState(initialSheet?.process || '');
-      const [controller, setController] = useState(
-        initialSheet?.controller ||
-        (initialSheet?.controleur_id === 'ctrl-b' ? 'OUJBOUR OMAR (Contrôleur B)' : 'AIT BABA ISMAIL (Contrôleur A)')
-      );
-      const [auditee, setAuditee] = useState(initialSheet?.auditee || '');
-      const [controlDate, setControlDate] = useState(initialSheet?.controlDate || new Date().toISOString().split('T')[0]);
-      const [periodicity, setPeriodicity] = useState(initialSheet?.periodicity || 'Trimestriel');
-      const [type, setType] = useState(initialSheet?.type || 'Contrôle de 2nd niveau');
-      const [riskLevel, setRiskLevel] = useState(initialSheet?.riskLevel || 'Modéré');
-      const [status, setStatus] = useState(initialSheet?.status || 'Conforme avec réserves');
-      const [objectives, setObjectives] = useState(initialSheet?.objectives || '');
-      const [methodology, setMethodology] = useState(initialSheet?.methodology || '');
-      const [sampleSize, setSampleSize] = useState(initialSheet?.sampleSize || '');
-      const [conclusion, setConclusion] = useState(initialSheet?.conclusion || '');
-      const [findings, setFindings] = useState(initialSheet?.findings || []);
+      <!-- Navigation Multi-Feuilles -->
+      <div class="sidebar-nav-section-title">Navigation Feuilles</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a class="sidebar-link active" id="navFeuille1">
+            <span>1. Référentiel de contrôle</span>
+            <span class="sidebar-badge sidebar-badge-active">Actif</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a class="sidebar-link disabled" title="Accessible après exportation des points de contrôle">
+            <span>2. Fiche de Contrôle (FC)</span>
+            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a class="sidebar-link disabled" title="Synthèse & rapports d'audit">
+            <span>3. Synthèse & Rapports</span>
+            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
+          </a>
+        </li>
+      </ul>
+    </div>
 
-      const handleAddFinding = () => {
-        const newF = {
-          id: `fnd-${Date.now()}`,
-          ref: `CST-0${findings.length + 1}`,
-          title: '',
-          severity: 'Majeur',
-          category: 'Conformité réglementaire',
-          description: '',
-          risk: '',
-          recommendation: '',
-          actionPlan: '',
-          assignee: auditee || 'Responsable de service',
-          targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: 'À traiter',
-          createdAt: new Date().toISOString()
-        };
-        setFindings([...findings, newF]);
-      };
+    <!-- Pied de Sidebar -->
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-user">Inspecteur d'Audit</div>
+      <div class="sidebar-footer-role">Pôle Audit & Inspection Générale</div>
+    </div>
+  </aside>
 
-      const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!title.trim()) {
-          alert('Veuillez renseigner un intitulé de contrôle.');
-          return;
+  <!-- ========================================================
+       2. ZONE PRINCIPALE (MAIN CONTENT)
+       ======================================================== -->
+  <main class="app-main">
+    
+    <!-- En-tête Principal avec Titre et Badge d'état -->
+    <header class="main-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
+        <div class="main-header-title-group">
+          <h1>Feuille 1 : Référentiel de contrôle</h1>
+          <p>Base nationale d'audit d'inspection — Barid Al-Maghrib</p>
+        </div>
+      </div>
+
+      <!-- Badge d'état du serveur (En ligne GitHub / Hors-ligne LocalStorage) -->
+      <div id="serverStatusBadge" class="status-badge loading">
+        <span class="status-dot"></span>
+        <span id="serverStatusText">Initialisation BDD...</span>
+      </div>
+    </header>
+
+    <!-- Corps de la Page -->
+    <div class="main-body">
+
+      <!-- ========================================================
+           A. ZONE DE FILTRAGE & CASCADE HIÉRARCHIQUE (4 Niveaux)
+           ======================================================== -->
+      <section class="filter-card">
+        <div class="filter-card-header">
+          <div class="filter-card-title">
+            <span>⚡ Filtrage en Cascade Hiérarchique</span>
+          </div>
+          <div class="filter-card-meta" id="dbRecordsSummary">
+            Chargement du catalogue...
+          </div>
+        </div>
+
+        <div class="filter-card-body">
+          <div class="filter-grid">
+            
+            <!-- 1. Liste déroulante Processus -->
+            <div class="filter-group">
+              <label class="filter-label" for="selectProcessus">
+                <span>1. Processus</span>
+                <span class="filter-label-num" id="countProcessus">0</span>
+              </label>
+              <select id="selectProcessus" class="filter-select">
+                <option value="">-- Sélectionner un Processus --</option>
+              </select>
+            </div>
+
+            <!-- 2. Liste déroulante Risque (dépend de Processus) -->
+            <div class="filter-group">
+              <label class="filter-label" for="selectRisque">
+                <span>2. Intitulé du Risque</span>
+                <span class="filter-label-num" id="countRisques">0</span>
+              </label>
+              <select id="selectRisque" class="filter-select" disabled>
+                <option value="">-- Choisir d'abord un Processus --</option>
+              </select>
+            </div>
+
+            <!-- 3. Liste déroulante Contrôle (dépend de Risque) -->
+            <div class="filter-group">
+              <label class="filter-label" for="selectControle">
+                <span>3. Intitulé Contrôle</span>
+                <span class="filter-label-num" id="countControles">0</span>
+              </label>
+              <select id="selectControle" class="filter-select" disabled>
+                <option value="">-- Choisir d'abord un Risque --</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Ligne d'actions : Fil d'ariane + Boutons [Afficher] et [Vider] -->
+          <div class="filter-actions-bar">
+            <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
+              Filtre actif : <strong>Aucun processus sélectionné</strong>
+            </div>
+
+            <div class="filter-btn-group">
+              <button type="button" id="btnVider" class="btn btn-outline-danger" title="Réinitialiser tous les filtres et vider le tableau">
+                ↺ Vider
+              </button>
+              <button type="button" id="btnAfficher" class="btn btn-primary" title="Valider les filtres et afficher les points de contrôle">
+                🔍 Afficher
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           B. BARRE D'OUTILS DU TABLEAU (ACTIONS RAPIDES)
+           ======================================================== -->
+      <section class="table-toolbar">
+        <div class="toolbar-left">
+          <button type="button" id="btnSelectAll" class="btn btn-secondary" title="Cocher tous les points affichés">
+            ☑ Sélectionner
+          </button>
+          <button type="button" id="btnDeselectAll" class="btn btn-secondary" title="Décocher tous les points affichés">
+            ☐ Désélectionner
+          </button>
+
+          <!-- Compteur en direct -->
+          <div class="selection-counter" id="selectionCounterBadge">
+            <span class="selection-counter-dot"></span>
+            <span id="selectionCounterText">0 point sélectionné</span>
+          </div>
+        </div>
+
+        <div class="toolbar-right">
+          <!-- Recherche par mot-clé -->
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔎</span>
+            <input type="text" id="searchInput" class="search-input" placeholder="Filtrer dans les résultats...">
+          </div>
+
+          <!-- Bouton Télécharger Excel -->
+          <button type="button" id="btnDownloadExcel" class="btn btn-success" title="Télécharger les points affichés sous format Excel (CSV)">
+            📊 Télécharger Excel
+          </button>
+
+          <!-- Bouton Exporter vers FC (Or #EAAA00) -->
+          <button type="button" id="btnExportFC" class="btn btn-gold" title="Sauvegarder les points cochés dans le LocalStorage pour la Feuille 2">
+            ⭐ Exporter vers FC
+          </button>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           C. TABLEAU DES POINTS DE CONTRÔLE (GRILLE PRINCIPALE)
+           ======================================================== -->
+      <section class="table-container">
+        <div class="table-responsive">
+          <table class="audit-table" id="auditTable">
+            <thead>
+              <tr>
+                <th class="col-select">
+                  <input type="checkbox" id="headerCheckbox" title="Tout sélectionner / désélectionner">
+                </th>
+                <th class="col-processus">Processus</th>
+                <th class="col-risque">Intitulé du risque</th>
+                <th class="col-controle">Intitulé Contrôle</th>
+                <th class="col-pc">Points de contrôle</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Rempli dynamiquement en JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pied du tableau -->
+        <div class="table-footer">
+          <div id="tableFooterSummary">0 point de contrôle affiché</div>
+          <div id="tableFooterSelection">0 sélectionné pour la Feuille 2</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ========================================================
+       TOAST NOTIFICATION (Feedback visuel)
+       ======================================================== -->
+  <div class="toast-container">
+    <div id="toast" class="toast">
+      <span class="toast-icon">✓</span>
+      <span id="toastMessage">Notification</span>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       SCRIPT JAVASCRIPT ES6 VANILLA
+       ======================================================== -->
+  <script>
+    // 1. Constante distante obligatoire
+    const URL_BDD_DISTANTE = "https://raw.githubusercontent.com/aitbaba74-dot/FCI-audit/refs/heads/main/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
+
+    // Clés LocalStorage
+    const CACHE_DB_KEY = "fci_referentiel_db";
+    const SELECTED_PC_KEY = "fci_selected_pc";
+
+    // État global de l'application
+    let referentielData = [];          // Ensemble des données complètes
+    let displayedPoints = [];          // Points actuellement filtrés pour le tableau
+    let selectedPointsSet = new Set(); // IDs/indices uniques des points cochés
+
+    // Éléments du DOM
+    const selectProcessus = document.getElementById('selectProcessus');
+    const selectRisque = document.getElementById('selectRisque');
+    const selectControle = document.getElementById('selectControle');
+    const btnAfficher = document.getElementById('btnAfficher');
+    const btnVider = document.getElementById('btnVider');
+    const tableBody = document.getElementById('tableBody');
+    const headerCheckbox = document.getElementById('headerCheckbox');
+    const btnSelectAll = document.getElementById('btnSelectAll');
+    const btnDeselectAll = document.getElementById('btnDeselectAll');
+    const btnExportFC = document.getElementById('btnExportFC');
+    const btnDownloadExcel = document.getElementById('btnDownloadExcel');
+    const searchInput = document.getElementById('searchInput');
+    const selectionCounterBadge = document.getElementById('selectionCounterBadge');
+    const selectionCounterText = document.getElementById('selectionCounterText');
+    const serverStatusBadge = document.getElementById('serverStatusBadge');
+    const serverStatusText = document.getElementById('serverStatusText');
+    const dbRecordsSummary = document.getElementById('dbRecordsSummary');
+    const filterBreadcrumbs = document.getElementById('filterBreadcrumbs');
+    const countProcessus = document.getElementById('countProcessus');
+    const countRisques = document.getElementById('countRisques');
+    const countControles = document.getElementById('countControles');
+    const tableFooterSummary = document.getElementById('tableFooterSummary');
+    const tableFooterSelection = document.getElementById('tableFooterSelection');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const appSidebar = document.getElementById('appSidebar');
+
+    // ========================================================
+    // CHARGEMENT AUTOMATIQUE AU CHARGEMENT DU DOM
+    // ========================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initDatabase();
+      setupEventListeners();
+    });
+
+    /**
+     * Initialise la base de données :
+     * 1. Tente fetch(URL_BDD_DISTANTE)
+     * 2. Si succès : sauvegarde dans LocalStorage (fci_referentiel_db) et badge en ligne
+     * 3. Si échec : charge depuis LocalStorage (fci_referentiel_db) et badge hors-ligne
+     */
+    async function initDatabase() {
+      updateStatusBadge('loading', 'Téléchargement de la BDD distante...');
+
+      try {
+        const response = await fetch(URL_BDD_DISTANTE);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const derivedControleurId =
-          controller.includes('OUJBOUR OMAR') || controller.includes('Contrôleur B')
-            ? 'ctrl-b'
-            : 'ctrl-a';
+        const data = await response.json();
 
-        onSave({
-          id: initialSheet?.id || `fci-${Date.now()}`,
-          controleur_id: initialSheet?.controleur_id || derivedControleurId,
-          date: controlDate,
-          ref,
-          title,
-          department,
-          process: process || 'Processus standard',
-          controller,
-          auditee,
-          controlDate,
-          periodicity,
-          type,
-          riskLevel,
-          status,
-          objectives: objectives || 'Objectif de conformité générale.',
-          methodology: methodology || 'Revue documentaire.',
-          sampleSize: sampleSize || 'Échantillon représentatif',
-          conclusion: conclusion || 'Contrôle validé.',
-          findings,
-          createdAt: initialSheet?.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-      };
+        if (Array.isArray(data) && data.length > 0) {
+          referentielData = data;
+          // Sauvegarde en cache dans le LocalStorage
+          try {
+            localStorage.setItem(CACHE_DB_KEY, JSON.stringify(data));
+          } catch (storageErr) {
+            console.warn('LocalStorage plein ou indisponible :', storageErr);
+          }
 
-      return (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                {initialSheet ? `Modifier ${initialSheet.ref}` : 'Créer une Fiche de Contrôle'}
-              </h3>
-              <p className="text-xs text-slate-500">Renseignez les détails du contrôle et enregistrez les constats.</p>
-            </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={onCancel} className="px-3 py-1.5 text-xs border rounded-lg hover:bg-slate-50">Annuler</button>
-              <button type="submit" className="px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">Enregistrer</button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold mb-1">Référence</label>
-              <input type="text" value={ref} onChange={e => setRef(e.target.value)} required className="w-full px-3 py-2 border rounded-lg bg-slate-50 font-mono" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block font-semibold mb-1">Intitulé du contrôle</label>
-              <input type="text" value={title} onChange={e => setTitle(e.target.value)} required placeholder="Ex: Revue des autorisations de signature" className="w-full px-3 py-2 border rounded-lg" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold mb-1">Direction</label>
-              <select value={department} onChange={e => setDepartment(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                <option value="Direction Financière & Comptable">Direction Financière & Comptable</option>
-                <option value="Systèmes d'Information & Sécurité">Systèmes d'Information & Sécurité</option>
-                <option value="Ressources Humaines">Ressources Humaines</option>
-                <option value="Achats & Approvisionnements">Achats & Approvisionnements</option>
-                <option value="Opérations & Logistique">Opérations & Logistique</option>
-                <option value="Conformité & Juridique">Conformité & Juridique</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Processus audité</label>
-              <input type="text" value={process} onChange={e => setProcess(e.target.value)} placeholder="Ex: Clôture mensuelle, IAM, etc." className="w-full px-3 py-2 border rounded-lg" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold mb-1">Contrôleur en charge</label>
-              <select value={controller} onChange={e => setController(e.target.value)} className="w-full px-3 py-2 border rounded-lg bg-slate-50">
-                <option value="AIT BABA ISMAIL (Contrôleur A)">AIT BABA ISMAIL (Contrôleur A)</option>
-                <option value="OUJBOUR OMAR (Contrôleur B)">OUJBOUR OMAR (Contrôleur B)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Responsable / Entité auditée</label>
-              <input type="text" value={auditee} onChange={e => setAuditee(e.target.value)} placeholder="Ex: Chef comptable, RSSI, DRH..." className="w-full px-3 py-2 border rounded-lg" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
-            <div>
-              <label className="block font-semibold mb-1">Date</label>
-              <input type="date" value={controlDate} onChange={e => setControlDate(e.target.value)} className="w-full px-3 py-2 border rounded-lg font-mono" />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Périodicité</label>
-              <select value={periodicity} onChange={e => setPeriodicity(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                <option value="Mensuel">Mensuel</option>
-                <option value="Trimestriel">Trimestriel</option>
-                <option value="Semestriel">Semestriel</option>
-                <option value="Annuel">Annuel</option>
-                <option value="Ponctuel">Ponctuel</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Risque</label>
-              <select value={riskLevel} onChange={e => setRiskLevel(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                <option value="Faible">Faible</option>
-                <option value="Modéré">Modéré</option>
-                <option value="Élevé">Élevé</option>
-                <option value="Critique">Critique</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Statut</label>
-              <select value={status} onChange={e => setStatus(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                <option value="Conforme">Conforme</option>
-                <option value="Conforme avec réserves">Conforme avec réserves</option>
-                <option value="Non conforme">Non conforme</option>
-                <option value="En attente">En attente</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="text-xs space-y-3">
-            <div>
-              <label className="block font-semibold mb-1">Objectifs du contrôle</label>
-              <textarea rows={2} value={objectives} onChange={e => setObjectives(e.target.value)} className="w-full px-3 py-2 border rounded-lg" placeholder="Périmètre et assertions contrôlées..." />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Méthodologie & Échantillonnage</label>
-              <textarea rows={2} value={methodology} onChange={e => setMethodology(e.target.value)} className="w-full px-3 py-2 border rounded-lg" placeholder="Démarche appliquée, documents vérifiés..." />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1">Conclusion synthétique</label>
-              <textarea rows={2} value={conclusion} onChange={e => setConclusion(e.target.value)} className="w-full px-3 py-2 border rounded-lg" placeholder="Synthèse de l'évaluateur..." />
-            </div>
-          </div>
-
-          {/* Findings section */}
-          <div className="pt-3 border-t border-slate-100 space-y-3">
-            <div className="flex justify-between items-center">
-              <h4 className="text-xs font-bold uppercase text-slate-800">Constats & Recommandations ({findings.length})</h4>
-              <button type="button" onClick={handleAddFinding} className="text-xs font-semibold text-blue-600 hover:underline">+ Ajouter un constat</button>
-            </div>
-
-            {findings.map((f, i) => (
-              <div key={f.id} className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="font-mono font-bold">{f.ref}</span>
-                  <button type="button" onClick={() => setFindings(findings.filter((_, idx) => idx !== i))} className="text-rose-600 hover:underline">Supprimer</button>
-                </div>
-                <input type="text" placeholder="Titre du constat" value={f.title} onChange={e => {
-                  const updated = [...findings];
-                  updated[i].title = e.target.value;
-                  setFindings(updated);
-                }} className="w-full px-2 py-1.5 border rounded bg-white" />
-                <textarea rows={2} placeholder="Description factuelle et risque" value={f.description} onChange={e => {
-                  const updated = [...findings];
-                  updated[i].description = e.target.value;
-                  setFindings(updated);
-                }} className="w-full px-2 py-1.5 border rounded bg-white" />
-                <textarea rows={2} placeholder="Recommandation opérationnelle" value={f.recommendation} onChange={e => {
-                  const updated = [...findings];
-                  updated[i].recommendation = e.target.value;
-                  setFindings(updated);
-                }} className="w-full px-2 py-1.5 border rounded bg-white" />
-              </div>
-            ))}
-          </div>
-        </form>
-      );
+          updateStatusBadge('online', `🟢 BDD à jour (${data.length} PC)`);
+          onDataLoaded();
+          showToast(`Référentiel synchronisé : ${data.length} points de contrôle chargés depuis GitHub`);
+          return;
+        } else {
+          throw new Error('Données JSON invalides ou vides');
+        }
+      } catch (err) {
+        console.warn('Échec du fetch distant, tentative de récupération depuis le cache local...', err);
+        loadFromLocalStorageFallback();
+      }
     }
 
-    // Render the React App
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    /**
+     * Repli sur le cache LocalStorage en cas de perte de connexion
+     */
+    function loadFromLocalStorageFallback() {
+      const cached = localStorage.getItem(CACHE_DB_KEY);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            referentielData = parsed;
+            updateStatusBadge('offline', `🟠 Mode hors-ligne (${parsed.length} PC en cache)`);
+            onDataLoaded();
+            showToast(`Mode hors-ligne : ${parsed.length} PC restaurés depuis le cache local`);
+            return;
+          }
+        } catch (e) {
+          console.error('Erreur lecture cache local', e);
+        }
+      }
+
+      // Fallback de secours intégré si aucun réseau et aucun cache existant
+      loadEmbeddedFallback();
+    }
+
+    /**
+     * Jeu de données de démonstration minimal de secours (si première visite sans réseau)
+     */
+    function loadEmbeddedFallback() {
+      referentielData = [
+        {
+          "Processus": "Gestion de la Caisse et Coffre",
+          "Intitulé du risque": "Écart ou déficit de caisse inexpliqué en fin de journée",
+          "Intitulé Contrôle": "Arrêté journalier contradictoire et inventaire physique des caisses",
+          "Points de contrôle": "Vérification inopinée du solde physique de la caisse principale par rapport au solde théorique."
+        },
+        {
+          "Processus": "Gestion de la Caisse et Coffre",
+          "Intitulé du risque": "Écart ou déficit de caisse inexpliqué en fin de journée",
+          "Intitulé Contrôle": "Arrêté journalier contradictoire et inventaire physique des caisses",
+          "Points de contrôle": "Contrôle de l'émargement conjoint du procès-verbal de clôture de caisse journalier."
+        },
+        {
+          "Processus": "Traitement du Courrier et Colis",
+          "Intitulé du risque": "Perte, avarie ou spoliation d'envois recommandés",
+          "Intitulé Contrôle": "Vérification du scellement et de la conformité des dépêches postales",
+          "Points de contrôle": "Concordance des numéros de scellés plastiques/métalliques avec la feuille d'expédition CTP."
+        },
+        {
+          "Processus": "Services Financiers et Opérations Postales",
+          "Intitulé du risque": "Blanchiment de capitaux et non-conformité aux directives LBC/FT",
+          "Intitulé Contrôle": "Vigilance KYC et filtrage systématique sur listes de sanctions",
+          "Points de contrôle": "Renseignement exhaustif de la fiche d'identification client (KYC) dès le seuil réglementaire."
+        }
+      ];
+      updateStatusBadge('offline', `🟠 Mode dégradé (${referentielData.length} PC secours)`);
+      onDataLoaded();
+    }
+
+    function updateStatusBadge(state, text) {
+      serverStatusBadge.className = `status-badge ${state}`;
+      serverStatusText.textContent = text;
+    }
+
+    /**
+     * Appelé lorsque referentielData est prêt
+     */
+    function onDataLoaded() {
+      dbRecordsSummary.textContent = `${referentielData.length} points de contrôle au catalogue`;
+      populateProcessusDropdown();
+      restoreSavedSelectedPC();
+      renderTable([]); // Table initialement vide ou prête
+    }
+
+    // ========================================================
+    // CASCADE DES DÉROULANTES (PROCESSUS > RISQUE > CONTRÔLE)
+    // ========================================================
+    function populateProcessusDropdown() {
+      // Extraire dynamiquement les valeurs uniques du champ 'Processus'
+      const processusSet = new Set();
+      referentielData.forEach(item => {
+        if (item && item['Processus']) {
+          processusSet.add(item['Processus'].trim());
+        }
+      });
+
+      const processusList = Array.from(processusSet).sort((a, b) => a.localeCompare(b, 'fr'));
+
+      countProcessus.textContent = processusList.length;
+
+      // Nettoyer et remplir le select
+      selectProcessus.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
+      selectProcessus.innerHTML += `<option value="__ALL__">★ Tous les Processus (${processusList.length})</option>`;
+
+      processusList.forEach(proc => {
+        const opt = document.createElement('option');
+        opt.value = proc;
+        opt.textContent = proc;
+        selectProcessus.appendChild(opt);
+      });
+
+      resetRisqueDropdown();
+      resetControleDropdown();
+    }
+
+    function onProcessusChanged() {
+      const selectedProc = selectProcessus.value;
+
+      if (!selectedProc) {
+        resetRisqueDropdown();
+        resetControleDropdown();
+        updateBreadcrumbs();
+        return;
+      }
+
+      if (selectedProc === '__ALL__') {
+        selectRisque.innerHTML = '<option value="">-- Tous les risques inclus --</option>';
+        selectRisque.disabled = true;
+        countRisques.textContent = 'Tous';
+        resetControleDropdown();
+        updateBreadcrumbs();
+        return;
+      }
+
+      // Filtrer les risques associés à ce Processus
+      const risquesSet = new Set();
+      referentielData.forEach(item => {
+        if (item && item['Processus'] && item['Processus'].trim() === selectedProc && item['Intitulé du risque']) {
+          risquesSet.add(item['Intitulé du risque'].trim());
+        }
+      });
+
+      const risquesList = Array.from(risquesSet).sort((a, b) => a.localeCompare(b, 'fr'));
+
+      countRisques.textContent = risquesList.length;
+      selectRisque.innerHTML = '<option value="">-- Tous les risques du processus (' + risquesList.length + ') --</option>';
+      risquesList.forEach(rsq => {
+        const opt = document.createElement('option');
+        opt.value = rsq;
+        opt.textContent = rsq;
+        selectRisque.appendChild(opt);
+      });
+      selectRisque.disabled = false;
+
+      resetControleDropdown();
+      updateBreadcrumbs();
+    }
+
+    function onRisqueChanged() {
+      const selectedProc = selectProcessus.value;
+      const selectedRisque = selectRisque.value;
+
+      if (!selectedRisque) {
+        resetControleDropdown();
+        updateBreadcrumbs();
+        return;
+      }
+
+      // Filtrer les contrôles associés à ce Risque
+      const controlesSet = new Set();
+      referentielData.forEach(item => {
+        const matchProc = (selectedProc === '__ALL__') || (item['Processus'] && item['Processus'].trim() === selectedProc);
+        const matchRisque = (item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
+
+        if (matchProc && matchRisque && item['Intitulé Contrôle']) {
+          controlesSet.add(item['Intitulé Contrôle'].trim());
+        }
+      });
+
+      const controlesList = Array.from(controlesSet).sort((a, b) => a.localeCompare(b, 'fr'));
+
+      countControles.textContent = controlesList.length;
+      selectControle.innerHTML = '<option value="">-- Tous les contrôles du risque (' + controlesList.length + ') --</option>';
+      controlesList.forEach(ctrl => {
+        const opt = document.createElement('option');
+        opt.value = ctrl;
+        opt.textContent = ctrl;
+        selectControle.appendChild(opt);
+      });
+      selectControle.disabled = false;
+
+      updateBreadcrumbs();
+    }
+
+    function resetRisqueDropdown() {
+      selectRisque.innerHTML = '<option value="">-- Choisir d\'abord un Processus --</option>';
+      selectRisque.disabled = true;
+      countRisques.textContent = '0';
+    }
+
+    function resetControleDropdown() {
+      selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
+      selectControle.disabled = true;
+      countControles.textContent = '0';
+    }
+
+    function updateBreadcrumbs() {
+      const proc = selectProcessus.value;
+      const rsq = selectRisque.value;
+      const ctrl = selectControle.value;
+
+      if (!proc) {
+        filterBreadcrumbs.innerHTML = 'Filtre actif : <strong>Aucun processus sélectionné</strong>';
+        return;
+      }
+
+      let html = `Filtre actif : <strong>${proc === '__ALL__' ? 'Tous les Processus' : escapeHtml(proc)}</strong>`;
+      if (rsq) {
+        html += ` &gt; <span>${escapeHtml(rsq)}</span>`;
+      }
+      if (ctrl) {
+        html += ` &gt; <span>${escapeHtml(ctrl)}</span>`;
+      }
+      filterBreadcrumbs.innerHTML = html;
+    }
+
+    // ========================================================
+    // ACTION DU BOUTON [AFFICHER] ET [VIDER]
+    // ========================================================
+    function handleAfficher() {
+      const selectedProc = selectProcessus.value;
+      const selectedRisque = selectRisque.value;
+      const selectedControle = selectControle.value;
+
+      if (!selectedProc) {
+        showToast('Veuillez sélectionner au moins un Processus.');
+        return;
+      }
+
+      let filtered = referentielData;
+
+      // Filtrer par Processus
+      if (selectedProc !== '__ALL__') {
+        filtered = filtered.filter(item => item['Processus'] && item['Processus'].trim() === selectedProc);
+      }
+
+      // Filtrer par Risque
+      if (selectedRisque) {
+        filtered = filtered.filter(item => item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
+      }
+
+      // Filtrer par Contrôle
+      if (selectedControle) {
+        filtered = filtered.filter(item => item['Intitulé Contrôle'] && item['Intitulé Contrôle'].trim() === selectedControle);
+      }
+
+      displayedPoints = filtered;
+      searchInput.value = '';
+      renderTable(filtered);
+      showToast(`${filtered.length} point(s) de contrôle affiché(s)`);
+    }
+
+    function handleVider() {
+      selectProcessus.value = '';
+      resetRisqueDropdown();
+      resetControleDropdown();
+      updateBreadcrumbs();
+      displayedPoints = [];
+      searchInput.value = '';
+      renderTable([]);
+      showToast('Filtres réinitialisés et tableau vidé.');
+    }
+
+    // ========================================================
+    // RENDU DU TABLEAU (5 COLONNES EXACTES)
+    // ========================================================
+    function renderTable(points) {
+      tableBody.innerHTML = '';
+
+      if (points.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td colspan="5" class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">Aucun point de contrôle affiché</div>
+            <div class="empty-state-text">
+              Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur le bouton <strong>[Afficher]</strong>.
+            </div>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+        tableFooterSummary.textContent = '0 point de contrôle affiché';
+        updateHeaderCheckboxState();
+        updateSelectionCounter();
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      points.forEach((item, index) => {
+        // Clé unique pour chaque point basée sur son contenu
+        const uniqueKey = getPointUniqueKey(item);
+        const isChecked = selectedPointsSet.has(uniqueKey);
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${index}`;
+        if (isChecked) tr.classList.add('row-selected');
+
+        tr.innerHTML = `
+          <td class="col-select">
+            <input type="checkbox" class="row-checkbox" data-key="${escapeHtml(uniqueKey)}" ${isChecked ? 'checked' : ''}>
+          </td>
+          <td class="td-processus">${escapeHtml(item['Processus'] || '-')}</td>
+          <td class="td-risque">${escapeHtml(item['Intitulé du risque'] || '-')}</td>
+          <td class="td-controle">${escapeHtml(item['Intitulé Contrôle'] || '-')}</td>
+          <td class="td-pc">${escapeHtml(item['Points de contrôle'] || '-')}</td>
+        `;
+
+        // Clic sur toute la ligne pour cocher/décocher
+        tr.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'INPUT') {
+            const chk = tr.querySelector('.row-checkbox');
+            chk.checked = !chk.checked;
+            togglePointSelection(uniqueKey, chk.checked, tr);
+          }
+        });
+
+        const chk = tr.querySelector('.row-checkbox');
+        chk.addEventListener('change', (e) => {
+          e.stopPropagation();
+          togglePointSelection(uniqueKey, chk.checked, tr);
+        });
+
+        fragment.appendChild(tr);
+      });
+
+      tableBody.appendChild(fragment);
+      tableFooterSummary.textContent = `${points.length} point${points.length > 1 ? 's' : ''} de contrôle affiché${points.length > 1 ? 's' : ''}`;
+      updateHeaderCheckboxState();
+      updateSelectionCounter();
+    }
+
+    function getPointUniqueKey(item) {
+      return `${item['Processus']}__${item['Intitulé du risque']}__${item['Intitulé Contrôle']}__${item['Points de contrôle']}`;
+    }
+
+    function togglePointSelection(uniqueKey, isSelected, trElement) {
+      if (isSelected) {
+        selectedPointsSet.add(uniqueKey);
+        if (trElement) trElement.classList.add('row-selected');
+      } else {
+        selectedPointsSet.delete(uniqueKey);
+        if (trElement) trElement.classList.remove('row-selected');
+      }
+      updateHeaderCheckboxState();
+      updateSelectionCounter();
+    }
+
+    function updateSelectionCounter() {
+      const count = selectedPointsSet.size;
+      selectionCounterText.textContent = `${count} point${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
+      tableFooterSelection.textContent = `${count} sélectionné${count > 1 ? 's' : ''} pour la Feuille 2`;
+
+      if (count > 0) {
+        selectionCounterBadge.classList.add('has-selection');
+      } else {
+        selectionCounterBadge.classList.remove('has-selection');
+      }
+    }
+
+    function updateHeaderCheckboxState() {
+      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
+      if (visibleCheckboxes.length === 0) {
+        headerCheckbox.checked = false;
+        headerCheckbox.indeterminate = false;
+        return;
+      }
+
+      let checkedCount = 0;
+      visibleCheckboxes.forEach(chk => {
+        if (chk.checked) checkedCount++;
+      });
+
+      if (checkedCount === 0) {
+        headerCheckbox.checked = false;
+        headerCheckbox.indeterminate = false;
+      } else if (checkedCount === visibleCheckboxes.length) {
+        headerCheckbox.checked = true;
+        headerCheckbox.indeterminate = false;
+      } else {
+        headerCheckbox.checked = false;
+        headerCheckbox.indeterminate = true;
+      }
+    }
+
+    // ========================================================
+    // ACTIONS DE LA BARRE D'OUTILS (SÉLECTIONNER / EXPORTER)
+    // ========================================================
+    function handleSelectAll() {
+      const visibleRows = tableBody.querySelectorAll('tr');
+      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
+
+      visibleCheckboxes.forEach(chk => {
+        chk.checked = true;
+        const key = chk.getAttribute('data-key');
+        if (key) selectedPointsSet.add(key);
+      });
+
+      visibleRows.forEach(row => {
+        if (row.querySelector('.row-checkbox')) {
+          row.classList.add('row-selected');
+        }
+      });
+
+      updateHeaderCheckboxState();
+      updateSelectionCounter();
+      showToast(`${visibleCheckboxes.length} point(s) cochés.`);
+    }
+
+    function handleDeselectAll() {
+      const visibleRows = tableBody.querySelectorAll('tr');
+      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
+
+      visibleCheckboxes.forEach(chk => {
+        chk.checked = false;
+        const key = chk.getAttribute('data-key');
+        if (key) selectedPointsSet.delete(key);
+      });
+
+      visibleRows.forEach(row => {
+        row.classList.remove('row-selected');
+      });
+
+      updateHeaderCheckboxState();
+      updateSelectionCounter();
+      showToast('Points décochés.');
+    }
+
+    headerCheckbox.addEventListener('change', () => {
+      if (headerCheckbox.checked) {
+        handleSelectAll();
+      } else {
+        handleDeselectAll();
+      }
+    });
+
+    /**
+     * Exporter vers FC (Feuille 2) :
+     * Stocke les PC cochés dans le LocalStorage sous la clé fci_selected_pc
+     */
+    function handleExportFC() {
+      if (selectedPointsSet.size === 0) {
+        showToast('Veuillez cocher au moins un point de contrôle.');
+        return;
+      }
+
+      // Reconstituer la liste complète des objets cochés
+      const selectedObjects = referentielData.filter(item => {
+        const key = getPointUniqueKey(item);
+        return selectedPointsSet.has(key);
+      });
+
+      try {
+        localStorage.setItem(SELECTED_PC_KEY, JSON.stringify(selectedObjects));
+        showToast(`✓ Succès : ${selectedObjects.length} PC enregistrés dans le LocalStorage (fci_selected_pc) pour la Feuille 2 !`);
+      } catch (err) {
+        console.error('Erreur sauvegarde LocalStorage', err);
+        showToast('Erreur lors de la sauvegarde dans le navigateur.');
+      }
+    }
+
+    function restoreSavedSelectedPC() {
+      try {
+        const saved = localStorage.getItem(SELECTED_PC_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(item => {
+              selectedPointsSet.add(getPointUniqueKey(item));
+            });
+            updateSelectionCounter();
+          }
+        }
+      } catch (e) {
+        console.warn('Impossible de restaurer la sélection', e);
+      }
+    }
+
+    /**
+     * Téléchargement Excel (CSV avec UTF-8 BOM pour accents français)
+     */
+    function handleDownloadExcel() {
+      // Exporter la sélection si existante, sinon tous les points affichés
+      let exportList = [];
+      const visibleKeys = new Set();
+      tableBody.querySelectorAll('.row-checkbox').forEach(chk => {
+        visibleKeys.add(chk.getAttribute('data-key'));
+      });
+
+      const selectedInView = displayedPoints.filter(item => {
+        const key = getPointUniqueKey(item);
+        return selectedPointsSet.has(key);
+      });
+
+      exportList = selectedInView.length > 0 ? selectedInView : displayedPoints;
+
+      if (exportList.length === 0) {
+        showToast('Aucune donnée à exporter.');
+        return;
+      }
+
+      const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
+      
+      const escapeCSV = (str) => {
+        if (!str) return '""';
+        return `"${String(str).replace(/"/g, '""')}"`;
+      };
+
+      const rows = [
+        headers.map(h => `"${h}"`).join(';'),
+        ...exportList.map(item => [
+          escapeCSV(item['Processus']),
+          escapeCSV(item['Intitulé du risque']),
+          escapeCSV(item['Intitulé Contrôle']),
+          escapeCSV(item['Points de contrôle'])
+        ].join(';'))
+      ];
+
+      // UTF-8 BOM (\uFEFF) garantit l'ouverture sans problème d'accents dans Microsoft Excel
+      const csvContent = '\uFEFF' + rows.join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `FCI_Referentiel_BAM_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast(`Fichier Excel téléchargé (${exportList.length} points)`);
+    }
+
+    // ========================================================
+    // RECHERCHE INSTANTANÉE PAR MOT-CLÉ
+    // ========================================================
+    function handleSearch() {
+      const query = searchInput.value.toLowerCase().trim();
+      if (!query) {
+        renderTable(displayedPoints);
+        return;
+      }
+
+      const filtered = displayedPoints.filter(item => {
+        const proc = (item['Processus'] || '').toLowerCase();
+        const rsq = (item['Intitulé du risque'] || '').toLowerCase();
+        const ctrl = (item['Intitulé Contrôle'] || '').toLowerCase();
+        const pc = (item['Points de contrôle'] || '').toLowerCase();
+
+        return proc.includes(query) || rsq.includes(query) || ctrl.includes(query) || pc.includes(query);
+      });
+
+      renderTable(filtered);
+    }
+
+    // ========================================================
+    // SETUP DES EVENT LISTENERS & HELPERS
+    // ========================================================
+    function setupEventListeners() {
+      selectProcessus.addEventListener('change', onProcessusChanged);
+      selectRisque.addEventListener('change', onRisqueChanged);
+      selectControle.addEventListener('change', updateBreadcrumbs);
+
+      btnAfficher.addEventListener('click', handleAfficher);
+      btnVider.addEventListener('click', handleVider);
+
+      btnSelectAll.addEventListener('click', handleSelectAll);
+      btnDeselectAll.addEventListener('click', handleDeselectAll);
+      btnExportFC.addEventListener('click', handleExportFC);
+      btnDownloadExcel.addEventListener('click', handleDownloadExcel);
+
+      searchInput.addEventListener('input', handleSearch);
+
+      if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+          appSidebar.classList.toggle('open');
+        });
+      }
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      if (toastTimer) clearTimeout(toastTimer);
+      toastMessage.textContent = msg;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
   </script>
 </body>
 </html>
