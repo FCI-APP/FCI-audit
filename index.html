@@ -943,16 +943,6 @@
           <div class="filter-card-title">
             <span>⚡ Filtrage en Cascade Hiérarchique</span>
           </div>
-          
-          <!-- BOUTONS HAUT DE SECTION (Mis à jour dynamiquement) -->
-          <div class="filter-btn-group">
-            <button type="button" class="btn btn-outline-danger btn-vider-action" title="Réinitialiser tous les filtres et vider le tableau">
-              ↺ Vider
-            </button>
-            <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
-              🔍 Afficher PC <span class="badge-pc-count">(0 PC)</span>
-            </button>
-          </div>
         </div>
 
         <div class="filter-card-body">
@@ -993,18 +983,18 @@
 
           </div>
 
-          <!-- BOUTONS BAS DE SECTION + BREADCRUMBS -->
+          <!-- UN SEUL JEU DE BOUTONS EN BAS DE SECTION + BREADCRUMBS -->
           <div class="filter-actions-bar">
             <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
               Filtre actif : <strong>Aucun processus sélectionné</strong>
             </div>
 
             <div class="filter-btn-group">
-              <button type="button" class="btn btn-outline-danger btn-vider-action" title="Réinitialiser tous les filtres et vider le tableau">
+              <button type="button" id="btnVider" class="btn btn-outline-danger" title="Réinitialiser tous les filtres et vider le tableau">
                 ↺ Vider
               </button>
-              <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
-                🔍 Afficher PC <span class="badge-pc-count">(0 PC)</span>
+              <button type="button" id="btnAfficher" class="btn btn-primary" title="Valider les filtres et afficher les points de contrôle">
+                🔍 Afficher PC <span id="badgePcCount">(0 PC)</span>
               </button>
             </div>
           </div>
@@ -1100,9 +1090,9 @@
     const selectProcessus = document.getElementById('selectProcessus');
     const selectRisque = document.getElementById('selectRisque');
     const selectControle = document.getElementById('selectControle');
-    
-    const btnAfficherList = document.querySelectorAll('.btn-afficher-action');
-    const btnViderList = document.querySelectorAll('.btn-vider-action');
+    const btnAfficher = document.getElementById('btnAfficher');
+    const btnVider = document.getElementById('btnVider');
+    const badgePcCount = document.getElementById('badgePcCount');
     
     const tableBody = document.getElementById('tableBody');
     const headerCheckbox = document.getElementById('headerCheckbox');
@@ -1225,11 +1215,10 @@
       renderTable([]);
     }
 
-    // Met à jour le libellé du nombre de PC sur les boutons "Afficher PC"
     function updateButtonPcCount(count) {
-      btnAfficherList.forEach(btn => {
-        btn.innerHTML = `🔍 Afficher PC <span class="badge-pc-count">(${count} PC)</span>`;
-      });
+      if (badgePcCount) {
+        badgePcCount.textContent = `(${count} PC)`;
+      }
     }
 
     function getFilteredData() {
@@ -1725,8 +1714,8 @@
       selectRisque.addEventListener('change', onRisqueChanged);
       selectControle.addEventListener('change', onControleChanged);
 
-      btnAfficherList.forEach(btn => btn.addEventListener('click', handleAfficher));
-      btnViderList.forEach(btn => btn.addEventListener('click', handleVider));
+      btnAfficher.addEventListener('click', handleAfficher);
+      btnVider.addEventListener('click', handleVider);
 
       btnSelectAll.addEventListener('click', handleSelectAll);
       btnDeselectAll.addEventListener('click', handleDeselectAll);
