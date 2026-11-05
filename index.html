@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FCI - Barid Al-Maghrib | Feuille 1 : Référentiel de contrôle</title>
-  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel d'audit Barid Al-Maghrib">
+  <title>FCI - BARID AL MAGHREB | Feuille 1 : Référentiel de contrôle</title>
+  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel de contrôle permanent BARID AL MAGHREB">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     /* ========================================================
-       CHARTE GRAPHIQUE & DESIGN SYSTEM (Barid Al-Maghrib)
+       CHARTE GRAPHIQUE & DESIGN SYSTEM (BARID AL MAGHREB)
        ======================================================== */
     :root {
       --barid-blue: #003366;
@@ -136,14 +136,15 @@
     }
 
     .brand-title {
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 12px;
+      font-weight: 800;
       color: #FFFFFF;
       line-height: 1.2;
+      text-transform: uppercase;
     }
 
     .brand-subtitle {
-      font-size: 10px;
+      font-size: 9px;
       color: var(--barid-gold);
       font-weight: 600;
       text-transform: uppercase;
@@ -226,17 +227,20 @@
       padding: 14px 16px;
       background: rgba(0, 34, 68, 0.6);
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 11px;
+      font-size: 10px;
     }
 
     .sidebar-footer-user {
       font-weight: 700;
       color: #FFFFFF;
+      font-size: 11px;
     }
 
     .sidebar-footer-role {
       color: var(--barid-gold);
-      font-size: 10px;
+      font-weight: 600;
+      margin-top: 2px;
+      line-height: 1.3;
     }
 
     /* ========================================================
@@ -870,6 +874,7 @@
        ======================================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div>
+      <!-- Header Logo / Noms officiels -->
       <div class="sidebar-header">
         <div class="brand-logo-badge">
           <div class="brand-logo-inner">
@@ -879,11 +884,12 @@
           </div>
         </div>
         <div>
-          <div class="brand-title">FCI - Barid Al-Maghrib</div>
-          <div class="brand-subtitle">Audit & Contrôle Interne</div>
+          <div class="brand-title">BARID AL MAGHREB</div>
+          <div class="brand-subtitle">DIRECTION CONTRÔLE GÉNÉRALE</div>
         </div>
       </div>
 
+      <!-- Navigation Multi-Feuilles -->
       <div class="sidebar-nav-section-title">Navigation Feuilles</div>
       <ul class="sidebar-menu">
         <li class="sidebar-menu-item">
@@ -899,7 +905,7 @@
           </a>
         </li>
         <li class="sidebar-menu-item">
-          <a class="sidebar-link disabled" title="Synthèse & rapports d'audit">
+          <a class="sidebar-link disabled" title="Synthèse & rapports de contrôle">
             <span>3. Synthèse & Rapports</span>
             <span class="sidebar-badge sidebar-badge-muted">À venir</span>
           </a>
@@ -907,9 +913,10 @@
       </ul>
     </div>
 
+    <!-- Pied de Sidebar mis à jour -->
     <div class="sidebar-footer">
-      <div class="sidebar-footer-user">Inspecteur d'Audit</div>
-      <div class="sidebar-footer-role">Pôle Audit & Inspection Générale</div>
+      <div class="sidebar-footer-user">Contrôleur</div>
+      <div class="sidebar-footer-role">DIVISION CONTRÔLE PERMANENT</div>
     </div>
   </aside>
 
@@ -918,12 +925,13 @@
        ======================================================== -->
   <main class="app-main">
     
+    <!-- En-tête Principal avec Titre Officiel et Badge d'état -->
     <header class="main-header">
       <div style="display: flex; align-items: center; gap: 12px;">
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
         <div class="main-header-title-group">
           <h1>Feuille 1 : Référentiel de contrôle</h1>
-          <p>Base nationale d'audit d'inspection — Barid Al-Maghrib</p>
+          <p>Référentiel National — BARID AL MAGHREB | DIVISION CONTRÔLE PERMANENT</p>
         </div>
       </div>
 
@@ -933,6 +941,7 @@
       </div>
     </header>
 
+    <!-- Corps de la Page -->
     <div class="main-body">
 
       <!-- ========================================================
