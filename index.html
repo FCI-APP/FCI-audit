@@ -191,7 +191,6 @@
       color: #FFFFFF;
     }
 
-    /* Onglet Actif (Feuille 1) avec indicateur Or/Jaune */
     .sidebar-link.active {
       background: rgba(255, 255, 255, 0.12);
       color: #FFFFFF;
@@ -251,7 +250,6 @@
       min-width: 0;
     }
 
-    /* En-tête principal de la zone de travail */
     .main-header {
       background: #FFFFFF;
       border-bottom: 1px solid var(--barid-border);
@@ -279,7 +277,6 @@
       margin-top: 2px;
     }
 
-    /* Badge d'état du serveur (En ligne / Hors ligne / Chargement) */
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -335,7 +332,6 @@
       50% { opacity: 0.4; transform: scale(0.85); }
     }
 
-    /* Conteneur principal */
     .main-body {
       padding: 24px 28px;
       max-width: 1440px;
@@ -344,7 +340,7 @@
     }
 
     /* ========================================================
-       SECTION CASCADE DE FILTRAGE (Haut de page)
+       SECTION CASCADE DE FILTRAGE
        ======================================================== */
     .filter-card {
       background: var(--barid-card);
@@ -472,7 +468,6 @@
       gap: 8px;
     }
 
-    /* Boutons standards */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -755,7 +750,6 @@
       font-weight: 500;
     }
 
-    /* Checkbox personnalisée */
     input[type="checkbox"] {
       width: 16px;
       height: 16px;
@@ -763,7 +757,6 @@
       cursor: pointer;
     }
 
-    /* État vide du tableau */
     .empty-state {
       padding: 60px 20px;
       text-align: center;
@@ -842,7 +835,6 @@
       color: var(--barid-gold);
     }
 
-    /* Mobile toggle */
     .mobile-menu-btn {
       display: none;
       background: none;
@@ -882,7 +874,6 @@
        ======================================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div>
-      <!-- Header Logo / Texte -->
       <div class="sidebar-header">
         <div class="brand-logo-badge">
           <div class="brand-logo-inner">
@@ -897,7 +888,6 @@
         </div>
       </div>
 
-      <!-- Navigation Multi-Feuilles -->
       <div class="sidebar-nav-section-title">Navigation Feuilles</div>
       <ul class="sidebar-menu">
         <li class="sidebar-menu-item">
@@ -921,7 +911,6 @@
       </ul>
     </div>
 
-    <!-- Pied de Sidebar -->
     <div class="sidebar-footer">
       <div class="sidebar-footer-user">Inspecteur d'Audit</div>
       <div class="sidebar-footer-role">Pôle Audit & Inspection Générale</div>
@@ -933,7 +922,6 @@
        ======================================================== -->
   <main class="app-main">
     
-    <!-- En-tête Principal avec Titre et Badge d'état -->
     <header class="main-header">
       <div style="display: flex; align-items: center; gap: 12px;">
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
@@ -943,14 +931,12 @@
         </div>
       </div>
 
-      <!-- Badge d'état du serveur (En ligne GitHub / Hors-ligne LocalStorage) -->
       <div id="serverStatusBadge" class="status-badge loading">
         <span class="status-dot"></span>
         <span id="serverStatusText">Initialisation BDD...</span>
       </div>
     </header>
 
-    <!-- Corps de la Page -->
     <div class="main-body">
 
       <!-- ========================================================
@@ -969,7 +955,7 @@
         <div class="filter-card-body">
           <div class="filter-grid">
             
-            <!-- 1. Liste déroulante Processus -->
+            <!-- 1. Processus -->
             <div class="filter-group">
               <label class="filter-label" for="selectProcessus">
                 <span>1. Processus</span>
@@ -980,7 +966,7 @@
               </select>
             </div>
 
-            <!-- 2. Liste déroulante Risque (dépend de Processus) -->
+            <!-- 2. Risque -->
             <div class="filter-group">
               <label class="filter-label" for="selectRisque">
                 <span>2. Intitulé du Risque</span>
@@ -991,7 +977,7 @@
               </select>
             </div>
 
-            <!-- 3. Liste déroulante Contrôle (dépend de Risque) -->
+            <!-- 3. Contrôle -->
             <div class="filter-group">
               <label class="filter-label" for="selectControle">
                 <span>3. Intitulé Contrôle</span>
@@ -1004,7 +990,6 @@
 
           </div>
 
-          <!-- Ligne d'actions : Fil d'ariane + Boutons [Afficher] et [Vider] -->
           <div class="filter-actions-bar">
             <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
               Filtre actif : <strong>Aucun processus sélectionné</strong>
@@ -1023,7 +1008,7 @@
       </section>
 
       <!-- ========================================================
-           B. BARRE D'OUTILS DU TABLEAU (ACTIONS RAPIDES)
+           B. BARRE D'OUTILS DU TABLEAU
            ======================================================== -->
       <section class="table-toolbar">
         <div class="toolbar-left">
@@ -1034,7 +1019,6 @@
             ☐ Désélectionner
           </button>
 
-          <!-- Compteur en direct -->
           <div class="selection-counter" id="selectionCounterBadge">
             <span class="selection-counter-dot"></span>
             <span id="selectionCounterText">0 point sélectionné</span>
@@ -1042,18 +1026,15 @@
         </div>
 
         <div class="toolbar-right">
-          <!-- Recherche par mot-clé -->
           <div class="search-input-wrapper">
             <span class="search-icon">🔎</span>
             <input type="text" id="searchInput" class="search-input" placeholder="Filtrer dans les résultats...">
           </div>
 
-          <!-- Bouton Télécharger Excel -->
           <button type="button" id="btnDownloadExcel" class="btn btn-success" title="Télécharger les points affichés sous format Excel (CSV)">
             📊 Télécharger Excel
           </button>
 
-          <!-- Bouton Exporter vers FC (Or #EAAA00) -->
           <button type="button" id="btnExportFC" class="btn btn-gold" title="Sauvegarder les points cochés dans le LocalStorage pour la Feuille 2">
             ⭐ Exporter vers FC
           </button>
@@ -1061,7 +1042,7 @@
       </section>
 
       <!-- ========================================================
-           C. TABLEAU DES POINTS DE CONTRÔLE (GRILLE PRINCIPALE)
+           C. TABLEAU DES POINTS DE CONTRÔLE
            ======================================================== -->
       <section class="table-container">
         <div class="table-responsive">
@@ -1078,12 +1059,11 @@
               </tr>
             </thead>
             <tbody id="tableBody">
-              <!-- Rempli dynamiquement en JavaScript -->
+              <!-- Rempli dynamiquement -->
             </tbody>
           </table>
         </div>
 
-        <!-- Pied du tableau -->
         <div class="table-footer">
           <div id="tableFooterSummary">0 point de contrôle affiché</div>
           <div id="tableFooterSelection">0 sélectionné pour la Feuille 2</div>
@@ -1093,9 +1073,6 @@
     </div>
   </main>
 
-  <!-- ========================================================
-       TOAST NOTIFICATION (Feedback visuel)
-       ======================================================== -->
   <div class="toast-container">
     <div id="toast" class="toast">
       <span class="toast-icon">✓</span>
@@ -1107,19 +1084,16 @@
        SCRIPT JAVASCRIPT ES6 VANILLA
        ======================================================== -->
   <script>
-    // 1. Constante distante obligatoire
-    const URL_BDD_DISTANTE = "https://raw.githubusercontent.com/aitbaba74-dot/FCI-audit/refs/heads/main/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
+    // URL directe via le domaine GitHub Pages officiel (pour éviter le blocage CORS)
+    const URL_BDD_DISTANTE = "https://aitbaba74-dot.github.io/FCI-audit/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
 
-    // Clés LocalStorage
     const CACHE_DB_KEY = "fci_referentiel_db";
     const SELECTED_PC_KEY = "fci_selected_pc";
 
-    // État global de l'application
-    let referentielData = [];          // Ensemble des données complètes
-    let displayedPoints = [];          // Points actuellement filtrés pour le tableau
-    let selectedPointsSet = new Set(); // IDs/indices uniques des points cochés
+    let referentielData = [];          
+    let displayedPoints = [];          
+    let selectedPointsSet = new Set(); 
 
-    // Éléments du DOM
     const selectProcessus = document.getElementById('selectProcessus');
     const selectRisque = document.getElementById('selectRisque');
     const selectControle = document.getElementById('selectControle');
@@ -1148,20 +1122,11 @@
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const appSidebar = document.getElementById('appSidebar');
 
-    // ========================================================
-    // CHARGEMENT AUTOMATIQUE AU CHARGEMENT DU DOM
-    // ========================================================
     document.addEventListener('DOMContentLoaded', () => {
       initDatabase();
       setupEventListeners();
     });
 
-    /**
-     * Initialise la base de données :
-     * 1. Tente fetch(URL_BDD_DISTANTE)
-     * 2. Si succès : sauvegarde dans LocalStorage (fci_referentiel_db) et badge en ligne
-     * 3. Si échec : charge depuis LocalStorage (fci_referentiel_db) et badge hors-ligne
-     */
     async function initDatabase() {
       updateStatusBadge('loading', 'Téléchargement de la BDD distante...');
 
@@ -1174,7 +1139,6 @@
 
         if (Array.isArray(data) && data.length > 0) {
           referentielData = data;
-          // Sauvegarde en cache dans le LocalStorage
           try {
             localStorage.setItem(CACHE_DB_KEY, JSON.stringify(data));
           } catch (storageErr) {
@@ -1183,7 +1147,7 @@
 
           updateStatusBadge('online', `🟢 BDD à jour (${data.length} PC)`);
           onDataLoaded();
-          showToast(`Référentiel synchronisé : ${data.length} points de contrôle chargés depuis GitHub`);
+          showToast(`Référentiel synchronisé : ${data.length} points de contrôle chargés`);
           return;
         } else {
           throw new Error('Données JSON invalides ou vides');
@@ -1194,9 +1158,6 @@
       }
     }
 
-    /**
-     * Repli sur le cache LocalStorage en cas de perte de connexion
-     */
     function loadFromLocalStorageFallback() {
       const cached = localStorage.getItem(CACHE_DB_KEY);
       if (cached) {
@@ -1214,13 +1175,9 @@
         }
       }
 
-      // Fallback de secours intégré si aucun réseau et aucun cache existant
       loadEmbeddedFallback();
     }
 
-    /**
-     * Jeu de données de démonstration minimal de secours (si première visite sans réseau)
-     */
     function loadEmbeddedFallback() {
       referentielData = [
         {
@@ -1257,21 +1214,14 @@
       serverStatusText.textContent = text;
     }
 
-    /**
-     * Appelé lorsque referentielData est prêt
-     */
     function onDataLoaded() {
       dbRecordsSummary.textContent = `${referentielData.length} points de contrôle au catalogue`;
       populateProcessusDropdown();
       restoreSavedSelectedPC();
-      renderTable([]); // Table initialement vide ou prête
+      renderTable([]);
     }
 
-    // ========================================================
-    // CASCADE DES DÉROULANTES (PROCESSUS > RISQUE > CONTRÔLE)
-    // ========================================================
     function populateProcessusDropdown() {
-      // Extraire dynamiquement les valeurs uniques du champ 'Processus'
       const processusSet = new Set();
       referentielData.forEach(item => {
         if (item && item['Processus']) {
@@ -1283,7 +1233,6 @@
 
       countProcessus.textContent = processusList.length;
 
-      // Nettoyer et remplir le select
       selectProcessus.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
       selectProcessus.innerHTML += `<option value="__ALL__">★ Tous les Processus (${processusList.length})</option>`;
 
@@ -1317,7 +1266,6 @@
         return;
       }
 
-      // Filtrer les risques associés à ce Processus
       const risquesSet = new Set();
       referentielData.forEach(item => {
         if (item && item['Processus'] && item['Processus'].trim() === selectedProc && item['Intitulé du risque']) {
@@ -1351,7 +1299,6 @@
         return;
       }
 
-      // Filtrer les contrôles associés à ce Risque
       const controlesSet = new Set();
       referentielData.forEach(item => {
         const matchProc = (selectedProc === '__ALL__') || (item['Processus'] && item['Processus'].trim() === selectedProc);
@@ -1409,9 +1356,6 @@
       filterBreadcrumbs.innerHTML = html;
     }
 
-    // ========================================================
-    // ACTION DU BOUTON [AFFICHER] ET [VIDER]
-    // ========================================================
     function handleAfficher() {
       const selectedProc = selectProcessus.value;
       const selectedRisque = selectRisque.value;
@@ -1424,17 +1368,14 @@
 
       let filtered = referentielData;
 
-      // Filtrer par Processus
       if (selectedProc !== '__ALL__') {
         filtered = filtered.filter(item => item['Processus'] && item['Processus'].trim() === selectedProc);
       }
 
-      // Filtrer par Risque
       if (selectedRisque) {
         filtered = filtered.filter(item => item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
       }
 
-      // Filtrer par Contrôle
       if (selectedControle) {
         filtered = filtered.filter(item => item['Intitulé Contrôle'] && item['Intitulé Contrôle'].trim() === selectedControle);
       }
@@ -1456,9 +1397,6 @@
       showToast('Filtres réinitialisés et tableau vidé.');
     }
 
-    // ========================================================
-    // RENDU DU TABLEAU (5 COLONNES EXACTES)
-    // ========================================================
     function renderTable(points) {
       tableBody.innerHTML = '';
 
@@ -1483,7 +1421,6 @@
       const fragment = document.createDocumentFragment();
 
       points.forEach((item, index) => {
-        // Clé unique pour chaque point basée sur son contenu
         const uniqueKey = getPointUniqueKey(item);
         const isChecked = selectedPointsSet.has(uniqueKey);
 
@@ -1501,7 +1438,6 @@
           <td class="td-pc">${escapeHtml(item['Points de contrôle'] || '-')}</td>
         `;
 
-        // Clic sur toute la ligne pour cocher/décocher
         tr.addEventListener('click', (e) => {
           if (e.target.tagName !== 'INPUT') {
             const chk = tr.querySelector('.row-checkbox');
@@ -1578,9 +1514,6 @@
       }
     }
 
-    // ========================================================
-    // ACTIONS DE LA BARRE D'OUTILS (SÉLECTIONNER / EXPORTER)
-    // ========================================================
     function handleSelectAll() {
       const visibleRows = tableBody.querySelectorAll('tr');
       const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
@@ -1629,17 +1562,12 @@
       }
     });
 
-    /**
-     * Exporter vers FC (Feuille 2) :
-     * Stocke les PC cochés dans le LocalStorage sous la clé fci_selected_pc
-     */
     function handleExportFC() {
       if (selectedPointsSet.size === 0) {
         showToast('Veuillez cocher au moins un point de contrôle.');
         return;
       }
 
-      // Reconstituer la liste complète des objets cochés
       const selectedObjects = referentielData.filter(item => {
         const key = getPointUniqueKey(item);
         return selectedPointsSet.has(key);
@@ -1647,7 +1575,7 @@
 
       try {
         localStorage.setItem(SELECTED_PC_KEY, JSON.stringify(selectedObjects));
-        showToast(`✓ Succès : ${selectedObjects.length} PC enregistrés dans le LocalStorage (fci_selected_pc) pour la Feuille 2 !`);
+        showToast(`✓ Succès : ${selectedObjects.length} PC enregistrés dans le LocalStorage pour la Feuille 2 !`);
       } catch (err) {
         console.error('Erreur sauvegarde LocalStorage', err);
         showToast('Erreur lors de la sauvegarde dans le navigateur.');
@@ -1671,11 +1599,7 @@
       }
     }
 
-    /**
-     * Téléchargement Excel (CSV avec UTF-8 BOM pour accents français)
-     */
     function handleDownloadExcel() {
-      // Exporter la sélection si existante, sinon tous les points affichés
       let exportList = [];
       const visibleKeys = new Set();
       tableBody.querySelectorAll('.row-checkbox').forEach(chk => {
@@ -1711,7 +1635,6 @@
         ].join(';'))
       ];
 
-      // UTF-8 BOM (\uFEFF) garantit l'ouverture sans problème d'accents dans Microsoft Excel
       const csvContent = '\uFEFF' + rows.join('\r\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -1726,9 +1649,6 @@
       showToast(`Fichier Excel téléchargé (${exportList.length} points)`);
     }
 
-    // ========================================================
-    // RECHERCHE INSTANTANÉE PAR MOT-CLÉ
-    // ========================================================
     function handleSearch() {
       const query = searchInput.value.toLowerCase().trim();
       if (!query) {
@@ -1748,9 +1668,6 @@
       renderTable(filtered);
     }
 
-    // ========================================================
-    // SETUP DES EVENT LISTENERS & HELPERS
-    // ========================================================
     function setupEventListeners() {
       selectProcessus.addEventListener('change', onProcessusChanged);
       selectRisque.addEventListener('change', onRisqueChanged);
