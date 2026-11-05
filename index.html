@@ -373,11 +373,6 @@
       gap: 6px;
     }
 
-    .filter-card-meta {
-      font-size: 11px;
-      color: var(--barid-text-muted);
-    }
-
     .filter-card-body {
       padding: 18px 20px;
     }
@@ -949,13 +944,13 @@
             <span>⚡ Filtrage en Cascade Hiérarchique</span>
           </div>
           
-          <!-- BOUTONS HAUT DE SECTION -->
+          <!-- BOUTONS HAUT DE SECTION (Mis à jour dynamiquement) -->
           <div class="filter-btn-group">
             <button type="button" class="btn btn-outline-danger btn-vider-action" title="Réinitialiser tous les filtres et vider le tableau">
               ↺ Vider
             </button>
             <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
-              🔍 Afficher PC
+              🔍 Afficher PC <span class="badge-pc-count">(0 PC)</span>
             </button>
           </div>
         </div>
@@ -1009,7 +1004,7 @@
                 ↺ Vider
               </button>
               <button type="button" class="btn btn-primary btn-afficher-action" title="Valider les filtres et afficher les points de contrôle">
-                🔍 Afficher PC
+                🔍 Afficher PC <span class="badge-pc-count">(0 PC)</span>
               </button>
             </div>
           </div>
@@ -1106,7 +1101,6 @@
     const selectRisque = document.getElementById('selectRisque');
     const selectControle = document.getElementById('selectControle');
     
-    // Tous les boutons Afficher PC et Vider (haut et bas)
     const btnAfficherList = document.querySelectorAll('.btn-afficher-action');
     const btnViderList = document.querySelectorAll('.btn-vider-action');
     
@@ -1227,33 +1221,71 @@
     function onDataLoaded() {
       populateProcessusDropdown();
       restoreSavedSelectedPC();
+      updateButtonPcCount(referentielData.length);
       renderTable([]);
     }
 
+    // Met à jour le libellé du nombre de PC sur les boutons "Afficher PC"
+    function updateButtonPcCount(count) {
+      btnAfficherList.forEach(btn => {
+        btn.innerHTML = `🔍 Afficher PC <span class="badge-pc-count">(${count} PC)</span>`;
+      });
+    }
+
+    function getFilteredData() {
+      const selectedProc = selectProcessus.value;
+      const selectedRisque = selectRisque.value;
+      const selectedControle = selectControle.value;
+
+      if (!selectedProc) {
+        return referentielData;
+      }
+
+      let filtered = referentielData;
+
+      if (selectedProc !== '__ALL__') {
+        filtered = filtered.filter(item => item['Processus'] && item['Processus'].trim() === selectedProc);
+      }
+
+      if (selectedRisque) {
+        filtered = filtered.filter(item => item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
+      }
+
+      if (selectedControle) {
+        filtered = filtered.filter(item => item['Intitulé Contrôle'] && item['Intitulé Contrôle'].trim() === selectedControle);
+      }
+
+      return filtered;
+    }
+
     function populateProcessusDropdown() {
-      const processusSet = new Set();
+      const processusMap = new Map();
+      
       referentielData.forEach(item => {
         if (item && item['Processus']) {
-          processusSet.add(item['Processus'].trim());
+          const proc = item['Processus'].trim();
+          processusMap.set(proc, (processusMap.get(proc) || 0) + 1);
         }
       });
 
-      const processusList = Array.from(processusSet).sort((a, b) => a.localeCompare(b, 'fr'));
+      const processusList = Array.from(processusMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
 
       countProcessus.textContent = processusList.length;
 
       selectProcessus.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
-      selectProcessus.innerHTML += `<option value="__ALL__">★ Tous les Processus (${processusList.length})</option>`;
+      selectProcessus.innerHTML += `<option value="__ALL__">★ Tous les Processus (${referentielData.length} PC)</option>`;
 
       processusList.forEach(proc => {
+        const pcCount = processusMap.get(proc);
         const opt = document.createElement('option');
         opt.value = proc;
-        opt.textContent = proc;
+        opt.textContent = `${proc} (${pcCount} PC)`;
         selectProcessus.appendChild(opt);
       });
 
       resetRisqueDropdown();
       resetControleDropdown();
+      updateButtonPcCount(referentielData.length);
     }
 
     function onProcessusChanged() {
@@ -1263,6 +1295,7 @@
         resetRisqueDropdown();
         resetControleDropdown();
         updateBreadcrumbs();
+        updateButtonPcCount(referentielData.length);
         return;
       }
 
@@ -1272,30 +1305,38 @@
         countRisques.textContent = 'Tous';
         resetControleDropdown();
         updateBreadcrumbs();
+        updateButtonPcCount(referentielData.length);
         return;
       }
 
-      const risquesSet = new Set();
+      const risquesMap = new Map();
+      let totalProcPC = 0;
+
       referentielData.forEach(item => {
         if (item && item['Processus'] && item['Processus'].trim() === selectedProc && item['Intitulé du risque']) {
-          risquesSet.add(item['Intitulé du risque'].trim());
+          const rsq = item['Intitulé du risque'].trim();
+          risquesMap.set(rsq, (risquesMap.get(rsq) || 0) + 1);
+          totalProcPC++;
         }
       });
 
-      const risquesList = Array.from(risquesSet).sort((a, b) => a.localeCompare(b, 'fr'));
+      const risquesList = Array.from(risquesMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
 
       countRisques.textContent = risquesList.length;
-      selectRisque.innerHTML = '<option value="">-- Tous les risques du processus (' + risquesList.length + ') --</option>';
+      selectRisque.innerHTML = `<option value="">-- Tous les risques (${totalProcPC} PC) --</option>`;
+      
       risquesList.forEach(rsq => {
+        const pcCount = risquesMap.get(rsq);
         const opt = document.createElement('option');
         opt.value = rsq;
-        opt.textContent = rsq;
+        opt.textContent = `${rsq} (${pcCount} PC)`;
         selectRisque.appendChild(opt);
       });
       selectRisque.disabled = false;
 
       resetControleDropdown();
       updateBreadcrumbs();
+      updateButtonPcCount(totalProcPC);
     }
 
     function onRisqueChanged() {
@@ -1305,32 +1346,47 @@
       if (!selectedRisque) {
         resetControleDropdown();
         updateBreadcrumbs();
+        const currentFiltered = getFilteredData();
+        updateButtonPcCount(currentFiltered.length);
         return;
       }
 
-      const controlesSet = new Set();
+      const controlesMap = new Map();
+      let totalRisquePC = 0;
+
       referentielData.forEach(item => {
         const matchProc = (selectedProc === '__ALL__') || (item['Processus'] && item['Processus'].trim() === selectedProc);
         const matchRisque = (item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
 
         if (matchProc && matchRisque && item['Intitulé Contrôle']) {
-          controlesSet.add(item['Intitulé Contrôle'].trim());
+          const ctrl = item['Intitulé Contrôle'].trim();
+          controlesMap.set(ctrl, (controlesMap.get(ctrl) || 0) + 1);
+          totalRisquePC++;
         }
       });
 
-      const controlesList = Array.from(controlesSet).sort((a, b) => a.localeCompare(b, 'fr'));
+      const controlesList = Array.from(controlesMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
 
       countControles.textContent = controlesList.length;
-      selectControle.innerHTML = '<option value="">-- Tous les contrôles du risque (' + controlesList.length + ') --</option>';
+      selectControle.innerHTML = `<option value="">-- Tous les contrôles (${totalRisquePC} PC) --</option>`;
+      
       controlesList.forEach(ctrl => {
+        const pcCount = controlesMap.get(ctrl);
         const opt = document.createElement('option');
         opt.value = ctrl;
-        opt.textContent = ctrl;
+        opt.textContent = `${ctrl} (${pcCount} PC)`;
         selectControle.appendChild(opt);
       });
       selectControle.disabled = false;
 
       updateBreadcrumbs();
+      updateButtonPcCount(totalRisquePC);
+    }
+
+    function onControleChanged() {
+      updateBreadcrumbs();
+      const currentFiltered = getFilteredData();
+      updateButtonPcCount(currentFiltered.length);
     }
 
     function resetRisqueDropdown() {
@@ -1367,27 +1423,13 @@
 
     function handleAfficher() {
       const selectedProc = selectProcessus.value;
-      const selectedRisque = selectRisque.value;
-      const selectedControle = selectControle.value;
 
       if (!selectedProc) {
         showToast('Veuillez sélectionner au moins un Processus.');
         return;
       }
 
-      let filtered = referentielData;
-
-      if (selectedProc !== '__ALL__') {
-        filtered = filtered.filter(item => item['Processus'] && item['Processus'].trim() === selectedProc);
-      }
-
-      if (selectedRisque) {
-        filtered = filtered.filter(item => item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
-      }
-
-      if (selectedControle) {
-        filtered = filtered.filter(item => item['Intitulé Contrôle'] && item['Intitulé Contrôle'].trim() === selectedControle);
-      }
+      const filtered = getFilteredData();
 
       displayedPoints = filtered;
       searchInput.value = '';
@@ -1403,6 +1445,7 @@
       displayedPoints = [];
       searchInput.value = '';
       renderTable([]);
+      updateButtonPcCount(referentielData.length);
       showToast('Filtres réinitialisés et tableau vidé.');
     }
 
@@ -1680,9 +1723,8 @@
     function setupEventListeners() {
       selectProcessus.addEventListener('change', onProcessusChanged);
       selectRisque.addEventListener('change', onRisqueChanged);
-      selectControle.addEventListener('change', updateBreadcrumbs);
+      selectControle.addEventListener('change', onControleChanged);
 
-      // Attribution des événements à TOUS les boutons Afficher et Vider
       btnAfficherList.forEach(btn => btn.addEventListener('click', handleAfficher));
       btnViderList.forEach(btn => btn.addEventListener('click', handleVider));
 
