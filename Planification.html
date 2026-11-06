@@ -590,7 +590,7 @@
 
     <script>
         let selectedData = [];
-        let checkedKeys = new Set(); // Stocke les clés des points cochés
+        let checkedKeys = new Set();
 
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
@@ -612,7 +612,6 @@
             if (rawData) {
                 try {
                     selectedData = JSON.parse(rawData);
-                    // Par défaut, tous les points chargés sont cochés
                     checkedKeys = new Set(selectedData.map(getPointKey));
                 } catch (e) {
                     console.error("Erreur de lecture du localStorage", e);
@@ -639,7 +638,6 @@
                 return;
             }
 
-            // Groupement des données par Processus
             const groupedData = selectedData.reduce((acc, item) => {
                 const proc = item["Processus"] || "Processus Non Spécifié";
                 if (!acc[proc]) acc[proc] = [];
@@ -649,13 +647,11 @@
 
             const processusKeys = Object.keys(groupedData);
 
-            // Rendu de chaque bloc de processus
             processusKeys.forEach(procName => {
                 const items = groupedData[procName];
                 const procBlock = document.createElement('div');
                 procBlock.className = 'processus-block';
 
-                // Vérifier si tous les points du processus sont cochés
                 const allProcChecked = items.every(item => checkedKeys.has(getPointKey(item)));
 
                 let rowsHtml = items.map(item => {
@@ -715,7 +711,6 @@
             recalculateKPIs();
         }
 
-        // Recalculer les statistiques selon les points actuellement cochés
         function recalculateKPIs() {
             const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
             
@@ -773,24 +768,21 @@
         }
 
         function removeProcessus(procName) {
-            if (confirm(`Voulez-vous vraiment retirer l'ensemble des points du processus : "${procName}" ?`)) {
-                selectedData = selectedData.filter(item => {
-                    if (item["Processus"] === procName) {
-                        checkedKeys.delete(getPointKey(item));
-                        return false;
-                    }
-                    return true;
-                });
-                saveAndRefresh();
-            }
+            selectedData = selectedData.filter(item => {
+                if (item["Processus"] === procName) {
+                    checkedKeys.delete(getPointKey(item));
+                    return false;
+                }
+                return true;
+            });
+            saveAndRefresh();
         }
 
+        /* --- FONCTION VIDER DIRECTE SANS MESSAGE --- */
         function viderPlanification() {
-            if (confirm("Voulez-vous vraiment vider l'ensemble des données de planification ?")) {
-                selectedData = [];
-                checkedKeys.clear();
-                saveAndRefresh();
-            }
+            selectedData = [];
+            checkedKeys.clear();
+            saveAndRefresh();
         }
 
         function saveAndRefresh() {
@@ -802,7 +794,7 @@
             const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
 
             if (!activeItems || activeItems.length === 0) {
-                alert("Aucun point coche à exporter.");
+                alert("Aucun point coché à exporter.");
                 return;
             }
 
@@ -843,7 +835,6 @@
                 return;
             }
 
-            // Récupérer uniquement les points cochés
             const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
 
             if (!activeItems || activeItems.length === 0) {
@@ -863,7 +854,6 @@
                 pointsControle: activeItems
             };
 
-            // Sauvegarde des points cochés sous la clé de Feuille 3
             localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
             window.location.href = 'FicheControle.html';
         }
