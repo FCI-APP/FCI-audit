@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI - Planification de Mission (Barid Al-Maghrib)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --accent-gold: #EAAA00;
+            --bg-light: #F4F6F9;
+            --text-dark: #2C3E50;
+            --white: #FFFFFF;
+            --border-color: #E2E8F0;
+            --danger: #E74C3C;
+            --sidebar-width: 250px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-blue);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+        }
+
+        .sidebar-brand {
+            padding: 20px 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-gold);
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .sidebar-brand h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--white);
+        }
+
+        .sidebar-brand span {
+            color: var(--accent-gold);
+            font-size: 0.8rem;
+            display: block;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            margin-top: 20px;
+            flex-grow: 1;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar-menu li a:hover {
+            background-color: rgba(255,255,255,0.08);
+            color: var(--white);
+        }
+
+        .sidebar-menu li.active a {
+            background-color: rgba(234, 170, 0, 0.15);
+            color: var(--accent-gold);
+            border-left-color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .sidebar-menu li a i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            font-size: 0.75rem;
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 30px;
+            max-width: calc(100% - var(--sidebar-width));
+        }
+
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: var(--white);
+            padding: 20px 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary-blue);
+        }
+
+        .top-header h1 {
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 10px;
+        }
+
+        .card-title i {
+            color: var(--accent-gold);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
+        }
+
+        .kpi-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            flex: 1;
+            background: var(--white);
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(0, 51, 102, 0.08);
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .kpi-info h3 {
+            font-size: 1.3rem;
+            color: var(--primary-blue);
+        }
+
+        .kpi-info p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .processus-block {
+            background: var(--white);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .processus-header {
+            background-color: var(--primary-blue);
+            color: var(--white);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .processus-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-delete-proc {
+            background: rgba(231, 76, 60, 0.2);
+            color: #FF8A80;
+            border: 1px solid rgba(231, 76, 60, 0.4);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .btn-delete-proc:hover {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        th {
+            background-color: rgba(0, 51, 102, 0.03);
+            color: var(--primary-blue);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .btn-delete-item {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .btn-delete-item:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-gold);
+            color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background-color: #d49b00;
+        }
+
+        .btn-secondary {
+            background-color: #E0E6ED;
+            color: var(--text-dark);
+        }
+
+        .btn-secondary:hover {
+            background-color: #D0D7DE;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            background: var(--white);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: #CBD5E1;
+            margin-bottom: 15px;
+        }
+
+        .empty-state h3 {
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            color: #64748B;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>BARID AL-MAGHRIB</h2>
+            <span>Audit & Contrôle Permanent</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="Referentiel.html"><i class="fa-solid fa-book"></i> 1. Référentiel</a>
+            </li>
+            <li class="active">
+                <a href="Planification.html"><i class="fa-solid fa-calendar-check"></i> 2. Planification</a>
+            </li>
+            <li>
+                <a href="FicheControle.html"><i class="fa-solid fa-clipboard-check"></i> 3. Fiche de Contrôle</a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            FCI v2.0 &copy; 2026 - Barid Al-Maghrib
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1>Planification de la Mission d'Audit</h1>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et paramétrage du contrôle</p>
+            </div>
+        </header>
+
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                <div class="kpi-info">
+                    <h3 id="kpi-proc-count">0</h3>
+                    <p>Processus ciblés</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                <div class="kpi-info">
+                    <h3 id="kpi-pc-count">0</h3>
+                    <p>Points de contrôle retenus</p>
+                </div>
+            </div>
+        </div>
+
+        <section class="card">
+            <div class="card-title">
+                <i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="audit-entite">Entité / Agence Auditée *</label>
+                    <input type="text" id="audit-entite" placeholder="Ex: Agence Principale Rabat">
+                </div>
+                <div class="form-group">
+                    <label for="audit-ref">Référence de la Mission *</label>
+                    <input type="text" id="audit-ref" placeholder="Ex: AUD-2026-089">
+                </div>
+                <div class="form-group">
+                    <label for="audit-date">Date du Contrôle *</label>
+                    <input type="date" id="audit-date">
+                </div>
+                <div class="form-group">
+                    <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
+                    <input type="text" id="audit-controleurs" placeholder="Ex: A. Ismail">
+                </div>
+            </div>
+        </section>
+
+        <section id="planification-container"></section>
+
+        <div class="action-bar">
+            <button class="btn btn-secondary" onclick="window.location.href='Referentiel.html'">
+                <i class="fa-solid fa-arrow-left"></i> Ajuster le Référentiel
+            </button>
+            <button class="btn btn-primary" onclick="lancerFicheControle()">
+                <i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle
+            </button>
+        </div>
+    </main>
+
+    <script>
+        let selectedData = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFormDefaults();
+            loadPlanificationData();
+        });
+
+        function initFormDefaults() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('audit-date').value = today;
+        }
+
+        function loadPlanificationData() {
+            const rawData = localStorage.getItem('fci_planification_pc');
+            if (rawData) {
+                try {
+                    selectedData = JSON.parse(rawData);
+                } catch (e) {
+                    console.error("Erreur de lecture du localStorage", e);
+                    selectedData = [];
+                }
+            }
+            renderPlanification();
+        }
+
+        function renderPlanification() {
+            const container = document.getElementById('planification-container');
+            container.innerHTML = '';
+
+            if (!selectedData || selectedData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <h3>Aucun point de contrôle sélectionné</h3>
+                        <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer dans cette mission.</p>
+                    </div>
+                `;
+                updateKPIs(0, 0);
+                return;
+            }
+
+            const groupedData = selectedData.reduce((acc, item) => {
+                const proc = item["Processus"] || "Processus Non Spécifié";
+                if (!acc[proc]) acc[proc] = [];
+                acc[proc].push(item);
+                return acc;
+            }, {});
+
+            const processusKeys = Object.keys(groupedData);
+            updateKPIs(processusKeys.length, selectedData.length);
+
+            processusKeys.forEach(procName => {
+                const items = groupedData[procName];
+                const procBlock = document.createElement('div');
+                procBlock.className = 'processus-block';
+
+                let rowsHtml = items.map(item => {
+                    const globalIdx = selectedData.findIndex(d => 
+                        d["Processus"] === item["Processus"] &&
+                        d["Intitulé du risque"] === item["Intitulé du risque"] &&
+                        d["Intitulé Contrôle"] === item["Intitulé Contrôle"] &&
+                        d["Points de contrôle"] === item["Points de contrôle"]
+                    );
+
+                    return `
+                        <tr>
+                            <td style="width: 25%;"><strong>${escapeHtml(item["Intitulé du risque"] || '-')}</strong></td>
+                            <td style="width: 30%;">${escapeHtml(item["Intitulé Contrôle"] || '-')}</td>
+                            <td style="width: 40%;">${escapeHtml(item["Points de contrôle"] || '-')}</td>
+                            <td style="width: 5%; text-align: center;">
+                                <button class="btn-delete-item" onclick="removePoint(${globalIdx})" title="Supprimer ce point">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                procBlock.innerHTML = `
+                    <div class="processus-header">
+                        <h3><i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length})</h3>
+                        <button class="btn-delete-proc" onclick="removeProcessus('${escapeJsString(procName)}')">
+                            <i class="fa-solid fa-trash"></i> Retirer le Processus
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Intitulé du Risque</th>
+                                    <th>Intitulé du Contrôle</th>
+                                    <th>Point de Contrôle</th>
+                                    <th style="text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(procBlock);
+            });
+        }
+
+        function updateKPIs(procCount, pcCount) {
+            document.getElementById('kpi-proc-count').innerText = procCount;
+            document.getElementById('kpi-pc-count').innerText = pcCount;
+        }
+
+        function removePoint(index) {
+            if (index >= 0 && index < selectedData.length) {
+                selectedData.splice(index, 1);
+                saveAndRefresh();
+            }
+        }
+
+        function removeProcessus(procName) {
+            if (confirm(`Voulez-vous vraiment retirer l'ensemble des points du processus : "${procName}" ?`)) {
+                selectedData = selectedData.filter(item => item["Processus"] !== procName);
+                saveAndRefresh();
+            }
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('fci_planification_pc', JSON.stringify(selectedData));
+            renderPlanification();
+        }
+
+        function lancerFicheControle() {
+            const entite = document.getElementById('audit-entite').value.trim();
+            const ref = document.getElementById('audit-ref').value.trim();
+            const date = document.getElementById('audit-date').value;
+            const controleurs = document.getElementById('audit-controleurs').value.trim();
+
+            if (!entite || !ref || !controleurs || !date) {
+                alert("Veuillez remplir l'ensemble des informations générales de la mission (Entité, Référence, Date, Contrôleurs) avant de continuer.");
+                return;
+            }
+
+            if (!selectedData || selectedData.length === 0) {
+                alert("Veuillez conserver au moins un point de contrôle dans votre planification.");
+                return;
+            }
+
+            const activeCampaign = {
+                metadata: {
+                    entite: entite,
+                    reference: ref,
+                    dateControle: date,
+                    controleurs: controleurs,
+                    createdAt: new Date().toISOString()
+                },
+                pointsControle: selectedData
+            };
+
+            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
+            window.location.href = 'FicheControle.html';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeJsString(str) {
+            if (!str) return '';
+            return String(str).replace(/'/g, "\\'");
+        }
+    </script>
+</body>
+</html>
