@@ -897,9 +897,9 @@
           </a>
         </li>
         <li class="sidebar-menu-item">
-          <a class="sidebar-link disabled" title="Planification de la campagne de contrôle multi-processus">
+          <a href="Planification.html" class="sidebar-link" title="Planification de la campagne de contrôle multi-processus">
             <span>2. Planification</span>
-            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
+            <span class="sidebar-badge sidebar-badge-active">Disponible</span>
           </a>
         </li>
         <li class="sidebar-menu-item">
@@ -1092,14 +1092,13 @@
        SCRIPT JAVASCRIPT ES6 VANILLA
        ======================================================== -->
   <script>
-    // URL mise à jour avec le nom d'utilisateur FCI-APP
     const URL_BDD_DISTANTE = "https://fci-app.github.io/FCI-audit/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
 
     const CACHE_DB_KEY = "fci_referentiel_db";
     const PLANIFICATION_PC_KEY = "fci_planification_pc"; 
 
-    let referentielData = [];          
-    let displayedPoints = [];          
+    let referentielData = [];         
+    let displayedPoints = [];         
     let selectedPointsSet = new Set(); 
 
     const selectProcessus = document.getElementById('selectProcessus');
@@ -1430,7 +1429,7 @@
       const selectedProc = selectProcessus.value;
 
       if (!selectedProc) {
-        showToast('Veuillez sélectionner au moins un Processus.');
+        showToast('Veuillez sélectioner au moins un Processus.');
         return;
       }
 
@@ -1634,7 +1633,13 @@
 
       try {
         localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedObjects));
-        showToast(`✓ Succès : ${selectedObjects.length} PC (${processusUniques} processus) exportés vers la Planification !`);
+        showToast(`✓ Succès : ${selectedObjects.length} PC (${processusUniques} processus) exportés ! Redirection...`);
+        
+        // Redirection vers la Feuille 2 après 1 seconde
+        setTimeout(() => {
+          window.location.href = 'Planification.html';
+        }, 1000);
+
       } catch (err) {
         console.error('Erreur sauvegarde LocalStorage', err);
         showToast('Erreur lors de la sauvegarde dans le navigateur.');
