@@ -288,10 +288,13 @@
         .btn-primary {
             background-color: var(--accent-gold);
             color: var(--primary-blue);
+            padding: 12px 28px;
+            font-size: 1rem;
         }
 
         .btn-primary:hover {
             background-color: var(--accent-gold-hover);
+            box-shadow: 0 4px 12px rgba(234, 170, 0, 0.3);
         }
 
         .btn-secondary {
@@ -448,7 +451,6 @@
         .action-bar {
             display: flex;
             justify-content: flex-end;
-            gap: 15px;
             margin-top: 30px;
             padding-top: 20px;
             border-top: 2px solid var(--border-color);
@@ -576,11 +578,8 @@
             <!-- Injecté dynamiquement par JavaScript -->
         </section>
 
-        <!-- ACTION BAR -->
+        <!-- ACTION BAR SEULEMENT AVEC LE BOUTON LANCER LA FICHE DE CONTROLE -->
         <div class="action-bar">
-            <button class="btn btn-secondary" onclick="window.location.href='index.html'">
-                <i class="fa-solid fa-arrow-left"></i> Ajuster le Référentiel
-            </button>
             <button class="btn btn-primary" onclick="lancerFicheControle()">
                 <i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle
             </button>
@@ -767,7 +766,6 @@
             }
         }
 
-        /* --- SUPPRESSION IMMÉDIATE SANS CONFIRMATION --- */
         function removeProcessus(procName) {
             selectedData = selectedData.filter(item => {
                 if (item["Processus"] === procName) {
@@ -779,7 +777,6 @@
             saveAndRefresh();
         }
 
-        /* --- VIDAGE IMMÉDIAT SANS CONFIRMATION --- */
         function viderPlanification() {
             selectedData = [];
             checkedKeys.clear();
