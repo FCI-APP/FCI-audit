@@ -2361,7 +2361,7 @@
     "Processus": "Gestion du contentieux",
     "Intitulé du risque": "Vice de procédure judiciaire devant les juridictions",
     "Intitulé Contrôle": "Contrôle des affaires contentieuses ordonnés par les instances de juridictions compétentes",
-    "Points de contrôle": "4/ Est-ce que le suivi des litiges non résolues suite à un vice de procédure judiciaire, par l'avocat et le responsable hiérarchique concerné est assuré ( interjeter appel contre les jugements de première instance, arrêt d'exécution , évoquer la compétenc"
+    "Points de contrôle": "4/ Est-ce que le suivi des litiges non résolues suite à un vice de procédure judiciaire, par l'avocat et le responsable hiérarchique concerné est assuré ( interjeter appel contre les jugements de première instance, arrêt d'exécution , évoquer la compétenc?"
   },
   {
     "Processus": "Gestion du contentieux",
@@ -2613,7 +2613,13 @@
     "Processus": "Gestion de la Sûreté",
     "Intitulé du risque": "Perte d'archive BAM",
     "Intitulé Contrôle": "Contrôle des archives",
-    "Points de contrôle": "5/ Est ce toute les mesures sont prises pour la bonne conservation des archives ( local/mobilier de classement/dispositif de sécurité) --6 / Est ce que la satisfaction d'une demande de consultation des archives est réalisée conformément à \" la procédure de communication des archives\"?"
+    "Points de contrôle": "5/ Est ce toute les mesures sont prises pour la bonne conservation des archives ( local/mobilier de classement/dispositif de sécurité)?"
+  },
+  {
+    "Processus": "Gestion de la Sûreté",
+    "Intitulé du risque": "Perte d'archive BAM",
+    "Intitulé Contrôle": "Contrôle des archives",
+    "Points de contrôle": "6 / Est ce que la satisfaction d'une demande de consultation des archives est réalisée conformément à \" la procédure de communication des archives\"?"
   },
   {
     "Processus": "Gestion de la Sûreté",
