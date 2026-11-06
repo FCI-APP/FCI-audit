@@ -874,7 +874,6 @@
        ======================================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div>
-      <!-- Header Logo / Noms officiels -->
       <div class="sidebar-header">
         <div class="brand-logo-badge">
           <div class="brand-logo-inner">
@@ -889,7 +888,7 @@
         </div>
       </div>
 
-      <!-- Navigation Multi-Feuilles -->
+      <!-- Navigation Multi-Feuilles organisée -->
       <div class="sidebar-nav-section-title">Navigation Feuilles</div>
       <ul class="sidebar-menu">
         <li class="sidebar-menu-item">
@@ -899,21 +898,26 @@
           </a>
         </li>
         <li class="sidebar-menu-item">
-          <a class="sidebar-link disabled" title="Accessible après exportation des points de contrôle">
-            <span>2. Fiche de Contrôle (FC)</span>
+          <a class="sidebar-link disabled" title="Planification de la campagne de contrôle multi-processus">
+            <span>2. Planification</span>
+            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a class="sidebar-link disabled" title="Exécution de la fiche de contrôle terrain">
+            <span>3. Fiche de Contrôle (FC)</span>
             <span class="sidebar-badge sidebar-badge-muted">À venir</span>
           </a>
         </li>
         <li class="sidebar-menu-item">
           <a class="sidebar-link disabled" title="Synthèse & rapports de contrôle">
-            <span>3. Synthèse & Rapports</span>
+            <span>4. Synthèse & Rapports</span>
             <span class="sidebar-badge sidebar-badge-muted">À venir</span>
           </a>
         </li>
       </ul>
     </div>
 
-    <!-- Pied de Sidebar -->
     <div class="sidebar-footer">
       <div class="sidebar-footer-user">Contrôleur</div>
       <div class="sidebar-footer-role">DIVISION CONTRÔLE PERMANENT</div>
@@ -925,7 +929,6 @@
        ======================================================== -->
   <main class="app-main">
     
-    <!-- En-tête Principal -->
     <header class="main-header">
       <div style="display: flex; align-items: center; gap: 12px;">
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
@@ -941,18 +944,16 @@
       </div>
     </header>
 
-    <!-- Corps de la Page -->
     <div class="main-body">
 
       <!-- ========================================================
-           A. ZONE DE FILTRAGE & CASCADE HIÉRARCHIQUE (4 Niveaux)
+           A. ZONE DE FILTRAGE & CASCADE HIÉRARCHIQUE
            ======================================================== -->
       <section class="filter-card">
         <div class="filter-card-header">
           <div class="filter-card-title">
             <span>⚡ Filtrage en Cascade Hiérarchique</span>
           </div>
-          <!-- NOUVEAU BOUTON : Télécharger toute la BDD -->
           <div>
             <button type="button" id="btnDownloadFullBDD" class="btn btn-success" title="Télécharger la base de données complète du référentiel sous format Excel (CSV)">
               📥 Télécharger BDD (Référentiel)
@@ -998,7 +999,6 @@
 
           </div>
 
-          <!-- UN SEUL JEU DE BOUTONS EN BAS DE SECTION + BREADCRUMBS -->
           <div class="filter-actions-bar">
             <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
               Filtre actif : <strong>Aucun processus sélectionné</strong>
@@ -1041,11 +1041,11 @@
           </div>
 
           <button type="button" id="btnDownloadExcel" class="btn btn-success" title="Télécharger les points affichés sous format Excel (CSV)">
-            📊 Télécharger Sélection/Vue
+            📊 Télécharger format Excel
           </button>
 
-          <button type="button" id="btnExportFC" class="btn btn-gold" title="Sauvegarder les points cochés dans le LocalStorage pour la Feuille 2">
-            ⭐ Exporter vers FC
+          <button type="button" id="btnExportPlanification" class="btn btn-gold" title="Exporter les points choisis vers la feuille Planification">
+            📅 Planification
           </button>
         </div>
       </section>
@@ -1075,7 +1075,7 @@
 
         <div class="table-footer">
           <div id="tableFooterSummary">0 point de contrôle affiché</div>
-          <div id="tableFooterSelection">0 sélectionné pour la Feuille 2</div>
+          <div id="tableFooterSelection">0 sélectionné pour la Planification</div>
         </div>
       </section>
 
@@ -1096,7 +1096,7 @@
     const URL_BDD_DISTANTE = "https://aitbaba74-dot.github.io/FCI-audit/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
 
     const CACHE_DB_KEY = "fci_referentiel_db";
-    const SELECTED_PC_KEY = "fci_selected_pc";
+    const PLANIFICATION_PC_KEY = "fci_planification_pc"; 
 
     let referentielData = [];          
     let displayedPoints = [];          
@@ -1113,7 +1113,7 @@
     const headerCheckbox = document.getElementById('headerCheckbox');
     const btnSelectAll = document.getElementById('btnSelectAll');
     const btnDeselectAll = document.getElementById('btnDeselectAll');
-    const btnExportFC = document.getElementById('btnExportFC');
+    const btnExportPlanification = document.getElementById('btnExportPlanification');
     const btnDownloadExcel = document.getElementById('btnDownloadExcel');
     const btnDownloadFullBDD = document.getElementById('btnDownloadFullBDD');
     const searchInput = document.getElementById('searchInput');
@@ -1537,7 +1537,7 @@
     function updateSelectionCounter() {
       const count = selectedPointsSet.size;
       selectionCounterText.textContent = `${count} point${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
-      tableFooterSelection.textContent = `${count} sélectionné${count > 1 ? 's' : ''} pour la Feuille 2`;
+      tableFooterSelection.textContent = `${count} sélectionné${count > 1 ? 's' : ''} pour la Planification`;
 
       if (count > 0) {
         selectionCounterBadge.classList.add('has-selection');
@@ -1619,7 +1619,7 @@
       }
     });
 
-    function handleExportFC() {
+    function handleExportPlanification() {
       if (selectedPointsSet.size === 0) {
         showToast('Veuillez cocher au moins un point de contrôle.');
         return;
@@ -1630,9 +1630,11 @@
         return selectedPointsSet.has(key);
       });
 
+      const processusUniques = new Set(selectedObjects.map(item => item['Processus'])).size;
+
       try {
-        localStorage.setItem(SELECTED_PC_KEY, JSON.stringify(selectedObjects));
-        showToast(`✓ Succès : ${selectedObjects.length} PC enregistrés dans le LocalStorage pour la Feuille 2 !`);
+        localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedObjects));
+        showToast(`✓ Succès : ${selectedObjects.length} PC (${processusUniques} processus) exportés vers la Planification !`);
       } catch (err) {
         console.error('Erreur sauvegarde LocalStorage', err);
         showToast('Erreur lors de la sauvegarde dans le navigateur.');
@@ -1641,7 +1643,7 @@
 
     function restoreSavedSelectedPC() {
       try {
-        const saved = localStorage.getItem(SELECTED_PC_KEY);
+        const saved = localStorage.getItem(PLANIFICATION_PC_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
@@ -1656,9 +1658,6 @@
       }
     }
 
-    /**
-     * Génère et télécharge un fichier CSV compatible Excel (avec UTF-8 BOM)
-     */
     function exportToCSV(dataList, filenamePrefix) {
       if (!dataList || dataList.length === 0) {
         showToast('Aucune donnée à exporter.');
@@ -1694,7 +1693,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // Télécharger toute la BDD (Référentiel complet)
     function handleDownloadFullBDD() {
       if (referentielData.length === 0) {
         showToast('La base de données n\'est pas encore chargée.');
@@ -1704,7 +1702,6 @@
       showToast(`Référentiel complet téléchargé (${referentielData.length} points)`);
     }
 
-    // Télécharger la sélection ou la vue filtrée
     function handleDownloadExcel() {
       let exportList = [];
       const visibleKeys = new Set();
@@ -1724,7 +1721,7 @@
         return;
       }
 
-      exportToCSV(exportList, 'FCI_Referentiel_Filtre');
+      exportToCSV(exportList, 'FCI_Referentiel_Selection');
       showToast(`Fichier Excel téléchargé (${exportList.length} points)`);
     }
 
@@ -1757,7 +1754,7 @@
 
       btnSelectAll.addEventListener('click', handleSelectAll);
       btnDeselectAll.addEventListener('click', handleDeselectAll);
-      btnExportFC.addEventListener('click', handleExportFC);
+      btnExportPlanification.addEventListener('click', handleExportPlanification);
       btnDownloadExcel.addEventListener('click', handleDownloadExcel);
       btnDownloadFullBDD.addEventListener('click', handleDownloadFullBDD);
 
