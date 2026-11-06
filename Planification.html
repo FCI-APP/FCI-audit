@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI - Planification de Mission (Barid Al-Maghrib)</title>
+    <title>FCI - Planification de la Mission de Contrôle (Barid Al-Maghrib)</title>
+    <!-- FontAwesome pour l'iconographie -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary-blue: #003366;
+            --blue-dark: #002244;
             --accent-gold: #EAAA00;
+            --accent-gold-hover: #D49900;
             --bg-light: #F4F6F9;
             --text-dark: #2C3E50;
             --white: #FFFFFF;
@@ -50,21 +53,32 @@
             padding: 20px 15px;
             text-align: center;
             border-bottom: 2px solid var(--accent-gold);
-            background-color: rgba(0,0,0,0.1);
+            background-color: var(--blue-dark);
         }
 
         .sidebar-brand h2 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: 1px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
             color: var(--white);
+            text-transform: uppercase;
         }
 
-        .sidebar-brand span {
+        .sidebar-brand .sub-title {
             color: var(--accent-gold);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 700;
             display: block;
             margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-brand .division-title {
+            color: #FFFFFF;
+            font-size: 0.7rem;
+            opacity: 0.85;
+            display: block;
+            margin-top: 2px;
             text-transform: uppercase;
         }
 
@@ -81,8 +95,9 @@
             color: rgba(255,255,255,0.85);
             text-decoration: none;
             font-size: 0.95rem;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             border-left: 4px solid transparent;
+            cursor: pointer;
         }
 
         .sidebar-menu li a:hover {
@@ -108,7 +123,8 @@
             font-size: 0.75rem;
             text-align: center;
             border-top: 1px solid rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.6);
+            background-color: rgba(0, 34, 68, 0.4);
         }
 
         /* --- MAIN CONTENT --- */
@@ -162,7 +178,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }
 
@@ -191,46 +207,124 @@
             box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
         }
 
+        /* --- KPIS ROW (PROCESSUS, RISQUES, CONTROLES, PC) --- */
         .kpi-row {
-            display: flex;
-            gap: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             margin-bottom: 25px;
         }
 
         .kpi-card {
-            flex: 1;
             background: var(--white);
-            padding: 15px 20px;
+            padding: 15px 18px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
             border: 1px solid var(--border-color);
         }
 
         .kpi-icon {
-            width: 45px;
-            height: 45px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             background: rgba(0, 51, 102, 0.08);
             color: var(--primary-blue);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+            flex-shrink: 0;
         }
 
         .kpi-info h3 {
             font-size: 1.3rem;
             color: var(--primary-blue);
+            line-height: 1.1;
         }
 
         .kpi-info p {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             color: #666;
+            margin-top: 3px;
         }
 
+        /* --- TOOLBAR --- */
+        .toolbar {
+            background: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-gold);
+            color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-gold-hover);
+        }
+
+        .btn-secondary {
+            background-color: #FFFFFF;
+            color: #4B5563;
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #F8FAFC;
+        }
+
+        .btn-danger-outline {
+            background-color: #FFFFFF;
+            color: var(--danger);
+            border-color: #FCA5A5;
+        }
+
+        .btn-danger-outline:hover {
+            background-color: #FEF2F2;
+        }
+
+        .btn-excel {
+            background-color: #ECFDF5;
+            color: #065F46;
+            border-color: #A7F3D0;
+        }
+
+        .btn-excel:hover {
+            background-color: #D1FAE5;
+        }
+
+        /* --- PROCESSUS GROUPS & TABLES --- */
         .processus-block {
             background: var(--white);
             border-radius: 8px;
@@ -250,7 +344,7 @@
         }
 
         .processus-header h3 {
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -311,46 +405,6 @@
             background-color: rgba(231, 76, 60, 0.1);
         }
 
-        .action-bar {
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid var(--border-color);
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-gold);
-            color: var(--primary-blue);
-        }
-
-        .btn-primary:hover {
-            background-color: #d49b00;
-        }
-
-        .btn-secondary {
-            background-color: #E0E6ED;
-            color: var(--text-dark);
-        }
-
-        .btn-secondary:hover {
-            background-color: #D0D7DE;
-        }
-
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -374,18 +428,29 @@
             color: #64748B;
             font-size: 0.9rem;
         }
+
+        .action-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-brand">
             <h2>BARID AL-MAGHRIB</h2>
-            <span>Audit & Contrôle Permanent</span>
+            <span class="sub-title">DIRECTION CONTRÔLE GÉNÉRALE</span>
+            <span class="division-title">DIVISION CONTRÔLE PERMANENT</span>
         </div>
         <ul class="sidebar-menu">
             <li>
-                <a href="Referentiel.html"><i class="fa-solid fa-book"></i> 1. Référentiel</a>
+                <a href="index.html"><i class="fa-solid fa-book"></i> 1. Référentiel</a>
             </li>
             <li class="active">
                 <a href="Planification.html"><i class="fa-solid fa-calendar-check"></i> 2. Planification</a>
@@ -399,34 +464,52 @@
         </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="main-content">
+        
         <header class="top-header">
             <div>
-                <h1>Planification de la Mission d'Audit</h1>
-                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et paramétrage du contrôle</p>
+                <h1>Planification de la mission de contrôle</h1>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et paramétrage des échantillons</p>
             </div>
         </header>
 
+        <!-- CELLULES STATISTIQUES / KPIS -->
         <div class="kpi-row">
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
                 <div class="kpi-info">
                     <h3 id="kpi-proc-count">0</h3>
-                    <p>Processus ciblés</p>
+                    <p>Processus visés</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="kpi-info">
+                    <h3 id="kpi-risque-count">0</h3>
+                    <p>Risques identifiés</p>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="kpi-info">
+                    <h3 id="kpi-controle-count">0</h3>
+                    <p>Contrôles associés</p>
                 </div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
                 <div class="kpi-info">
                     <h3 id="kpi-pc-count">0</h3>
-                    <p>Points de contrôle retenus</p>
+                    <p>Points de contrôle</p>
                 </div>
             </div>
         </div>
 
+        <!-- FORMULAIRE DE MISSION (PERIODE DE CONTROLE DU SIEGE) -->
         <section class="card">
             <div class="card-title">
-                <i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission
+                <i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle
             </div>
             <div class="form-grid">
                 <div class="form-group">
@@ -438,26 +521,55 @@
                     <input type="text" id="audit-ref" placeholder="Ex: AUD-2026-089">
                 </div>
                 <div class="form-group">
-                    <label for="audit-date">Date du Contrôle *</label>
-                    <input type="date" id="audit-date">
+                    <label for="audit-date-debut">Début de la période du contrôle *</label>
+                    <input type="date" id="audit-date-debut">
                 </div>
                 <div class="form-group">
+                    <label for="audit-date-fin">Fin de la période du contrôle *</label>
+                    <input type="date" id="audit-date-fin">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
                     <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                    <input type="text" id="audit-controleurs" placeholder="Ex: A. Ismail">
+                    <input type="text" id="audit-controleurs" placeholder="Ex: A. Ismail / M. Tahiri">
                 </div>
             </div>
         </section>
 
-        <section id="planification-container"></section>
+        <!-- BARRE D'ACTIONS ET OUTILS -->
+        <div class="toolbar">
+            <div class="toolbar-group">
+                <button class="btn btn-secondary" onclick="selectAllPoints()" title="Conserver tous les points">
+                    <i class="fa-solid fa-square-check"></i> Sélectionner tout
+                </button>
+                <button class="btn btn-secondary" onclick="deselectAllPoints()" title="Décocher les points">
+                    <i class="fa-solid fa-square"></i> Désélectionner tout
+                </button>
+                <button class="btn btn-danger-outline" onclick="viderPlanification()" title="Réinitialiser la planification">
+                    <i class="fa-solid fa-rotate-left"></i> Vider
+                </button>
+            </div>
+            <div class="toolbar-group">
+                <button class="btn btn-excel" onclick="exportToExcel()" title="Exporter la grille en Excel">
+                    <i class="fa-solid fa-file-excel"></i> Télécharger format Excel
+                </button>
+            </div>
+        </div>
 
+        <!-- CONTENEUR DES PROCESSUS & POINTS DE CONTROLE -->
+        <section id="planification-container">
+            <!-- Injecté dynamiquement par JavaScript -->
+        </section>
+
+        <!-- ACTION BAR -->
         <div class="action-bar">
-            <button class="btn btn-secondary" onclick="window.location.href='Referentiel.html'">
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">
                 <i class="fa-solid fa-arrow-left"></i> Ajuster le Référentiel
             </button>
             <button class="btn btn-primary" onclick="lancerFicheControle()">
                 <i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle
             </button>
         </div>
+
     </main>
 
     <script>
@@ -470,7 +582,8 @@
 
         function initFormDefaults() {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('audit-date').value = today;
+            document.getElementById('audit-date-debut').value = today;
+            document.getElementById('audit-date-fin').value = today;
         }
 
         function loadPlanificationData() {
@@ -498,10 +611,11 @@
                         <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer dans cette mission.</p>
                     </div>
                 `;
-                updateKPIs(0, 0);
+                updateKPIs(0, 0, 0, 0);
                 return;
             }
 
+            // Groupement des données
             const groupedData = selectedData.reduce((acc, item) => {
                 const proc = item["Processus"] || "Processus Non Spécifié";
                 if (!acc[proc]) acc[proc] = [];
@@ -510,8 +624,14 @@
             }, {});
 
             const processusKeys = Object.keys(groupedData);
-            updateKPIs(processusKeys.length, selectedData.length);
 
+            // Calcul des métriques KPI
+            const risquesSet = new Set(selectedData.map(i => i["Intitulé du risque"]));
+            const controlesSet = new Set(selectedData.map(i => i["Intitulé Contrôle"]));
+
+            updateKPIs(processusKeys.length, risquesSet.size, controlesSet.size, selectedData.length);
+
+            // Rendu de chaque bloc de processus
             processusKeys.forEach(procName => {
                 const items = groupedData[procName];
                 const procBlock = document.createElement('div');
@@ -541,7 +661,7 @@
 
                 procBlock.innerHTML = `
                     <div class="processus-header">
-                        <h3><i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length})</h3>
+                        <h3><i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)</h3>
                         <button class="btn-delete-proc" onclick="removeProcessus('${escapeJsString(procName)}')">
                             <i class="fa-solid fa-trash"></i> Retirer le Processus
                         </button>
@@ -566,8 +686,10 @@
             });
         }
 
-        function updateKPIs(procCount, pcCount) {
+        function updateKPIs(procCount, risqueCount, controleCount, pcCount) {
             document.getElementById('kpi-proc-count').innerText = procCount;
+            document.getElementById('kpi-risque-count').innerText = risqueCount;
+            document.getElementById('kpi-controle-count').innerText = controleCount;
             document.getElementById('kpi-pc-count').innerText = pcCount;
         }
 
@@ -585,19 +707,66 @@
             }
         }
 
+        function viderPlanification() {
+            if (confirm("Voulez-vous vraiment vider toute la planification en cours ?")) {
+                selectedData = [];
+                saveAndRefresh();
+            }
+        }
+
+        function selectAllPoints() {
+            loadPlanificationData();
+        }
+
+        function deselectAllPoints() {
+            viderPlanification();
+        }
+
         function saveAndRefresh() {
             localStorage.setItem('fci_planification_pc', JSON.stringify(selectedData));
             renderPlanification();
         }
 
+        function exportToExcel() {
+            if (!selectedData || selectedData.length === 0) {
+                alert("Aucune donnée à exporter.");
+                return;
+            }
+
+            const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
+            const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+
+            const rows = [
+                headers.map(h => `"${h}"`).join(';'),
+                ...selectedData.map(item => [
+                    escapeCSV(item['Processus']),
+                    escapeCSV(item['Intitulé du risque']),
+                    escapeCSV(item['Intitulé Contrôle']),
+                    escapeCSV(item['Points de contrôle'])
+                ].join(';'))
+            ];
+
+            const csvContent = '\uFEFF' + rows.join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Planification_Mission_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
         function lancerFicheControle() {
             const entite = document.getElementById('audit-entite').value.trim();
             const ref = document.getElementById('audit-ref').value.trim();
-            const date = document.getElementById('audit-date').value;
+            const dateDebut = document.getElementById('audit-date-debut').value;
+            const dateFin = document.getElementById('audit-date-fin').value;
             const controleurs = document.getElementById('audit-controleurs').value.trim();
 
-            if (!entite || !ref || !controleurs || !date) {
-                alert("Veuillez remplir l'ensemble des informations générales de la mission (Entité, Référence, Date, Contrôleurs) avant de continuer.");
+            if (!entite || !ref || !controleurs || !dateDebut || !dateFin) {
+                alert("Veuillez remplir l'ensemble des informations de la mission (Entité, Référence, Période de contrôle, Contrôleurs) avant de continuer.");
                 return;
             }
 
@@ -610,7 +779,8 @@
                 metadata: {
                     entite: entite,
                     reference: ref,
-                    dateControle: date,
+                    dateDebutControle: dateDebut,
+                    dateFinControle: dateFin,
                     controleurs: controleurs,
                     createdAt: new Date().toISOString()
                 },
@@ -624,11 +794,11 @@
         function escapeHtml(str) {
             if (!str) return '';
             return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         function escapeJsString(str) {
