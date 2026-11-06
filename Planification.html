@@ -560,7 +560,7 @@
                 <button class="btn btn-secondary" onclick="deselectAllPoints()" title="Décocher tous les points">
                     <i class="fa-solid fa-square"></i> Désélectionner tout
                 </button>
-                <button class="btn btn-danger-outline" onclick="viderPlanification()" title="Réinitialiser toute la grille">
+                <button class="btn btn-danger-outline" onclick="viderPlanification()" title="Réinitialiser toute la grille sans confirmation">
                     <i class="fa-solid fa-rotate-left"></i> Vider
                 </button>
             </div>
@@ -767,6 +767,7 @@
             }
         }
 
+        /* --- SUPPRESSION IMMÉDIATE SANS CONFIRMATION --- */
         function removeProcessus(procName) {
             selectedData = selectedData.filter(item => {
                 if (item["Processus"] === procName) {
@@ -778,7 +779,7 @@
             saveAndRefresh();
         }
 
-        /* --- FONCTION VIDER DIRECTE SANS MESSAGE --- */
+        /* --- VIDAGE IMMÉDIAT SANS CONFIRMATION --- */
         function viderPlanification() {
             selectedData = [];
             checkedKeys.clear();
