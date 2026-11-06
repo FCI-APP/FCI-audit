@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FCI - BARID AL MAGHREB | Feuille 1 : Référentiel de contrôle</title>
-  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel de contrôle permanent BARID AL MAGHREB">
+  <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
+  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel de contrôle permanent BARID AL-MAGHRIB">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     /* ========================================================
-       CHARTE GRAPHIQUE & DESIGN SYSTEM (BARID AL MAGHREB)
+       CHARTE GRAPHIQUE & DESIGN SYSTEM (BARID AL-MAGHRIB)
        ======================================================== */
     :root {
       --barid-blue: #003366;
@@ -70,85 +70,40 @@
       z-index: 100;
       border-right: 1px solid var(--barid-blue-dark);
       transition: transform 0.25s ease;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
     }
 
     .sidebar-header {
-      padding: 20px 16px;
-      background-color: var(--barid-blue-dark);
+      padding: 20px 15px;
+      text-align: center;
       border-bottom: 2px solid var(--barid-gold);
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background-color: var(--barid-blue-dark);
     }
 
-    .brand-logo-badge {
-      width: 42px;
-      height: 42px;
-      background: #FFFFFF;
-      border-radius: var(--radius-sm);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      flex-shrink: 0;
-      box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
-    }
-
-    .brand-logo-inner {
-      width: 36px;
-      height: 36px;
-      background: var(--barid-blue);
-      border-radius: 3px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .brand-logo-bam {
-      color: var(--barid-gold);
+    .sidebar-header h2 {
+      font-size: 1.1rem;
       font-weight: 800;
-      font-size: 11px;
-      line-height: 1;
-      letter-spacing: -0.5px;
-    }
-
-    .brand-logo-sub {
-      color: #FFFFFF;
-      font-size: 6px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .brand-logo-circle {
-      position: absolute;
-      bottom: -3px;
-      right: -3px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: var(--barid-gold);
-      opacity: 0.7;
-    }
-
-    .brand-title {
-      font-size: 12px;
-      font-weight: 800;
-      color: #FFFFFF;
-      line-height: 1.2;
-      text-transform: uppercase;
-    }
-
-    .brand-subtitle {
-      font-size: 9px;
-      color: var(--barid-gold);
-      font-weight: 600;
-      text-transform: uppercase;
       letter-spacing: 0.5px;
+      color: #FFFFFF;
+      text-transform: uppercase;
+    }
+
+    .sidebar-header .sub-title {
+      color: var(--barid-gold);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: block;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-header .division-title {
+      color: #FFFFFF;
+      font-size: 0.7rem;
+      opacity: 0.85;
+      display: block;
+      margin-top: 2px;
+      text-transform: uppercase;
     }
 
     .sidebar-nav-section-title {
@@ -193,8 +148,8 @@
     }
 
     .sidebar-link.active {
-      background: rgba(255, 255, 255, 0.12);
-      color: #FFFFFF;
+      background: rgba(234, 170, 0, 0.15);
+      color: var(--barid-gold);
       font-weight: 700;
       border-left: 4px solid var(--barid-gold);
       padding-left: 10px;
@@ -224,23 +179,12 @@
     }
 
     .sidebar-footer {
-      padding: 14px 16px;
-      background: rgba(0, 34, 68, 0.6);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 10px;
-    }
-
-    .sidebar-footer-user {
-      font-weight: 700;
-      color: #FFFFFF;
-      font-size: 11px;
-    }
-
-    .sidebar-footer-role {
-      color: var(--barid-gold);
-      font-weight: 600;
-      margin-top: 2px;
-      line-height: 1.3;
+      padding: 15px;
+      font-size: 0.75rem;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6);
+      background-color: rgba(0, 34, 68, 0.4);
     }
 
     /* ========================================================
@@ -870,22 +814,14 @@
 <body>
 
   <!-- ========================================================
-       1. MENU LATÉRAL (SIDEBAR - 250px)
+       1. MENU LATÉRAL (SIDEBAR - 250px) AVEC EN-TÊTE CONFORME
        ======================================================== -->
   <aside class="app-sidebar" id="appSidebar">
     <div>
       <div class="sidebar-header">
-        <div class="brand-logo-badge">
-          <div class="brand-logo-inner">
-            <span class="brand-logo-bam">BAM</span>
-            <span class="brand-logo-sub">POSTE</span>
-            <div class="brand-logo-circle"></div>
-          </div>
-        </div>
-        <div>
-          <div class="brand-title">BARID AL MAGHREB</div>
-          <div class="brand-subtitle">DIRECTION CONTRÔLE GÉNÉRALE</div>
-        </div>
+        <h2>BARID AL-MAGHRIB</h2>
+        <span class="sub-title">DIRECTION CONTRÔLE GÉNÉRALE</span>
+        <span class="division-title">DIVISION CONTRÔLE PERMANENT</span>
       </div>
 
       <div class="sidebar-nav-section-title">Navigation Feuilles</div>
@@ -918,8 +854,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <div class="sidebar-footer-user">Contrôleur</div>
-      <div class="sidebar-footer-role">DIVISION CONTRÔLE PERMANENT</div>
+      FCI v2.0 &copy; 2026 - Barid Al-Maghrib
     </div>
   </aside>
 
@@ -933,7 +868,7 @@
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
         <div class="main-header-title-group">
           <h1>Feuille 1 : Référentiel de contrôle</h1>
-          <p>Référentiel National — BARID AL MAGHREB | DIVISION CONTRÔLE PERMANENT</p>
+          <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
         </div>
       </div>
 
@@ -1429,7 +1364,7 @@
       const selectedProc = selectProcessus.value;
 
       if (!selectedProc) {
-        showToast('Veuillez sélectioner au moins un Processus.');
+        showToast('Veuillez sélectionner au moins un Processus.');
         return;
       }
 
@@ -1635,7 +1570,6 @@
         localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedObjects));
         showToast(`✓ Succès : ${selectedObjects.length} PC (${processusUniques} processus) exportés ! Redirection...`);
         
-        // Redirection vers la Feuille 2 après 1 seconde
         setTimeout(() => {
           window.location.href = 'Planification.html';
         }, 1000);
@@ -1703,7 +1637,7 @@
         showToast('La base de données n\'est pas encore chargée.');
         return;
       }
-      exportToCSV(referentielData, 'BDD_Referentiel_BARID_AL_MAGHREB');
+      exportToCSV(referentielData, 'BDD_Referentiel_BARID_AL_MAGHRIB');
       showToast(`Référentiel complet téléchargé (${referentielData.length} points)`);
     }
 
