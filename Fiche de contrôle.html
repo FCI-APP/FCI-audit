@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feuille de Contrôle Terrain - FCI v1.0</title>
+    <title>Référentiel de contrôle - FCI v1.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS pour l'export Excel -->
@@ -19,10 +19,6 @@
             --text-muted: #6C757D;
             --border-color: #E2E8F0;
             --sidebar-width: 250px;
-            
-            --status-cloture: #2E7D32;
-            --status-non-cloture: #C62828;
-            --status-en-cours: #F57C00;
         }
 
         * {
@@ -59,7 +55,7 @@
         }
 
         .sidebar-header h2 {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 700;
             color: #FFFFFF;
             display: flex;
@@ -69,9 +65,18 @@
 
         .sidebar-header h2 i { color: var(--accent); }
 
+        .sidebar-nav-title {
+            padding: 15px 20px 5px 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 700;
+        }
+
         .sidebar-nav {
             list-style: none;
-            padding: 20px 0;
+            padding: 10px 0;
             flex-grow: 1;
         }
 
@@ -80,14 +85,15 @@
             align-items: center;
             gap: 12px;
             padding: 14px 20px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.75);
             text-decoration: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.2s ease;
         }
 
-        .sidebar-nav li a:hover, .sidebar-nav li.active a {
+        .sidebar-nav li a:hover, 
+        .sidebar-nav li.active a {
             color: #FFFFFF;
             background-color: rgba(255, 255, 255, 0.1);
             border-left: 4px solid var(--accent);
@@ -109,35 +115,128 @@
             max-width: calc(100vw - var(--sidebar-width));
         }
 
-        .header-bar {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
         }
 
-        .header-title h1 {
-            font-size: 1.6rem;
+        .page-header h1 {
+            font-size: 1.5rem;
             color: var(--primary);
             font-weight: 700;
         }
 
-        .header-title p {
-            font-size: 0.9rem;
+        .page-header p {
+            font-size: 0.85rem;
             color: var(--text-muted);
         }
 
-        .action-buttons {
+        .status-badge {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #2E7D32;
+            border-radius: 50%;
+        }
+
+        /* FILTER CARD */
+        .filter-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .filter-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .filter-group select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.88rem;
+            outline: none;
+            background-color: #FFF;
+        }
+
+        .filter-group select:focus {
+            border-color: var(--primary);
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #F1F5F9;
+        }
+
+        .active-filter-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .active-filter-text strong {
+            color: var(--primary);
+        }
+
+        .btn-group-right {
             display: flex;
             gap: 10px;
         }
 
+        /* BUTTONS */
         .btn {
-            padding: 10px 18px;
+            padding: 9px 16px;
             border-radius: 6px;
             border: none;
             font-weight: 600;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -151,262 +250,126 @@
         .btn-accent:hover { opacity: 0.9; }
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: #E2E8F0; }
+        .btn-outline-primary { background-color: #EBF3FA; border: 1px solid #BEE3F8; color: var(--primary); }
+        .btn-outline-primary:hover { background-color: #D6E8F7; }
 
-        /* BANNIÈRE MÉTADONNÉES */
-        .meta-card {
-            background-color: var(--bg-card);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 25px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .meta-item span.label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .meta-item span.value {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        /* KPI DASHBOARD DE L'ENTITÉ */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .kpi-card {
+        /* DATA TABLE CARD */
+        .table-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .kpi-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.3rem;
-        }
-
-        .kpi-data h3 { font-size: 1.3rem; font-weight: 700; }
-        .kpi-data p { font-size: 0.8rem; color: var(--text-muted); }
-
-        /* PROCESS GROUP & CARDS */
-        .process-group {
-            margin-bottom: 25px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            background-color: var(--bg-card);
             overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
 
-        .process-header {
-            background-color: #F8FAFC;
+        .table-toolbar {
             padding: 15px 20px;
-            font-weight: 700;
-            color: var(--primary);
-            font-size: 1.05rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background-color: #FFF;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .process-header .badge {
-            background: var(--primary);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .control-item {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
+        .search-box {
+            position: relative;
         }
 
-        .control-item:last-child { border-bottom: none; }
+        .search-box input {
+            padding: 8px 12px 8px 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            width: 240px;
+            outline: none;
+        }
 
-        .control-header-info { margin-bottom: 15px; }
+        .search-box i {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
 
-        .control-risk {
-            font-size: 0.82rem;
-            color: #D97706;
+        .selection-count {
             background: #FEF3C7;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .control-title {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-main);
-            margin-bottom: 5px;
-        }
-
-        .control-desc {
-            font-size: 0.9rem;
-            color: #475569;
-            background-color: #F1F5F9;
-            padding: 10px 12px;
-            border-left: 3px solid var(--primary);
-            border-radius: 0 4px 4px 0;
-            margin-bottom: 15px;
-        }
-
-        /* FORM GRID DES PARAMÈTRES ET ÉVALUATION */
-        .eval-section {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 20px;
-            background: #FAFBFD;
-            padding: 15px;
+            color: #D97706;
+            padding: 6px 12px;
             border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-
-        .metrics-block {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-right: 1px solid var(--border-color);
-            padding-right: 15px;
-        }
-
-        .input-inline {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .input-inline label {
-            font-size: 0.75rem;
+            font-size: 0.82rem;
             font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
+            border: 1px solid #FDE68A;
         }
 
-        .input-inline input, .input-inline select {
-            padding: 8px 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.85rem;
-            outline: none;
-            background: white;
+        /* TABLE STYLES */
+        .table-container {
+            max-height: 550px;
+            overflow-y: auto;
         }
 
-        .input-inline input:focus, .input-inline select:focus {
-            border-color: var(--primary);
-        }
-
-        .rate-box {
-            background: #FFFFFF;
-            border: 1px dashed var(--primary);
-            padding: 10px;
-            border-radius: 6px;
-            text-align: center;
-            margin-top: 5px;
-        }
-
-        .rate-box span { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; display: block; }
-        .rate-box strong { font-size: 1.2rem; color: var(--primary); }
-
-        /* ÉTAT DU CONSTAT AVEC COULEURS */
-        .status-select {
-            font-weight: 700;
-            border-radius: 6px;
-            padding: 8px 10px;
-        }
-
-        .status-select option[value="CLOTURE"] { color: var(--status-cloture); font-weight: 700; }
-        .status-select option[value="NON_CLOTURE"] { color: var(--status-non-cloture); font-weight: 700; }
-        .status-select option[value="EN_COURS"] { color: var(--status-en-cours); font-weight: 700; }
-
-        .fields-block {
-            display: grid;
-            grid-template-columns: repeat( auto-fit, minmax(220px, 1fr) );
-            gap: 12px;
-        }
-
-        .field-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .field-group label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .field-group textarea {
+        table {
             width: 100%;
-            height: 90px;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 0.85rem;
-            resize: vertical;
-            outline: none;
-            background: white;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.88rem;
         }
 
-        .field-group textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
+        th {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            padding: 14px 16px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+
+        tr:hover {
+            background-color: #F8FAFC;
+        }
+
+        tr.selected-row {
+            background-color: #FEFCE8;
+        }
+
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
         }
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
+            padding: 50px 20px;
         }
 
         .empty-state i {
-            font-size: 3rem;
+            font-size: 2.5rem;
             color: var(--text-muted);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
-        /* STYLES IMPRESSION / PDF */
-        @media print {
-            .sidebar, .action-buttons { display: none !important; }
-            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
-            .process-group { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 15px; }
-            .field-group textarea, .input-inline input, .input-inline select { border: none; background: transparent; padding: 0; }
-            .eval-section { grid-template-columns: 1fr 1fr; background: white; }
+        .table-footer {
+            padding: 12px 20px;
+            background: #F8FAFC;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -416,368 +379,383 @@
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
-                <h2><i class="fa-solid fa-shield-halved"></i> Fiche de contrôle intelligente (FCI)</h2>
+                <h2><i class="fa-solid fa-shield-halved"></i> FCI v1.0</h2>
             </div>
+            
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            
             <ul class="sidebar-nav">
-                <li><a href="index.html"><i class="fa-solid fa-book"></i> Référentiel de contrôle</a></li>
-                <li><a href="Planification.html"><i class="fa-solid fa-calendar-check"></i> Planification</a></li>
-                <li class="active"><a href="FicheControle.html"><i class="fa-solid fa-clipboard-check"></i> Fiche de Contrôle</a></li>
+                <li class="active">
+                    <a href="index.html">
+                        <i class="fa-solid fa-book"></i>
+                        <span>1. Référentiel de contrôle</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Planification.html">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>2. Planification</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="FicheControle.html">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>3. Fiche de Contrôle (FC)</span>
+                    </a>
+                </li>
             </ul>
         </div>
         <div class="sidebar-footer">
-            FCI v1.0 © 2026 - 2027<br>Barid Al-Maghrib
+            FCI v1.0 © 2026 - 2027<br>BARID AL-MAGHRIB
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
         
-        <!-- HEADER BAR -->
-        <div class="header-bar">
-            <div class="header-title">
-                <h1>Fiche de Contrôle Intelligente - Saisie Terrain</h1>
-                <p>Évaluation des points de contrôle, calcul de conformité et avis de l'entité</p>
+        <!-- PAGE HEADER -->
+        <div class="page-header">
+            <div>
+                <h1>Feuille 1 : Référentiel de contrôle</h1>
+                <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
-            <div class="action-buttons">
-                <button class="btn btn-outline" onclick="sauvegarderLocalement()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
-                <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
-                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+            <div class="status-badge" id="bdd-status">
+                <div class="status-dot"></div> BDD à jour (<span id="total-pc-count">0</span> PC)
             </div>
         </div>
 
-        <!-- ZONE DE CONTENU DYNAMIQUE -->
-        <div id="content-area">
-            <!-- Contenu généré dynamiquement -->
+        <!-- FILTRAGE EN CASCADE -->
+        <div class="filter-card">
+            <div class="filter-title">
+                <i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique
+            </div>
+
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>1. Processus <span id="count-proc">0</span></label>
+                    <select id="select-processus" onchange="onProcessusChange()">
+                        <option value="">-- Sélectionner un Processus --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>2. Intitulé du risque <span id="count-risque">0</span></label>
+                    <select id="select-risque" onchange="onRisqueChange()" disabled>
+                        <option value="">-- Choisir d'abord un Processus --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>3. Intitulé contrôle <span id="count-controle">0</span></label>
+                    <select id="select-controle" onchange="onControleChange()" disabled>
+                        <option value="">-- Choisir d'abord un Risque --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="filter-actions">
+                <div class="active-filter-text">
+                    Filtre actif : <strong id="filter-status-desc">Aucun processus sélectionné</strong>
+                </div>
+                <div class="btn-group-right">
+                    <button class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                    <button class="btn btn-primary" onclick="appliquerFiltre()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC (<span id="btn-count">0</span> PC)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLEAU DE DONNÉES -->
+        <div class="table-card">
+            <div class="table-toolbar">
+                <div class="toolbar-left">
+                    <button class="btn btn-outline" onclick="selectionnerTout()"><i class="fa-regular fa-square-check"></i> Sélectionner</button>
+                    <button class="btn btn-outline" onclick="deselectionnerTout()"><i class="fa-regular fa-square"></i> Désélectionner</button>
+                    <div class="selection-count">
+                        <span id="selected-count">0</span> points sélectionnés
+                    </div>
+                </div>
+
+                <div class="toolbar-right">
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="search-input" placeholder="Filtrer dans les résultats..." onkeyup="filtrerRechercheTexte()">
+                    </div>
+                    <button class="btn btn-outline-primary" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+                    <button class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="checkbox-cell">
+                                <input type="checkbox" id="master-checkbox" onchange="toggleMasterCheckbox(this)">
+                            </th>
+                            <th>PROCESSUS</th>
+                            <th>INTITULÉ DU RISQUE</th>
+                            <th>INTITULÉ CONTRÔLE</th>
+                            <th>POINTS DE CONTRÔLE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Les données seront injectées dynamiquement -->
+                    </tbody>
+                </table>
+                <div id="empty-state" class="empty-state">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                    <h3>Aucun point de contrôle affiché</h3>
+                    <p>Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur le bouton [Afficher PC].</p>
+                </div>
+            </div>
+
+            <div class="table-footer">
+                <div><span id="rendered-count">0</span> point(s) de contrôle affiché(s)</div>
+                <div><span id="selected-footer-count">0</span> sélectionné(s) pour la Planification</div>
+            </div>
         </div>
 
     </main>
 
     <script>
-        let missionData = null;
+        let bddData = [];
+        let filteredData = [];
+        let selectedPoints = new Set();
 
         document.addEventListener('DOMContentLoaded', () => {
-            chargerDonneesMission();
+            chargerBDD();
         });
 
-        function chargerDonneesMission() {
-            const dataRaw = localStorage.getItem('fci_fiche_controle_active');
-            const contentArea = document.getElementById('content-area');
+        // Chargement du référentiel JSON
+        async function chargerBDD() {
+            try {
+                const response = await fetch('referentiel.json');
+                bddData = await response.json();
+                
+                document.getElementById('total-pc-count').textContent = bddData.length;
+                document.getElementById('btn-count').textContent = bddData.length;
+                
+                initialiserFiltres();
+            } catch (err) {
+                console.error("Erreur lors du chargement de referentiel.json :", err);
+            }
+        }
 
-            if (!dataRaw) {
-                contentArea.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <h3>Aucune mission active trouvée</h3>
-                        <p>Veuillez d'abord planifier une mission dans l'onglet Planification.</p>
-                        <br>
-                        <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
-                    </div>
-                `;
+        function initialiserFiltres() {
+            const selectProc = document.getElementById('select-processus');
+            selectProc.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
+            
+            const processusUniques = [...new Set(bddData.map(item => item.Processus))].filter(Boolean).sort();
+            document.getElementById('count-proc').textContent = processusUniques.length;
+
+            processusUniques.forEach(proc => {
+                const opt = document.createElement('option');
+                opt.value = proc;
+                opt.textContent = proc;
+                selectProc.appendChild(opt);
+            });
+        }
+
+        function onProcessusChange() {
+            const proc = document.getElementById('select-processus').value;
+            const selectRisque = document.getElementById('select-risque');
+            const selectControle = document.getElementById('select-controle');
+
+            selectRisque.innerHTML = '<option value="">-- Sélectionner un Risque --</option>';
+            selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
+            selectControle.disabled = true;
+
+            if (!proc) {
+                selectRisque.disabled = true;
+                document.getElementById('count-risque').textContent = "0";
+                document.getElementById('count-controle').textContent = "0";
+                document.getElementById('filter-status-desc').textContent = "Aucun processus sélectionné";
+                document.getElementById('btn-count').textContent = bddData.length;
                 return;
             }
 
-            missionData = JSON.parse(dataRaw);
+            selectRisque.disabled = false;
+            const itemsProc = bddData.filter(d => d.Processus === proc);
+            const risquesUniques = [...new Set(itemsProc.map(d => d['Intitulé du risque']))].filter(Boolean).sort();
             
-            // Initialisation des champs d'évaluation détaillés s'ils n'existent pas encore
-            missionData.pointsControle.forEach((item) => {
-                if (!item.eval) {
-                    item.eval = {
-                        population: 0,
-                        echantillon: 0,
-                        nombreOk: 0,
-                        nombreKo: 0,
-                        tauxConformite: 0,
-                        statutConstat: 'EN_COURS', // CLOTURE, NON_CLOTURE, EN_COURS
-                        constat: '',
-                        recommandation: '',
-                        avisResponsable: ''
-                    };
-                }
-            });
+            document.getElementById('count-risque').textContent = risquesUniques.length;
+            document.getElementById('count-controle').textContent = "0";
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc}`;
+            document.getElementById('btn-count').textContent = itemsProc.length;
 
-            renderPage();
+            risquesUniques.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                selectRisque.appendChild(opt);
+            });
         }
 
-        function renderPage() {
-            const contentArea = document.getElementById('content-area');
-            const meta = missionData.metadata || {};
-            const points = missionData.pointsControle || [];
+        function onRisqueChange() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const selectControle = document.getElementById('select-controle');
 
-            // Regroupement par Processus
-            const parProcessus = {};
-            points.forEach(p => {
-                const proc = p.Processus || "Processus Non Spécifié";
-                if (!parProcessus[proc]) parProcessus[proc] = [];
-                parProcessus[proc].push(p);
-            });
+            selectControle.innerHTML = '<option value="">-- Sélectionner un Contrôle --</option>';
 
-            // Calculs des KPIs Globaux et du Taux de Conformité Moyen du Centre
-            let totalTaux = 0;
-            let nbPointsEvalues = 0;
-            let countCloture = 0;
-            let countNonCloture = 0;
-            let countEnCours = 0;
-
-            points.forEach(p => {
-                if (p.eval.echantillon > 0) {
-                    totalTaux += parseFloat(p.eval.tauxConformite || 0);
-                    nbPointsEvalues++;
-                }
-                if (p.eval.statutConstat === 'CLOTURE') countCloture++;
-                else if (p.eval.statutConstat === 'NON_CLOTURE') countNonCloture++;
-                else countEnCours++;
-            });
-
-            const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
-
-            // Diagnostic du niveau du centre selon le taux moyen
-            let niveauCentreLabel = "Non évalué";
-            let niveauStyle = "color: var(--text-muted);";
-
-            if (nbPointsEvalues > 0) {
-                const tx = parseFloat(tauxConformiteMoyen);
-                if (tx >= 90) {
-                    niveauCentreLabel = "Maîtrisé (Niveau Élevé)";
-                    niveauStyle = "color: #2E7D32;";
-                } else if (tx >= 70) {
-                    niveauCentreLabel = "Moyennement Maîtrisé";
-                    niveauStyle = "color: #F57C00;";
-                } else {
-                    niveauCentreLabel = "Critique / À Risque";
-                    niveauStyle = "color: #C62828;";
-                }
+            if (!risque) {
+                selectControle.disabled = true;
+                document.getElementById('count-controle').textContent = "0";
+                const itemsProc = bddData.filter(d => d.Processus === proc);
+                document.getElementById('btn-count').textContent = itemsProc.length;
+                return;
             }
 
-            let html = `
-                <!-- METADATA CARD (Rappel du contexte complet) -->
-                <div class="meta-card">
-                    <div class="meta-item">
-                        <span class="label">Date de la mission</span>
-                        <span class="value">${meta.dateDebutControle || 'N/A'} au ${meta.dateFinControle || 'N/A'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">Entité contrôlée</span>
-                        <span class="value">${meta.entite || 'N/A'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">Contrôle réalisé par</span>
-                        <span class="value">${meta.controleurs || 'N/A'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">Type de contrôle</span>
-                        <span class="value">${meta.typeControle || 'N/A'}</span>
-                    </div>
-                </div>
+            selectControle.disabled = false;
+            const itemsRisque = bddData.filter(d => d.Processus === proc && d['Intitulé du risque'] === risque);
+            const controlesUniques = [...new Set(itemsRisque.map(d => d['Intitulé Contrôle']))].filter(Boolean).sort();
 
-                <!-- DASHBOARD KPI : TAUX MOYEN DU CENTRE ET STATUTS -->
-                <div class="kpi-grid">
-                    <div class="kpi-card" style="border-left: 4px solid var(--primary);">
-                        <div class="kpi-icon" style="background:#E3F2FD; color:var(--primary);"><i class="fa-solid fa-chart-line"></i></div>
-                        <div class="kpi-data">
-                            <h3>${tauxConformiteMoyen} %</h3>
-                            <p>Taux Conformité Moyen</p>
-                        </div>
-                    </div>
+            document.getElementById('count-controle').textContent = controlesUniques.length;
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc} > Risque : ${risque}`;
+            document.getElementById('btn-count').textContent = itemsRisque.length;
 
-                    <div class="kpi-card" style="border-left: 4px solid var(--accent);">
-                        <div class="kpi-icon" style="background:#FEF3C7; color:#D97706;"><i class="fa-solid fa-award"></i></div>
-                        <div class="kpi-data">
-                            <h3 style="${niveauStyle}">${niveauCentreLabel}</h3>
-                            <p>Niveau global de l'Entité</p>
-                        </div>
-                    </div>
+            controlesUniques.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                selectControle.appendChild(opt);
+            });
+        }
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#E8F5E9; color:var(--status-cloture);"><i class="fa-solid fa-check-circle"></i></div>
-                        <div class="kpi-data">
-                            <h3>${countCloture}</h3>
-                            <p>Constats Clôturés</p>
-                        </div>
-                    </div>
+        function onControleChange() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-cloture);"><i class="fa-solid fa-circle-xmark"></i></div>
-                        <div class="kpi-data">
-                            <h3>${countNonCloture}</h3>
-                            <p>Constats Non Clôturés</p>
-                        </div>
-                    </div>
+            let items = bddData.filter(d => d.Processus === proc && d['Intitulé du risque'] === risque);
+            if (controle) {
+                items = items.filter(d => d['Intitulé Contrôle'] === controle);
+                document.getElementById('filter-status-desc').textContent = `Processus : ${proc} > Risque : ${risque} > Contrôle : ${controle}`;
+            }
+            document.getElementById('btn-count').textContent = items.length;
+        }
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#FFF3E0; color:var(--status-en-cours);"><i class="fa-solid fa-spinner"></i></div>
-                        <div class="kpi-data">
-                            <h3>${countEnCours}</h3>
-                            <p>Constats en cours de clôture</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+        function reinitialiserFiltres() {
+            document.getElementById('select-processus').value = "";
+            onProcessusChange();
+            filteredData = [];
+            afficherTableau();
+        }
 
-            // RENDU DES GROUPES DE PROCESSUS
-            for (const [proc, items] of Object.entries(parProcessus)) {
-                html += `
-                    <div class="process-group">
-                        <div class="process-header">
-                            <span><i class="fa-solid fa-diagram-project"></i> Processus : ${proc}</span>
-                            <span class="badge">${items.length} Point(s) de contrôle</span>
-                        </div>
+        function appliquerFiltre() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
+
+            filteredData = bddData.filter(item => {
+                if (proc && item.Processus !== proc) return false;
+                if (risque && item['Intitulé du risque'] !== risque) return false;
+                if (controle && item['Intitulé Contrôle'] !== controle) return false;
+                return true;
+            });
+
+            afficherTableau();
+        }
+
+        function afficherTableau() {
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('rendered-count').textContent = '0';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            document.getElementById('rendered-count').textContent = filteredData.length;
+
+            filteredData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const isSelected = selectedPoints.has(JSON.stringify(item));
+                if (isSelected) tr.classList.add('selected-row');
+
+                tr.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectPoint(${index}, this)">
+                    </td>
+                    <td><strong>${item.Processus || ''}</strong></td>
+                    <td>${item['Intitulé du risque'] || ''}</td>
+                    <td>${item['Intitulé Contrôle'] || ''}</td>
+                    <td>${item['Points de contrôle'] || ''}</td>
                 `;
+                tbody.appendChild(tr);
+            });
 
-                items.forEach((item) => {
-                    const idx = points.indexOf(item);
-                    const evalData = item.eval;
-
-                    // Couleur dynamique pour le select du statut de constat
-                    let selectBgColor = "#FFF3E0";
-                    let selectTxtColor = "var(--status-en-cours)";
-                    if (evalData.statutConstat === 'CLOTURE') {
-                        selectBgColor = "#E8F5E9";
-                        selectTxtColor = "var(--status-cloture)";
-                    } else if (evalData.statutConstat === 'NON_CLOTURE') {
-                        selectBgColor = "#FFEBEE";
-                        selectTxtColor = "var(--status-non-cloture)";
-                    }
-
-                    html += `
-                        <div class="control-item">
-                            <div class="control-header-info">
-                                <span class="control-risk"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${item['Intitulé du risque'] || 'N/A'}</span>
-                                <div class="control-title"><strong>Contrôle :</strong> ${item['Intitulé Contrôle'] || 'Contrôle'}</div>
-                                <div class="control-desc"><strong>Point de contrôle (PC) :</strong> ${item['Points de contrôle']}</div>
-                            </div>
-
-                            <div class="eval-section">
-                                <!-- BLOC MESURES DE L'ÉCHANTILLON ET CONFORMITÉ -->
-                                <div class="metrics-block">
-                                    <div class="input-inline">
-                                        <label>Statut du constat</label>
-                                        <select class="status-select" style="background-color:${selectBgColor}; color:${selectTxtColor};" onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
-                                            <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Constat clôturé</option>
-                                            <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Constat non clôturé</option>
-                                            <option value="EN_COURS" ${evalData.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 Constat en cours de clôture</option>
-                                        </select>
-                                    </div>
-
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline">
-                                            <label>Population</label>
-                                            <input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)">
-                                        </div>
-                                        <div class="input-inline">
-                                            <label>Échantillon</label>
-                                            <input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)">
-                                        </div>
-                                    </div>
-
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline">
-                                            <label>Nombre (OK)</label>
-                                            <input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)">
-                                        </div>
-                                        <div class="input-inline">
-                                            <label>Nombre (KO)</label>
-                                            <input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;">
-                                        </div>
-                                    </div>
-
-                                    <div class="rate-box">
-                                        <span>Taux de conformité</span>
-                                        <strong>${evalData.tauxConformite} %</strong>
-                                    </div>
-                                </div>
-
-                                <!-- BLOC TEXTUEL : CONSTAT, RECOMMANDATION, AVIS -->
-                                <div class="fields-block">
-                                    <div class="field-group">
-                                        <label><i class="fa-solid fa-pen-to-square"></i> Constat</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Détails du constat terrain...">${evalData.constat}</textarea>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label><i class="fa-solid fa-lightbulb"></i> Recommandation</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations et plan d'action...">${evalData.recommandation}</textarea>
-                                    </div>
-
-                                    <div class="field-group">
-                                        <label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable Entité</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis et commentaires de l'entité contrôlée...">${evalData.avisResponsable}</textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `</div>`;
-            }
-
-            contentArea.innerHTML = html;
+            mettreAJourCompteurSelection();
         }
 
-        // Calcul dynamique pour Taux de conformité = Nombre (OK) / Échantillon et Nombre (KO) = Échantillon - Nombre (OK)
-        function mettreAJourCalcul(index, champ, valeur) {
-            const ev = missionData.pointsControle[index].eval;
+        function toggleSelectPoint(index, cb) {
+            const itemStr = JSON.stringify(filteredData[index]);
+            if (cb.checked) {
+                selectedPoints.add(itemStr);
+                cb.closest('tr').classList.add('selected-row');
+            } else {
+                selectedPoints.delete(itemStr);
+                cb.closest('tr').classList.remove('selected-row');
+            }
+            mettreAJourCompteurSelection();
+        }
+
+        function selectionnerTout() {
+            filteredData.forEach(item => selectedPoints.add(JSON.stringify(item)));
+            afficherTableau();
+        }
+
+        function deselectionnerTout() {
+            filteredData.forEach(item => selectedPoints.delete(JSON.stringify(item)));
+            afficherTableau();
+        }
+
+        function toggleMasterCheckbox(masterCb) {
+            if (masterCb.checked) selectionnerTout();
+            else deselectionnerTout();
+        }
+
+        function mettreAJourCompteurSelection() {
+            const count = selectedPoints.size;
+            document.getElementById('selected-count').textContent = count;
+            document.getElementById('selected-footer-count').textContent = count;
+        }
+
+        function filtrerRechercheTexte() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const rows = document.querySelectorAll('#table-body tr');
             
-            if (champ === 'statutConstat') {
-                ev.statutConstat = valeur;
-            } else {
-                ev[champ] = parseFloat(valeur) || 0;
-            }
-
-            // Calcul du Nombre KO et du Taux de conformité
-            if (ev.echantillon > 0) {
-                if (ev.nombreOk > ev.echantillon) ev.nombreOk = ev.echantillon;
-                ev.nombreKo = Math.max(0, ev.echantillon - ev.nombreOk);
-                ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
-            } else {
-                ev.nombreKo = 0;
-                ev.tauxConformite = "0.00";
-            }
-
-            sauvegarderLocalement(false);
-            renderPage();
-        }
-
-        function mettreAJourChamp(index, champ, valeur) {
-            missionData.pointsControle[index].eval[champ] = valeur;
-            sauvegarderLocalement(false);
-        }
-
-        function sauvegarderLocalement(afficherNotif = true) {
-            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
-            if (afficherNotif) alert('Feuille de contrôle enregistrée avec succès.');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
         }
 
         function exporterExcel() {
-            if (!missionData || !missionData.pointsControle) return;
+            if (selectedPoints.size === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle à exporter.");
+                return;
+            }
 
-            const rows = missionData.pointsControle.map(p => ({
-                "Date Début": missionData.metadata.dateDebutControle,
-                "Date Fin": missionData.metadata.dateFinControle,
-                "Entité Contrôlée": missionData.metadata.entite,
-                "Contrôle réalisé par": missionData.metadata.controleurs,
-                "Type de Contrôle": missionData.metadata.typeControle,
-                "Processus": p.Processus,
-                "Risque": p['Intitulé du risque'],
-                "Contrôle": p['Intitulé Contrôle'],
-                "PC (Point de Contrôle)": p['Points de contrôle'],
-                "Population": p.eval.population,
-                "Échantillon": p.eval.echantillon,
-                "Nombre (OK)": p.eval.nombreOk,
-                "Nombre (KO)": p.eval.nombreKo,
-                "Taux de conformité (%)": p.eval.tauxConformite,
-                "Statut Constat": p.eval.statutConstat,
-                "Constat": p.eval.constat,
-                "Recommandation": p.eval.recommandation,
-                "Avis de Responsable Entité": p.eval.avisResponsable
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const dataToExport = Array.from(selectedPoints).map(item => JSON.parse(item));
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche de Contrôle");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Points de Contrôle");
+            XLSX.writeFile(workbook, "FCI_Points_Controle_Selectionnes.xlsx");
+        }
 
-            const entiteName = (missionData.metadata && missionData.metadata.entite) ? missionData.metadata.entite.replace(/[^a-z0-9]/gi, '_') : 'Centre';
-            XLSX.writeFile(workbook, `FCI_FicheControle_${entiteName}.xlsx`);
+        function redirigerVersPlanification() {
+            if (selectedPoints.size === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle avant de passer à la Planification.");
+                return;
+            }
+
+            const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
+            localStorage.setItem('fci_selected_points', JSON.stringify(dataToSave));
+            window.location.href = "Planification.html";
         }
     </script>
 </body>
