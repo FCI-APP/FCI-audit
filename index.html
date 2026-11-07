@@ -52,7 +52,6 @@
 
         .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
         .badge-active { background: var(--accent); color: var(--primary-dark); }
-        .badge-muted { background: rgba(255,255,255,0.2); color: #FFF; }
 
         .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
 
@@ -127,7 +126,7 @@
                 <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
             <div class="btn-group">
-                <span class="selection-count" id="bdd-status">BDD à jour (<span id="total-pc-count">0</span> PC)</span>
+                <span class="selection-count" id="bdd-status">Chargement BDD...</span>
             </div>
         </div>
 
@@ -211,15 +210,31 @@
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
         async function chargerBDD() {
+            const statusBadge = document.getElementById('bdd-status');
             try {
-                const response = await fetch('referentiel.json');
+                const response = await fetch('./referentiel.json');
+                if (!response.ok) {
+                    throw new Error(`Statut HTTP ${response.status}`);
+                }
                 bddData = await response.json();
-                document.getElementById('total-pc-count').textContent = bddData.length;
+
+                if (!Array.isArray(bddData) || bddData.length === 0) {
+                    throw new Error("JSON vide ou format incorrect");
+                }
+
+                statusBadge.style.background = "#DEF7EC";
+                statusBadge.style.color = "#03543F";
+                statusBadge.innerHTML = `BDD à jour (<strong id="total-pc-count">${bddData.length}</strong> PC)`;
+
                 document.getElementById('btn-count').textContent = bddData.length;
                 initialiserFiltres();
                 restaurerSelectionExistante();
+
             } catch (err) {
                 console.error("Erreur de chargement JSON:", err);
+                statusBadge.style.background = "#FDE8E8";
+                statusBadge.style.color = "#9B1C1C";
+                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erreur chargement referentiel.json (${err.message})`;
             }
         }
 
