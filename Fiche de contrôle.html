@@ -20,10 +20,9 @@
             --border-color: #E2E8F0;
             --sidebar-width: 250px;
             
-            --status-conforme: #2E7D32;
-            --status-non-conforme: #C62828;
-            --status-na: #757575;
-            --status-pending: #F57C00;
+            --status-cloture: #2E7D32;
+            --status-non-cloture: #C62828;
+            --status-en-cours: #F57C00;
         }
 
         * {
@@ -68,9 +67,7 @@
             gap: 10px;
         }
 
-        .sidebar-header h2 i {
-            color: var(--accent);
-        }
+        .sidebar-header h2 i { color: var(--accent); }
 
         .sidebar-nav {
             list-style: none;
@@ -155,7 +152,7 @@
         .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-outline:hover { background-color: #E2E8F0; }
 
-        /* METADATA BANNER */
+        /* BANNIÈRE MÉTADONNÉES */
         .meta-card {
             background-color: var(--bg-card);
             border-radius: 8px;
@@ -188,10 +185,10 @@
             color: var(--primary);
         }
 
-        /* KPI DASHBOARD */
+        /* KPI DASHBOARD DE L'ENTITÉ */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
         }
@@ -207,13 +204,13 @@
         }
 
         .kpi-icon {
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
         }
 
         .kpi-data h3 { font-size: 1.3rem; font-weight: 700; }
@@ -221,7 +218,7 @@
 
         /* PROCESS GROUP & CARDS */
         .process-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             border: 1px solid var(--border-color);
             border-radius: 8px;
             background-color: var(--bg-card);
@@ -238,7 +235,6 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
         }
 
         .process-header .badge {
@@ -256,8 +252,17 @@
 
         .control-item:last-child { border-bottom: none; }
 
-        .control-header-info {
-            margin-bottom: 15px;
+        .control-header-info { margin-bottom: 15px; }
+
+        .control-risk {
+            font-size: 0.82rem;
+            color: #D97706;
+            background: #FEF3C7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: 600;
         }
 
         .control-title {
@@ -267,61 +272,87 @@
             margin-bottom: 5px;
         }
 
-        .control-risk {
-            font-size: 0.85rem;
-            color: #D97706;
-            background: #FEF3C7;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
         .control-desc {
             font-size: 0.9rem;
             color: #475569;
             background-color: #F1F5F9;
-            padding: 10px;
+            padding: 10px 12px;
             border-left: 3px solid var(--primary);
             border-radius: 0 4px 4px 0;
             margin-bottom: 15px;
         }
 
-        /* EVALUATION FORM GRID */
-        .eval-grid {
+        /* FORM GRID DES PARAMÈTRES ET ÉVALUATION */
+        .eval-section {
             display: grid;
-            grid-template-columns: 220px 1fr;
-            gap: 15px;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            background: #FAFBFD;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
         }
 
-        .status-selector {
+        .metrics-block {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
+            border-right: 1px solid var(--border-color);
+            padding-right: 15px;
         }
 
-        .status-option {
+        .input-inline {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-inline label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .input-inline input, .input-inline select {
+            padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            cursor: pointer;
             font-size: 0.85rem;
-            font-weight: 600;
-            transition: all 0.2s;
+            outline: none;
+            background: white;
         }
 
-        .status-option input { display: none; }
+        .input-inline input:focus, .input-inline select:focus {
+            border-color: var(--primary);
+        }
 
-        .status-option[data-val="C"].selected { background: #E8F5E9; border-color: var(--status-conforme); color: var(--status-conforme); }
-        .status-option[data-val="NC"].selected { background: #FFEBEE; border-color: var(--status-non-conforme); color: var(--status-non-conforme); }
-        .status-option[data-val="NA"].selected { background: #F5F5F5; border-color: var(--status-na); color: var(--status-na); }
+        .rate-box {
+            background: #FFFFFF;
+            border: 1px dashed var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            margin-top: 5px;
+        }
 
-        .fields-grid {
+        .rate-box span { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; display: block; }
+        .rate-box strong { font-size: 1.2rem; color: var(--primary); }
+
+        /* ÉTAT DU CONSTAT AVEC COULEURS */
+        .status-select {
+            font-weight: 700;
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        .status-select option[value="CLOTURE"] { color: var(--status-cloture); font-weight: 700; }
+        .status-select option[value="NON_CLOTURE"] { color: var(--status-non-cloture); font-weight: 700; }
+        .status-select option[value="EN_COURS"] { color: var(--status-en-cours); font-weight: 700; }
+
+        .fields-block {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat( auto-fit, minmax(220px, 1fr) );
             gap: 12px;
         }
 
@@ -332,7 +363,7 @@
         }
 
         .field-group label {
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
@@ -340,13 +371,14 @@
 
         .field-group textarea {
             width: 100%;
-            height: 70px;
+            height: 90px;
             padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             font-size: 0.85rem;
             resize: vertical;
             outline: none;
+            background: white;
         }
 
         .field-group textarea:focus {
@@ -368,13 +400,13 @@
             margin-bottom: 15px;
         }
 
-        /* IMPRESSION / PDF */
+        /* STYLES IMPRESSION / PDF */
         @media print {
             .sidebar, .action-buttons { display: none !important; }
             .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
-            .process-group { break-inside: avoid; }
-            .field-group textarea { border: none; height: auto; padding: 0; }
-            .status-option:not(.selected) { display: none !important; }
+            .process-group { break-inside: avoid; border: 1px solid #ccc; margin-bottom: 15px; }
+            .field-group textarea, .input-inline input, .input-inline select { border: none; background: transparent; padding: 0; }
+            .eval-section { grid-template-columns: 1fr 1fr; background: white; }
         }
     </style>
 </head>
@@ -384,10 +416,10 @@
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
-                <h2><i class="fa-solid fa-shield-halved"></i> FCI v1.0</h2>
+                <h2><i class="fa-solid fa-shield-halved"></i> Fiche de contrôle intelligente (FCI)</h2>
             </div>
             <ul class="sidebar-nav">
-                <li><a href="index.html"><i class="fa-solid fa-book"></i> Référentiel</a></li>
+                <li><a href="index.html"><i class="fa-solid fa-book"></i> Référentiel de contrôle</a></li>
                 <li><a href="Planification.html"><i class="fa-solid fa-calendar-check"></i> Planification</a></li>
                 <li class="active"><a href="FicheControle.html"><i class="fa-solid fa-clipboard-check"></i> Fiche de Contrôle</a></li>
             </ul>
@@ -403,8 +435,8 @@
         <!-- HEADER BAR -->
         <div class="header-bar">
             <div class="header-title">
-                <h1>Fiche d'Évaluation Terrain</h1>
-                <p>Saisie des constats, épreuves et recommandations de contrôle</p>
+                <h1>Fiche de Contrôle Intelligente - Saisie Terrain</h1>
+                <p>Évaluation des points de contrôle, calcul de conformité et avis de l'entité</p>
             </div>
             <div class="action-buttons">
                 <button class="btn btn-outline" onclick="sauvegarderLocalement()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
@@ -413,9 +445,9 @@
             </div>
         </div>
 
-        <!-- CONTAINER CONTENU DYNAMIQUE -->
+        <!-- ZONE DE CONTENU DYNAMIQUE -->
         <div id="content-area">
-            <!-- Injecté par JavaScript -->
+            <!-- Contenu généré dynamiquement -->
         </div>
 
     </main>
@@ -436,7 +468,7 @@
                     <div class="empty-state">
                         <i class="fa-solid fa-folder-open"></i>
                         <h3>Aucune mission active trouvée</h3>
-                        <p>Veuillez d'abord sélectionner des points de contrôle dans l'onglet Planification.</p>
+                        <p>Veuillez d'abord planifier une mission dans l'onglet Planification.</p>
                         <br>
                         <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
                     </div>
@@ -446,22 +478,27 @@
 
             missionData = JSON.parse(dataRaw);
             
-            // Initialiser les champs d'évaluation s'ils n'existent pas encore
-            missionData.pointsControle.forEach((item, idx) => {
+            // Initialisation des champs d'évaluation détaillés s'ils n'existent pas encore
+            missionData.pointsControle.forEach((item) => {
                 if (!item.eval) {
                     item.eval = {
-                        statut: 'EN_ATTENTE', // C, NC, NA, EN_ATTENTE
-                        constats: '',
-                        preuves: '',
-                        recommandations: ''
+                        population: 0,
+                        echantillon: 0,
+                        nombreOk: 0,
+                        nombreKo: 0,
+                        tauxConformite: 0,
+                        statutConstat: 'EN_COURS', // CLOTURE, NON_CLOTURE, EN_COURS
+                        constat: '',
+                        recommandation: '',
+                        avisResponsable: ''
                     };
                 }
             });
 
-            renderDashboard();
+            renderPage();
         }
 
-        function renderDashboard() {
+        function renderPage() {
             const contentArea = document.getElementById('content-area');
             const meta = missionData.metadata || {};
             const points = missionData.pointsControle || [];
@@ -474,116 +511,196 @@
                 parProcessus[proc].push(p);
             });
 
-            // Calcul KPIs
-            const total = points.length;
-            const evalues = points.filter(p => p.eval.statut !== 'EN_ATTENTE').length;
-            const conformes = points.filter(p => p.eval.statut === 'C').length;
-            const nonConformes = points.filter(p => p.eval.statut === 'NC').length;
-            const avancement = total > 0 ? Math.round((evalues / total) * 100) : 0;
-            const tauxConformite = (conformes + nonConformes) > 0 ? Math.round((conformes / (conformes + nonConformes)) * 100) : 0;
+            // Calculs des KPIs Globaux et du Taux de Conformité Moyen du Centre
+            let totalTaux = 0;
+            let nbPointsEvalues = 0;
+            let countCloture = 0;
+            let countNonCloture = 0;
+            let countEnCours = 0;
+
+            points.forEach(p => {
+                if (p.eval.echantillon > 0) {
+                    totalTaux += parseFloat(p.eval.tauxConformite || 0);
+                    nbPointsEvalues++;
+                }
+                if (p.eval.statutConstat === 'CLOTURE') countCloture++;
+                else if (p.eval.statutConstat === 'NON_CLOTURE') countNonCloture++;
+                else countEnCours++;
+            });
+
+            const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
+
+            // Diagnostic du niveau du centre selon le taux moyen
+            let niveauCentreLabel = "Non évalué";
+            let niveauStyle = "color: var(--text-muted);";
+
+            if (nbPointsEvalues > 0) {
+                const tx = parseFloat(tauxConformiteMoyen);
+                if (tx >= 90) {
+                    niveauCentreLabel = "Maîtrisé (Niveau Élevé)";
+                    niveauStyle = "color: #2E7D32;";
+                } else if (tx >= 70) {
+                    niveauCentreLabel = "Moyennement Maîtrisé";
+                    niveauStyle = "color: #F57C00;";
+                } else {
+                    niveauCentreLabel = "Critique / À Risque";
+                    niveauStyle = "color: #C62828;";
+                }
+            }
 
             let html = `
-                <!-- METADATA CARD -->
+                <!-- METADATA CARD (Rappel du contexte complet) -->
                 <div class="meta-card">
                     <div class="meta-item">
-                        <span class="label">Entité Contrôlée</span>
+                        <span class="label">Date de la mission</span>
+                        <span class="value">${meta.dateDebutControle || 'N/A'} au ${meta.dateFinControle || 'N/A'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Entité contrôlée</span>
                         <span class="value">${meta.entite || 'N/A'}</span>
                     </div>
                     <div class="meta-item">
-                        <span class="label">Type de Contrôle</span>
-                        <span class="value">${meta.typeControle || 'N/A'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">Période du contrôle</span>
-                        <span class="value">${meta.dateDebutControle || '...'} au ${meta.dateFinControle || '...'}</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="label">Équipe de contrôle</span>
+                        <span class="label">Contrôle réalisé par</span>
                         <span class="value">${meta.controleurs || 'N/A'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Type de contrôle</span>
+                        <span class="value">${meta.typeControle || 'N/A'}</span>
                     </div>
                 </div>
 
-                <!-- KPI DASHBOARD -->
+                <!-- DASHBOARD KPI : TAUX MOYEN DU CENTRE ET STATUTS -->
                 <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#E3F2FD; color:#1976D2;"><i class="fa-solid fa-tasks"></i></div>
+                    <div class="kpi-card" style="border-left: 4px solid var(--primary);">
+                        <div class="kpi-icon" style="background:#E3F2FD; color:var(--primary);"><i class="fa-solid fa-chart-line"></i></div>
                         <div class="kpi-data">
-                            <h3>${evalues} / ${total}</h3>
-                            <p>Avancement (${avancement}%)</p>
+                            <h3>${tauxConformiteMoyen} %</h3>
+                            <p>Taux Conformité Moyen</p>
                         </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#E8F5E9; color:var(--status-conforme);"><i class="fa-solid fa-circle-check"></i></div>
+
+                    <div class="kpi-card" style="border-left: 4px solid var(--accent);">
+                        <div class="kpi-icon" style="background:#FEF3C7; color:#D97706;"><i class="fa-solid fa-award"></i></div>
                         <div class="kpi-data">
-                            <h3>${conformes}</h3>
-                            <p>Conformes (${tauxConformite}% conformité)</p>
+                            <h3 style="${niveauStyle}">${niveauCentreLabel}</h3>
+                            <p>Niveau global de l'Entité</p>
                         </div>
                     </div>
+
                     <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-conforme);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="kpi-icon" style="background:#E8F5E9; color:var(--status-cloture);"><i class="fa-solid fa-check-circle"></i></div>
                         <div class="kpi-data">
-                            <h3>${nonConformes}</h3>
-                            <p>Non Conformes</p>
+                            <h3>${countCloture}</h3>
+                            <p>Constats Clôturés</p>
                         </div>
                     </div>
+
                     <div class="kpi-card">
-                        <div class="kpi-icon" style="background:#FFF3E0; color:var(--status-pending);"><i class="fa-solid fa-clock"></i></div>
+                        <div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-cloture);"><i class="fa-solid fa-circle-xmark"></i></div>
                         <div class="kpi-data">
-                            <h3>${total - evalues}</h3>
-                            <p>En Attente</p>
+                            <h3>${countNonCloture}</h3>
+                            <p>Constats Non Clôturés</p>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:#FFF3E0; color:var(--status-en-cours);"><i class="fa-solid fa-spinner"></i></div>
+                        <div class="kpi-data">
+                            <h3>${countEnCours}</h3>
+                            <p>Constats en cours de clôture</p>
                         </div>
                     </div>
                 </div>
             `;
 
-            // Rendu des groupes de Processus
-            let globalIndex = 0;
+            // RENDU DES GROUPES DE PROCESSUS
             for (const [proc, items] of Object.entries(parProcessus)) {
                 html += `
                     <div class="process-group">
                         <div class="process-header">
-                            <span><i class="fa-solid fa-folder"></i> Processus : ${proc}</span>
-                            <span class="badge">${items.length} point(s)</span>
+                            <span><i class="fa-solid fa-diagram-project"></i> Processus : ${proc}</span>
+                            <span class="badge">${items.length} Point(s) de contrôle</span>
                         </div>
                 `;
 
                 items.forEach((item) => {
                     const idx = points.indexOf(item);
+                    const evalData = item.eval;
+
+                    // Couleur dynamique pour le select du statut de constat
+                    let selectBgColor = "#FFF3E0";
+                    let selectTxtColor = "var(--status-en-cours)";
+                    if (evalData.statutConstat === 'CLOTURE') {
+                        selectBgColor = "#E8F5E9";
+                        selectTxtColor = "var(--status-cloture)";
+                    } else if (evalData.statutConstat === 'NON_CLOTURE') {
+                        selectBgColor = "#FFEBEE";
+                        selectTxtColor = "var(--status-non-cloture)";
+                    }
+
                     html += `
                         <div class="control-item">
                             <div class="control-header-info">
-                                <span class="control-risk"><i class="fa-solid fa-shield-cat"></i> Risque : ${item['Intitulé du risque'] || 'N/A'}</span>
-                                <div class="control-title">${item['Intitulé Contrôle'] || 'Contrôle'}</div>
-                                <div class="control-desc"><strong>Point de contrôle :</strong> ${item['Points de contrôle']}</div>
+                                <span class="control-risk"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${item['Intitulé du risque'] || 'N/A'}</span>
+                                <div class="control-title"><strong>Contrôle :</strong> ${item['Intitulé Contrôle'] || 'Contrôle'}</div>
+                                <div class="control-desc"><strong>Point de contrôle (PC) :</strong> ${item['Points de contrôle']}</div>
                             </div>
 
-                            <div class="eval-grid">
-                                <!-- CHOIX DU STATUT -->
-                                <div class="status-selector">
-                                    <label class="status-option ${item.eval.statut === 'C' ? 'selected' : ''}" data-val="C" onclick="definirStatut(${idx}, 'C')">
-                                        <i class="fa-solid fa-check-circle" style="color:var(--status-conforme)"></i> Conforme (C)
-                                    </label>
-                                    <label class="status-option ${item.eval.statut === 'NC' ? 'selected' : ''}" data-val="NC" onclick="definirStatut(${idx}, 'NC')">
-                                        <i class="fa-solid fa-times-circle" style="color:var(--status-non-conforme)"></i> Non Conforme (NC)
-                                    </label>
-                                    <label class="status-option ${item.eval.statut === 'NA' ? 'selected' : ''}" data-val="NA" onclick="definirStatut(${idx}, 'NA')">
-                                        <i class="fa-solid fa-minus-circle" style="color:var(--status-na)"></i> Non Applicable (N/A)
-                                    </label>
+                            <div class="eval-section">
+                                <!-- BLOC MESURES DE L'ÉCHANTILLON ET CONFORMITÉ -->
+                                <div class="metrics-block">
+                                    <div class="input-inline">
+                                        <label>Statut du constat</label>
+                                        <select class="status-select" style="background-color:${selectBgColor}; color:${selectTxtColor};" onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
+                                            <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Constat clôturé</option>
+                                            <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Constat non clôturé</option>
+                                            <option value="EN_COURS" ${evalData.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 Constat en cours de clôture</option>
+                                        </select>
+                                    </div>
+
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                        <div class="input-inline">
+                                            <label>Population</label>
+                                            <input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)">
+                                        </div>
+                                        <div class="input-inline">
+                                            <label>Échantillon</label>
+                                            <input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)">
+                                        </div>
+                                    </div>
+
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                        <div class="input-inline">
+                                            <label>Nombre (OK)</label>
+                                            <input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)">
+                                        </div>
+                                        <div class="input-inline">
+                                            <label>Nombre (KO)</label>
+                                            <input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;">
+                                        </div>
+                                    </div>
+
+                                    <div class="rate-box">
+                                        <span>Taux de conformité</span>
+                                        <strong>${evalData.tauxConformite} %</strong>
+                                    </div>
                                 </div>
 
-                                <!-- CHAMPS DE SAISIE -->
-                                <div class="fields-grid">
+                                <!-- BLOC TEXTUEL : CONSTAT, RECOMMANDATION, AVIS -->
+                                <div class="fields-block">
                                     <div class="field-group">
-                                        <label><i class="fa-solid fa-eye"></i> Constats & Observations</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'constats', this.value)" placeholder="Saisir les observations terrain...">${item.eval.constats}</textarea>
+                                        <label><i class="fa-solid fa-pen-to-square"></i> Constat</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Détails du constat terrain...">${evalData.constat}</textarea>
                                     </div>
+
                                     <div class="field-group">
-                                        <label><i class="fa-solid fa-vial"></i> Échantillonnage / Preuves</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'preuves', this.value)" placeholder="Références des pièces justificatives, taille échantillon...">${item.eval.preuves}</textarea>
+                                        <label><i class="fa-solid fa-lightbulb"></i> Recommandation</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations et plan d'action...">${evalData.recommandation}</textarea>
                                     </div>
+
                                     <div class="field-group">
-                                        <label><i class="fa-solid fa-lightbulb"></i> Recommandations</label>
-                                        <textarea onchange="mettreAJourChamp(${idx}, 'recommandations', this.value)" placeholder="Actions correctives préconisées...">${item.eval.recommandations}</textarea>
+                                        <label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable Entité</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis et commentaires de l'entité contrôlée...">${evalData.avisResponsable}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -597,10 +714,28 @@
             contentArea.innerHTML = html;
         }
 
-        function definirStatut(index, statut) {
-            missionData.pointsControle[index].eval.statut = statut;
+        // Calcul dynamique pour Taux de conformité = Nombre (OK) / Échantillon et Nombre (KO) = Échantillon - Nombre (OK)
+        function mettreAJourCalcul(index, champ, valeur) {
+            const ev = missionData.pointsControle[index].eval;
+            
+            if (champ === 'statutConstat') {
+                ev.statutConstat = valeur;
+            } else {
+                ev[champ] = parseFloat(valeur) || 0;
+            }
+
+            // Calcul du Nombre KO et du Taux de conformité
+            if (ev.echantillon > 0) {
+                if (ev.nombreOk > ev.echantillon) ev.nombreOk = ev.echantillon;
+                ev.nombreKo = Math.max(0, ev.echantillon - ev.nombreOk);
+                ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
+            } else {
+                ev.nombreKo = 0;
+                ev.tauxConformite = "0.00";
+            }
+
             sauvegarderLocalement(false);
-            renderDashboard();
+            renderPage();
         }
 
         function mettreAJourChamp(index, champ, valeur) {
@@ -608,33 +743,41 @@
             sauvegarderLocalement(false);
         }
 
-        function sauvegarderLocalement(afficherNotification = true) {
+        function sauvegarderLocalement(afficherNotif = true) {
             localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
-            if (afficherNotification) {
-                alert('Données du contrôle enregistrées avec succès.');
-            }
+            if (afficherNotif) alert('Feuille de contrôle enregistrée avec succès.');
         }
 
         function exporterExcel() {
             if (!missionData || !missionData.pointsControle) return;
 
             const rows = missionData.pointsControle.map(p => ({
+                "Date Début": missionData.metadata.dateDebutControle,
+                "Date Fin": missionData.metadata.dateFinControle,
+                "Entité Contrôlée": missionData.metadata.entite,
+                "Contrôle réalisé par": missionData.metadata.controleurs,
+                "Type de Contrôle": missionData.metadata.typeControle,
                 "Processus": p.Processus,
-                "Intitulé du Risque": p['Intitulé du risque'],
-                "Intitulé Contrôle": p['Intitulé Contrôle'],
-                "Point de Contrôle": p['Points de contrôle'],
-                "Statut": p.eval.statut === 'C' ? 'Conforme' : (p.eval.statut === 'NC' ? 'Non Conforme' : (p.eval.statut === 'NA' ? 'Non Applicable' : 'Non Évalué')),
-                "Constats / Observations": p.eval.constats,
-                "Échantillonnage / Preuves": p.eval.preuves,
-                "Recommandations": p.eval.recommandations
+                "Risque": p['Intitulé du risque'],
+                "Contrôle": p['Intitulé Contrôle'],
+                "PC (Point de Contrôle)": p['Points de contrôle'],
+                "Population": p.eval.population,
+                "Échantillon": p.eval.echantillon,
+                "Nombre (OK)": p.eval.nombreOk,
+                "Nombre (KO)": p.eval.nombreKo,
+                "Taux de conformité (%)": p.eval.tauxConformite,
+                "Statut Constat": p.eval.statutConstat,
+                "Constat": p.eval.constat,
+                "Recommandation": p.eval.recommandation,
+                "Avis de Responsable Entité": p.eval.avisResponsable
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(rows);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Rapport de Contrôle");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche de Contrôle");
 
-            const entite = (missionData.metadata && missionData.metadata.entite) ? missionData.metadata.entite.replace(/[^a-z0-9]/gi, '_') : 'Mission';
-            XLSX.writeFile(workbook, `FCI_Rapport_Controle_${entite}.xlsx`);
+            const entiteName = (missionData.metadata && missionData.metadata.entite) ? missionData.metadata.entite.replace(/[^a-z0-9]/gi, '_') : 'Centre';
+            XLSX.writeFile(workbook, `FCI_FicheControle_${entiteName}.xlsx`);
         }
     </script>
 </body>
