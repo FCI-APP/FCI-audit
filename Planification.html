@@ -135,11 +135,11 @@
             <div class="form-grid">
                 <div class="form-group">
                     <label for="audit-entite">Entité / Agence Auditée *</label>
-                    <input type="text" id="audit-entite" placeholder="Ex: Agence Principale Rabat">
+                    <input type="text" id="audit-entite" autocomplete="off" placeholder="Ex: Agence Principale Rabat">
                 </div>
                 <div class="form-group">
                     <label for="audit-type-controle">Type de Contrôle *</label>
-                    <select id="audit-type-controle">
+                    <select id="audit-type-controle" autocomplete="off">
                         <option value="">-- Sélectionner le type --</option>
                         <option value="Thématique">Thématique</option>
                         <option value="Systématique">Systématique</option>
@@ -147,15 +147,15 @@
                 </div>
                 <div class="form-group">
                     <label for="audit-date-debut">Début de la période du contrôle *</label>
-                    <input type="date" id="audit-date-debut">
+                    <input type="date" id="audit-date-debut" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="audit-date-fin">Fin de la période du contrôle *</label>
-                    <input type="date" id="audit-date-fin">
+                    <input type="date" id="audit-date-fin" autocomplete="off">
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                    <input type="text" id="audit-controleurs" placeholder="Ex: A. Ismail / M. Tahiri">
+                    <input type="text" id="audit-controleurs" autocomplete="off" placeholder="Ex: A. Ismail / M. Tahiri">
                 </div>
             </div>
         </section>
@@ -190,6 +190,9 @@
 
         function initFormDefaults() {
             const today = new Date().toISOString().split('T')[0];
+            document.getElementById('audit-entite').value = "";
+            document.getElementById('audit-controleurs').value = "";
+            document.getElementById('audit-type-controle').value = "";
             document.getElementById('audit-date-debut').value = today;
             document.getElementById('audit-date-fin').value = today;
         }
@@ -347,7 +350,12 @@
             saveAndRefresh();
         }
 
-        function viderPlanification() { selectedData = []; checkedKeys.clear(); saveAndRefresh(); }
+        function viderPlanification() { 
+            selectedData = []; 
+            checkedKeys.clear(); 
+            initFormDefaults();
+            saveAndRefresh(); 
+        }
 
         function saveAndRefresh() {
             localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
