@@ -34,8 +34,8 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.15);
         }
 
-        .sidebar-header { padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
-        .sidebar-header h2 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; color: #FFF; }
+        .sidebar-header { padding: 20px 15px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #FFF; line-height: 1.4; }
 
         .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-nav li a {
@@ -82,7 +82,7 @@
         .control-item { padding: 20px; border-bottom: 1px solid var(--border-color); }
         .control-item:last-child { border-bottom: none; }
 
-        /* Bloc métriques/échantillon encore plus compact : 200px */
+        /* Bloc métriques/échantillon compact : 200px */
         .eval-section { 
             display: grid; 
             grid-template-columns: 200px 1fr; 
@@ -128,7 +128,7 @@
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
-                <h2>Fiche de contrôle intelligente (FCI)</h2>
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
             </div>
             <ul class="sidebar-nav">
                 <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
@@ -136,7 +136,7 @@
                 <li class="active"><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Actif</span></a></li>
             </ul>
         </div>
-        <div class="sidebar-footer">FCI v1.0 © 2026 - 2027<br>BARID AL-MAGHRIB</div>
+        <div class="sidebar-footer">FCI v1.0 © 2026 – 2027</div>
     </aside>
 
     <main class="main-content">
@@ -360,7 +360,6 @@
             sauvegarderLocalement(false);
         }
 
-        /* Nouvelle Fonction : Vider toutes les cellules saisies */
         function viderToutesLesCellules() {
             if (!confirm("Voulez-vous vraiment vider toutes les saisies et réinitialiser les évaluations pour cette mission ?")) {
                 return;
