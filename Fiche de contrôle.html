@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feuille de Contrôle Terrain - FCI v1.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS pour l'export Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #003366;
+            --primary-light: #004080;
+            --accent: #EAAA00;
+            --bg-body: #F4F6F9;
+            --bg-card: #FFFFFF;
+            --text-main: #2C3E50;
+            --text-muted: #6C757D;
+            --border-color: #E2E8F0;
+            --sidebar-width: 250px;
+            
+            --status-conforme: #2E7D32;
+            --status-non-conforme: #C62828;
+            --status-na: #757575;
+            --status-pending: #F57C00;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            display: flex;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary);
+            color: #FFFFFF;
+            position: fixed;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-header h2 i {
+            color: var(--accent);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-nav li a:hover, .sidebar-nav li.active a {
+            color: #FFFFFF;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 30px;
+            max-width: calc(100vw - var(--sidebar-width));
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .header-title h1 {
+            font-size: 1.6rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-light); }
+        .btn-accent { background-color: var(--accent); color: var(--primary); }
+        .btn-accent:hover { opacity: 0.9; }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background-color: #E2E8F0; }
+
+        /* METADATA BANNER */
+        .meta-card {
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-item span.label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .meta-item span.value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* KPI DASHBOARD */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .kpi-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .kpi-data h3 { font-size: 1.3rem; font-weight: 700; }
+        .kpi-data p { font-size: 0.8rem; color: var(--text-muted); }
+
+        /* PROCESS GROUP & CARDS */
+        .process-group {
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--bg-card);
+            overflow: hidden;
+        }
+
+        .process-header {
+            background-color: #F8FAFC;
+            padding: 15px 20px;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.05rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .process-header .badge {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .control-item {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .control-item:last-child { border-bottom: none; }
+
+        .control-header-info {
+            margin-bottom: 15px;
+        }
+
+        .control-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .control-risk {
+            font-size: 0.85rem;
+            color: #D97706;
+            background: #FEF3C7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .control-desc {
+            font-size: 0.9rem;
+            color: #475569;
+            background-color: #F1F5F9;
+            padding: 10px;
+            border-left: 3px solid var(--primary);
+            border-radius: 0 4px 4px 0;
+            margin-bottom: 15px;
+        }
+
+        /* EVALUATION FORM GRID */
+        .eval-grid {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 15px;
+        }
+
+        .status-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .status-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .status-option input { display: none; }
+
+        .status-option[data-val="C"].selected { background: #E8F5E9; border-color: var(--status-conforme); color: var(--status-conforme); }
+        .status-option[data-val="NC"].selected { background: #FFEBEE; border-color: var(--status-non-conforme); color: var(--status-non-conforme); }
+        .status-option[data-val="NA"].selected { background: #F5F5F5; border-color: var(--status-na); color: var(--status-na); }
+
+        .fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-group label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .field-group textarea {
+            width: 100%;
+            height: 70px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            resize: vertical;
+            outline: none;
+        }
+
+        .field-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        /* IMPRESSION / PDF */
+        @media print {
+            .sidebar, .action-buttons { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
+            .process-group { break-inside: avoid; }
+            .field-group textarea { border: none; height: auto; padding: 0; }
+            .status-option:not(.selected) { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2><i class="fa-solid fa-shield-halved"></i> FCI v1.0</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="index.html"><i class="fa-solid fa-book"></i> Référentiel</a></li>
+                <li><a href="Planification.html"><i class="fa-solid fa-calendar-check"></i> Planification</a></li>
+                <li class="active"><a href="FicheControle.html"><i class="fa-solid fa-clipboard-check"></i> Fiche de Contrôle</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            FCI v1.0 © 2026 - 2027<br>Barid Al-Maghrib
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- HEADER BAR -->
+        <div class="header-bar">
+            <div class="header-title">
+                <h1>Fiche d'Évaluation Terrain</h1>
+                <p>Saisie des constats, épreuves et recommandations de contrôle</p>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-outline" onclick="sauvegarderLocalement()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+                <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+            </div>
+        </div>
+
+        <!-- CONTAINER CONTENU DYNAMIQUE -->
+        <div id="content-area">
+            <!-- Injecté par JavaScript -->
+        </div>
+
+    </main>
+
+    <script>
+        let missionData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerDonneesMission();
+        });
+
+        function chargerDonneesMission() {
+            const dataRaw = localStorage.getItem('fci_fiche_controle_active');
+            const contentArea = document.getElementById('content-area');
+
+            if (!dataRaw) {
+                contentArea.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <h3>Aucune mission active trouvée</h3>
+                        <p>Veuillez d'abord sélectionner des points de contrôle dans l'onglet Planification.</p>
+                        <br>
+                        <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
+                    </div>
+                `;
+                return;
+            }
+
+            missionData = JSON.parse(dataRaw);
+            
+            // Initialiser les champs d'évaluation s'ils n'existent pas encore
+            missionData.pointsControle.forEach((item, idx) => {
+                if (!item.eval) {
+                    item.eval = {
+                        statut: 'EN_ATTENTE', // C, NC, NA, EN_ATTENTE
+                        constats: '',
+                        preuves: '',
+                        recommandations: ''
+                    };
+                }
+            });
+
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const contentArea = document.getElementById('content-area');
+            const meta = missionData.metadata || {};
+            const points = missionData.pointsControle || [];
+
+            // Regroupement par Processus
+            const parProcessus = {};
+            points.forEach(p => {
+                const proc = p.Processus || "Processus Non Spécifié";
+                if (!parProcessus[proc]) parProcessus[proc] = [];
+                parProcessus[proc].push(p);
+            });
+
+            // Calcul KPIs
+            const total = points.length;
+            const evalues = points.filter(p => p.eval.statut !== 'EN_ATTENTE').length;
+            const conformes = points.filter(p => p.eval.statut === 'C').length;
+            const nonConformes = points.filter(p => p.eval.statut === 'NC').length;
+            const avancement = total > 0 ? Math.round((evalues / total) * 100) : 0;
+            const tauxConformite = (conformes + nonConformes) > 0 ? Math.round((conformes / (conformes + nonConformes)) * 100) : 0;
+
+            let html = `
+                <!-- METADATA CARD -->
+                <div class="meta-card">
+                    <div class="meta-item">
+                        <span class="label">Entité Contrôlée</span>
+                        <span class="value">${meta.entite || 'N/A'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Type de Contrôle</span>
+                        <span class="value">${meta.typeControle || 'N/A'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Période du contrôle</span>
+                        <span class="value">${meta.dateDebutControle || '...'} au ${meta.dateFinControle || '...'}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Équipe de contrôle</span>
+                        <span class="value">${meta.controleurs || 'N/A'}</span>
+                    </div>
+                </div>
+
+                <!-- KPI DASHBOARD -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:#E3F2FD; color:#1976D2;"><i class="fa-solid fa-tasks"></i></div>
+                        <div class="kpi-data">
+                            <h3>${evalues} / ${total}</h3>
+                            <p>Avancement (${avancement}%)</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:#E8F5E9; color:var(--status-conforme);"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="kpi-data">
+                            <h3>${conformes}</h3>
+                            <p>Conformes (${tauxConformite}% conformité)</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-conforme);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="kpi-data">
+                            <h3>${nonConformes}</h3>
+                            <p>Non Conformes</p>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background:#FFF3E0; color:var(--status-pending);"><i class="fa-solid fa-clock"></i></div>
+                        <div class="kpi-data">
+                            <h3>${total - evalues}</h3>
+                            <p>En Attente</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Rendu des groupes de Processus
+            let globalIndex = 0;
+            for (const [proc, items] of Object.entries(parProcessus)) {
+                html += `
+                    <div class="process-group">
+                        <div class="process-header">
+                            <span><i class="fa-solid fa-folder"></i> Processus : ${proc}</span>
+                            <span class="badge">${items.length} point(s)</span>
+                        </div>
+                `;
+
+                items.forEach((item) => {
+                    const idx = points.indexOf(item);
+                    html += `
+                        <div class="control-item">
+                            <div class="control-header-info">
+                                <span class="control-risk"><i class="fa-solid fa-shield-cat"></i> Risque : ${item['Intitulé du risque'] || 'N/A'}</span>
+                                <div class="control-title">${item['Intitulé Contrôle'] || 'Contrôle'}</div>
+                                <div class="control-desc"><strong>Point de contrôle :</strong> ${item['Points de contrôle']}</div>
+                            </div>
+
+                            <div class="eval-grid">
+                                <!-- CHOIX DU STATUT -->
+                                <div class="status-selector">
+                                    <label class="status-option ${item.eval.statut === 'C' ? 'selected' : ''}" data-val="C" onclick="definirStatut(${idx}, 'C')">
+                                        <i class="fa-solid fa-check-circle" style="color:var(--status-conforme)"></i> Conforme (C)
+                                    </label>
+                                    <label class="status-option ${item.eval.statut === 'NC' ? 'selected' : ''}" data-val="NC" onclick="definirStatut(${idx}, 'NC')">
+                                        <i class="fa-solid fa-times-circle" style="color:var(--status-non-conforme)"></i> Non Conforme (NC)
+                                    </label>
+                                    <label class="status-option ${item.eval.statut === 'NA' ? 'selected' : ''}" data-val="NA" onclick="definirStatut(${idx}, 'NA')">
+                                        <i class="fa-solid fa-minus-circle" style="color:var(--status-na)"></i> Non Applicable (N/A)
+                                    </label>
+                                </div>
+
+                                <!-- CHAMPS DE SAISIE -->
+                                <div class="fields-grid">
+                                    <div class="field-group">
+                                        <label><i class="fa-solid fa-eye"></i> Constats & Observations</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'constats', this.value)" placeholder="Saisir les observations terrain...">${item.eval.constats}</textarea>
+                                    </div>
+                                    <div class="field-group">
+                                        <label><i class="fa-solid fa-vial"></i> Échantillonnage / Preuves</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'preuves', this.value)" placeholder="Références des pièces justificatives, taille échantillon...">${item.eval.preuves}</textarea>
+                                    </div>
+                                    <div class="field-group">
+                                        <label><i class="fa-solid fa-lightbulb"></i> Recommandations</label>
+                                        <textarea onchange="mettreAJourChamp(${idx}, 'recommandations', this.value)" placeholder="Actions correctives préconisées...">${item.eval.recommandations}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+            }
+
+            contentArea.innerHTML = html;
+        }
+
+        function definirStatut(index, statut) {
+            missionData.pointsControle[index].eval.statut = statut;
+            sauvegarderLocalement(false);
+            renderDashboard();
+        }
+
+        function mettreAJourChamp(index, champ, valeur) {
+            missionData.pointsControle[index].eval[champ] = valeur;
+            sauvegarderLocalement(false);
+        }
+
+        function sauvegarderLocalement(afficherNotification = true) {
+            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
+            if (afficherNotification) {
+                alert('Données du contrôle enregistrées avec succès.');
+            }
+        }
+
+        function exporterExcel() {
+            if (!missionData || !missionData.pointsControle) return;
+
+            const rows = missionData.pointsControle.map(p => ({
+                "Processus": p.Processus,
+                "Intitulé du Risque": p['Intitulé du risque'],
+                "Intitulé Contrôle": p['Intitulé Contrôle'],
+                "Point de Contrôle": p['Points de contrôle'],
+                "Statut": p.eval.statut === 'C' ? 'Conforme' : (p.eval.statut === 'NC' ? 'Non Conforme' : (p.eval.statut === 'NA' ? 'Non Applicable' : 'Non Évalué')),
+                "Constats / Observations": p.eval.constats,
+                "Échantillonnage / Preuves": p.eval.preuves,
+                "Recommandations": p.eval.recommandations
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(rows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Rapport de Contrôle");
+
+            const entite = (missionData.metadata && missionData.metadata.entite) ? missionData.metadata.entite.replace(/[^a-z0-9]/gi, '_') : 'Mission';
+            XLSX.writeFile(workbook, `FCI_Rapport_Controle_${entite}.xlsx`);
+        }
+    </script>
+</body>
+</html>
