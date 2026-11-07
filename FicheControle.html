@@ -80,11 +80,11 @@
         .control-item { padding: 20px; border-bottom: 1px solid var(--border-color); }
         .control-item:last-child { border-bottom: none; }
 
-        /* Correction Disposition pour séparer métriques et saisie textuelle */
+        /* Bloc métriques compacté à 240px pour maximiser la zone de texte */
         .eval-section { 
             display: grid; 
-            grid-template-columns: 320px 1fr; 
-            gap: 20px; 
+            grid-template-columns: 240px 1fr; 
+            gap: 15px; 
             background: #FAFBFD; 
             padding: 15px; 
             border-radius: 6px; 
@@ -94,22 +94,22 @@
         .metrics-block { 
             display: flex; 
             flex-direction: column; 
-            gap: 12px; 
+            gap: 10px; 
             border-right: 2px solid var(--border-color); 
-            padding-right: 18px; 
+            padding-right: 12px; 
         }
 
         .input-inline { display: flex; flex-direction: column; gap: 4px; }
-        .input-inline label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .input-inline input, .input-inline select { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: white; }
+        .input-inline label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-inline input, .input-inline select { padding: 6px 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.82rem; outline: none; background: white; }
 
-        .rate-box { background: #FFFFFF; border: 1px dashed var(--primary); padding: 10px; border-radius: 6px; text-align: center; }
-        .rate-box span { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
-        .rate-box strong { font-size: 1.15rem; color: var(--primary); display: block; margin-top: 2px; }
+        .rate-box { background: #FFFFFF; border: 1px dashed var(--primary); padding: 8px; border-radius: 6px; text-align: center; }
+        .rate-box span { font-size: 0.70rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .rate-box strong { font-size: 1.10rem; color: var(--primary); display: block; margin-top: 2px; }
 
-        .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; width: 100%; }
-        .field-group { display: flex; flex-direction: column; gap: 6px; }
-        .field-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; }
+        .field-group { display: flex; flex-direction: column; gap: 4px; }
+        .field-group label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .field-group textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
 
         .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -224,7 +224,6 @@
 
             const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
             
-            // Calcul à 4 niveaux de Risque avec couleurs
             let niveauRisqueLabel = "Non évalué";
             let niveauStyle = "color: var(--text-muted);";
 
@@ -232,16 +231,16 @@
                 const tx = parseFloat(tauxConformiteMoyen);
                 if (tx >= 90) {
                     niveauRisqueLabel = "Risque Faible";
-                    niveauStyle = "color: #2E7D32;"; // Vert
+                    niveauStyle = "color: #2E7D32;";
                 } else if (tx >= 75) {
                     niveauRisqueLabel = "Risque Moyen";
-                    niveauStyle = "color: #0288D1;"; // Bleu
+                    niveauStyle = "color: #0288D1;";
                 } else if (tx >= 60) {
                     niveauRisqueLabel = "Risque Fort";
-                    niveauStyle = "color: #F57C00;"; // Orange
+                    niveauStyle = "color: #F57C00;";
                 } else {
                     niveauRisqueLabel = "Risque Critique";
-                    niveauStyle = "color: #C62828;"; // Rouge
+                    niveauStyle = "color: #C62828;";
                 }
             }
 
@@ -296,32 +295,32 @@
                             <div class="eval-section">
                                 <div class="metrics-block">
                                     <div class="input-inline">
-                                        <label>Statut du constat *</label>
+                                        <label>Statut constat *</label>
                                         <select style="background-color:${selectBgColor}; color:${selectTxtColor}; font-weight:700;" onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
-                                            <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Constat clôturé</option>
-                                            <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Constat non clôturé</option>
-                                            <option value="EN_COURS" ${evalData.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 Constat en cours de clôture</option>
+                                            <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Clôturé</option>
+                                            <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Non clôturé</option>
+                                            <option value="EN_COURS" ${evalData.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 En cours</option>
                                         </select>
                                     </div>
 
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline"><label>Population *</label><input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
-                                        <div class="input-inline"><label>Échantillon *</label><input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                        <div class="input-inline"><label>Pop. *</label><input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
+                                        <div class="input-inline"><label>Échant. *</label><input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
                                     </div>
 
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline"><label>Nombre (OK) *</label><input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
-                                        <div class="input-inline"><label>Nombre (KO)</label><input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;"></div>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                                        <div class="input-inline"><label>OK *</label><input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
+                                        <div class="input-inline"><label>KO</label><input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;"></div>
                                     </div>
 
                                     <div class="rate-box">
-                                        <span>Taux de conformité</span>
+                                        <span>Conformité</span>
                                         <strong>${evalData.tauxConformite} %</strong>
                                     </div>
                                 </div>
 
                                 <div class="fields-block">
-                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Saisir les constats obligatoires...">${evalData.constat}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${evalData.constat}</textarea></div>
                                     <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${evalData.recommandation}</textarea></div>
                                     <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis de l'entité (Optionnel)...">${evalData.avisResponsable}</textarea></div>
                                 </div>
