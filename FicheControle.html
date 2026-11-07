@@ -82,7 +82,6 @@
         .control-item { padding: 20px; border-bottom: 1px solid var(--border-color); }
         .control-item:last-child { border-bottom: none; }
 
-        /* Bloc métriques/échantillon compact : 200px */
         .eval-section { 
             display: grid; 
             grid-template-columns: 200px 1fr; 
@@ -249,10 +248,10 @@
 
             let html = `
                 <div class="meta-card">
-                    <div class="meta-item"><span class="label">Période du contrôle</span><span class="value">${meta.dateDebutControle || 'N/A'} au ${meta.dateFinControle || 'N/A'}</span></div>
-                    <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || 'N/A'}</span></div>
-                    <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || 'N/A'}</span></div>
-                    <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || 'N/A'}</span></div>
+                    <div class="meta-item"><span class="label">Période du contrôle</span><span class="value">${(meta.dateDebutControle || meta.dateFinControle) ? `${meta.dateDebutControle || ''} au ${meta.dateFinControle || ''}` : '-'}</span></div>
+                    <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
+                    <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || '-'}</span></div>
+                    <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || '-'}</span></div>
                 </div>
 
                 <div class="kpi-grid">
@@ -361,24 +360,37 @@
         }
 
         function viderToutesLesCellules() {
-            if (!confirm("Voulez-vous vraiment vider toutes les saisies et réinitialiser les évaluations pour cette mission ?")) {
+            if (!confirm("Voulez-vous vraiment vider toutes les saisies (informations générales et évaluations) pour cette mission ?")) {
                 return;
             }
 
-            if (missionData && missionData.pointsControle) {
-                missionData.pointsControle.forEach(p => {
-                    p.eval = {
-                        population: 0,
-                        echantillon: 0,
-                        nombreOk: 0,
-                        nombreKo: 0,
-                        tauxConformite: "0.00",
-                        statutConstat: 'EN_COURS',
-                        constat: '',
-                        recommandation: '',
-                        avisResponsable: ''
-                    };
-                });
+            if (missionData) {
+                // Réinitialisation des métadonnées générales
+                missionData.metadata = {
+                    entite: '',
+                    typeControle: '',
+                    dateDebutControle: '',
+                    dateFinControle: '',
+                    controleurs: ''
+                };
+
+                // Réinitialisation des points de contrôle
+                if (missionData.pointsControle) {
+                    missionData.pointsControle.forEach(p => {
+                        p.eval = {
+                            population: 0,
+                            echantillon: 0,
+                            nombreOk: 0,
+                            nombreKo: 0,
+                            tauxConformite: "0.00",
+                            statutConstat: 'EN_COURS',
+                            constat: '',
+                            recommandation: '',
+                            avisResponsable: ''
+                        };
+                    });
+                }
+
                 sauvegarderLocalement(false);
                 renderPage();
             }
