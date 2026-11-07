@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+    <!-- Import direct des données du référentiel -->
+    <script src="./referentiel.js"></script>
+
     <style>
         :root {
             --primary: #003366;
@@ -22,8 +25,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
-        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; }
+        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
         .sidebar {
             width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
@@ -31,11 +33,7 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.15);
         }
 
-        .sidebar-header {
-            padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark);
-            text-align: center;
-        }
-
+        .sidebar-header { padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
         .sidebar-header h2 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; color: #FFF; }
 
         .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
@@ -43,8 +41,7 @@
         .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-nav li a {
             display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.2s;
         }
         .sidebar-nav li a:hover, .sidebar-nav li.active a {
             background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
@@ -55,18 +52,23 @@
 
         .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
 
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
 
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .page-header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
         .page-header p { font-size: 0.85rem; color: var(--text-muted); }
 
-        .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; width: 100%; }
         .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
-        .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        
+        .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 15px; width: 100%; }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .filter-group label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; }
-        .filter-group select { padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; }
+        .filter-group select { 
+            width: 100%; max-width: 100%; padding: 9px; border: 1px solid var(--border-color); 
+            border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; 
+            text-overflow: ellipsis; white-space: nowrap; overflow: hidden; 
+        }
 
         .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
@@ -80,7 +82,7 @@
         .table-container { max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
         th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; }
-        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
         tr.selected-row { background-color: #FEFCE8; }
 
         .empty-state { text-align: center; padding: 50px 20px; }
@@ -179,10 +181,10 @@
                     <thead>
                         <tr>
                             <th style="width:40px; text-align:center;"><input type="checkbox" id="master-checkbox" onchange="toggleMasterCheckbox(this)"></th>
-                            <th>PROCESSUS</th>
-                            <th>INTITULÉ DU RISQUE</th>
-                            <th>INTITULÉ CONTRÔLE</th>
-                            <th>POINTS DE CONTRÔLE</th>
+                            <th style="width:20%;">PROCESSUS</th>
+                            <th style="width:25%;">INTITULÉ DU RISQUE</th>
+                            <th style="width:25%;">INTITULÉ CONTRÔLE</th>
+                            <th style="width:30%;">POINTS DE CONTRÔLE</th>
                         </tr>
                     </thead>
                     <tbody id="table-body"></tbody>
@@ -211,31 +213,35 @@
 
         async function chargerBDD() {
             const statusBadge = document.getElementById('bdd-status');
+            
+            // 1. Détection prioritaire si la variable globale est chargée via referentiel.js
+            if (typeof bddDataGlobal !== 'undefined' && Array.isArray(bddDataGlobal) && bddDataGlobal.length > 0) {
+                bddData = bddDataGlobal;
+                initialiserInterface(statusBadge);
+                return;
+            }
+
+            // 2. Repli par Fetch si le fichier referentiel.js n'est pas utilisé
             try {
-                const response = await fetch('./referentiel.json');
-                if (!response.ok) {
-                    throw new Error(`Statut HTTP ${response.status}`);
-                }
+                const response = await fetch('./referentiel_controle_redresse-vf_Référentiel Redressé.json');
+                if (!response.ok) throw new Error(`Statut HTTP ${response.status}`);
                 bddData = await response.json();
-
-                if (!Array.isArray(bddData) || bddData.length === 0) {
-                    throw new Error("JSON vide ou format incorrect");
-                }
-
-                statusBadge.style.background = "#DEF7EC";
-                statusBadge.style.color = "#03543F";
-                statusBadge.innerHTML = `BDD à jour (<strong id="total-pc-count">${bddData.length}</strong> PC)`;
-
-                document.getElementById('btn-count').textContent = bddData.length;
-                initialiserFiltres();
-                restaurerSelectionExistante();
-
+                initialiserInterface(statusBadge);
             } catch (err) {
                 console.error("Erreur de chargement JSON:", err);
                 statusBadge.style.background = "#FDE8E8";
                 statusBadge.style.color = "#9B1C1C";
-                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erreur chargement referentiel.json (${err.message})`;
+                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erreur chargement référentiel`;
             }
+        }
+
+        function initialiserInterface(statusBadge) {
+            statusBadge.style.background = "#DEF7EC";
+            statusBadge.style.color = "#03543F";
+            statusBadge.innerHTML = `BDD à jour (<strong id="total-pc-count">${bddData.length}</strong> PC)`;
+            document.getElementById('btn-count').textContent = bddData.length;
+            initialiserFiltres();
+            restaurerSelectionExistante();
         }
 
         function initialiserFiltres() {
