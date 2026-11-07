@@ -7,8 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-    <!-- Inclusion du fichier JS local pour contourner les erreurs CORS/affichage -->
     <script src="./referentiel.js"></script>
 
     <style>
@@ -25,7 +23,6 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
         body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
         .sidebar {
@@ -34,20 +31,14 @@
             box-shadow: 2px 0 10px rgba(0,0,0,0.15);
         }
 
-        .sidebar-header {
-            padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark);
-            text-align: center;
-        }
-
+        .sidebar-header { padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
         .sidebar-header h2 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; color: #FFF; }
-
         .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
 
         .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-nav li a {
             display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            transition: all 0.2s;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.2s;
         }
         .sidebar-nav li a:hover, .sidebar-nav li.active a {
             background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
@@ -67,7 +58,6 @@
         .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; width: 100%; }
         .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
         
-        /* Grille fixée pour éviter tout glissement du 3ème filtre */
         .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 15px; width: 100%; }
         .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .filter-group label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; }
@@ -221,26 +211,36 @@
         async function chargerBDD() {
             const statusBadge = document.getElementById('bdd-status');
             
-            // 1. Détection prioritaire si la variable globale existe dans referentiel.js
+            // 1. Détection prioritaire si le script js local est inclus
             if (typeof bddDataGlobal !== 'undefined' && Array.isArray(bddDataGlobal) && bddDataGlobal.length > 0) {
                 bddData = bddDataGlobal;
                 initialiserInterface(statusBadge);
                 return;
             }
 
-            // 2. Sinon chargement dynamique via Fetch avec encodage d'URL
-            try {
-                const targetFile = encodeURIComponent("referentiel_controle_redresse-vf_Référentiel Redressé.json");
-                const response = await fetch(`./${targetFile}`);
-                if (!response.ok) throw new Error(`Statut HTTP ${response.status}`);
-                bddData = await response.json();
-                initialiserInterface(statusBadge);
-            } catch (err) {
-                console.error("Erreur de chargement JSON:", err);
-                statusBadge.style.background = "#FDE8E8";
-                statusBadge.style.color = "#9B1C1C";
-                statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erreur chargement JSON`;
+            // 2. Stratégie de chargement JSON avec replis successifs
+            const dynamicFiles = [
+                './referentiel.json',
+                './referentiel_controle_redresse-vf_Référentiel Redressé.json'
+            ];
+
+            for (const path of dynamicFiles) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        bddData = await response.json();
+                        if (Array.isArray(bddData) && bddData.length > 0) {
+                            initialiserInterface(statusBadge);
+                            return;
+                        }
+                    }
+                } catch(e){}
             }
+
+            // Erreur affichée si aucun fichier n'est trouvé
+            statusBadge.style.background = "#FDE8E8";
+            statusBadge.style.color = "#9B1C1C";
+            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Fichier JSON introuvable`;
         }
 
         function initialiserInterface(statusBadge) {
