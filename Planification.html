@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI - Planification de la Mission de Contrôle (Barid Al-Maghrib)</title>
+    <title>FCI - Planification de la Mission de Contrôle</title>
     <!-- FontAwesome pour l'iconographie -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -50,7 +50,7 @@
         }
 
         .sidebar-brand {
-            padding: 20px 15px;
+            padding: 25px 15px;
             text-align: center;
             border-bottom: 2px solid var(--accent-gold);
             background-color: var(--blue-dark);
@@ -62,24 +62,7 @@
             letter-spacing: 0.5px;
             color: var(--white);
             text-transform: uppercase;
-        }
-
-        .sidebar-brand .sub-title {
-            color: var(--accent-gold);
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: block;
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
-
-        .sidebar-brand .division-title {
-            color: #FFFFFF;
-            font-size: 0.7rem;
-            opacity: 0.85;
-            display: block;
-            margin-top: 2px;
-            text-transform: uppercase;
+            line-height: 1.3;
         }
 
         .sidebar-menu {
@@ -194,15 +177,16 @@
             color: var(--text-dark);
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             padding: 10px 12px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             font-size: 0.9rem;
             outline: none;
+            background-color: var(--white);
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             border-color: var(--primary-blue);
             box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
         }
@@ -462,9 +446,7 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-brand">
-            <h2>BARID AL-MAGHRIB</h2>
-            <span class="sub-title">DIRECTION CONTRÔLE GÉNÉRALE</span>
-            <span class="division-title">DIVISION CONTRÔLE PERMANENT</span>
+            <h2>Fiche de contrôle intelligente (FCI)</h2>
         </div>
         <ul class="sidebar-menu">
             <li>
@@ -478,7 +460,7 @@
             </li>
         </ul>
         <div class="sidebar-footer">
-            FCI v2.0 &copy; 2026 - Barid Al-Maghrib
+            FCI v1.0 &copy; 2026 - 2027
         </div>
     </aside>
 
@@ -535,8 +517,12 @@
                     <input type="text" id="audit-entite" placeholder="Ex: Agence Principale Rabat">
                 </div>
                 <div class="form-group">
-                    <label for="audit-ref">Référence de la Mission *</label>
-                    <input type="text" id="audit-ref" placeholder="Ex: AUD-2026-089">
+                    <label for="audit-type-controle">Type de Contrôle *</label>
+                    <select id="audit-type-controle">
+                        <option value="">-- Sélectionner le type --</option>
+                        <option value="Thématique">Thématique</option>
+                        <option value="Systématique">Systématique</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="audit-date-debut">Début de la période du contrôle *</label>
@@ -823,13 +809,13 @@
 
         function lancerFicheControle() {
             const entite = document.getElementById('audit-entite').value.trim();
-            const ref = document.getElementById('audit-ref').value.trim();
+            const typeControle = document.getElementById('audit-type-controle').value;
             const dateDebut = document.getElementById('audit-date-debut').value;
             const dateFin = document.getElementById('audit-date-fin').value;
             const controleurs = document.getElementById('audit-controleurs').value.trim();
 
-            if (!entite || !ref || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez remplir l'ensemble des informations de la mission (Entité, Référence, Période de contrôle, Contrôleurs) avant de continuer.");
+            if (!entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
+                alert("Veuillez remplir l'ensemble des informations de la mission (Entité, Type de contrôle, Période de contrôle, Contrôleurs) avant de continuer.");
                 return;
             }
 
@@ -843,7 +829,7 @@
             const activeCampaign = {
                 metadata: {
                     entite: entite,
-                    reference: ref,
+                    typeControle: typeControle,
                     dateDebutControle: dateDebut,
                     dateFinControle: dateFin,
                     controleurs: controleurs,
