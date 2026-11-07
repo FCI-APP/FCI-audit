@@ -132,32 +132,34 @@
 
         <section class="card">
             <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="audit-entite">Entité / Agence Auditée *</label>
-                    <input type="text" id="audit-entite" autocomplete="off" placeholder="Ex: Agence Principale Rabat">
+            <form autocomplete="off" onsubmit="return false;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="audit-entite">Entité / Agence Auditée *</label>
+                        <input type="text" id="audit-entite" name="fci_entite_audit_noautofill" autocomplete="off" aria-autocomplete="none" placeholder="Ex: Agence Principale Rabat">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-type-controle">Type de Contrôle *</label>
+                        <select id="audit-type-controle" autocomplete="off">
+                            <option value="">-- Sélectionner le type --</option>
+                            <option value="Thématique">Thématique</option>
+                            <option value="Systématique">Systématique</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-date-debut">Début de la période du contrôle *</label>
+                        <input type="date" id="audit-date-debut" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-date-fin">Fin de la période du contrôle *</label>
+                        <input type="date" id="audit-date-fin" autocomplete="off">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
+                        <input type="text" id="audit-controleurs" name="fci_controleurs_noautofill" autocomplete="off" aria-autocomplete="none" placeholder="Ex: A. Ismail / M. Tahiri">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="audit-type-controle">Type de Contrôle *</label>
-                    <select id="audit-type-controle" autocomplete="off">
-                        <option value="">-- Sélectionner le type --</option>
-                        <option value="Thématique">Thématique</option>
-                        <option value="Systématique">Systématique</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="audit-date-debut">Début de la période du contrôle *</label>
-                    <input type="date" id="audit-date-debut" autocomplete="off">
-                </div>
-                <div class="form-group">
-                    <label for="audit-date-fin">Fin de la période du contrôle *</label>
-                    <input type="date" id="audit-date-fin" autocomplete="off">
-                </div>
-                <div class="form-group" style="grid-column: span 2;">
-                    <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                    <input type="text" id="audit-controleurs" autocomplete="off" placeholder="Ex: A. Ismail / M. Tahiri">
-                </div>
-            </div>
+            </form>
         </section>
 
         <div class="toolbar">
