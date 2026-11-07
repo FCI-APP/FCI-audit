@@ -26,7 +26,7 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; }
+        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
         .sidebar {
             width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
@@ -51,7 +51,7 @@
 
         .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
 
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
 
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .header-title h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
@@ -70,7 +70,7 @@
         .meta-item span.label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
         .meta-item span.value { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 15px; }
         .kpi-icon { width: 45px; height: 45px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 
@@ -80,27 +80,43 @@
         .control-item { padding: 20px; border-bottom: 1px solid var(--border-color); }
         .control-item:last-child { border-bottom: none; }
 
-        .eval-section { display: grid; grid-template-columns: 280px 1fr; gap: 20px; background: #FAFBFD; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); }
-        .metrics-block { display: flex; flex-direction: column; gap: 10px; border-right: 1px solid var(--border-color); padding-right: 15px; }
+        /* Correction Disposition pour séparer métriques et saisie textuelle */
+        .eval-section { 
+            display: grid; 
+            grid-template-columns: 320px 1fr; 
+            gap: 20px; 
+            background: #FAFBFD; 
+            padding: 15px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            width: 100%;
+        }
+        .metrics-block { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            border-right: 2px solid var(--border-color); 
+            padding-right: 18px; 
+        }
 
         .input-inline { display: flex; flex-direction: column; gap: 4px; }
-        .input-inline label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .input-inline label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .input-inline input, .input-inline select { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: white; }
 
-        .rate-box { background: #FFFFFF; border: 1px dashed var(--primary); padding: 8px; border-radius: 6px; text-align: center; }
-        .rate-box span { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
-        .rate-box strong { font-size: 1.1rem; color: var(--primary); }
+        .rate-box { background: #FFFFFF; border: 1px dashed var(--primary); padding: 10px; border-radius: 6px; text-align: center; }
+        .rate-box span { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .rate-box strong { font-size: 1.15rem; color: var(--primary); display: block; margin-top: 2px; }
 
-        .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-        .field-group { display: flex; flex-direction: column; gap: 5px; }
+        .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; width: 100%; }
+        .field-group { display: flex; flex-direction: column; gap: 6px; }
         .field-group label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .field-group textarea { width: 100%; height: 95px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
+        .field-group textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
 
         .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
         @media print {
             .sidebar, .action-buttons { display: none !important; }
-            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
             .eval-section { grid-template-columns: 1fr 1fr; background: white; }
         }
     </style>
@@ -128,7 +144,7 @@
                 <p>Évaluation des points de contrôle, calcul de conformité et avis de l'entité</p>
             </div>
             <div class="action-buttons">
-                <button class="btn btn-outline" onclick="sauvegarderLocalement()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+                <button class="btn btn-outline" onclick="sauvegarderEtValider()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
                 <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
                 <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
             </div>
@@ -207,13 +223,26 @@
             });
 
             const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
-            let niveauCentreLabel = "Non évalué", niveauStyle = "color: var(--text-muted);";
+            
+            // Calcul à 4 niveaux de Risque avec couleurs
+            let niveauRisqueLabel = "Non évalué";
+            let niveauStyle = "color: var(--text-muted);";
 
             if (nbPointsEvalues > 0) {
                 const tx = parseFloat(tauxConformiteMoyen);
-                if (tx >= 90) { niveauCentreLabel = "Maîtrisé (Niveau Élevé)"; niveauStyle = "color: #2E7D32;"; }
-                else if (tx >= 70) { niveauCentreLabel = "Moyennement Maîtrisé"; niveauStyle = "color: #F57C00;"; }
-                else { niveauCentreLabel = "Critique / À Risque"; niveauStyle = "color: #C62828;"; }
+                if (tx >= 90) {
+                    niveauRisqueLabel = "Risque Faible";
+                    niveauStyle = "color: #2E7D32;"; // Vert
+                } else if (tx >= 75) {
+                    niveauRisqueLabel = "Risque Moyen";
+                    niveauStyle = "color: #0288D1;"; // Bleu
+                } else if (tx >= 60) {
+                    niveauRisqueLabel = "Risque Fort";
+                    niveauStyle = "color: #F57C00;"; // Orange
+                } else {
+                    niveauRisqueLabel = "Risque Critique";
+                    niveauStyle = "color: #C62828;"; // Rouge
+                }
             }
 
             let html = `
@@ -230,8 +259,8 @@
                         <div><h3>${tauxConformiteMoyen} %</h3><p style="font-size:0.8rem; color:var(--text-muted);">Taux Conformité Moyen</p></div>
                     </div>
                     <div class="kpi-card" style="border-left: 4px solid var(--accent);">
-                        <div class="kpi-icon" style="background:#FEF3C7; color:#D97706;"><i class="fa-solid fa-award"></i></div>
-                        <div><h3 style="${niveauStyle}">${niveauCentreLabel}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Niveau de l'Entité</p></div>
+                        <div class="kpi-icon" style="background:#FEF3C7; color:#D97706;"><i class="fa-solid fa-shield-cat"></i></div>
+                        <div><h3 style="${niveauStyle}">${niveauRisqueLabel}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Niveau de Risque Global</p></div>
                     </div>
                     <div class="kpi-card"><div class="kpi-icon" style="background:#E8F5E9; color:var(--status-cloture);"><i class="fa-solid fa-check-circle"></i></div><div><h3>${countCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Clôturés</p></div></div>
                     <div class="kpi-card"><div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-cloture);"><i class="fa-solid fa-circle-xmark"></i></div><div><h3>${countNonCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Non Clôturés</p></div></div>
@@ -267,7 +296,7 @@
                             <div class="eval-section">
                                 <div class="metrics-block">
                                     <div class="input-inline">
-                                        <label>Statut du constat</label>
+                                        <label>Statut du constat *</label>
                                         <select style="background-color:${selectBgColor}; color:${selectTxtColor}; font-weight:700;" onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
                                             <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Constat clôturé</option>
                                             <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Constat non clôturé</option>
@@ -276,12 +305,12 @@
                                     </div>
 
                                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline"><label>Population</label><input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
-                                        <div class="input-inline"><label>Échantillon</label><input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
+                                        <div class="input-inline"><label>Population *</label><input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
+                                        <div class="input-inline"><label>Échantillon *</label><input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
                                     </div>
 
                                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                                        <div class="input-inline"><label>Nombre (OK)</label><input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
+                                        <div class="input-inline"><label>Nombre (OK) *</label><input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
                                         <div class="input-inline"><label>Nombre (KO)</label><input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;"></div>
                                     </div>
 
@@ -292,9 +321,9 @@
                                 </div>
 
                                 <div class="fields-block">
-                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Saisir les constats...">${evalData.constat}</textarea></div>
-                                    <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations...">${evalData.recommandation}</textarea></div>
-                                    <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis de l'entité...">${evalData.avisResponsable}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Saisir les constats obligatoires...">${evalData.constat}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${evalData.recommandation}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis de l'entité (Optionnel)...">${evalData.avisResponsable}</textarea></div>
                                 </div>
                             </div>
                         </div>
@@ -329,13 +358,48 @@
             sauvegarderLocalement(false);
         }
 
+        function validerChampsObligatoires() {
+            let valide = true;
+            let messageErreur = "";
+
+            missionData.pointsControle.forEach((p) => {
+                const ev = p.eval;
+                if (!ev.echantillon || ev.echantillon <= 0) {
+                    valide = false; messageErreur = `Le point "${p['Points de contrôle']}" nécessite un échantillon valide (> 0).`;
+                } else if (!ev.constat || ev.constat.trim() === '') {
+                    valide = false; messageErreur = `Le champ "Constat" est obligatoire pour le point : "${p['Points de contrôle']}".`;
+                } else if (!ev.recommandation || ev.recommandation.trim() === '') {
+                    valide = false; messageErreur = `Le champ "Recommandation" est obligatoire pour le point : "${p['Points de contrôle']}".`;
+                }
+            });
+
+            return { valide, messageErreur };
+        }
+
+        function sauvegarderEtValider() {
+            const val = validerChampsObligatoires();
+            if (!val.valide) {
+                alert(`⚠️ Champs obligatoires manquants :\n${val.messageErreur}`);
+                return;
+            }
+            sauvegarderLocalement(true);
+        }
+
         function sauvegarderLocalement(notif = true) {
             localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
-            if (notif) alert('Sauvegarde effectuée avec succès.');
+            if (notif) alert('Feuille de contrôle enregistrée avec succès.');
         }
 
         function exporterExcel() {
             if (!missionData || !missionData.pointsControle) return;
+
+            const val = validerChampsObligatoires();
+            if (!val.valide) {
+                if (!confirm(`⚠️ Attention : Certains champs obligatoires sont incomplets :\n${val.messageErreur}\n\nVoulez-vous quand même exporter en Excel ?`)) {
+                    return;
+                }
+            }
+
             const rows = missionData.pointsControle.map(p => ({
                 "Date Début": missionData.metadata.dateDebutControle,
                 "Date Fin": missionData.metadata.dateFinControle,
@@ -352,9 +416,9 @@
                 "Nombre (KO)": p.eval.nombreKo,
                 "Taux de conformité (%)": p.eval.tauxConformite,
                 "Statut Constat": p.eval.statutConstat,
-                "Constat": p.eval.constat,
-                "Recommandation": p.eval.recommandation,
-                "Avis Responsable Entité": p.eval.avisResponsable
+                "Constat (Obligatoire)": p.eval.constat,
+                "Recommandation (Obligatoire)": p.eval.recommandation,
+                "Avis Responsable Entité (Facultatif)": p.eval.avisResponsable
             }));
 
             const worksheet = XLSX.utils.json_to_sheet(rows);
