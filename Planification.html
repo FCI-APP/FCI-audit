@@ -400,7 +400,13 @@
                 pointsControle: activeItems
             };
 
+            // 1. Sauvegarde de la mission active pour la Feuille de Contrôle
             localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
+
+            // 2. Reinitialisation complete des donnees saisies sur la feuille Planification
+            viderPlanification();
+
+            // 3. Redirection vers la Fiche de Controle
             window.location.href = 'FicheControle.html';
         }
 
