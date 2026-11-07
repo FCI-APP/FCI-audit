@@ -1,1711 +1,420 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
-  <meta name="description" content="Fiche de contrôle intelligente (FCI) - Référentiel de contrôle permanent BARID AL-MAGHRIB">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <style>
-    /* ========================================================
-       CHARTE GRAPHIQUE & DESIGN SYSTEM (BARID AL-MAGHRIB)
-       ======================================================== */
-    :root {
-      --barid-blue: #003366;
-      --barid-blue-dark: #002244;
-      --barid-blue-light: #0A4B8C;
-      --barid-gold: #EAAA00;
-      --barid-gold-hover: #D49900;
-      --barid-gold-light: #FFF8E6;
-      --barid-bg: #F4F6F9;
-      --barid-card: #FFFFFF;
-      --barid-text: #333333;
-      --barid-text-muted: #6B7280;
-      --barid-border: #D1D5DB;
-      --barid-border-light: #E5E7EB;
-      --sidebar-width: 250px;
-      --radius-sm: 4px;
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--barid-bg);
-      color: var(--barid-text);
-      line-height: 1.5;
-      font-size: 13px;
-      -webkit-font-smoothing: antialiased;
-      display: flex;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* ========================================================
-       DISPOSITION GÉNÉRALE : SIDEBAR (250px) + MAIN CONTENT
-       ======================================================== */
-    .app-sidebar {
-      width: var(--sidebar-width);
-      background-color: var(--barid-blue);
-      color: #FFFFFF;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      border-right: 1px solid var(--barid-blue-dark);
-      transition: transform 0.25s ease;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.15);
-    }
-
-    .sidebar-header {
-      padding: 25px 15px;
-      text-align: center;
-      border-bottom: 2px solid var(--barid-gold);
-      background-color: var(--barid-blue-dark);
-    }
-
-    .sidebar-header h2 {
-      font-size: 1.1rem;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #FFFFFF;
-      text-transform: uppercase;
-      line-height: 1.3;
-    }
-
-    .sidebar-nav-section-title {
-      padding: 16px 16px 8px;
-      font-size: 10px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .sidebar-menu {
-      list-style: none;
-      padding: 0 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .sidebar-menu-item {
-      position: relative;
-    }
-
-    .sidebar-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      color: rgba(255, 255, 255, 0.8);
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: var(--radius-md);
-      transition: all 0.15s ease;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .sidebar-link:hover:not(.disabled) {
-      background: rgba(255, 255, 255, 0.08);
-      color: #FFFFFF;
-    }
-
-    .sidebar-link.active {
-      background: rgba(234, 170, 0, 0.15);
-      color: var(--barid-gold);
-      font-weight: 700;
-      border-left: 4px solid var(--barid-gold);
-      padding-left: 10px;
-    }
-
-    .sidebar-link.disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-    }
-
-    .sidebar-badge {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: var(--radius-sm);
-      text-transform: uppercase;
-    }
-
-    .sidebar-badge-active {
-      background: var(--barid-gold);
-      color: var(--barid-blue-dark);
-    }
-
-    .sidebar-badge-muted {
-      background: rgba(255, 255, 255, 0.15);
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    .sidebar-footer {
-      padding: 15px;
-      font-size: 0.75rem;
-      text-align: center;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.6);
-      background-color: rgba(0, 34, 68, 0.4);
-    }
-
-    /* ========================================================
-       ZONE PRINCIPALE (MAIN CONTENT)
-       ======================================================== */
-    .app-main {
-      margin-left: var(--sidebar-width);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .main-header {
-      background: #FFFFFF;
-      border-bottom: 1px solid var(--barid-border);
-      padding: 14px 28px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .main-header-title-group h1 {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--barid-blue);
-      line-height: 1.2;
-    }
-
-    .main-header-title-group p {
-      font-size: 11px;
-      color: var(--barid-text-muted);
-      margin-top: 2px;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      font-size: 11px;
-      font-weight: 700;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .status-badge.online {
-      background: #ECFDF5;
-      color: #065F46;
-      border: 1px solid #A7F3D0;
-    }
-
-    .status-badge.offline {
-      background: #FFFBEB;
-      color: #92400E;
-      border: 1px solid #FDE68A;
-    }
-
-    .status-badge.loading {
-      background: #EFF6FF;
-      color: #1E40AF;
-      border: 1px solid #BFDBFE;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-    }
-
-    .status-badge.online .status-dot {
-      background: #10B981;
-      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
-    }
-
-    .status-badge.offline .status-dot {
-      background: #F59E0B;
-    }
-
-    .status-badge.loading .status-dot {
-      background: #3B82F6;
-      animation: pulse 1.2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
-    }
-
-    .main-body {
-      padding: 24px 28px;
-      max-width: 1440px;
-      width: 100%;
-      margin: 0 auto;
-    }
-
-    /* ========================================================
-       SECTION CASCADE DE FILTRAGE
-       ======================================================== */
-    .filter-card {
-      background: var(--barid-card);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--barid-border);
-      box-shadow: var(--shadow-sm);
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-
-    .filter-card-header {
-      background: #FAFBFD;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--barid-border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .filter-card-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--barid-blue);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .filter-card-body {
-      padding: 18px 20px;
-    }
-
-    .filter-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .filter-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #374151;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .filter-label-num {
-      color: var(--barid-blue);
-    }
-
-    .filter-select {
-      width: 100%;
-      padding: 9px 12px;
-      font-size: 12px;
-      font-family: inherit;
-      color: var(--barid-text);
-      background-color: #FFFFFF;
-      border: 1px solid var(--barid-border);
-      border-radius: var(--radius-sm);
-      outline: none;
-      transition: all 0.15s ease;
-      cursor: pointer;
-    }
-
-    .filter-select:hover:not(:disabled) {
-      border-color: #9CA3AF;
-    }
-
-    .filter-select:focus {
-      border-color: var(--barid-blue);
-      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.15);
-    }
-
-    .filter-select:disabled {
-      background-color: #F3F4F6;
-      color: #9CA3AF;
-      border-color: #E5E7EB;
-      cursor: not-allowed;
-    }
-
-    .filter-actions-bar {
-      padding-top: 14px;
-      border-top: 1px solid var(--barid-border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .active-filter-breadcrumbs {
-      font-size: 11px;
-      color: #4B5563;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .active-filter-breadcrumbs strong {
-      color: var(--barid-blue);
-    }
-
-    .filter-btn-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 8px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      user-select: none;
-      white-space: nowrap;
-      text-decoration: none;
-      font-family: inherit;
-    }
-
-    .btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      pointer-events: none;
-    }
-
-    .btn-primary {
-      background-color: var(--barid-blue);
-      color: #FFFFFF;
-      border-color: var(--barid-blue-dark);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background-color: var(--barid-blue-dark);
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn-gold {
-      background-color: var(--barid-gold);
-      color: var(--barid-blue-dark);
-      border-color: #D49900;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn-gold:hover:not(:disabled) {
-      background-color: var(--barid-gold-hover);
-      box-shadow: var(--shadow-md);
-    }
-
-    .btn-secondary {
-      background-color: #FFFFFF;
-      color: #4B5563;
-      border-color: var(--barid-border);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background-color: #F9FAFB;
-      color: var(--barid-text);
-      border-color: #9CA3AF;
-    }
-
-    .btn-outline-danger {
-      background-color: #FFFFFF;
-      color: #DC2626;
-      border-color: #FCA5A5;
-    }
-
-    .btn-outline-danger:hover:not(:disabled) {
-      background-color: #FEF2F2;
-      border-color: #EF4444;
-    }
-
-    .btn-success {
-      background-color: #ECFDF5;
-      color: #065F46;
-      border-color: #A7F3D0;
-    }
-
-    .btn-success:hover:not(:disabled) {
-      background-color: #D1FAE5;
-      border-color: #6EE7B7;
-    }
-
-    /* ========================================================
-       BARRE D'OUTILS DU TABLEAU
-       ======================================================== */
-    .table-toolbar {
-      background: var(--barid-card);
-      border: 1px solid var(--barid-border);
-      border-radius: var(--radius-md);
-      padding: 12px 18px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      box-shadow: var(--shadow-sm);
-      flex-wrap: wrap;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .selection-counter {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      background: #F3F4F6;
-      border: 1px solid var(--barid-border);
-      font-size: 11px;
-      font-weight: 700;
-      color: #374151;
-    }
-
-    .selection-counter.has-selection {
-      background: var(--barid-gold-light);
-      border-color: var(--barid-gold);
-      color: var(--barid-blue-dark);
-    }
-
-    .selection-counter-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--barid-gold);
-    }
-
-    .search-input-wrapper {
-      position: relative;
-      min-width: 200px;
-    }
-
-    .search-input {
-      width: 100%;
-      padding: 7px 10px 7px 28px;
-      font-size: 11px;
-      font-family: inherit;
-      border: 1px solid var(--barid-border);
-      border-radius: var(--radius-sm);
-      background: #FAFBFD;
-      outline: none;
-      transition: all 0.15s ease;
-    }
-
-    .search-input:focus {
-      background: #FFFFFF;
-      border-color: var(--barid-blue);
-      box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.1);
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #9CA3AF;
-      font-size: 12px;
-      pointer-events: none;
-    }
-
-    /* ========================================================
-       TABLEAU DES POINTS DE CONTRÔLE
-       ======================================================== */
-    .table-container {
-      background: var(--barid-card);
-      border: 1px solid var(--barid-border);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-
-    .table-responsive {
-      overflow-x: auto;
-      width: 100%;
-    }
-
-    .audit-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 12px;
-    }
-
-    .audit-table thead {
-      background-color: var(--barid-blue);
-      color: #FFFFFF;
-      user-select: none;
-    }
-
-    .audit-table th {
-      padding: 12px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      border-bottom: 2px solid var(--barid-gold);
-      white-space: nowrap;
-    }
-
-    .audit-table th.col-select {
-      width: 44px;
-      text-align: center;
-    }
-
-    .audit-table th.col-processus {
-      width: 180px;
-    }
-
-    .audit-table th.col-risque {
-      width: 240px;
-    }
-
-    .audit-table th.col-controle {
-      width: 240px;
-    }
-
-    .audit-table th.col-pc {
-      min-width: 320px;
-    }
-
-    .audit-table tbody tr {
-      border-bottom: 1px solid var(--barid-border-light);
-      transition: background-color 0.1s ease;
-      cursor: pointer;
-    }
-
-    .audit-table tbody tr:hover {
-      background-color: #F8FAFC;
-    }
-
-    .audit-table tbody tr.row-selected {
-      background-color: #FFFDF0;
-    }
-
-    .audit-table tbody tr.row-selected:hover {
-      background-color: #FFF9D6;
-    }
-
-    .audit-table td {
-      padding: 12px 14px;
-      vertical-align: top;
-      color: #1F2937;
-      line-height: 1.45;
-    }
-
-    .audit-table td.col-select {
-      text-align: center;
-      padding-top: 14px;
-    }
-
-    .td-processus {
-      font-weight: 700;
-      color: var(--barid-blue);
-    }
-
-    .td-risque {
-      font-weight: 600;
-      color: #1F2937;
-    }
-
-    .td-controle {
-      font-weight: 500;
-      color: #374151;
-    }
-
-    .td-pc {
-      color: #111827;
-      font-weight: 500;
-    }
-
-    input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--barid-blue);
-      cursor: pointer;
-    }
-
-    .empty-state {
-      padding: 60px 20px;
-      text-align: center;
-      color: var(--barid-text-muted);
-    }
-
-    .empty-state-icon {
-      font-size: 36px;
-      margin-bottom: 12px;
-      display: inline-block;
-      color: #9CA3AF;
-    }
-
-    .empty-state-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #374151;
-      margin-bottom: 6px;
-    }
-
-    .empty-state-text {
-      font-size: 12px;
-      max-width: 440px;
-      margin: 0 auto 16px;
-      line-height: 1.5;
-    }
-
-    .table-footer {
-      padding: 10px 16px;
-      background: #FAFBFD;
-      border-top: 1px solid var(--barid-border-light);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--barid-text-muted);
-    }
-
-    /* ========================================================
-       TOAST NOTIFICATION
-       ======================================================== */
-    .toast-container {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      z-index: 9999;
-      pointer-events: none;
-    }
-
-    .toast {
-      background: var(--barid-blue);
-      color: #FFFFFF;
-      padding: 12px 18px;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      border-left: 4px solid var(--barid-gold);
-      font-size: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.25s ease;
-      pointer-events: auto;
-      max-width: 420px;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .toast-icon {
-      font-size: 16px;
-      color: var(--barid-gold);
-    }
-
-    .mobile-menu-btn {
-      display: none;
-      background: none;
-      border: 1px solid var(--barid-border);
-      padding: 6px 10px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    @media (max-width: 900px) {
-      .app-sidebar {
-        transform: translateX(-100%);
-      }
-      .app-sidebar.open {
-        transform: translateX(0);
-      }
-      .app-main {
-        margin-left: 0;
-      }
-      .mobile-menu-btn {
-        display: block;
-      }
-      .filter-grid {
-        grid-template-columns: 1fr;
-      }
-      .main-body {
-        padding: 16px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #003366;
+            --primary-dark: #002244;
+            --accent: #EAAA00;
+            --bg-body: #F4F6F9;
+            --bg-card: #FFFFFF;
+            --text-main: #2C3E50;
+            --text-muted: #6C757D;
+            --border-color: #E2E8F0;
+            --sidebar-width: 250px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
+            height: 100vh; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+        }
+
+        .sidebar-header {
+            padding: 24px 20px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark);
+            text-align: center;
+        }
+
+        .sidebar-header h2 { font-size: 1.05rem; font-weight: 800; text-transform: uppercase; color: #FFF; }
+
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
+
+        .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-nav li a {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            transition: all 0.2s;
+        }
+        .sidebar-nav li a:hover, .sidebar-nav li.active a {
+            background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
+        }
+
+        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background: var(--accent); color: var(--primary-dark); }
+        .badge-muted { background: rgba(255,255,255,0.2); color: #FFF; }
+
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
+        .page-header p { font-size: 0.85rem; color: var(--text-muted); }
+
+        .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
+        .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
+        .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        .filter-group label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; }
+        .filter-group select { padding: 9px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; }
+
+        .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-accent { background: var(--accent); color: var(--primary); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-excel { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+
+        .table-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+        .table-toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .selection-count { background: #FEF3C7; color: #D97706; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; }
+        .table-container { max-height: 500px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+        th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        tr.selected-row { background-color: #FEFCE8; }
+
+        .empty-state { text-align: center; padding: 50px 20px; }
+        .table-footer { padding: 12px 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); }
+    </style>
 </head>
 <body>
 
-  <!-- ========================================================
-       1. MENU LATÉRAL (SIDEBAR - 250px)
-       ======================================================== -->
-  <aside class="app-sidebar" id="appSidebar">
-    <div>
-      <div class="sidebar-header">
-        <h2>Fiche de contrôle intelligente (FCI)</h2>
-      </div>
-
-      <div class="sidebar-nav-section-title">Navigation Feuilles</div>
-      <ul class="sidebar-menu">
-        <li class="sidebar-menu-item">
-          <a class="sidebar-link active" id="navFeuille1">
-            <span>1. Référentiel de contrôle</span>
-            <span class="sidebar-badge sidebar-badge-active">Actif</span>
-          </a>
-        </li>
-        <li class="sidebar-menu-item">
-          <a href="Planification.html" class="sidebar-link" title="Planification de la campagne de contrôle multi-processus">
-            <span>2. Planification</span>
-            <span class="sidebar-badge sidebar-badge-active">Disponible</span>
-          </a>
-        </li>
-        <li class="sidebar-menu-item">
-          <a class="sidebar-link disabled" title="Exécution de la fiche de contrôle terrain">
-            <span>3. Fiche de Contrôle (FC)</span>
-            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
-          </a>
-        </li>
-        <li class="sidebar-menu-item">
-          <a class="sidebar-link disabled" title="Synthèse & rapports de contrôle">
-            <span>4. Synthèse & Rapports</span>
-            <span class="sidebar-badge sidebar-badge-muted">À venir</span>
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    <div class="sidebar-footer">
-      FCI v1.0 &copy; 2026 - 2027
-    </div>
-  </aside>
-
-  <!-- ========================================================
-       2. ZONE PRINCIPALE (MAIN CONTENT)
-       ======================================================== -->
-  <main class="app-main">
-    
-    <header class="main-header">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
-        <div class="main-header-title-group">
-          <h1>Feuille 1 : Référentiel de contrôle</h1>
-          <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>Fiche de contrôle intelligente (FCI)</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-nav">
+                <li class="active">
+                    <a href="index.html">
+                        <span>1. Référentiel de contrôle</span>
+                        <span class="badge-status badge-active">Actif</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Planification.html">
+                        <span>2. Planification</span>
+                        <span class="badge-status badge-active">Disponible</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="FicheControle.html">
+                        <span>3. Fiche de Contrôle (FC)</span>
+                        <span class="badge-status badge-active">Disponible</span>
+                    </a>
+                </li>
+            </ul>
         </div>
-      </div>
+        <div class="sidebar-footer">FCI v1.0 © 2026 - 2027<br>BARID AL-MAGHRIB</div>
+    </aside>
 
-      <div id="serverStatusBadge" class="status-badge loading">
-        <span class="status-dot"></span>
-        <span id="serverStatusText">Initialisation BDD...</span>
-      </div>
-    </header>
-
-    <div class="main-body">
-
-      <!-- ========================================================
-           A. ZONE DE FILTRAGE & CASCADE HIÉRARCHIQUE
-           ======================================================== -->
-      <section class="filter-card">
-        <div class="filter-card-header">
-          <div class="filter-card-title">
-            <span>⚡ Filtrage en Cascade Hiérarchique</span>
-          </div>
-          <div>
-            <button type="button" id="btnDownloadFullBDD" class="btn btn-success" title="Télécharger la base de données complète du référentiel sous format Excel (CSV)">
-              📥 Télécharger BDD (Référentiel)
-            </button>
-          </div>
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1>Feuille 1 : Référentiel de contrôle</h1>
+                <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
+            </div>
+            <div class="btn-group">
+                <span class="selection-count" id="bdd-status">BDD à jour (<span id="total-pc-count">0</span> PC)</span>
+            </div>
         </div>
 
-        <div class="filter-card-body">
-          <div class="filter-grid">
-            
-            <!-- 1. Processus -->
-            <div class="filter-group">
-              <label class="filter-label" for="selectProcessus">
-                <span>1. Processus</span>
-                <span class="filter-label-num" id="countProcessus">0</span>
-              </label>
-              <select id="selectProcessus" class="filter-select">
-                <option value="">-- Sélectionner un Processus --</option>
-              </select>
+        <div class="filter-card">
+            <div class="filter-title"><i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique</div>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>1. Processus <span id="count-proc">0</span></label>
+                    <select id="select-processus" onchange="onProcessusChange()">
+                        <option value="">-- Sélectionner un Processus --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>2. Intitulé du risque <span id="count-risque">0</span></label>
+                    <select id="select-risque" onchange="onRisqueChange()" disabled>
+                        <option value="">-- Choisir d'abord un Processus --</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>3. Intitulé contrôle <span id="count-controle">0</span></label>
+                    <select id="select-controle" onchange="onControleChange()" disabled>
+                        <option value="">-- Choisir d'abord un Risque --</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 15px;">
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Filtre actif : <strong id="filter-status-desc">Aucun processus sélectionné</strong></div>
+                <div>
+                    <button class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                    <button class="btn btn-primary" onclick="appliquerFiltre()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC (<span id="btn-count">0</span> PC)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-toolbar">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn btn-outline" onclick="selectionnerTout()"><i class="fa-regular fa-square-check"></i> Sélectionner tout</button>
+                    <button class="btn btn-outline" onclick="deselectionnerTout()"><i class="fa-regular fa-square"></i> Désélectionner tout</button>
+                    <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+                    <button class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
+                </div>
             </div>
 
-            <!-- 2. Risque -->
-            <div class="filter-group">
-              <label class="filter-label" for="selectRisque">
-                <span>2. Intitulé du Risque</span>
-                <span class="filter-label-num" id="countRisques">0</span>
-              </label>
-              <select id="selectRisque" class="filter-select" disabled>
-                <option value="">-- Choisir d'abord un Processus --</option>
-              </select>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" id="master-checkbox" onchange="toggleMasterCheckbox(this)"></th>
+                            <th>PROCESSUS</th>
+                            <th>INTITULÉ DU RISQUE</th>
+                            <th>INTITULÉ CONTRÔLE</th>
+                            <th>POINTS DE CONTRÔLE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body"></tbody>
+                </table>
+                <div id="empty-state" class="empty-state">
+                    <i class="fa-solid fa-clipboard-list" style="font-size:2.5rem; color: var(--text-muted); margin-bottom:10px;"></i>
+                    <h3>Aucun point de contrôle affiché</h3>
+                    <p>Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur [Afficher PC].</p>
+                </div>
             </div>
 
-            <!-- 3. Contrôle -->
-            <div class="filter-group">
-              <label class="filter-label" for="selectControle">
-                <span>3. Intitulé Contrôle</span>
-                <span class="filter-label-num" id="countControles">0</span>
-              </label>
-              <select id="selectControle" class="filter-select" disabled>
-                <option value="">-- Choisir d'abord un Risque --</option>
-              </select>
+            <div class="table-footer">
+                <div><span id="rendered-count">0</span> point(s) affiché(s)</div>
+                <div><span id="selected-footer-count">0</span> sélectionné(s) pour la Planification</div>
             </div>
-
-          </div>
-
-          <div class="filter-actions-bar">
-            <div class="active-filter-breadcrumbs" id="filterBreadcrumbs">
-              Filtre actif : <strong>Aucun processus sélectionné</strong>
-            </div>
-
-            <div class="filter-btn-group">
-              <button type="button" id="btnVider" class="btn btn-outline-danger" title="Réinitialiser tous les filtres et vider le tableau">
-                ↺ Vider
-              </button>
-              <button type="button" id="btnAfficher" class="btn btn-primary" title="Valider les filtres et afficher les points de contrôle">
-                🔍 Afficher PC <span id="badgePcCount">(0 PC)</span>
-              </button>
-            </div>
-          </div>
         </div>
-      </section>
+    </main>
 
-      <!-- ========================================================
-           B. BARRE D'OUTILS DU TABLEAU
-           ======================================================== -->
-      <section class="table-toolbar">
-        <div class="toolbar-left">
-          <button type="button" id="btnSelectAll" class="btn btn-secondary" title="Cocher tous les points affichés">
-            ☑ Sélectionner
-          </button>
-          <button type="button" id="btnDeselectAll" class="btn btn-secondary" title="Décocher tous les points affichés">
-            ☐ Désélectionner
-          </button>
+    <script>
+        let bddData = [];
+        let filteredData = [];
+        let selectedPoints = new Set();
+        const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-          <div class="selection-counter" id="selectionCounterBadge">
-            <span class="selection-counter-dot"></span>
-            <span id="selectionCounterText">0 point sélectionné</span>
-          </div>
-        </div>
+        document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
-        <div class="toolbar-right">
-          <div class="search-input-wrapper">
-            <span class="search-icon">🔎</span>
-            <input type="text" id="searchInput" class="search-input" placeholder="Filtrer dans les résultats...">
-          </div>
-
-          <button type="button" id="btnDownloadExcel" class="btn btn-success" title="Télécharger les points affichés sous format Excel (CSV)">
-            📊 Télécharger format Excel
-          </button>
-
-          <button type="button" id="btnExportPlanification" class="btn btn-gold" title="Exporter les points choisis vers la feuille Planification">
-            📅 Planification
-          </button>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           C. TABLEAU DES POINTS DE CONTRÔLE
-           ======================================================== -->
-      <section class="table-container">
-        <div class="table-responsive">
-          <table class="audit-table" id="auditTable">
-            <thead>
-              <tr>
-                <th class="col-select">
-                  <input type="checkbox" id="headerCheckbox" title="Tout sélectionner / désélectionner">
-                </th>
-                <th class="col-processus">Processus</th>
-                <th class="col-risque">Intitulé du risque</th>
-                <th class="col-controle">Intitulé Contrôle</th>
-                <th class="col-pc">Points de contrôle</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody">
-              <!-- Rempli dynamiquement -->
-            </tbody>
-          </table>
-        </div>
-
-        <div class="table-footer">
-          <div id="tableFooterSummary">0 point de contrôle affiché</div>
-          <div id="tableFooterSelection">0 sélectionné pour la Planification</div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <div class="toast-container">
-    <div id="toast" class="toast">
-      <span class="toast-icon">✓</span>
-      <span id="toastMessage">Notification</span>
-    </div>
-  </div>
-
-  <!-- ========================================================
-       SCRIPT JAVASCRIPT ES6 VANILLA
-       ======================================================== -->
-  <script>
-    const URL_BDD_DISTANTE = "https://fci-app.github.io/FCI-audit/referentiel_controle_redresse-vf_R%C3%A9f%C3%A9rentiel%20Redress%C3%A9.json";
-
-    const CACHE_DB_KEY = "fci_referentiel_db";
-    const PLANIFICATION_PC_KEY = "fci_planification_pc"; 
-
-    let referentielData = [];         
-    let displayedPoints = [];         
-    let selectedPointsSet = new Set(); 
-
-    const selectProcessus = document.getElementById('selectProcessus');
-    const selectRisque = document.getElementById('selectRisque');
-    const selectControle = document.getElementById('selectControle');
-    const btnAfficher = document.getElementById('btnAfficher');
-    const btnVider = document.getElementById('btnVider');
-    const badgePcCount = document.getElementById('badgePcCount');
-    
-    const tableBody = document.getElementById('tableBody');
-    const headerCheckbox = document.getElementById('headerCheckbox');
-    const btnSelectAll = document.getElementById('btnSelectAll');
-    const btnDeselectAll = document.getElementById('btnDeselectAll');
-    const btnExportPlanification = document.getElementById('btnExportPlanification');
-    const btnDownloadExcel = document.getElementById('btnDownloadExcel');
-    const btnDownloadFullBDD = document.getElementById('btnDownloadFullBDD');
-    const searchInput = document.getElementById('searchInput');
-    const selectionCounterBadge = document.getElementById('selectionCounterBadge');
-    const selectionCounterText = document.getElementById('selectionCounterText');
-    const serverStatusBadge = document.getElementById('serverStatusBadge');
-    const serverStatusText = document.getElementById('serverStatusText');
-    const filterBreadcrumbs = document.getElementById('filterBreadcrumbs');
-    const countProcessus = document.getElementById('countProcessus');
-    const countRisques = document.getElementById('countRisques');
-    const countControles = document.getElementById('countControles');
-    const tableFooterSummary = document.getElementById('tableFooterSummary');
-    const tableFooterSelection = document.getElementById('tableFooterSelection');
-    const toast = document.getElementById('toast');
-    const toastMessage = document.getElementById('toastMessage');
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const appSidebar = document.getElementById('appSidebar');
-
-    document.addEventListener('DOMContentLoaded', () => {
-      initDatabase();
-      setupEventListeners();
-    });
-
-    async function initDatabase() {
-      updateStatusBadge('loading', 'Téléchargement de la BDD distante...');
-
-      try {
-        const response = await fetch(URL_BDD_DISTANTE);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        async function chargerBDD() {
+            try {
+                const response = await fetch('referentiel.json');
+                bddData = await response.json();
+                document.getElementById('total-pc-count').textContent = bddData.length;
+                document.getElementById('btn-count').textContent = bddData.length;
+                initialiserFiltres();
+                restaurerSelectionExistante();
+            } catch (err) {
+                console.error("Erreur de chargement JSON:", err);
+            }
         }
-        const data = await response.json();
 
-        if (Array.isArray(data) && data.length > 0) {
-          referentielData = data;
-          try {
-            localStorage.setItem(CACHE_DB_KEY, JSON.stringify(data));
-          } catch (storageErr) {
-            console.warn('LocalStorage plein ou indisponible :', storageErr);
-          }
-
-          updateStatusBadge('online', `🟢 BDD à jour (${data.length} PC)`);
-          onDataLoaded();
-          showToast(`Référentiel synchronisé : ${data.length} points de contrôle chargés`);
-          return;
-        } else {
-          throw new Error('Données JSON invalides ou vides');
-        }
-      } catch (err) {
-        console.warn('Échec du fetch distant, tentative de récupération depuis le cache local...', err);
-        loadFromLocalStorageFallback();
-      }
-    }
-
-    function loadFromLocalStorageFallback() {
-      const cached = localStorage.getItem(CACHE_DB_KEY);
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            referentielData = parsed;
-            updateStatusBadge('offline', `🟠 Mode hors-ligne (${parsed.length} PC en cache)`);
-            onDataLoaded();
-            showToast(`Mode hors-ligne : ${parsed.length} PC restaurés depuis le cache local`);
-            return;
-          }
-        } catch (e) {
-          console.error('Erreur lecture cache local', e);
-        }
-      }
-
-      loadEmbeddedFallback();
-    }
-
-    function loadEmbeddedFallback() {
-      referentielData = [
-        {
-          "Processus": "Gestion de la Caisse et Coffre",
-          "Intitulé du risque": "Écart ou déficit de caisse inexpliqué en fin de journée",
-          "Intitulé Contrôle": "Arrêté journalier contradictoire et inventaire physique des caisses",
-          "Points de contrôle": "Vérification inopinée du solde physique de la caisse principale par rapport au solde théorique."
-        },
-        {
-          "Processus": "Gestion de la Caisse et Coffre",
-          "Intitulé du risque": "Écart ou déficit de caisse inexpliqué en fin de journée",
-          "Intitulé Contrôle": "Arrêté journalier contradictoire et inventaire physique des caisses",
-          "Points de contrôle": "Contrôle de l'émargement conjoint du procès-verbal de clôture de caisse journalier."
-        },
-        {
-          "Processus": "Traitement du Courrier et Colis",
-          "Intitulé du risque": "Perte, avarie ou spoliation d'envois recommandés",
-          "Intitulé Contrôle": "Vérification du scellement et de la conformité des dépêches postales",
-          "Points de contrôle": "Concordance des numéros de scellés plastiques/métalliques avec la feuille d'expédition CTP."
-        },
-        {
-          "Processus": "Services Financiers et Opérations Postales",
-          "Intitulé du risque": "Blanchiment de capitaux et non-conformité aux directives LBC/FT",
-          "Intitulé Contrôle": "Vigilance KYC et filtrage systématique sur listes de sanctions",
-          "Points de contrôle": "Renseignement exhaustif de la fiche d'identification client (KYC) dès le seuil réglementaire."
-        }
-      ];
-      updateStatusBadge('offline', `🟠 Mode dégradé (${referentielData.length} PC secours)`);
-      onDataLoaded();
-    }
-
-    function updateStatusBadge(state, text) {
-      serverStatusBadge.className = `status-badge ${state}`;
-      serverStatusText.textContent = text;
-    }
-
-    function onDataLoaded() {
-      populateProcessusDropdown();
-      restoreSavedSelectedPC();
-      updateButtonPcCount(referentielData.length);
-      renderTable([]);
-    }
-
-    function updateButtonPcCount(count) {
-      if (badgePcCount) {
-        badgePcCount.textContent = `(${count} PC)`;
-      }
-    }
-
-    function getFilteredData() {
-      const selectedProc = selectProcessus.value;
-      const selectedRisque = selectRisque.value;
-      const selectedControle = selectControle.value;
-
-      if (!selectedProc) {
-        return referentielData;
-      }
-
-      let filtered = referentielData;
-
-      if (selectedProc !== '__ALL__') {
-        filtered = filtered.filter(item => item['Processus'] && item['Processus'].trim() === selectedProc);
-      }
-
-      if (selectedRisque) {
-        filtered = filtered.filter(item => item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
-      }
-
-      if (selectedControle) {
-        filtered = filtered.filter(item => item['Intitulé Contrôle'] && item['Intitulé Contrôle'].trim() === selectedControle);
-      }
-
-      return filtered;
-    }
-
-    function populateProcessusDropdown() {
-      const processusMap = new Map();
-      
-      referentielData.forEach(item => {
-        if (item && item['Processus']) {
-          const proc = item['Processus'].trim();
-          processusMap.set(proc, (processusMap.get(proc) || 0) + 1);
-        }
-      });
-
-      const processusList = Array.from(processusMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
-
-      countProcessus.textContent = processusList.length;
-
-      selectProcessus.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
-      selectProcessus.innerHTML += `<option value="__ALL__">★ Tous les Processus (${referentielData.length} PC)</option>`;
-
-      processusList.forEach(proc => {
-        const pcCount = processusMap.get(proc);
-        const opt = document.createElement('option');
-        opt.value = proc;
-        opt.textContent = `${proc} (${pcCount} PC)`;
-        selectProcessus.appendChild(opt);
-      });
-
-      resetRisqueDropdown();
-      resetControleDropdown();
-      updateButtonPcCount(referentielData.length);
-    }
-
-    function onProcessusChanged() {
-      const selectedProc = selectProcessus.value;
-
-      if (!selectedProc) {
-        resetRisqueDropdown();
-        resetControleDropdown();
-        updateBreadcrumbs();
-        updateButtonPcCount(referentielData.length);
-        return;
-      }
-
-      if (selectedProc === '__ALL__') {
-        selectRisque.innerHTML = '<option value="">-- Tous les risques inclus --</option>';
-        selectRisque.disabled = true;
-        countRisques.textContent = 'Tous';
-        resetControleDropdown();
-        updateBreadcrumbs();
-        updateButtonPcCount(referentielData.length);
-        return;
-      }
-
-      const risquesMap = new Map();
-      let totalProcPC = 0;
-
-      referentielData.forEach(item => {
-        if (item && item['Processus'] && item['Processus'].trim() === selectedProc && item['Intitulé du risque']) {
-          const rsq = item['Intitulé du risque'].trim();
-          risquesMap.set(rsq, (risquesMap.get(rsq) || 0) + 1);
-          totalProcPC++;
-        }
-      });
-
-      const risquesList = Array.from(risquesMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
-
-      countRisques.textContent = risquesList.length;
-      selectRisque.innerHTML = `<option value="">-- Tous les risques (${totalProcPC} PC) --</option>`;
-      
-      risquesList.forEach(rsq => {
-        const pcCount = risquesMap.get(rsq);
-        const opt = document.createElement('option');
-        opt.value = rsq;
-        opt.textContent = `${rsq} (${pcCount} PC)`;
-        selectRisque.appendChild(opt);
-      });
-      selectRisque.disabled = false;
-
-      resetControleDropdown();
-      updateBreadcrumbs();
-      updateButtonPcCount(totalProcPC);
-    }
-
-    function onRisqueChanged() {
-      const selectedProc = selectProcessus.value;
-      const selectedRisque = selectRisque.value;
-
-      if (!selectedRisque) {
-        resetControleDropdown();
-        updateBreadcrumbs();
-        const currentFiltered = getFilteredData();
-        updateButtonPcCount(currentFiltered.length);
-        return;
-      }
-
-      const controlesMap = new Map();
-      let totalRisquePC = 0;
-
-      referentielData.forEach(item => {
-        const matchProc = (selectedProc === '__ALL__') || (item['Processus'] && item['Processus'].trim() === selectedProc);
-        const matchRisque = (item['Intitulé du risque'] && item['Intitulé du risque'].trim() === selectedRisque);
-
-        if (matchProc && matchRisque && item['Intitulé Contrôle']) {
-          const ctrl = item['Intitulé Contrôle'].trim();
-          controlesMap.set(ctrl, (controlesMap.get(ctrl) || 0) + 1);
-          totalRisquePC++;
-        }
-      });
-
-      const controlesList = Array.from(controlesMap.keys()).sort((a, b) => a.localeCompare(b, 'fr'));
-
-      countControles.textContent = controlesList.length;
-      selectControle.innerHTML = `<option value="">-- Tous les contrôles (${totalRisquePC} PC) --</option>`;
-      
-      controlesList.forEach(ctrl => {
-        const pcCount = controlesMap.get(ctrl);
-        const opt = document.createElement('option');
-        opt.value = ctrl;
-        opt.textContent = `${ctrl} (${pcCount} PC)`;
-        selectControle.appendChild(opt);
-      });
-      selectControle.disabled = false;
-
-      updateBreadcrumbs();
-      updateButtonPcCount(totalRisquePC);
-    }
-
-    function onControleChanged() {
-      updateBreadcrumbs();
-      const currentFiltered = getFilteredData();
-      updateButtonPcCount(currentFiltered.length);
-    }
-
-    function resetRisqueDropdown() {
-      selectRisque.innerHTML = '<option value="">-- Choisir d\'abord un Processus --</option>';
-      selectRisque.disabled = true;
-      countRisques.textContent = '0';
-    }
-
-    function resetControleDropdown() {
-      selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
-      selectControle.disabled = true;
-      countControles.textContent = '0';
-    }
-
-    function updateBreadcrumbs() {
-      const proc = selectProcessus.value;
-      const rsq = selectRisque.value;
-      const ctrl = selectControle.value;
-
-      if (!proc) {
-        filterBreadcrumbs.innerHTML = 'Filtre actif : <strong>Aucun processus sélectionné</strong>';
-        return;
-      }
-
-      let html = `Filtre actif : <strong>${proc === '__ALL__' ? 'Tous les Processus' : escapeHtml(proc)}</strong>`;
-      if (rsq) {
-        html += ` &gt; <span>${escapeHtml(rsq)}</span>`;
-      }
-      if (ctrl) {
-        html += ` &gt; <span>${escapeHtml(ctrl)}</span>`;
-      }
-      filterBreadcrumbs.innerHTML = html;
-    }
-
-    function handleAfficher() {
-      const selectedProc = selectProcessus.value;
-
-      if (!selectedProc) {
-        showToast('Veuillez sélectionner au moins un Processus.');
-        return;
-      }
-
-      const filtered = getFilteredData();
-
-      displayedPoints = filtered;
-      searchInput.value = '';
-      renderTable(filtered);
-      showToast(`${filtered.length} point(s) de contrôle affiché(s)`);
-    }
-
-    function handleVider() {
-      selectProcessus.value = '';
-      resetRisqueDropdown();
-      resetControleDropdown();
-      updateBreadcrumbs();
-      displayedPoints = [];
-      searchInput.value = '';
-      renderTable([]);
-      updateButtonPcCount(referentielData.length);
-      showToast('Filtres réinitialisés et tableau vidé.');
-    }
-
-    function renderTable(points) {
-      tableBody.innerHTML = '';
-
-      if (points.length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td colspan="5" class="empty-state">
-            <div class="empty-state-icon">📋</div>
-            <div class="empty-state-title">Aucun point de contrôle affiché</div>
-            <div class="empty-state-text">
-              Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur le bouton <strong>[Afficher PC]</strong>.
-            </div>
-          </td>
-        `;
-        tableBody.appendChild(tr);
-        tableFooterSummary.textContent = '0 point de contrôle affiché';
-        updateHeaderCheckboxState();
-        updateSelectionCounter();
-        return;
-      }
-
-      const fragment = document.createDocumentFragment();
-
-      points.forEach((item, index) => {
-        const uniqueKey = getPointUniqueKey(item);
-        const isChecked = selectedPointsSet.has(uniqueKey);
-
-        const tr = document.createElement('tr');
-        tr.id = `row-${index}`;
-        if (isChecked) tr.classList.add('row-selected');
-
-        tr.innerHTML = `
-          <td class="col-select">
-            <input type="checkbox" class="row-checkbox" data-key="${escapeHtml(uniqueKey)}" ${isChecked ? 'checked' : ''}>
-          </td>
-          <td class="td-processus">${escapeHtml(item['Processus'] || '-')}</td>
-          <td class="td-risque">${escapeHtml(item['Intitulé du risque'] || '-')}</td>
-          <td class="td-controle">${escapeHtml(item['Intitulé Contrôle'] || '-')}</td>
-          <td class="td-pc">${escapeHtml(item['Points de contrôle'] || '-')}</td>
-        `;
-
-        tr.addEventListener('click', (e) => {
-          if (e.target.tagName !== 'INPUT') {
-            const chk = tr.querySelector('.row-checkbox');
-            chk.checked = !chk.checked;
-            togglePointSelection(uniqueKey, chk.checked, tr);
-          }
-        });
-
-        const chk = tr.querySelector('.row-checkbox');
-        chk.addEventListener('change', (e) => {
-          e.stopPropagation();
-          togglePointSelection(uniqueKey, chk.checked, tr);
-        });
-
-        fragment.appendChild(tr);
-      });
-
-      tableBody.appendChild(fragment);
-      tableFooterSummary.textContent = `${points.length} point${points.length > 1 ? 's' : ''} de contrôle affiché${points.length > 1 ? 's' : ''}`;
-      updateHeaderCheckboxState();
-      updateSelectionCounter();
-    }
-
-    function getPointUniqueKey(item) {
-      return `${item['Processus']}__${item['Intitulé du risque']}__${item['Intitulé Contrôle']}__${item['Points de contrôle']}`;
-    }
-
-    function togglePointSelection(uniqueKey, isSelected, trElement) {
-      if (isSelected) {
-        selectedPointsSet.add(uniqueKey);
-        if (trElement) trElement.classList.add('row-selected');
-      } else {
-        selectedPointsSet.delete(uniqueKey);
-        if (trElement) trElement.classList.remove('row-selected');
-      }
-      updateHeaderCheckboxState();
-      updateSelectionCounter();
-    }
-
-    function updateSelectionCounter() {
-      const count = selectedPointsSet.size;
-      selectionCounterText.textContent = `${count} point${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
-      tableFooterSelection.textContent = `${count} sélectionné${count > 1 ? 's' : ''} pour la Planification`;
-
-      if (count > 0) {
-        selectionCounterBadge.classList.add('has-selection');
-      } else {
-        selectionCounterBadge.classList.remove('has-selection');
-      }
-    }
-
-    function updateHeaderCheckboxState() {
-      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-      if (visibleCheckboxes.length === 0) {
-        headerCheckbox.checked = false;
-        headerCheckbox.indeterminate = false;
-        return;
-      }
-
-      let checkedCount = 0;
-      visibleCheckboxes.forEach(chk => {
-        if (chk.checked) checkedCount++;
-      });
-
-      if (checkedCount === 0) {
-        headerCheckbox.checked = false;
-        headerCheckbox.indeterminate = false;
-      } else if (checkedCount === visibleCheckboxes.length) {
-        headerCheckbox.checked = true;
-        headerCheckbox.indeterminate = false;
-      } else {
-        headerCheckbox.checked = false;
-        headerCheckbox.indeterminate = true;
-      }
-    }
-
-    function handleSelectAll() {
-      const visibleRows = tableBody.querySelectorAll('tr');
-      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-
-      visibleCheckboxes.forEach(chk => {
-        chk.checked = true;
-        const key = chk.getAttribute('data-key');
-        if (key) selectedPointsSet.add(key);
-      });
-
-      visibleRows.forEach(row => {
-        if (row.querySelector('.row-checkbox')) {
-          row.classList.add('row-selected');
-        }
-      });
-
-      updateHeaderCheckboxState();
-      updateSelectionCounter();
-      showToast(`${visibleCheckboxes.length} point(s) cochés.`);
-    }
-
-    function handleDeselectAll() {
-      const visibleRows = tableBody.querySelectorAll('tr');
-      const visibleCheckboxes = tableBody.querySelectorAll('.row-checkbox');
-
-      visibleCheckboxes.forEach(chk => {
-        chk.checked = false;
-        const key = chk.getAttribute('data-key');
-        if (key) selectedPointsSet.delete(key);
-      });
-
-      visibleRows.forEach(row => {
-        row.classList.remove('row-selected');
-      });
-
-      updateHeaderCheckboxState();
-      updateSelectionCounter();
-      showToast('Points décochés.');
-    }
-
-    headerCheckbox.addEventListener('change', () => {
-      if (headerCheckbox.checked) {
-        handleSelectAll();
-      } else {
-        handleDeselectAll();
-      }
-    });
-
-    function handleExportPlanification() {
-      if (selectedPointsSet.size === 0) {
-        showToast('Veuillez cocher au moins un point de contrôle.');
-        return;
-      }
-
-      const selectedObjects = referentielData.filter(item => {
-        const key = getPointUniqueKey(item);
-        return selectedPointsSet.has(key);
-      });
-
-      const processusUniques = new Set(selectedObjects.map(item => item['Processus'])).size;
-
-      try {
-        localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedObjects));
-        showToast(`✓ Succès : ${selectedObjects.length} PC (${processusUniques} processus) exportés ! Redirection...`);
-        
-        setTimeout(() => {
-          window.location.href = 'Planification.html';
-        }, 1000);
-
-      } catch (err) {
-        console.error('Erreur sauvegarde LocalStorage', err);
-        showToast('Erreur lors de la sauvegarde dans le navigateur.');
-      }
-    }
-
-    function restoreSavedSelectedPC() {
-      try {
-        const saved = localStorage.getItem(PLANIFICATION_PC_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            parsed.forEach(item => {
-              selectedPointsSet.add(getPointUniqueKey(item));
+        function initialiserFiltres() {
+            const selectProc = document.getElementById('select-processus');
+            selectProc.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
+            const processusUniques = [...new Set(bddData.map(item => item.Processus))].filter(Boolean).sort();
+            document.getElementById('count-proc').textContent = processusUniques.length;
+            processusUniques.forEach(proc => {
+                const opt = document.createElement('option');
+                opt.value = proc; opt.textContent = proc;
+                selectProc.appendChild(opt);
             });
-            updateSelectionCounter();
-          }
         }
-      } catch (e) {
-        console.warn('Impossible de restaurer la sélection', e);
-      }
-    }
 
-    function exportToCSV(dataList, filenamePrefix) {
-      if (!dataList || dataList.length === 0) {
-        showToast('Aucune donnée à exporter.');
-        return;
-      }
+        function onProcessusChange() {
+            const proc = document.getElementById('select-processus').value;
+            const selectRisque = document.getElementById('select-risque');
+            const selectControle = document.getElementById('select-controle');
+            selectRisque.innerHTML = '<option value="">-- Sélectionner un Risque --</option>';
+            selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
+            selectControle.disabled = true;
 
-      const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
-      
-      const escapeCSV = (str) => {
-        if (!str) return '""';
-        return `"${String(str).replace(/"/g, '""')}"`;
-      };
+            if (!proc) {
+                selectRisque.disabled = true;
+                document.getElementById('count-risque').textContent = "0";
+                document.getElementById('count-controle').textContent = "0";
+                document.getElementById('filter-status-desc').textContent = "Aucun processus sélectionné";
+                document.getElementById('btn-count').textContent = bddData.length;
+                return;
+            }
 
-      const rows = [
-        headers.map(h => `"${h}"`).join(';'),
-        ...dataList.map(item => [
-          escapeCSV(item['Processus']),
-          escapeCSV(item['Intitulé du risque']),
-          escapeCSV(item['Intitulé Contrôle']),
-          escapeCSV(item['Points de contrôle'])
-        ].join(';'))
-      ];
+            selectRisque.disabled = false;
+            const itemsProc = bddData.filter(d => d.Processus === proc);
+            const risquesUniques = [...new Set(itemsProc.map(d => d['Intitulé du risque']))].filter(Boolean).sort();
+            document.getElementById('count-risque').textContent = risquesUniques.length;
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc}`;
+            document.getElementById('btn-count').textContent = itemsProc.length;
 
-      const csvContent = '\uFEFF' + rows.join('\r\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${filenamePrefix}_${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
+            risquesUniques.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r; opt.textContent = r;
+                selectRisque.appendChild(opt);
+            });
+        }
 
-    function handleDownloadFullBDD() {
-      if (referentielData.length === 0) {
-        showToast('La base de données n\'est pas encore chargée.');
-        return;
-      }
-      exportToCSV(referentielData, 'BDD_Referentiel_BARID_AL_MAGHRIB');
-      showToast(`Référentiel complet téléchargé (${referentielData.length} points)`);
-    }
+        function onRisqueChange() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const selectControle = document.getElementById('select-controle');
+            selectControle.innerHTML = '<option value="">-- Sélectionner un Contrôle --</option>';
 
-    function handleDownloadExcel() {
-      let exportList = [];
-      const visibleKeys = new Set();
-      tableBody.querySelectorAll('.row-checkbox').forEach(chk => {
-        visibleKeys.add(chk.getAttribute('data-key'));
-      });
+            if (!risque) {
+                selectControle.disabled = true;
+                document.getElementById('count-controle').textContent = "0";
+                return;
+            }
 
-      const selectedInView = displayedPoints.filter(item => {
-        const key = getPointUniqueKey(item);
-        return selectedPointsSet.has(key);
-      });
+            selectControle.disabled = false;
+            const itemsRisque = bddData.filter(d => d.Processus === proc && d['Intitulé du risque'] === risque);
+            const controlesUniques = [...new Set(itemsRisque.map(d => d['Intitulé Contrôle']))].filter(Boolean).sort();
+            document.getElementById('count-controle').textContent = controlesUniques.length;
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc} > Risque : ${risque}`;
+            document.getElementById('btn-count').textContent = itemsRisque.length;
 
-      exportList = selectedInView.length > 0 ? selectedInView : displayedPoints;
+            controlesUniques.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.textContent = c;
+                selectControle.appendChild(opt);
+            });
+        }
 
-      if (exportList.length === 0) {
-        showToast('Aucune donnée affichée à exporter.');
-        return;
-      }
+        function onControleChange() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
+            let items = bddData.filter(d => d.Processus === proc && d['Intitulé du risque'] === risque);
+            if (controle) items = items.filter(d => d['Intitulé Contrôle'] === controle);
+            document.getElementById('btn-count').textContent = items.length;
+        }
 
-      exportToCSV(exportList, 'FCI_Referentiel_Selection');
-      showToast(`Fichier Excel téléchargé (${exportList.length} points)`);
-    }
+        function reinitialiserFiltres() {
+            document.getElementById('select-processus').value = "";
+            onProcessusChange();
+            filteredData = [];
+            afficherTableau();
+        }
 
-    function handleSearch() {
-      const query = searchInput.value.toLowerCase().trim();
-      if (!query) {
-        renderTable(displayedPoints);
-        return;
-      }
+        function appliquerFiltre() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
 
-      const filtered = displayedPoints.filter(item => {
-        const proc = (item['Processus'] || '').toLowerCase();
-        const rsq = (item['Intitulé du risque'] || '').toLowerCase();
-        const ctrl = (item['Intitulé Contrôle'] || '').toLowerCase();
-        const pc = (item['Points de contrôle'] || '').toLowerCase();
+            filteredData = bddData.filter(item => {
+                if (proc && item.Processus !== proc) return false;
+                if (risque && item['Intitulé du risque'] !== risque) return false;
+                if (controle && item['Intitulé Contrôle'] !== controle) return false;
+                return true;
+            });
+            afficherTableau();
+        }
 
-        return proc.includes(query) || rsq.includes(query) || ctrl.includes(query) || pc.includes(query);
-      });
+        function afficherTableau() {
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
 
-      renderTable(filtered);
-    }
+            if (filteredData.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('rendered-count').textContent = '0';
+                return;
+            }
 
-    function setupEventListeners() {
-      selectProcessus.addEventListener('change', onProcessusChanged);
-      selectRisque.addEventListener('change', onRisqueChanged);
-      selectControle.addEventListener('change', onControleChanged);
+            emptyState.style.display = 'none';
+            document.getElementById('rendered-count').textContent = filteredData.length;
 
-      btnAfficher.addEventListener('click', handleAfficher);
-      btnVider.addEventListener('click', handleVider);
+            filteredData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                const isSelected = selectedPoints.has(JSON.stringify(item));
+                if (isSelected) tr.classList.add('selected-row');
 
-      btnSelectAll.addEventListener('click', handleSelectAll);
-      btnDeselectAll.addEventListener('click', handleDeselectAll);
-      btnExportPlanification.addEventListener('click', handleExportPlanification);
-      btnDownloadExcel.addEventListener('click', handleDownloadExcel);
-      btnDownloadFullBDD.addEventListener('click', handleDownloadFullBDD);
+                tr.innerHTML = `
+                    <td style="text-align:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectPoint(${index}, this)"></td>
+                    <td><strong>${item.Processus || ''}</strong></td>
+                    <td>${item['Intitulé du risque'] || ''}</td>
+                    <td>${item['Intitulé Contrôle'] || ''}</td>
+                    <td>${item['Points de contrôle'] || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            mettreAJourCompteurSelection();
+        }
 
-      searchInput.addEventListener('input', handleSearch);
+        function toggleSelectPoint(index, cb) {
+            const itemStr = JSON.stringify(filteredData[index]);
+            if (cb.checked) {
+                selectedPoints.add(itemStr);
+                cb.closest('tr').classList.add('selected-row');
+            } else {
+                selectedPoints.delete(itemStr);
+                cb.closest('tr').classList.remove('selected-row');
+            }
+            mettreAJourCompteurSelection();
+        }
 
-      if (mobileMenuBtn) {
-        mobileMenuBtn.addEventListener('click', () => {
-          appSidebar.classList.toggle('open');
-        });
-      }
-    }
+        function selectionnerTout() {
+            filteredData.forEach(item => selectedPoints.add(JSON.stringify(item)));
+            afficherTableau();
+        }
 
-    let toastTimer = null;
-    function showToast(msg) {
-      if (toastTimer) clearTimeout(toastTimer);
-      toastMessage.textContent = msg;
-      toast.classList.add('show');
-      toastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 4000);
-    }
+        function deselectionnerTout() {
+            filteredData.forEach(item => selectedPoints.delete(JSON.stringify(item)));
+            afficherTableau();
+        }
 
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-  </script>
+        function toggleMasterCheckbox(masterCb) {
+            if (masterCb.checked) selectionnerTout();
+            else deselectionnerTout();
+        }
+
+        function mettreAJourCompteurSelection() {
+            const count = selectedPoints.size;
+            document.getElementById('selected-count').textContent = count;
+            document.getElementById('selected-footer-count').textContent = count;
+        }
+
+        function restaurerSelectionExistante() {
+            const saved = localStorage.getItem(PLANIFICATION_PC_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(item => selectedPoints.add(JSON.stringify(item)));
+                    mettreAJourCompteurSelection();
+                } catch(e){}
+            }
+        }
+
+        function exporterExcel() {
+            if (selectedPoints.size === 0) { alert("Veuillez sélectionner au moins un point."); return; }
+            const dataToExport = Array.from(selectedPoints).map(item => JSON.parse(item));
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Points de Contrôle");
+            XLSX.writeFile(workbook, "FCI_Points_Controle_Selectionnes.xlsx");
+        }
+
+        function redirigerVersPlanification() {
+            if (selectedPoints.size === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle avant de passer à la Planification.");
+                return;
+            }
+            const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
+            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(dataToSave));
+            window.location.href = "Planification.html";
+        }
+    </script>
 </body>
 </html>
