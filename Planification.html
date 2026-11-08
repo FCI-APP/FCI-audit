@@ -43,7 +43,7 @@
         .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
         .badge-active { background: var(--accent-gold); color: var(--blue-dark); }
 
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100% - var(--sidebar-width)); }
 
@@ -100,7 +100,9 @@
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle</span><span class="badge-status badge-active">Disponible</span></a></li>
             </ul>
         </div>
-        <div class="sidebar-footer">FCI v1.0 © 2026 – 2027</div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+        </div>
     </aside>
 
     <main class="main-content">
@@ -403,10 +405,10 @@
             // 1. Sauvegarde de la mission active pour la Feuille de Contrôle
             localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
 
-            // 2. Reinitialisation complete des donnees saisies sur la feuille Planification
+            // 2. Réinitialisation complète des données saisies sur la feuille Planification
             viderPlanification();
 
-            // 3. Redirection vers la Fiche de Controle
+            // 3. Redirection vers la Fiche de Contrôle
             window.location.href = 'FicheControle.html';
         }
 
