@@ -1,61 +1,62 @@
-
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Détournement des encaissements et des recettes au niveau du réseau",
-  "Intitulé de contrôle": "Contrôle de l'arrêté journalier des centres / agences",
-  "Point de contrôle": "Les fonds disponibles sont-ils exacts ou présentent-ils un écart ?"
- },
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
-  "Intitulé de contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
-  "Point de contrôle": "Les versements des recettes budgétaires et DTQ payées en espèces au compte BAM n° 8515743 sont-ils :\n- Conformes aux montants saisis sur SI COMMERCIAL ?\n- Effectués à J+1 ?\n- Effectués auprès de l’agence BAM la plus proche ?"
- },
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Détournement des encaissements et des recettes au niveau du réseau",
-  "Intitulé de contrôle": "Contrôle de la comptabilité des fonds CRBT",
-  "Point de contrôle": "Le versement des fonds CRBT et des Droits de Douane (DD) au compte des opérations CRBT BAM n° 8515801 est-il conforme aux recettes encaissées et saisies sur SI COMMERCIAL ?"
- },
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
-  "Intitulé de contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
-  "Point de contrôle": "Le versement des fonds EMS-Chronopost au compte EMS-CIMA n° 625899 est-il effectué régulièrement ?"
- },
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Retours des moyens de paiements (chèques, effets de commerce) impayés",
-  "Intitulé de contrôle": "Contrôle en agence du traitement des moyens de paiements retournés impayés",
-  "Point de contrôle": "Le montant des chèques bancaires est-il conforme ?"
- },
- {
-  "Processus": "Trésorerie et Financement",
-  "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
-  "Intitulé de contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
-  "Point de contrôle": "Les chèques bancaires remis à l’encaissement au compte BAM sont-ils :\n- Conformes aux montants des recettes budgétaires payées par carte bancaire (CB) et saisies sur SI COMMERCIAL ?\n- Remis à l’encaissement à J+1 ?\n- Remis auprès de l’agence ABB la plus proche ?"
- },
- {
-  "Processus": "Philatélie",
-  "Intitulé du risque": "Spoliation ou vol de timbres",
-  "Intitulé de contrôle": "Contrôle de la disponibilité du stock au niveau du réseau",
-  "Point de contrôle": "La valeur des valeurs postales est-elle exacte ?"
- },
- {
-  "Processus": "Philatélie",
-  "Intitulé du risque": "Spoliation ou vol de timbres",
-  "Intitulé de contrôle": "Contrôle de l'approvisionnement du réseau",
-  "Point de contrôle": "Les approvisionnements en valeurs postales communiqués par le CNTP sont-ils conformes aux quantités saisies sur SI COMMERCIAL ?"
- },
- {
-  "Processus": "Gestion de la Sûreté",
-  "Intitulé du risque": "Rupture de stock ou surstockage du consommable",
-  "Intitulé de contrôle": "Contrôle des niveaux de stockage / sur stockage des consommables",
-  "Point de contrôle": "Les quantités d'emballages sont-elles exactes ?"
- },
- {
-  "Processus": "Gestion de la Sûreté",
-  "Intitulé du risque": "Retard dans la satisfaction du besoin de prestation de service en matière d'approvisionnement",
-  "Intitulé de contrôle": "Contrôle du délai de satisfaction du besoin en matière d'approvisionnement",
-  "Point de contrôle": "Les approvisionnements en emballages communiqués par le Service Moyen d’Exploitation (PAP) sont-ils conformes aux quantités saisies sur SI COMMERCIAL ?"
- }
+[
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Détournement des encaissements et des recettes au niveau du réseau",
+    "Intitulé Contrôle": "Contrôle de l'arrêté journalier des centres / agences",
+    "Points de contrôle": "Les fonds disponibles sont-ils exacts ou présentent-ils un écart ?"
+  },
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
+    "Intitulé Contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
+    "Points de contrôle": "Les versements des recettes budgétaires et DTQ payées en espèces au compte BAM n° 8515743 sont-ils :\n- Conformes aux montants saisis sur SI COMMERCIAL ?\n- Effectués à J+1 ?\n- Effectués auprès de l’agence BAM la plus proche ?"
+  },
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Détournement des encaissements et des recettes au niveau du réseau",
+    "Intitulé Contrôle": "Contrôle de la comptabilité des fonds CRBT",
+    "Points de contrôle": "Le versement des fonds CRBT et des Droits de Douane (DD) au compte des opérations CRBT BAM n° 8515801 est-il conforme aux recettes encaissées et saisies sur SI COMMERCIAL ?"
+  },
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
+    "Intitulé Contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
+    "Points de contrôle": "Le versement des fonds EMS-Chronopost au compte EMS-CIMA n° 625899 est-il effectué régulièrement ?"
+  },
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Retours des moyens de paiements (chèques, effets de commerce) impayés",
+    "Intitulé Contrôle": "Contrôle en agence du traitement des moyens de paiements retournés impayés",
+    "Points de contrôle": "Le montant des chèques bancaires est-il conforme ?"
+  },
+  {
+    "Processus": "Trésorerie et Financement",
+    "Intitulé du risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
+    "Intitulé Contrôle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
+    "Points de contrôle": "Les chèques bancaires remis à l’encaissement au compte BAM sont-ils :\n- Conformes aux montants des recettes budgétaires payées par carte bancaire (CB) et saisies sur SI COMMERCIAL ?\n- Remis à l’encaissement à J+1 ?\n- Remis auprès de l’agence ABB la plus proche ?"
+  },
+  {
+    "Processus": "Philatélie",
+    "Intitulé du risque": "Spoliation ou vol de timbres",
+    "Intitulé Contrôle": "Contrôle de la disponibilité du stock au niveau du réseau",
+    "Points de contrôle": "La valeur des valeurs postales est-elle exacte ?"
+  },
+  {
+    "Processus": "Philatélie",
+    "Intitulé du risque": "Spoliation ou vol de timbres",
+    "Intitulé Contrôle": "Contrôle de l'approvisionnement du réseau",
+    "Points de contrôle": "Les approvisionnements en valeurs postales communiqués par le CNTP sont-ils conformes aux quantités saisies sur SI COMMERCIAL ?"
+  },
+  {
+    "Processus": "Gestion de la Sûreté",
+    "Intitulé du risque": "Rupture de stock ou surstockage du consommable",
+    "Intitulé Contrôle": "Contrôle des niveaux de stockage / sur stockage des consommables",
+    "Points de contrôle": "Les quantités d'emballages sont-elles exactes ?"
+  },
+  {
+    "Processus": "Gestion de la Sûreté",
+    "Intitulé du risque": "Retard dans la satisfaction du besoin de prestation de service en matière d'approvisionnement",
+    "Intitulé Contrôle": "Contrôle du délai de satisfaction du besoin en matière d'approvisionnement",
+    "Points de contrôle": "Les approvisionnements en emballages communiqués par le Service Moyen d’Exploitation (PAP) sont-ils conformes aux quantités saisies sur SI COMMERCIAL ?"
+  }
+]
