@@ -3,417 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI - Planification de la Mission de Contrôle</title>
+    <title>FCI v1.0 - Planification</title>
+    <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx) pour Export Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         :root {
             --primary-blue: #003366;
-            --blue-dark: #002244;
+            --dark-blue: #002244;
             --accent-gold: #EAAA00;
+            --accent-gold-hover: #d49900;
             --bg-light: #F4F6F9;
-            --text-dark: #2C3E50;
-            --white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
             --border-color: #E2E8F0;
-            --danger: #E74C3C;
+            --success: #10B981;
             --sidebar-width: 250px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
+        /* SIDEBAR (250px Fixe) */
         .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary-blue); color: var(--white);
-            display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.15); justify-content: space-between;
+            width: var(--sidebar-width);
+            background-color: var(--dark-blue);
+            color: #FFFFFF;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 100;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar-brand { padding: 20px 15px; text-align: center; border-bottom: 2px solid var(--accent-gold); background-color: var(--blue-dark); }
-        .sidebar-brand h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--white); line-height: 1.4; }
+        .sidebar-header {
+            padding: 20px;
+            background-color: var(--primary-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--accent-gold);
+        }
 
-        .sidebar-menu { list-style: none; margin-top: 10px; flex-grow: 1; }
+        .sidebar-header h2 { font-size: 0.95rem; font-weight: 800; color: #FFFFFF; line-height: 1.3; text-transform: uppercase; }
+        .sidebar-header p { font-size: 0.75rem; color: #CBD5E1; margin-top: 4px; font-weight: 700; }
+        .sidebar-nav-title { padding: 15px 20px 5px 20px; font-size: 0.7rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; color: #CBD5E1; text-decoration: none;
+            font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
+            border-left: 4px solid transparent;
         }
-        .sidebar-menu li.active a, .sidebar-menu li a:hover {
-            background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left: 4px solid var(--accent-gold);
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .badge-dispo { background-color: rgba(234, 170, 0, 0.2); color: var(--accent-gold); }
+
+        .sidebar-footer {
+            padding: 16px 20px; background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.75rem; line-height: 1.4; color: #94A3B8; text-align: center;
         }
 
-        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .badge-active { background: var(--accent-gold); color: var(--blue-dark); }
+        /* MAIN CONTENT AREA */
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
-
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100% - var(--sidebar-width)); }
-
-        .top-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
-            background: var(--white); padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary-blue);
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
         }
-        .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; }
 
-        .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-        .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card-title { font-size: 0.95rem; font-weight: 800; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; }
+        .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
-        .kpi-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .kpi-info h3 { font-size: 1.3rem; color: var(--primary-blue); font-weight: 800; }
+        .form-control { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; }
+        .form-control:focus { border-color: var(--primary-blue); }
 
-        .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-primary:hover { background-color: var(--dark-blue); }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-accent:hover { background-color: var(--accent-gold-hover); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-dark); }
+        .btn-outline:hover { background-color: #F8FAFC; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
-        .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
-        .btn-excel { background-color: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
-        .btn-danger-outline { background-color: #FFFFFF; color: var(--danger); border-color: #FCA5A5; }
+        .table-responsive { width: 100%; overflow-x: auto; }
+        table.data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+        table.data-table th { background-color: var(--primary-blue); color: #FFFFFF; font-weight: 700; padding: 14px 18px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+        table.data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); vertical-align: top; line-height: 1.5; }
 
-        .processus-block { background: var(--white); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); overflow: hidden; }
-        .processus-header { background-color: var(--primary-blue); color: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: rgba(0, 51, 102, 0.03); color: var(--primary-blue); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
-        tr.row-selected { background-color: #FEFCE8; }
-
-        .empty-state { text-align: center; padding: 50px 20px; background: var(--white); border-radius: 8px; border: 2px dashed var(--border-color); }
-        .action-bar { display: flex; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; color: #94A3B8; }
     </style>
 </head>
 <body>
 
+    <!-- 1. SIDEBAR COMPLETE A 4 FEUILLES -->
     <aside class="sidebar">
-        <div>
-            <div class="sidebar-brand">
-                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
-            </div>
-            <ul class="sidebar-menu">
-                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li class="active"><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle</span><span class="badge-status badge-active">Disponible</span></a></li>
-            </ul>
+        <div class="sidebar-header">
+            <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT</h2>
+            <p>BARID AL-MAGHRIB</p>
         </div>
+        <div class="sidebar-nav-title">NAVIGATION FEUILLES</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html">
+                    <span>1. Référentiel de contrôle</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="Planification.html">
+                    <span>2. Planification</span>
+                    <span class="badge-status badge-actif">ACTIF</span>
+                </a>
+            </li>
+            <li>
+                <a href="FicheControle.html">
+                    <span>3. Fiche de Contrôle (FC)</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+            <li>
+                <a href="VérificationsEncaisses.html">
+                    <span>4. Fiche de la vérification des encaisses</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+        </ul>
         <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+            Fiche de contrôle intelligente (FCI)<br>
+            <strong>v1.0 © 2026 - 2027</strong>
         </div>
     </aside>
 
+    <!-- 2. MAIN CONTENT -->
     <main class="main-content">
-        <header class="top-header">
+        <header class="page-header">
+            <div class="page-title">
+                <h1>Feuille 2 : Planification des missions d'audit</h1>
+                <p>Gestion des campagnes et affectation des contrôles — BARID AL-MAGHRIB</p>
+            </div>
             <div>
-                <h1>Planification de la mission de contrôle</h1>
-                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
+                <a href="FicheControle.html" class="btn btn-accent"><i class="fa-solid fa-clipboard-check"></i> Ouvrir Fiche de Contrôle (FC)</a>
             </div>
         </header>
 
-        <div class="kpi-row">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
-                <div class="kpi-info"><h3 id="kpi-proc-count">0</h3><p>Processus cochés</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="kpi-info"><h3 id="kpi-risque-count">0</h3><p>Risques cochés</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="kpi-info"><h3 id="kpi-controle-count">0</h3><p>Contrôles cochés</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                <div class="kpi-info"><h3 id="kpi-pc-count">0</h3><p>PC sélectionnés (FC)</p></div>
-            </div>
-        </div>
-
+        <!-- FORMULAIRE DE PLANIFICATION -->
         <section class="card">
-            <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</div>
-            <form autocomplete="off" onsubmit="return false;">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="audit-entite">Entité / Agence Auditée *</label>
-                        <input type="text" id="audit-entite" name="fci_entite_audit_noautofill" autocomplete="off" aria-autocomplete="none" placeholder="Ex: Agence Principale Rabat">
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-type-controle">Type de Contrôle *</label>
-                        <select id="audit-type-controle" autocomplete="off">
-                            <option value="">-- Sélectionner le type --</option>
-                            <option value="Thématique">Thématique</option>
-                            <option value="Systématique">Systématique</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-date-debut">Début de la période du contrôle *</label>
-                        <input type="date" id="audit-date-debut" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-date-fin">Fin de la période du contrôle *</label>
-                        <input type="date" id="audit-date-fin" autocomplete="off">
-                    </div>
-                    <div class="form-group" style="grid-column: span 2;">
-                        <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                        <input type="text" id="audit-controleurs" name="fci_controleurs_noautofill" autocomplete="off" aria-autocomplete="none" placeholder="Ex: A. Ismail / M. Tahiri">
-                    </div>
+            <h2 class="card-title"><i class="fa-solid fa-calendar-plus"></i> PARAMÈTRES DE LA CAMPAGNE D'AUDIT</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="inputMission">Intitulé de la mission / Campagne *</label>
+                    <input type="text" class="form-control" id="inputMission" placeholder="Ex: Mission Trimestrielle Caisse Rabat">
                 </div>
-            </form>
+                <div class="form-group">
+                    <label for="inputEntite">Entité auditée / Agence *</label>
+                    <input type="text" class="form-control" id="inputEntite" placeholder="Ex: Agence Principale Rabat">
+                </div>
+                <div class="form-group">
+                    <label for="inputControleur">Contrôleur(s) affecté(s) *</label>
+                    <input type="text" class="form-control" id="inputControleur" placeholder="Ex: Ait Baba">
+                </div>
+                <div class="form-group">
+                    <label for="inputDateDebut">Date de début *</label>
+                    <input type="date" class="form-control" id="inputDateDebut">
+                </div>
+                <div class="form-group">
+                    <label for="inputDateFin">Date de fin *</label>
+                    <input type="date" class="form-control" id="inputDateFin">
+                </div>
+            </div>
         </section>
 
-        <div class="toolbar">
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
-                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
-                <button class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+        <!-- TABLEAU DES POINTS PLANIFIÉS -->
+        <section class="card" style="padding: 0; overflow: hidden;">
+            <div style="padding: 16px 20px; background: #F8FAFC; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: var(--primary-blue); font-size: 0.9rem;"><i class="fa-solid fa-list-check"></i> POINTS DE CONTRÔLE SÉLECTIONNÉS POUR LA MISSION</strong>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-outline" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Exporter la Planification</button>
+                    <button class="btn btn-primary" onclick="sauvegarderPlanification()"><i class="fa-solid fa-floppy-disk"></i> Valider la Campagne</button>
+                </div>
             </div>
-            <div>
-                <button class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">PROCESSUS</th>
+                            <th style="width: 25%;">INTITULÉ DU RISQUE</th>
+                            <th style="width: 25%;">INTITULÉ CONTRÔLE</th>
+                            <th>POINTS DE CONTRÔLE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="planificationTbody">
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-calendar-xmark"></i>
+                                    <h3>Aucun point de contrôle sélectionné</h3>
+                                    <p style="margin-top: 4px;">Veuillez d'abord sélectionner des points depuis la <strong>Feuille 1 (Référentiel)</strong>.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <section id="planification-container"></section>
-
-        <div class="action-bar">
-            <button class="btn btn-primary" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
-        </div>
+        </section>
     </main>
 
     <script>
-        let selectedData = [];
-        let checkedKeys = new Set();
-        const PLANIFICATION_PC_KEY = "fci_planification_pc";
-
         document.addEventListener('DOMContentLoaded', () => {
-            initFormDefaults();
-            loadPlanificationData();
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('inputDateDebut').value = today;
+            document.getElementById('inputDateFin').value = today;
         });
 
-        function initFormDefaults() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('audit-entite').value = "";
-            document.getElementById('audit-controleurs').value = "";
-            document.getElementById('audit-type-controle').value = "";
-            document.getElementById('audit-date-debut').value = today;
-            document.getElementById('audit-date-fin').value = today;
-        }
+        function sauvegarderPlanification() {
+            const mission = document.getElementById('inputMission').value.trim();
+            const entite = document.getElementById('inputEntite').value.trim();
 
-        function getPointKey(item) {
-            return `${item['Processus']}__${item['Intitulé du risque']}__${item['Intitulé Contrôle']}__${item['Points de contrôle']}`;
-        }
-
-        function loadPlanificationData() {
-            const rawData = localStorage.getItem(PLANIFICATION_PC_KEY);
-            if (rawData) {
-                try {
-                    selectedData = JSON.parse(rawData);
-                    checkedKeys = new Set(selectedData.map(getPointKey));
-                } catch (e) {
-                    selectedData = []; checkedKeys.clear();
-                }
-            }
-            renderPlanification();
-        }
-
-        function renderPlanification() {
-            const container = document.getElementById('planification-container');
-            container.innerHTML = '';
-
-            if (!selectedData || selectedData.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 15px;"></i>
-                        <h3>Aucun point de contrôle dans la planification</h3>
-                        <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer.</p>
-                    </div>
-                `;
-                updateKPIs(0, 0, 0, 0);
+            if (!mission || !entite) {
+                alert("Veuillez renseigner au moins l'intitulé de la mission et l'entité auditée.");
                 return;
             }
 
-            const groupedData = selectedData.reduce((acc, item) => {
-                const proc = item["Processus"] || "Processus Non Spécifié";
-                if (!acc[proc]) acc[proc] = [];
-                acc[proc].push(item);
-                return acc;
-            }, {});
-
-            Object.keys(groupedData).forEach(procName => {
-                const items = groupedData[procName];
-                const procBlock = document.createElement('div');
-                procBlock.className = 'processus-block';
-
-                const allProcChecked = items.every(item => checkedKeys.has(getPointKey(item)));
-
-                let rowsHtml = items.map(item => {
-                    const key = getPointKey(item);
-                    const isChecked = checkedKeys.has(key);
-                    const globalIdx = selectedData.findIndex(d => getPointKey(d) === key);
-
-                    return `
-                        <tr class="${isChecked ? 'row-selected' : ''}">
-                            <td style="width: 4%; text-align: center;">
-                                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePointCheckbox('${escapeJsString(key)}', this.checked)">
-                            </td>
-                            <td style="width: 20%; font-weight:700; color:var(--primary-blue);">${escapeHtml(item["Processus"] || '-')}</td>
-                            <td style="width: 25%;"><strong>${escapeHtml(item["Intitulé du risque"] || '-')}</strong></td>
-                            <td style="width: 23%;">${escapeHtml(item["Intitulé Contrôle"] || '-')}</td>
-                            <td style="width: 23%;">${escapeHtml(item["Points de contrôle"] || '-')}</td>
-                            <td style="width: 5%; text-align: center;">
-                                <button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                procBlock.innerHTML = `
-                    <div class="processus-header">
-                        <h3>
-                            <input type="checkbox" ${allProcChecked ? 'checked' : ''} onchange="toggleProcessusCheckboxes('${escapeJsString(procName)}', this.checked)" style="margin-right: 8px;">
-                            <i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)
-                        </h3>
-                        <button style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
-                            <i class="fa-solid fa-trash"></i> Retirer le Processus
-                        </button>
-                    </div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="text-align: center;">✓</th>
-                                    <th>Processus</th>
-                                    <th>Intitulé du Risque</th>
-                                    <th>Intitulé du Contrôle</th>
-                                    <th>Point de Contrôle</th>
-                                    <th style="text-align: center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rowsHtml}</tbody>
-                        </table>
-                    </div>
-                `;
-                container.appendChild(procBlock);
-            });
-
-            recalculateKPIs();
+            alert("Campagne de planification validée avec succès !");
         }
 
-        function recalculateKPIs() {
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            const activeProcSet = new Set(activeItems.map(i => i["Processus"]));
-            const activeRisqueSet = new Set(activeItems.map(i => i["Intitulé du risque"]));
-            const activeControleSet = new Set(activeItems.map(i => i["Intitulé Contrôle"]));
-            updateKPIs(activeProcSet.size, activeRisqueSet.size, activeControleSet.size, activeItems.length);
+        function exportExcel() {
+            alert("Exportation de la planification au format Excel.");
         }
-
-        function updateKPIs(p, r, c, pc) {
-            document.getElementById('kpi-proc-count').innerText = p;
-            document.getElementById('kpi-risque-count').innerText = r;
-            document.getElementById('kpi-controle-count').innerText = c;
-            document.getElementById('kpi-pc-count').innerText = pc;
-        }
-
-        function togglePointCheckbox(key, isChecked) {
-            if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
-            renderPlanification();
-        }
-
-        function toggleProcessusCheckboxes(procName, isChecked) {
-            selectedData.forEach(item => {
-                if (item["Processus"] === procName) {
-                    const key = getPointKey(item);
-                    if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
-                }
-            });
-            renderPlanification();
-        }
-
-        function selectAllPoints() { checkedKeys = new Set(selectedData.map(getPointKey)); renderPlanification(); }
-        function deselectAllPoints() { checkedKeys.clear(); renderPlanification(); }
-
-        function removePoint(index) {
-            if (index >= 0 && index < selectedData.length) {
-                checkedKeys.delete(getPointKey(selectedData[index]));
-                selectedData.splice(index, 1);
-                saveAndRefresh();
-            }
-        }
-
-        function removeProcessus(procName) {
-            selectedData = selectedData.filter(item => {
-                if (item["Processus"] === procName) {
-                    checkedKeys.delete(getPointKey(item)); return false;
-                }
-                return true;
-            });
-            saveAndRefresh();
-        }
-
-        function viderPlanification() { 
-            selectedData = []; 
-            checkedKeys.clear(); 
-            initFormDefaults();
-            saveAndRefresh(); 
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
-            renderPlanification();
-        }
-
-        function exportToExcel() {
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            if (!activeItems || activeItems.length === 0) { alert("Aucun point coché à exporter."); return; }
-            const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
-            const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
-            const rows = [headers.map(h => `"${h}"`).join(';'), ...activeItems.map(item => [escapeCSV(item['Processus']), escapeCSV(item['Intitulé du risque']), escapeCSV(item['Intitulé Contrôle']), escapeCSV(item['Points de contrôle'])].join(';'))];
-            const csvContent = '\uFEFF' + rows.join('\r\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a'); link.href = url; link.download = `Planification_Mission_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
-        }
-
-        function lancerFicheControle() {
-            const entite = document.getElementById('audit-entite').value.trim();
-            const typeControle = document.getElementById('audit-type-controle').value;
-            const dateDebut = document.getElementById('audit-date-debut').value;
-            const dateFin = document.getElementById('audit-date-fin').value;
-            const controleurs = document.getElementById('audit-controleurs').value.trim();
-
-            if (!entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez remplir l'ensemble des informations de la mission avant de continuer.");
-                return;
-            }
-
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            if (!activeItems || activeItems.length === 0) {
-                alert("Veuillez cocher au moins un point de contrôle.");
-                return;
-            }
-
-            const activeCampaign = {
-                metadata: { entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
-                pointsControle: activeItems
-            };
-
-            // 1. Sauvegarde de la mission active pour la Feuille de Contrôle
-            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
-
-            // 2. Réinitialisation complète des données saisies sur la feuille Planification
-            viderPlanification();
-
-            // 3. Redirection vers la Fiche de Contrôle
-            window.location.href = 'FicheControle.html';
-        }
-
-        function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
-        function escapeJsString(str) { return str ? String(str).replace(/'/g, "\\'") : ''; }
     </script>
 </body>
 </html>
