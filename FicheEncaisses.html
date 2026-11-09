@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Fiche de la vérification des encaisses</title>
+    <title>FCI v1.0 - Feuille 4 : Vérification des encaisses</title>
     <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -34,31 +34,31 @@
         /* SIDEBAR (250px Fixe) */
         .sidebar {
             width: var(--sidebar-width);
-            background-color: var(--dark-blue);
+            background-color: var(--primary-blue);
             color: #FFFFFF;
             position: fixed;
             top: 0; bottom: 0; left: 0;
             display: flex; flex-direction: column;
+            justify-content: space-between;
             z-index: 100;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.15);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         }
 
         .sidebar-header {
-            padding: 20px;
-            background-color: var(--primary-blue);
+            padding: 20px 15px;
+            background-color: var(--dark-blue);
             text-align: center;
             border-bottom: 2px solid var(--accent-gold);
         }
 
-        .sidebar-header h2 { font-size: 0.95rem; font-weight: 800; color: #FFFFFF; line-height: 1.3; text-transform: uppercase; }
-        .sidebar-header p { font-size: 0.75rem; color: #CBD5E1; margin-top: 4px; font-weight: 700; }
-        .sidebar-nav-title { padding: 15px 20px 5px 20px; font-size: 0.7rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
         .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 20px; color: #CBD5E1; text-decoration: none;
-            font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
+            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
             border-left: 4px solid transparent;
         }
         .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
@@ -66,12 +66,11 @@
 
         .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
         .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
-        .badge-dispo { background-color: rgba(234, 170, 0, 0.2); color: var(--accent-gold); }
 
         .sidebar-footer {
-            padding: 16px 20px; background-color: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.75rem; line-height: 1.4; color: #94A3B8; text-align: center;
+            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
         }
 
         /* MAIN CONTENT AREA */
@@ -80,32 +79,32 @@
         .page-header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
-            border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .card { background: var(--card-bg); border-radius: 12px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
 
-        .form-control { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
+        .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
         .form-control:focus { border-color: var(--primary-blue); }
 
-        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; padding: 18px; margin-top: 15px; }
-        .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 8px; margin-top: 14px; }
+        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-top: 15px; }
+        .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 6px; margin-top: 14px; }
         .pc-preview p { font-size: 0.9rem; color: var(--text-dark); white-space: pre-line; line-height: 1.5; }
 
-        .pc-card { background: #FFFFFF; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .pc-card { background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
         .pc-card-header { background: var(--primary-blue); color: #FFFFFF; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
         .pc-card-header h4 { font-size: 0.95rem; font-weight: 700; }
         .pc-card-body { padding: 20px; }
 
-        .constat-box { background: #F8FAFC; border-radius: 10px; border: 1px solid var(--border-color); padding: 16px; margin-bottom: 15px; }
+        .constat-box { background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-color); padding: 16px; margin-bottom: 15px; }
         .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 
         .conformity-badge { font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
@@ -113,7 +112,7 @@
         .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 12px; padding: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
         .summary-info h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
 
         .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
@@ -124,7 +123,7 @@
 
         .actions-bar { display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px; }
 
-        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-primary:hover { background-color: var(--dark-blue); }
         .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
@@ -145,40 +144,31 @@
 
     <!-- SIDEBAR NAVIGATION -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT</h2>
-            <p>BARID AL-MAGHRIB</p>
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="index.html">
+                        <span>1. Référentiel de contrôle</span>
+                        <span class="badge-status badge-actif">Actif</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a>
+                </li>
+                <li>
+                    <a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a>
+                </li>
+                <li class="active">
+                    <a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a>
+                </li>
+            </ul>
         </div>
-        <div class="sidebar-nav-title">NAVIGATION FEUILLES</div>
-        <ul class="sidebar-menu">
-            <li>
-                <a href="index.html">
-                    <span>1. Référentiel de contrôle</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-            <li>
-                <a href="Planification.html">
-                    <span>2. Planification</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-            <li>
-                <a href="FicheControle.html">
-                    <span>3. Fiche de Contrôle (FC)</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-            <li class="active">
-                <a href="FicheEncaisses.html">
-                    <span>4. Fiche de la vérification des encaisses</span>
-                    <span class="badge-status badge-actif">ACTIF</span>
-                </a>
-            </li>
-        </ul>
         <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br>
-            <strong>v1.0 © 2026 - 2027</strong>
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
@@ -186,7 +176,7 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Fiche de la vérification des encaisses</h1>
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Vérification des encaisses</h1>
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
             <div style="display: flex; gap: 10px;">
@@ -224,7 +214,7 @@
 
         <!-- SÉLECTION DE LA RÉFÉRENCE (JSON) -->
         <section class="card">
-            <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Référentiel JSON)</h2>
+            <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</h2>
             <div class="selection-box">
                 <div class="form-grid">
                     <div class="form-group">
@@ -289,6 +279,13 @@
         let rawJsonData = [];
         let addedPoints = [];
 
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined) return item[k];
+            }
+            return '';
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -300,30 +297,26 @@
 
         async function chargerReferentielJSON() {
             try {
-                // Chargement correct du fichier Encaisses.json avec paramètre anti-cache
                 const response = await fetch('Encaisses.json?v=' + Date.now());
-                
-                if (!response.ok) {
-                    throw new Error(`Statut HTTP ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Statut HTTP ${response.status}`);
                 
                 rawJsonData = await response.json();
-                console.log("Référentiel JSON chargé avec succès :", rawJsonData.length, "points.");
+                console.log("Référentiel JSON Encaisses chargé avec succès :", rawJsonData.length, "points.");
                 initCascadeSelects();
 
             } catch (error) {
-                console.error("Erreur de chargement du JSON :", error);
+                console.error("Erreur de chargement de Encaisses.json :", error);
                 const procSelect = document.getElementById('selectProcessus');
                 if (procSelect) {
                     procSelect.innerHTML = '<option value="">-- Erreur de chargement du fichier JSON --</option>';
                 }
-                alert("Impossible de charger le fichier 'Encaisses.json'. Assurez-vous d'avoir bien placé ce fichier sur GitHub.");
+                alert("Impossible de charger le fichier 'Encaisses.json'. Vérifiez que le fichier existe et qu'il est syntaxiquement correct sur GitHub.");
             }
         }
 
         function initCascadeSelects() {
             const procSelect = document.getElementById('selectProcessus');
-            const processes = [...new Set(rawJsonData.map(item => item.Processus))];
+            const processes = [...new Set(rawJsonData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean);
             
             procSelect.innerHTML = '<option value="">-- Choisir un processus --</option>';
             processes.forEach(p => {
@@ -346,7 +339,7 @@
                 return;
             }
 
-            const risques = [...new Set(rawJsonData.filter(i => i.Processus === proc).map(i => i["Intitulé du risque"]))];
+            const risques = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc).map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
             risques.forEach(r => {
                 risqueSelect.innerHTML += `<option value="${r}">${r}</option>`;
             });
@@ -366,7 +359,7 @@
                 return;
             }
 
-            const controles = [...new Set(rawJsonData.filter(i => i.Processus === proc && i["Intitulé du risque"] === risque).map(i => i["Intitulé de contrôle"]))];
+            const controles = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque).map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean);
             controles.forEach(c => {
                 ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`;
             });
@@ -383,9 +376,9 @@
                 return;
             }
 
-            const item = rawJsonData.find(i => i.Processus === proc && i["Intitulé du risque"] === risque && i["Intitulé de contrôle"] === ctrl);
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
             if (item) {
-                document.getElementById('pcPreviewText').innerText = item["Point de contrôle"];
+                document.getElementById('pcPreviewText').innerText = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
                 document.getElementById('pcPreviewBox').style.display = 'block';
             }
         }
@@ -394,16 +387,16 @@
             const proc = document.getElementById('selectProcessus').value;
             const risque = document.getElementById('selectRisque').value;
             const ctrl = document.getElementById('selectControle').value;
-            const item = rawJsonData.find(i => i.Processus === proc && i["Intitulé du risque"] === risque && i["Intitulé de contrôle"] === ctrl);
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
 
             if (!item) return;
 
             const pointObj = {
                 id: Date.now(),
-                processus: item.Processus,
-                risque: item["Intitulé du risque"],
-                controle: item["Intitulé de contrôle"],
-                pointDeControle: item["Point de contrôle"],
+                processus: getItemVal(item, ['Processus']),
+                risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
+                controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
                 constats: [
                     { population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }
                 ]
@@ -478,7 +471,7 @@
                         <button class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
                     </div>
                     <div class="pc-card-body">
-                        <div style="background: #F1F5F9; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                        <div style="background: #F1F5F9; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
                             <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
                             <p style="font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">${point.pointDeControle}</p>
                         </div>
@@ -589,21 +582,6 @@
                             constatText: 'Concordance parfaite entre les arrêtés de caisse physiques et le SI COMMERCIAL sur la période.',
                             recoText: 'Maintenir la rigueur des arrêtés quotidiens.',
                             avisText: 'Prise en compte effectuée par l’équipe de caisse.'
-                        }
-                    ]
-                },
-                {
-                    id: 102,
-                    processus: 'Philatélie',
-                    risque: 'Spoliation ou vol de timbres',
-                    controle: 'Contrôle de la disponibilité du stock au niveau du réseau',
-                    pointDeControle: 'La valeur des valeurs postales est-elle exacte ?',
-                    constats: [
-                        {
-                            population: 50, echantillon: 20, ok: 18, ko: 2, rate: 90,
-                            constatText: 'Écart mineur de 2 figurines postales constaté en caisse secondaire.',
-                            recoText: 'Procéder au versement régulier des valeurs détériorées.',
-                            avisText: 'Régularisation effectuée immédiatement.'
                         }
                     ]
                 }
