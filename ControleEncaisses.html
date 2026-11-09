@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI v1.0 - Contrôle des encaisses</title>
+    <!-- FontAwesome v6.4.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx) pour Export Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --dark-blue: #002244;
+            --accent-gold: #EAAA00;
+            --accent-gold-hover: #d49900;
+            --bg-light: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --sidebar-width: 250px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+
+        /* SIDEBAR (250px Fixe) */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--dark-blue);
+            color: #FFFFFF;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            display: flex; flex-direction: column;
+            z-index: 100;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background-color: var(--primary-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .sidebar-header h2 { font-size: 0.95rem; font-weight: 800; color: #FFFFFF; line-height: 1.3; text-transform: uppercase; }
+        .sidebar-header p { font-size: 0.75rem; color: #CBD5E1; margin-top: 4px; font-weight: 700; }
+        .sidebar-nav-title { padding: 15px 20px 5px 20px; font-size: 0.7rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; color: #CBD5E1; text-decoration: none;
+            font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .badge-dispo { background-color: rgba(234, 170, 0, 0.2); color: var(--accent-gold); }
+
+        .sidebar-footer {
+            padding: 16px 20px; background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.75rem; line-height: 1.4; color: #94A3B8; text-align: center;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+        }
+
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .card { background: var(--card-bg); border-radius: 12px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
+
+        .form-control { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
+        .form-control:focus { border-color: var(--primary-blue); }
+
+        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; padding: 18px; margin-top: 15px; }
+        .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 8px; margin-top: 14px; }
+        .pc-preview p { font-size: 0.9rem; color: var(--text-dark); white-space: pre-line; line-height: 1.5; }
+
+        .pc-card { background: #FFFFFF; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .pc-card-header { background: var(--primary-blue); color: #FFFFFF; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .pc-card-header h4 { font-size: 0.95rem; font-weight: 700; }
+        .pc-card-body { padding: 20px; }
+
+        .constat-box { background: #F8FAFC; border-radius: 10px; border: 1px solid var(--border-color); padding: 16px; margin-bottom: 15px; }
+        .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+
+        .conformity-badge { font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 12px; padding: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
+        .summary-info h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .avis-insuffisant { background-color: var(--danger); color: #FFF; }
+        .avis-partiel { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--primary-blue); border: 2px solid var(--accent-gold); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
+
+        .actions-bar { display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px; }
+
+        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-primary:hover { background-color: var(--dark-blue); }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-accent:hover { background-color: var(--accent-gold-hover); }
+        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-dark); }
+        .btn-outline:hover { background-color: #F8FAFC; }
+        .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
+
+        @media print {
+            .sidebar, .page-header button, .selection-box, .actions-bar, .btn-add-constat, .btn-danger-icon { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
+            body { background: #FFF !important; }
+            .card, .pc-card { box-shadow: none !important; border: 1px solid #CCC !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT</h2>
+            <p>BARID AL-MAGHRIB</p>
+        </div>
+        <div class="sidebar-nav-title">NAVIGATION FEUILLES</div>
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html">
+                    <span>1. Référentiel de contrôle</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+            <li>
+                <a href="Planification.html">
+                    <span>2. Planification</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+            <li>
+                <a href="FicheControle.html">
+                    <span>3. Fiche de Contrôle (FC)</span>
+                    <span class="badge-status badge-dispo">DISPONIBLE</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="ControleEncaisses.html">
+                    <span>4. Fiche de la vérification des encaisses</span>
+                    <span class="badge-status badge-actif">ACTIF</span>
+                </a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br>
+            <strong>v1.0 © 2026 - 2027</strong>
+        </div>
+    </aside>
+
+    <!-- 2. MAIN CONTENT -->
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-title">
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Fiche de la vérification des encaisses</h1>
+                <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-accent" onclick="fillDemoData()"><i class="fa-solid fa-wand-magic-sparkles"></i> Remplir Démo</button>
+                <button class="btn btn-outline" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
+            </div>
+        </header>
+
+        <!-- INFORMATIONS DE LA MISSION -->
+        <section class="card">
+            <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Date et heure de vérification *</label>
+                    <input type="datetime-local" class="form-control" id="dateVerification">
+                </div>
+                <div class="form-group">
+                    <label>Période vérifiée (Échantillonnage) *</label>
+                    <input type="text" class="form-control" id="periodeVerifiee" placeholder="Ex: Du 01/10/2026 au 31/10/2026">
+                </div>
+                <div class="form-group">
+                    <label>Nom du site / Agence *</label>
+                    <input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Rabat">
+                </div>
+                <div class="form-group">
+                    <label>Nom du contrôleur *</label>
+                    <input type="text" class="form-control" id="nomControleur" placeholder="Ex: Ait Baba">
+                </div>
+                <div class="form-group">
+                    <label>Nom du responsable du site *</label>
+                    <input type="text" class="form-control" id="nomResponsable" placeholder="Ex: Mohammed El Amrani">
+                </div>
+            </div>
+        </section>
+
+        <!-- SÉLECTION DE LA RÉFÉRENCE (JSON) -->
+        <section class="card">
+            <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Référentiel JSON)</h2>
+            <div class="selection-box">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="selectProcessus">1. Processus</label>
+                        <select class="form-control" id="selectProcessus" onchange="onProcessusChange()">
+                            <option value="">-- Chargement du JSON en cours... --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectRisque">2. Intitulé du risque</label>
+                        <select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled>
+                            <option value="">-- Choisir un risque --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectControle">3. Intitulé de contrôle</label>
+                        <select class="form-control" id="selectControle" onchange="onControleChange()" disabled>
+                            <option value="">-- Choisir un contrôle --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pc-preview" id="pcPreviewBox" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <div>
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE SÉLECTIONNÉ :</strong>
+                            <p id="pcPreviewText" style="margin-top: 5px;"></p>
+                        </div>
+                        <button class="btn btn-primary" onclick="addSelectedPointControl()"><i class="fa-solid fa-plus"></i> Ajouter ce point au contrôle</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTAINER DES POINTS DE CONTRÔLE ÉVALUÉS -->
+        <div id="pointsEvaluationsContainer"></div>
+
+        <!-- SYNTHÈSE ET AVIS GLOBAL DE GESTION -->
+        <section class="summary-card" id="summaryCard" style="display: none;">
+            <div class="summary-info">
+                <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent-gold);"></i>
+                <div>
+                    <h3>TAUX DE CONFORMITÉ MOYEN GLOBAL : <span id="globalRateDisplay">0 %</span></h3>
+                    <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération calculée sur l'ensemble des points et constats de la mission.</p>
+                </div>
+            </div>
+            <div>
+                <span class="badge-avis-global" id="globalAvisBadge">---</span>
+            </div>
+        </section>
+
+        <!-- BARRE D'ACTIONS -->
+        <footer class="actions-bar">
+            <button class="btn btn-outline" onclick="saveToLocalStorage()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+            <button class="btn btn-primary" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
+            <button class="btn btn-accent" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+        </footer>
+    </main>
+
+    <!-- JAVASCRIPT APPLICATION -->
+    <script>
+        let rawJsonData = [];
+        let addedPoints = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const dateInput = document.getElementById('dateVerification');
+            if (dateInput) dateInput.value = now.toISOString().slice(0, 16);
+
+            chargerReferentielJSON();
+        });
+
+        async function chargerReferentielJSON() {
+            try {
+                // Chargement du fichier Encaisses.json propre et sans accent
+                const response = await fetch('Encaisses.json');
+                
+                if (!response.ok) {
+                    throw new Error(`Statut HTTP ${response.status}`);
+                }
+                
+                rawJsonData = await response.json();
+                console.log("Référentiel JSON chargé avec succès :", rawJsonData.length, "points.");
+                initCascadeSelects();
+
+            } catch (error) {
+                console.error("Erreur de chargement du JSON :", error);
+                const procSelect = document.getElementById('selectProcessus');
+                if (procSelect) {
+                    procSelect.innerHTML = '<option value="">-- Erreur de chargement du fichier JSON --</option>';
+                }
+                alert("Impossible de charger le fichier 'Encaisses.json'. Assurez-vous d'avoir renommé votre fichier JSON sur GitHub.");
+            }
+        }
+
+        function initCascadeSelects() {
+            const procSelect = document.getElementById('selectProcessus');
+            const processes = [...new Set(rawJsonData.map(item => item.Processus))];
+            
+            procSelect.innerHTML = '<option value="">-- Choisir un processus --</option>';
+            processes.forEach(p => {
+                procSelect.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+        }
+
+        function onProcessusChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risqueSelect = document.getElementById('selectRisque');
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            risqueSelect.innerHTML = '<option value="">-- Choisir un risque --</option>';
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+            ctrlSelect.disabled = true;
+
+            if (!proc) {
+                risqueSelect.disabled = true;
+                return;
+            }
+
+            const risques = [...new Set(rawJsonData.filter(i => i.Processus === proc).map(i => i["Intitulé du risque"]))];
+            risques.forEach(r => {
+                risqueSelect.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+            risqueSelect.disabled = false;
+        }
+
+        function onRisqueChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+
+            if (!risque) {
+                ctrlSelect.disabled = true;
+                return;
+            }
+
+            const controles = [...new Set(rawJsonData.filter(i => i.Processus === proc && i["Intitulé du risque"] === risque).map(i => i["Intitulé de contrôle"]))];
+            controles.forEach(c => {
+                ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            ctrlSelect.disabled = false;
+        }
+
+        function onControleChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+
+            if (!ctrl) {
+                document.getElementById('pcPreviewBox').style.display = 'none';
+                return;
+            }
+
+            const item = rawJsonData.find(i => i.Processus === proc && i["Intitulé du risque"] === risque && i["Intitulé de contrôle"] === ctrl);
+            if (item) {
+                document.getElementById('pcPreviewText').innerText = item["Point de contrôle"];
+                document.getElementById('pcPreviewBox').style.display = 'block';
+            }
+        }
+
+        function addSelectedPointControl() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+            const item = rawJsonData.find(i => i.Processus === proc && i["Intitulé du risque"] === risque && i["Intitulé de contrôle"] === ctrl);
+
+            if (!item) return;
+
+            const pointObj = {
+                id: Date.now(),
+                processus: item.Processus,
+                risque: item["Intitulé du risque"],
+                controle: item["Intitulé de contrôle"],
+                pointDeControle: item["Point de contrôle"],
+                constats: [
+                    { population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }
+                ]
+            };
+
+            addedPoints.push(pointObj);
+            renderPoints();
+            
+            document.getElementById('selectProcessus').value = '';
+            onProcessusChange();
+        }
+
+        function renderPoints() {
+            const container = document.getElementById('pointsEvaluationsContainer');
+            container.innerHTML = '';
+
+            addedPoints.forEach((point, pIndex) => {
+                const card = document.createElement('div');
+                card.className = 'pc-card';
+
+                let constatsHTML = '';
+                point.constats.forEach((c, cIndex) => {
+                    const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
+                    constatsHTML += `
+                        <div class="constat-box">
+                            <div class="constat-header">
+                                <strong style="font-size: 0.85rem; color: var(--primary-blue);">Constat #${cIndex + 1}</strong>
+                                <div>
+                                    Taux : <span class="conformity-badge ${badgeClass}">${c.rate.toFixed(1)} %</span>
+                                    ${point.constats.length > 1 ? `<button class="btn-danger-icon" style="margin-left: 10px;" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                </div>
+                            </div>
+                            <div class="form-grid" style="margin-bottom: 12px;">
+                                <div class="form-group">
+                                    <label>Population</label>
+                                    <input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Échantillon</label>
+                                    <input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre OK</label>
+                                    <input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre KO</label>
+                                    <input type="number" min="0" class="form-control" value="${c.ko}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ko', this.value)">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label>Constat / Anomalie observée</label>
+                                <textarea class="form-control" rows="2" placeholder="Description du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
+                            </div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Recommandations</label>
+                                    <textarea class="form-control" rows="2" placeholder="Recommandations du contrôleur..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Avis du responsable du site</label>
+                                    <textarea class="form-control" rows="2" placeholder="Commentaires ou avis du responsable..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="pc-card-header">
+                        <h4><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> ${point.processus} &gt; ${point.risque}</h4>
+                        <button class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
+                    </div>
+                    <div class="pc-card-body">
+                        <div style="background: #F1F5F9; padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
+                            <p style="font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">${point.pointDeControle}</p>
+                        </div>
+                        ${constatsHTML}
+                        <button class="btn btn-outline btn-add-constat" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="addConstatToPoint(${pIndex})">
+                            <i class="fa-solid fa-plus"></i> Ajouter un constat supplémentaire
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            calculateGlobalSummary();
+        }
+
+        function updateConstatNumbers(pIndex, cIndex, field, value) {
+            const val = parseInt(value) || 0;
+            const c = addedPoints[pIndex].constats[cIndex];
+            c[field] = val;
+
+            if (field === 'echantillon' || field === 'ok') {
+                if (c.echantillon > 0) {
+                    c.rate = Math.min(100, Math.max(0, (c.ok / c.echantillon) * 100));
+                } else {
+                    c.rate = 100;
+                }
+            }
+            renderPoints();
+        }
+
+        function updateConstatText(pIndex, cIndex, field, value) {
+            addedPoints[pIndex].constats[cIndex][field] = value;
+        }
+
+        function addConstatToPoint(pIndex) {
+            addedPoints[pIndex].constats.push({
+                population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: ''
+            });
+            renderPoints();
+        }
+
+        function removeConstat(pIndex, cIndex) {
+            addedPoints[pIndex].constats.splice(cIndex, 1);
+            renderPoints();
+        }
+
+        function removePoint(pIndex) {
+            addedPoints.splice(pIndex, 1);
+            renderPoints();
+        }
+
+        function calculateGlobalSummary() {
+            const summaryCard = document.getElementById('summaryCard');
+            if (addedPoints.length === 0) {
+                summaryCard.style.display = 'none';
+                return;
+            }
+
+            let totalRates = 0;
+            let count = 0;
+
+            addedPoints.forEach(p => {
+                p.constats.forEach(c => {
+                    totalRates += c.rate;
+                    count++;
+                });
+            });
+
+            const globalRate = count > 0 ? (totalRates / count) : 100;
+            document.getElementById('globalRateDisplay').innerText = globalRate.toFixed(1) + ' %';
+
+            const badge = document.getElementById('globalAvisBadge');
+            badge.className = 'badge-avis-global ';
+
+            if (globalRate < 60) {
+                badge.innerText = 'Gestion insuffisante';
+                badge.classList.add('avis-insuffisant');
+            } else if (globalRate < 85) {
+                badge.innerText = 'Gestion partiellement satisfaisante';
+                badge.classList.add('avis-partiel');
+            } else if (globalRate < 95) {
+                badge.innerText = 'Bonne gestion';
+                badge.classList.add('avis-bonne');
+            } else {
+                badge.innerText = 'Très bonne gestion';
+                badge.classList.add('avis-tres-bonne');
+            }
+
+            summaryCard.style.display = 'flex';
+        }
+
+        function fillDemoData() {
+            document.getElementById('periodeVerifiee').value = 'Du 01/10/2026 au 31/10/2026';
+            document.getElementById('nomSite').value = 'Barid Al-Maghrib - Agence Principale Rabat';
+            document.getElementById('nomControleur').value = 'Ait Baba';
+            document.getElementById('nomResponsable').value = 'Mohammed El Amrani';
+
+            addedPoints = [
+                {
+                    id: 101,
+                    processus: 'Trésorerie et Financement',
+                    risque: 'Détournement des encaissements et des recettes au niveau du réseau',
+                    controle: "Contrôle de l'arrêté journalier des centres / agences",
+                    pointDeControle: 'Les fonds disponibles sont-ils exacts ou présentent-ils un écart ?',
+                    constats: [
+                        {
+                            population: 30, echantillon: 30, ok: 30, ko: 0, rate: 100,
+                            constatText: 'Concordance parfaite entre les arrêtés de caisse physiques et le SI COMMERCIAL sur la période.',
+                            recoText: 'Maintenir la rigueur des arrêtés quotidiens.',
+                            avisText: 'Prise en compte effectuée par l’équipe de caisse.'
+                        }
+                    ]
+                },
+                {
+                    id: 102,
+                    processus: 'Philatélie',
+                    risque: 'Spoliation ou vol de timbres',
+                    controle: 'Contrôle de la disponibilité du stock au niveau du réseau',
+                    pointDeControle: 'La valeur des valeurs postales est-elle exacte ?',
+                    constats: [
+                        {
+                            population: 50, echantillon: 20, ok: 18, ko: 2, rate: 90,
+                            constatText: 'Écart mineur de 2 figurines postales constaté en caisse secondaire.',
+                            recoText: 'Procéder au versement régulier des valeurs détériorées.',
+                            avisText: 'Régularisation effectuée immédiatement.'
+                        }
+                    ]
+                }
+            ];
+
+            renderPoints();
+        }
+
+        function clearForm() {
+            if (confirm("Voulez-vous vraiment vider toute la fiche de contrôle ?")) {
+                addedPoints = [];
+                document.getElementById('nomSite').value = '';
+                document.getElementById('nomControleur').value = '';
+                document.getElementById('nomResponsable').value = '';
+                document.getElementById('periodeVerifiee').value = '';
+                renderPoints();
+            }
+        }
+
+        function saveToLocalStorage() {
+            const dataToSave = {
+                dateVerif: document.getElementById('dateVerification').value,
+                periode: document.getElementById('periodeVerifiee').value,
+                site: document.getElementById('nomSite').value,
+                controleur: document.getElementById('nomControleur').value,
+                responsable: document.getElementById('nomResponsable').value,
+                points: addedPoints
+            };
+            localStorage.setItem('fci_fiche_verification_encaisses', JSON.stringify(dataToSave));
+            alert("Fiche enregistrée avec succès dans le navigateur !");
+        }
+
+        function exportToExcel() {
+            if (addedPoints.length === 0) {
+                alert("Veuillez ajouter au moins un point de contrôle avant d'exporter.");
+                return;
+            }
+
+            const exportArray = [];
+            addedPoints.forEach(p => {
+                p.constats.forEach((c, idx) => {
+                    exportArray.push({
+                        "Date Vérification": document.getElementById('dateVerification').value,
+                        "Période Vérifiée": document.getElementById('periodeVerifiee').value,
+                        "Site / Agence": document.getElementById('nomSite').value,
+                        "Contrôleur": document.getElementById('nomControleur').value,
+                        "Responsable Site": document.getElementById('nomResponsable').value,
+                        "Processus": p.processus,
+                        "Intitulé du Risque": p.risque,
+                        "Intitulé de Contrôle": p.controle,
+                        "Point de Contrôle": p.pointDeControle,
+                        "Constat #": idx + 1,
+                        "Population": c.population,
+                        "Échantillon": c.echantillon,
+                        "Nombre OK": c.ok,
+                        "Nombre KO": c.ko,
+                        "Taux Conformité (%)": c.rate.toFixed(1) + '%',
+                        "Constat / Anomalie": c.constatText,
+                        "Recommandations": c.recoText,
+                        "Avis Responsable": c.avisText
+                    });
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportArray);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche Vérification Encaisses");
+            XLSX.writeFile(workbook, "Fiche_Verification_Encaisses_BAM.xlsx");
+        }
+    </script>
+</body>
+</html>
