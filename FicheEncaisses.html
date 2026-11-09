@@ -300,7 +300,7 @@
 
         async function chargerReferentielJSON() {
             try {
-                // Chargement avec anti-cache pour forcer l'actualisation
+                // Chargement correct du fichier Encaisses.json avec paramètre anti-cache
                 const response = await fetch('Encaisses.json?v=' + Date.now());
                 
                 if (!response.ok) {
@@ -317,7 +317,7 @@
                 if (procSelect) {
                     procSelect.innerHTML = '<option value="">-- Erreur de chargement du fichier JSON --</option>';
                 }
-                alert("Impossible de charger le fichier 'Encaisses.json'. Assurez-vous d'avoir bien placé ce fichier dans le dépôt GitHub.");
+                alert("Impossible de charger le fichier 'Encaisses.json'. Assurez-vous d'avoir bien placé ce fichier sur GitHub.");
             }
         }
 
