@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx) pour Export Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="./referentiel.js"></script>
 
     <style>
         :root {
@@ -25,6 +27,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
         body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
+        /* SIDEBAR NAVIGATION */
         .sidebar {
             width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
             height: 100vh; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
@@ -49,6 +52,7 @@
 
         .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
 
+        /* MAIN CONTENT */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
 
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -78,7 +82,7 @@
         .selection-count { background: #FEF3C7; color: #D97706; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; }
         .table-container { max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-        th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; }
+        th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; z-index: 10; }
         td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
         tr.selected-row { background-color: #FEFCE8; }
 
@@ -210,7 +214,7 @@
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
-        // Helper pour lire dynamiquement les noms des champs quelles que soient les variantes de syntaxe du JSON
+        // Helper tolérant pour lire dynamiquement les variantes de clés du JSON
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -220,15 +224,9 @@
 
         async function chargerBDD() {
             const statusBadge = document.getElementById('bdd-status');
-            
-            if (typeof bddDataGlobal !== 'undefined' && Array.isArray(bddDataGlobal) && bddDataGlobal.length > 0) {
-                bddData = bddDataGlobal;
-                initialiserInterface(statusBadge);
-                return;
-            }
 
+            // Fichiers cibles par ordre strict de priorité (référentiel général en premier)
             const dynamicFiles = [
-                './Encaisses.json?v=' + Date.now(),
                 './referentiel.json?v=' + Date.now(),
                 './referentiel_controle_redresse-vf_Référentiel Redressé.json?v=' + Date.now()
             ];
@@ -237,8 +235,9 @@
                 try {
                     const response = await fetch(path);
                     if (response.ok) {
-                        bddData = await response.json();
-                        if (Array.isArray(bddData) && bddData.length > 0) {
+                        const data = await response.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            bddData = data;
                             initialiserInterface(statusBadge);
                             return;
                         }
@@ -248,7 +247,7 @@
 
             statusBadge.style.background = "#FDE8E8";
             statusBadge.style.color = "#9B1C1C";
-            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Fichier JSON introuvable`;
+            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> referentiel.json introuvable`;
         }
 
         function initialiserInterface(statusBadge) {
