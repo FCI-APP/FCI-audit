@@ -3,429 +3,463 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Référentiel de contrôle</title>
-    <!-- FontAwesome v6.4.0 -->
+    <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- SheetJS (xlsx) pour Export Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="./referentiel.js"></script>
 
     <style>
         :root {
-            --primary-blue: #003366;
-            --dark-blue: #002244;
-            --accent-gold: #EAAA00;
-            --accent-gold-hover: #d49900;
-            --bg-light: #F4F6F9;
-            --card-bg: #FFFFFF;
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
+            --primary: #003366;
+            --primary-dark: #002244;
+            --accent: #EAAA00;
+            --bg-body: #F4F6F9;
+            --bg-card: #FFFFFF;
+            --text-main: #2C3E50;
+            --text-muted: #6C757D;
             --border-color: #E2E8F0;
-            --success: #10B981;
             --sidebar-width: 250px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-        /* SIDEBAR (250px Fixe) */
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--dark-blue);
-            color: #FFFFFF;
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            display: flex; flex-direction: column;
-            z-index: 100;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.15);
+            width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
+            height: 100vh; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
         }
 
-        .sidebar-header {
-            padding: 20px;
-            background-color: var(--primary-blue);
-            text-align: center;
-            border-bottom: 2px solid var(--accent-gold);
+        .sidebar-header { padding: 20px 15px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #FFF; line-height: 1.4; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
+
+        .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-nav li a {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.2s;
+        }
+        .sidebar-nav li a:hover, .sidebar-nav li.active a {
+            background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
         }
 
-        .sidebar-header h2 { font-size: 0.95rem; font-weight: 800; color: #FFFFFF; line-height: 1.3; text-transform: uppercase; }
-        .sidebar-header p { font-size: 0.75rem; color: #CBD5E1; margin-top: 4px; font-weight: 700; }
-        .sidebar-nav-title { padding: 15px 20px 5px 20px; font-size: 0.7rem; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background: var(--accent); color: var(--primary-dark); }
 
-        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
-        .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 20px; color: #CBD5E1; text-decoration: none;
-            font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease;
-            border-left: 4px solid transparent;
-        }
-        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
-        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
 
-        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
-        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
-        .badge-dispo { background-color: rgba(234, 170, 0, 0.2); color: var(--accent-gold); }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
 
-        .sidebar-footer {
-            padding: 16px 20px; background-color: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.75rem; line-height: 1.4; color: #94A3B8; text-align: center;
-        }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
+        .page-header p { font-size: 0.85rem; color: var(--text-muted); }
 
-        /* MAIN CONTENT AREA */
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
-
-        .page-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
-            border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+        .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; width: 100%; }
+        .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
+        
+        .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 15px; width: 100%; }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .filter-group label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; }
+        .filter-group select { 
+            width: 100%; max-width: 100%; padding: 9px; border: 1px solid var(--border-color); 
+            border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; 
+            text-overflow: ellipsis; white-space: nowrap; overflow: hidden; 
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; }
-        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-accent { background: var(--accent); color: var(--primary); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-excel { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
 
-        .badge-bdd {
-            background-color: rgba(16, 185, 129, 0.1); color: var(--success);
-            font-weight: 700; font-size: 0.8rem; padding: 6px 12px;
-            border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3);
-        }
+        .table-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+        .table-toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .selection-count { background: #FEF3C7; color: #D97706; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; }
+        .table-container { max-height: 500px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+        th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; }
+        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        tr.selected-row { background-color: #FEFCE8; }
 
-        .card { background: var(--card-bg); border-radius: 12px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
-        .card-title { font-size: 0.95rem; font-weight: 800; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); display: flex; justify-content: space-between; }
-        .form-control { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; }
-
-        .btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px; }
-        .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; text-decoration: none; }
-        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
-        .btn-primary:hover { background-color: var(--dark-blue); }
-        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
-        .btn-accent:hover { background-color: var(--accent-gold-hover); }
-        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-dark); }
-        .btn-outline:hover { background-color: #F8FAFC; }
-
-        /* DATA TABLE */
-        .table-responsive { width: 100%; overflow-x: auto; }
-        table.data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-        table.data-table th { background-color: var(--primary-blue); color: #FFFFFF; font-weight: 700; padding: 14px 18px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
-        table.data-table td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); vertical-align: top; line-height: 1.5; }
-
-        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); }
-        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; color: #94A3B8; }
+        .empty-state { text-align: center; padding: 50px 20px; }
+        .table-footer { padding: 12px 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
 
-    <!-- 1. SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT</h2>
-            <p>BARID AL-MAGHRIB</p>
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-nav">
+                <li class="active">
+                    <a href="index.html">
+                        <span>1. Référentiel de contrôle</span>
+                        <span class="badge-status badge-active">Actif</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="Planification.html">
+                        <span>2. Planification</span>
+                        <span class="badge-status badge-active">Disponible</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Disponible</span></a>
+                </li>
+                <li>
+                    <a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a>
+                </li>
+            </ul>
         </div>
-        <div class="sidebar-nav-title">NAVIGATION FEUILLES</div>
-        <ul class="sidebar-menu">
-            <li class="active">
-                <a href="index.html">
-                    <span>1. Référentiel de contrôle</span>
-                    <span class="badge-status badge-actif">ACTIF</span>
-                </a>
-            </li>
-            <li>
-                <a href="Planification.html">
-                    <span>2. Planification</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-            <li>
-                <a href="FicheControle.html">
-                    <span>3. Fiche de Contrôle (FC)</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-            <li>
-                <a href="FicheEncaisses.html">
-                    <span>4. Fiche de la vérification des encaisses</span>
-                    <span class="badge-status badge-dispo">DISPONIBLE</span>
-                </a>
-            </li>
-        </ul>
         <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br>
-            <strong>v1.0 © 2026 - 2027</strong>
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
-    <!-- 2. MAIN CONTENT -->
     <main class="main-content">
-        <header class="page-header">
-            <div class="page-title">
+        <div class="page-header">
+            <div>
                 <h1>Feuille 1 : Référentiel de contrôle</h1>
                 <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
-            <div>
-                <span class="badge-bdd" id="bddCountBadge">BDD à jour (1605 PC)</span>
+            <div class="btn-group">
+                <span class="selection-count" id="bdd-status">Chargement BDD...</span>
             </div>
-        </header>
+        </div>
 
-        <!-- FILTRAGE EN CASCADE -->
-        <section class="card">
-            <h2 class="card-title"><i class="fa-solid fa-bolt"></i> FILTRAGE EN CASCADE HIÉRARCHIQUE</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="selectProcessus">1. PROCESSUS <span id="countProcessus">33</span></label>
-                    <select class="form-control" id="selectProcessus" onchange="onProcessusChange()">
+        <div class="filter-card">
+            <div class="filter-title"><i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique</div>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>1. Processus <span id="count-proc">0</span></label>
+                    <select id="select-processus" onchange="onProcessusChange()">
                         <option value="">-- Sélectionner un Processus --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="selectRisque">2. INTITULÉ DU RISQUE <span id="countRisque">0</span></label>
-                    <select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled>
+                <div class="filter-group">
+                    <label>2. Intitulé du risque <span id="count-risque">0</span></label>
+                    <select id="select-risque" onchange="onRisqueChange()" disabled>
                         <option value="">-- Choisir d'abord un Processus --</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="selectControle">3. INTITULÉ CONTRÔLE <span id="countControle">0</span></label>
-                    <select class="form-control" id="selectControle" disabled>
+                <div class="filter-group">
+                    <label>3. Intitulé contrôle <span id="count-controle">0</span></label>
+                    <select id="select-controle" onchange="onControleChange()" disabled>
                         <option value="">-- Choisir d'abord un Risque --</option>
                     </select>
                 </div>
             </div>
-            
-            <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);" id="filterStatusText">
-                Filtre actif : <strong>Aucun processus sélectionné</strong>
-            </div>
-
-            <div class="btn-group">
-                <button class="btn btn-outline" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                <button class="btn btn-primary" onclick="applyFilter()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC ( <span id="filteredPcCount">1605</span> PC)</button>
-            </div>
-        </section>
-
-        <!-- TABLEAU DES POINTS DE CONTRÔLE -->
-        <section class="card" style="padding: 0; overflow: hidden;">
-            <div style="padding: 16px 20px; background: #F8FAFC; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <div style="display: flex; gap: 12px;">
-                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="selectAll()"><i class="fa-regular fa-square-check"></i> Sélectionner tout</button>
-                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem;" onclick="deselectAll()"><i class="fa-regular fa-square"></i> Désélectionner tout</button>
-                    <span style="background: #FEF3C7; color: #92400E; font-weight: 700; font-size: 0.8rem; padding: 6px 12px; border-radius: 6px;" id="selectedCountBadge">0 points sélectionnés</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 15px;">
+                <div style="font-size: 0.85rem; color: var(--text-muted);">Filtre actif : <strong id="filter-status-desc">Aucun processus sélectionné</strong></div>
+                <div>
+                    <button class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                    <button class="btn btn-primary" onclick="appliquerFiltre()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC (<span id="btn-count">0</span> PC)</button>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; color: var(--success); border-color: rgba(16,185,129,0.3);" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
-                    <a href="Planification.html" class="btn btn-accent" style="padding: 6px 16px; font-size: 0.8rem;"><i class="fa-solid fa-calendar-plus"></i> Planification</a>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="table-toolbar">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn btn-outline" onclick="selectionnerTout()"><i class="fa-regular fa-square-check"></i> Sélectionner tout</button>
+                    <button class="btn btn-outline" onclick="deselectionnerTout()"><i class="fa-regular fa-square"></i> Désélectionner tout</button>
+                    <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+                    <button class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="data-table">
+            <div class="table-container">
+                <table>
                     <thead>
                         <tr>
-                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="checkAllHeader" onchange="toggleCheckAll(this)"></th>
-                            <th style="width: 20%;">PROCESSUS</th>
-                            <th style="width: 25%;">INTITULÉ DU RISQUE</th>
-                            <th style="width: 25%;">INTITULÉ CONTRÔLE</th>
-                            <th>POINTS DE CONTRÔLE</th>
+                            <th style="width:40px; text-align:center;"><input type="checkbox" id="master-checkbox" onchange="toggleMasterCheckbox(this)"></th>
+                            <th style="width:20%;">PROCESSUS</th>
+                            <th style="width:25%;">INTITULÉ DU RISQUE</th>
+                            <th style="width:25%;">INTITULÉ CONTRÔLE</th>
+                            <th style="width:30%;">POINTS DE CONTRÔLE</th>
                         </tr>
                     </thead>
-                    <tbody id="referentielTbody">
-                        <tr>
-                            <td colspan="5">
-                                <div class="empty-state">
-                                    <i class="fa-solid fa-clipboard-list"></i>
-                                    <h3>Aucun point de contrôle affiché</h3>
-                                    <p style="margin-top: 4px;">Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur [Afficher PC].</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tbody id="table-body"></tbody>
                 </table>
+                <div id="empty-state" class="empty-state">
+                    <i class="fa-solid fa-clipboard-list" style="font-size:2.5rem; color: var(--text-muted); margin-bottom:10px;"></i>
+                    <h3>Aucun point de contrôle affiché</h3>
+                    <p>Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur [Afficher PC].</p>
+                </div>
             </div>
-            
-            <div style="padding: 14px 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted);">
-                <div><span id="footerDisplayedCount">0</span> point(s) affiché(s)</div>
-                <div><span id="footerSelectedCount">0</span> sélectionné(s) pour la Planification</div>
+
+            <div class="table-footer">
+                <div><span id="rendered-count">0</span> point(s) affiché(s)</div>
+                <div><span id="selected-footer-count">0</span> sélectionné(s) pour la Planification</div>
             </div>
-        </section>
+        </div>
     </main>
 
-    <!-- JAVASCRIPT APPLICATION -->
     <script>
-        let rawReferentielData = [];
+        let bddData = [];
+        let filteredData = [];
+        let selectedPoints = new Set();
+        const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            chargerReferentielJSON();
-        });
+        document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
-        async function chargerReferentielJSON() {
-            try {
-                const response = await fetch('referentiel.json');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                rawReferentielData = await response.json();
-                
-                document.getElementById('bddCountBadge').innerText = `BDD à jour (${rawReferentielData.length} PC)`;
-                document.getElementById('filteredPcCount').innerText = rawReferentielData.length;
-                initProcessusSelect();
-            } catch (error) {
-                console.error("Erreur de chargement de referentiel.json :", error);
+        // Helper pour lire dynamiquement les noms des champs quelles que soient les variantes de syntaxe du JSON
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined) return item[k];
             }
+            return '';
         }
 
-        function initProcessusSelect() {
-            const select = document.getElementById('selectProcessus');
-            const processes = [...new Set(rawReferentielData.map(i => i.Processus || i.processus))].filter(Boolean);
-            document.getElementById('countProcessus').innerText = processes.length;
+        async function chargerBDD() {
+            const statusBadge = document.getElementById('bdd-status');
+            
+            if (typeof bddDataGlobal !== 'undefined' && Array.isArray(bddDataGlobal) && bddDataGlobal.length > 0) {
+                bddData = bddDataGlobal;
+                initialiserInterface(statusBadge);
+                return;
+            }
 
-            select.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
-            processes.forEach(p => {
-                select.innerHTML += `<option value="${p}">${p}</option>`;
+            const dynamicFiles = [
+                './Encaisses.json?v=' + Date.now(),
+                './referentiel.json?v=' + Date.now(),
+                './referentiel_controle_redresse-vf_Référentiel Redressé.json?v=' + Date.now()
+            ];
+
+            for (const path of dynamicFiles) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        bddData = await response.json();
+                        if (Array.isArray(bddData) && bddData.length > 0) {
+                            initialiserInterface(statusBadge);
+                            return;
+                        }
+                    }
+                } catch(e){}
+            }
+
+            statusBadge.style.background = "#FDE8E8";
+            statusBadge.style.color = "#9B1C1C";
+            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Fichier JSON introuvable`;
+        }
+
+        function initialiserInterface(statusBadge) {
+            statusBadge.style.background = "#DEF7EC";
+            statusBadge.style.color = "#03543F";
+            statusBadge.innerHTML = `BDD à jour (<strong id="total-pc-count">${bddData.length}</strong> PC)`;
+            document.getElementById('btn-count').textContent = bddData.length;
+            initialiserFiltres();
+            restaurerSelectionExistante();
+        }
+
+        function initialiserFiltres() {
+            const selectProc = document.getElementById('select-processus');
+            selectProc.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
+            const processusUniques = [...new Set(bddData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean).sort();
+            document.getElementById('count-proc').textContent = processusUniques.length;
+            processusUniques.forEach(proc => {
+                const opt = document.createElement('option');
+                opt.value = proc; opt.textContent = proc;
+                selectProc.appendChild(opt);
             });
         }
 
         function onProcessusChange() {
-            const proc = document.getElementById('selectProcessus').value;
-            const risqueSelect = document.getElementById('selectRisque');
-            const ctrlSelect = document.getElementById('selectControle');
-
-            risqueSelect.innerHTML = '<option value="">-- Sélectionner un Risque --</option>';
-            ctrlSelect.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
-            ctrlSelect.disabled = true;
+            const proc = document.getElementById('select-processus').value;
+            const selectRisque = document.getElementById('select-risque');
+            const selectControle = document.getElementById('select-controle');
+            selectRisque.innerHTML = '<option value="">-- Sélectionner un Risque --</option>';
+            selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
+            selectControle.disabled = true;
 
             if (!proc) {
-                risqueSelect.disabled = true;
-                document.getElementById('countRisque').innerText = 0;
-                document.getElementById('countControle').innerText = 0;
+                selectRisque.disabled = true;
+                document.getElementById('count-risque').textContent = "0";
+                document.getElementById('count-controle').textContent = "0";
+                document.getElementById('filter-status-desc').textContent = "Aucun processus sélectionné";
+                document.getElementById('btn-count').textContent = bddData.length;
                 return;
             }
 
-            const risques = [...new Set(rawReferentielData.filter(i => (i.Processus || i.processus) === proc).map(i => i["Intitulé du risque"] || i.intitule_risque))].filter(Boolean);
-            document.getElementById('countRisque').innerText = risques.length;
+            selectRisque.disabled = false;
+            const itemsProc = bddData.filter(d => getItemVal(d, ['Processus']) === proc);
+            const risquesUniques = [...new Set(itemsProc.map(d => getItemVal(d, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean).sort();
+            document.getElementById('count-risque').textContent = risquesUniques.length;
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc}`;
+            document.getElementById('btn-count').textContent = itemsProc.length;
 
-            risques.forEach(r => {
-                risqueSelect.innerHTML += `<option value="${r}">${r}</option>`;
+            risquesUniques.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r; opt.textContent = r;
+                selectRisque.appendChild(opt);
             });
-            risqueSelect.disabled = false;
         }
 
         function onRisqueChange() {
-            const proc = document.getElementById('selectProcessus').value;
-            const risque = document.getElementById('selectRisque').value;
-            const ctrlSelect = document.getElementById('selectControle');
-
-            ctrlSelect.innerHTML = '<option value="">-- Sélectionner un Contrôle --</option>';
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const selectControle = document.getElementById('select-controle');
+            selectControle.innerHTML = '<option value="">-- Sélectionner un Contrôle --</option>';
 
             if (!risque) {
-                ctrlSelect.disabled = true;
-                document.getElementById('countControle').innerText = 0;
+                selectControle.disabled = true;
+                document.getElementById('count-controle').textContent = "0";
                 return;
             }
 
-            const controles = [...new Set(rawReferentielData.filter(i => (i.Processus || i.processus) === proc && (i["Intitulé du risque"] || i.intitule_risque) === risque).map(i => i["Intitulé de contrôle"] || i.intitule_controle))].filter(Boolean);
-            document.getElementById('countControle').innerText = controles.length;
+            selectControle.disabled = false;
+            const itemsRisque = bddData.filter(d => getItemVal(d, ['Processus']) === proc && getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque);
+            const controlesUniques = [...new Set(itemsRisque.map(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean).sort();
+            document.getElementById('count-controle').textContent = controlesUniques.length;
+            document.getElementById('filter-status-desc').textContent = `Processus : ${proc} > Risque : ${risque}`;
+            document.getElementById('btn-count').textContent = itemsRisque.length;
 
-            controles.forEach(c => {
-                ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            controlesUniques.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.textContent = c;
+                selectControle.appendChild(opt);
             });
-            ctrlSelect.disabled = false;
         }
 
-        function resetFilters() {
-            document.getElementById('selectProcessus').value = '';
+        function onControleChange() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
+            let items = bddData.filter(d => getItemVal(d, ['Processus']) === proc && getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque);
+            if (controle) items = items.filter(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle']) === controle);
+            document.getElementById('btn-count').textContent = items.length;
+        }
+
+        function reinitialiserFiltres() {
+            document.getElementById('select-processus').value = "";
             onProcessusChange();
-            document.getElementById('filterStatusText').innerHTML = 'Filtre actif : <strong>Aucun processus sélectionné</strong>';
-            renderTable([]);
+            filteredData = [];
+            afficherTableau();
         }
 
-        function applyFilter() {
-            const proc = document.getElementById('selectProcessus').value;
-            const risque = document.getElementById('selectRisque').value;
-            const ctrl = document.getElementById('selectControle').value;
+        function appliquerFiltre() {
+            const proc = document.getElementById('select-processus').value;
+            const risque = document.getElementById('select-risque').value;
+            const controle = document.getElementById('select-controle').value;
 
-            if (!proc) {
-                alert("Veuillez sélectionner au moins un processus.");
-                return;
-            }
+            filteredData = bddData.filter(item => {
+                const itemProc = getItemVal(item, ['Processus']);
+                const itemRisque = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
+                const itemCtrl = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
 
-            const filtered = rawReferentielData.filter(i => {
-                const matchProc = (i.Processus || i.processus) === proc;
-                const matchRisque = !risque || (i["Intitulé du risque"] || i.intitule_risque) === risque;
-                const matchCtrl = !ctrl || (i["Intitulé de contrôle"] || i.intitule_controle) === ctrl;
-                return matchProc && matchRisque && matchCtrl;
+                if (proc && itemProc !== proc) return false;
+                if (risque && itemRisque !== risque) return false;
+                if (controle && itemCtrl !== controle) return false;
+                return true;
             });
-
-            document.getElementById('filterStatusText').innerHTML = `Filtre actif : <strong>${proc}</strong> ${risque ? ' &gt; ' + risque : ''}`;
-            renderTable(filtered);
+            afficherTableau();
         }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('referentielTbody');
+        function afficherTableau() {
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
             tbody.innerHTML = '';
 
-            if (data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5">
-                            <div class="empty-state">
-                                <i class="fa-solid fa-clipboard-list"></i>
-                                <h3>Aucun point de contrôle affiché</h3>
-                                <p style="margin-top: 4px;">Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur [Afficher PC].</p>
-                            </div>
-                        </td>
-                    </tr>`;
-                document.getElementById('footerDisplayedCount').innerText = 0;
+            if (filteredData.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('rendered-count').textContent = '0';
                 return;
             }
 
-            data.forEach((item, index) => {
+            emptyState.style.display = 'none';
+            document.getElementById('rendered-count').textContent = filteredData.length;
+
+            filteredData.forEach((item, index) => {
                 const tr = document.createElement('tr');
+                const isSelected = selectedPoints.has(JSON.stringify(item));
+                if (isSelected) tr.classList.add('selected-row');
+
+                const pName = getItemVal(item, ['Processus']);
+                const rName = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
+                const cName = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
+                const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
+
                 tr.innerHTML = `
-                    <td style="text-align: center;"><input type="checkbox" class="pc-checkbox" onchange="updateSelectedCount()"></td>
-                    <td><strong>${item.Processus || item.processus}</strong></td>
-                    <td>${item["Intitulé du risque"] || item.intitule_risque}</td>
-                    <td>${item["Intitulé de contrôle"] || item.intitule_controle}</td>
-                    <td style="white-space: pre-line;">${item["Point de contrôle"] || item.point_controle}</td>
+                    <td style="text-align:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectPoint(${index}, this)"></td>
+                    <td><strong>${pName}</strong></td>
+                    <td>${rName}</td>
+                    <td>${cName}</td>
+                    <td>${pcName}</td>
                 `;
                 tbody.appendChild(tr);
             });
-
-            document.getElementById('footerDisplayedCount').innerText = data.length;
-            updateSelectedCount();
+            mettreAJourCompteurSelection();
         }
 
-        function toggleCheckAll(headerCheckbox) {
-            const checkboxes = document.querySelectorAll('.pc-checkbox');
-            checkboxes.forEach(cb => cb.checked = headerCheckbox.checked);
-            updateSelectedCount();
+        function toggleSelectPoint(index, cb) {
+            const itemStr = JSON.stringify(filteredData[index]);
+            if (cb.checked) {
+                selectedPoints.add(itemStr);
+                cb.closest('tr').classList.add('selected-row');
+            } else {
+                selectedPoints.delete(itemStr);
+                cb.closest('tr').classList.remove('selected-row');
+            }
+            mettreAJourCompteurSelection();
         }
 
-        function selectAll() {
-            const checkboxes = document.querySelectorAll('.pc-checkbox');
-            checkboxes.forEach(cb => cb.checked = true);
-            document.getElementById('checkAllHeader').checked = true;
-            updateSelectedCount();
+        function selectionnerTout() {
+            filteredData.forEach(item => selectedPoints.add(JSON.stringify(item)));
+            afficherTableau();
         }
 
-        function deselectAll() {
-            const checkboxes = document.querySelectorAll('.pc-checkbox');
-            checkboxes.forEach(cb => cb.checked = false);
-            document.getElementById('checkAllHeader').checked = false;
-            updateSelectedCount();
+        function deselectionnerTout() {
+            filteredData.forEach(item => selectedPoints.delete(JSON.stringify(item)));
+            afficherTableau();
         }
 
-        function updateSelectedCount() {
-            const selected = document.querySelectorAll('.pc-checkbox:checked').length;
-            document.getElementById('selectedCountBadge').innerText = `${selected} points sélectionnés`;
-            document.getElementById('footerSelectedCount').innerText = selected;
+        function toggleMasterCheckbox(masterCb) {
+            if (masterCb.checked) selectionnerTout();
+            else deselectionnerTout();
         }
 
-        function exportExcel() {
-            const checkboxes = document.querySelectorAll('.pc-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle à exporter.");
+        function mettreAJourCompteurSelection() {
+            const count = selectedPoints.size;
+            document.getElementById('selected-count').textContent = count;
+            document.getElementById('selected-footer-count').textContent = count;
+        }
+
+        function restaurerSelectionExistante() {
+            const saved = localStorage.getItem(PLANIFICATION_PC_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(item => selectedPoints.add(JSON.stringify(item)));
+                    mettreAJourCompteurSelection();
+                } catch(e){}
+            }
+        }
+
+        function exporterExcel() {
+            if (selectedPoints.size === 0) { alert("Veuillez sélectionner au moins un point."); return; }
+            const dataToExport = Array.from(selectedPoints).map(item => JSON.parse(item));
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Points de Contrôle");
+            XLSX.writeFile(workbook, "FCI_Points_Controle_Selectionnes.xlsx");
+        }
+
+        function redirigerVersPlanification() {
+            if (selectedPoints.size === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle avant de passer à la Planification.");
                 return;
             }
-            alert(`${checkboxes.length} points exportés au format Excel.`);
+            const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
+            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(dataToSave));
+            window.location.href = "Planification.html";
         }
     </script>
 </body>
