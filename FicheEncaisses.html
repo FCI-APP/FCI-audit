@@ -662,6 +662,12 @@
             const c = addedPoints[pIndex].constats[cIndex];
             c[field] = val;
 
+            // VÉRIFICATION DE COHÉRENCE : ÉCHANTILLON vs POPULATION
+            if (c.echantillon > c.population && c.population > 0) {
+                alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
+                c.echantillon = c.population; // Réinitialise l'échantillon à la valeur maximale autorisée
+            }
+
             if (c.echantillon > 0) {
                 if (c.ok > c.echantillon) c.ok = c.echantillon;
                 c.ko = Math.max(0, c.echantillon - c.ok);
@@ -768,7 +774,21 @@
             }
         }
 
+        function validateCohérenceEchantillon() {
+            for (let p of addedPoints) {
+                for (let c of p.constats) {
+                    if (c.echantillon > c.population && c.population > 0) {
+                        alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être toujours inférieur ou égal à la population (${c.population}).`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
         function saveToLocalStorage() {
+            if (!validateCohérenceEchantillon()) return;
+
             const dataToSave = {
                 typeControle: document.getElementById('typeControle').value,
                 dateVerif: document.getElementById('dateVerification').value,
@@ -784,6 +804,8 @@
         }
 
         function exportToExcel() {
+            if (!validateCohérenceEchantillon()) return;
+
             const activePoints = addedPoints.filter(p => p.selected);
             if (activePoints.length === 0) {
                 alert("Veuillez sélectionner au moins un point de contrôle coché avant d'exporter.");
