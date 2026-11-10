@@ -245,11 +245,11 @@
                 </div>
                 <div class="form-group">
                     <label><i class="fa-solid fa-calendar-day"></i> Début période vérifiée *</label>
-                    <input type="text" class="form-control" id="periodeDebut" placeholder="Ex: 01/10/2026">
+                    <input type="date" class="form-control" id="periodeDebut">
                 </div>
                 <div class="form-group">
                     <label><i class="fa-solid fa-calendar-day"></i> Fin période vérifiée *</label>
-                    <input type="text" class="form-control" id="periodeFin" placeholder="Ex: 31/10/2026">
+                    <input type="date" class="form-control" id="periodeFin">
                 </div>
                 <div class="form-group">
                     <label>Nom du site / Agence *</label>
@@ -360,11 +360,22 @@
             return '';
         }
 
-        function toFormatFR(val) {
+        // Convertit toute date ISO (YYYY-MM-DD) vers le format FR (JJ/MM/AAAA)
+        function formatDateToFR(val) {
             if (!val || val === '-') return '';
             if (val.includes('-')) {
                 const parts = val.split('-');
                 if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return val;
+        }
+
+        // Convertit une date JJ/MM/AAAA ou ISO vers le format ISO YYYY-MM-DD (pour <input type="date">)
+        function formatDateToISO(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('/')) {
+                const parts = val.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             }
             return val;
         }
@@ -389,8 +400,8 @@
             try {
                 const saved = JSON.parse(savedRaw);
                 if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
-                if (saved.periodeDebut) document.getElementById('periodeDebut').value = toFormatFR(saved.periodeDebut);
-                if (saved.periodeFin) document.getElementById('periodeFin').value = toFormatFR(saved.periodeFin);
+                if (saved.periodeDebut) document.getElementById('periodeDebut').value = formatDateToISO(saved.periodeDebut);
+                if (saved.periodeFin) document.getElementById('periodeFin').value = formatDateToISO(saved.periodeFin);
                 if (saved.site) document.getElementById('nomSite').value = saved.site;
                 if (saved.controleur) document.getElementById('nomControleur').value = saved.controleur;
                 if (saved.responsable) document.getElementById('nomResponsable').value = saved.responsable;
@@ -761,8 +772,8 @@
             const dataToSave = {
                 typeControle: document.getElementById('typeControle').value,
                 dateVerif: document.getElementById('dateVerification').value,
-                periodeDebut: document.getElementById('periodeDebut').value,
-                periodeFin: document.getElementById('periodeFin').value,
+                periodeDebut: formatDateToFR(document.getElementById('periodeDebut').value),
+                periodeFin: formatDateToFR(document.getElementById('periodeFin').value),
                 site: document.getElementById('nomSite').value,
                 controleur: document.getElementById('nomControleur').value,
                 responsable: document.getElementById('nomResponsable').value,
@@ -787,8 +798,8 @@
                     exportArray.push({
                         "Type de Contrôle": typeCtrlValue,
                         "Date Vérification": document.getElementById('dateVerification').value,
-                        "Début Période Vérifiée": document.getElementById('periodeDebut').value,
-                        "Fin Période Vérifiée": document.getElementById('periodeFin').value,
+                        "Début Période Vérifiée": formatDateToFR(document.getElementById('periodeDebut').value),
+                        "Fin Période Vérifiée": formatDateToFR(document.getElementById('periodeFin').value),
                         "Site / Agence": document.getElementById('nomSite').value,
                         "Contrôleur": document.getElementById('nomControleur').value,
                         "Responsable Site": document.getElementById('nomResponsable').value,
