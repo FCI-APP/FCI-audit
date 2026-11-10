@@ -94,7 +94,7 @@
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
 
@@ -244,8 +244,12 @@
                     <input type="datetime-local" class="form-control" id="dateVerification">
                 </div>
                 <div class="form-group">
-                    <label>Période vérifiée (Échantillonnage) *</label>
-                    <input type="text" class="form-control" id="periodeVerifiee" placeholder="Ex: Du 01/10/2026 au 31/10/2026">
+                    <label><i class="fa-solid fa-calendar-day"></i> Début période vérifiée *</label>
+                    <input type="text" class="form-control" id="periodeDebut" placeholder="JJ/MM/AAAA (ex: 01/10/2026)">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Fin période vérifiée *</label>
+                    <input type="text" class="form-control" id="periodeFin" placeholder="JJ/MM/AAAA (ex: 31/10/2026)">
                 </div>
                 <div class="form-group">
                     <label>Nom du site / Agence *</label>
@@ -253,7 +257,7 @@
                 </div>
                 <div class="form-group">
                     <label>Nom du contrôleur *</label>
-                    <input type="text" class="form-control" id="nomControleur" placeholder="Ex: Ait Baba">
+                    <input type="text" class="form-control" id="nomControleur" placeholder="Ex: Ahmed El Mansouri / Karima Naji">
                 </div>
                 <div class="form-group">
                     <label>Nom du responsable du site <span style="font-weight: 400; color: var(--text-muted);">(Facultatif)</span></label>
@@ -356,8 +360,19 @@
             return '';
         }
 
+        // Standardise toute date au format JJ/MM/AAAA
+        function toFormatFR(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('-')) {
+                const parts = val.split('-');
+                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return val;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             resetDateField();
+            chargerDonneesSauvegardees();
             chargerReferentielJSON();
         });
 
@@ -365,7 +380,29 @@
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const dateInput = document.getElementById('dateVerification');
-            if (dateInput) dateInput.value = now.toISOString().slice(0, 16);
+            if (dateInput && !dateInput.value) dateInput.value = now.toISOString().slice(0, 16);
+        }
+
+        function chargerDonneesSauvegardees() {
+            const savedRaw = localStorage.getItem('fci_fiche_verification_encaisses');
+            if (!savedRaw) return;
+
+            try {
+                const saved = JSON.parse(savedRaw);
+                if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
+                if (saved.periodeDebut) document.getElementById('periodeDebut').value = toFormatFR(saved.periodeDebut);
+                if (saved.periodeFin) document.getElementById('periodeFin').value = toFormatFR(saved.periodeFin);
+                if (saved.site) document.getElementById('nomSite').value = saved.site;
+                if (saved.controleur) document.getElementById('nomControleur').value = saved.controleur;
+                if (saved.responsable) document.getElementById('nomResponsable').value = saved.responsable;
+                
+                if (Array.isArray(saved.points) && saved.points.length > 0) {
+                    addedPoints = saved.points;
+                    renderPoints();
+                }
+            } catch (e) {
+                console.warn("Impossible de restaurer la fiche sauvegardée :", e);
+            }
         }
 
         async function chargerReferentielJSON() {
@@ -711,7 +748,8 @@
                 document.getElementById('nomSite').value = '';
                 document.getElementById('nomControleur').value = '';
                 document.getElementById('nomResponsable').value = '';
-                document.getElementById('periodeVerifiee').value = '';
+                document.getElementById('periodeDebut').value = '';
+                document.getElementById('periodeFin').value = '';
                 document.getElementById('selectProcessus').value = '';
                 onProcessusChange();
                 resetDateField();
@@ -724,7 +762,8 @@
             const dataToSave = {
                 typeControle: document.getElementById('typeControle').value,
                 dateVerif: document.getElementById('dateVerification').value,
-                periode: document.getElementById('periodeVerifiee').value,
+                periodeDebut: document.getElementById('periodeDebut').value,
+                periodeFin: document.getElementById('periodeFin').value,
                 site: document.getElementById('nomSite').value,
                 controleur: document.getElementById('nomControleur').value,
                 responsable: document.getElementById('nomResponsable').value,
@@ -749,7 +788,8 @@
                     exportArray.push({
                         "Type de Contrôle": typeCtrlValue,
                         "Date Vérification": document.getElementById('dateVerification').value,
-                        "Période Vérifiée": document.getElementById('periodeVerifiee').value,
+                        "Début Période Vérifiée": document.getElementById('periodeDebut').value,
+                        "Fin Période Vérifiée": document.getElementById('periodeFin').value,
                         "Site / Agence": document.getElementById('nomSite').value,
                         "Contrôleur": document.getElementById('nomControleur').value,
                         "Responsable Site": document.getElementById('nomResponsable').value,
