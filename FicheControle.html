@@ -314,44 +314,67 @@
             `;
         }
 
-        // Analyse sémantique de l'intitulé du PC pour déterminer l'objet précis du contrôle
-        function analyserEtFormulerObjetPC(pcName) {
-            if (!pcName) return "Le contrôle des opérations";
+        // Extrait le nom du sujet et sa qualification (ex: "la marque" -> "pas licite")
+        function analyserPC(pcName) {
+            if (!pcName) return { sujet: "dossier(s)", defaut: "non conforme(s)", qualifOk: "conforme(s)" };
             
-            const txt = pcName.toLowerCase();
+            // Nettoyage des numérotations initiales ex: "1/ ", "1- ", "A. "
+            let txt = pcName.replace(/^[\d\w]+[\/\.\-]\s*/, '').trim();
 
-            if (txt.includes("facture") || txt.includes("rapprochement")) return "Le rapprochement des factures";
-            if (txt.includes("accusé") || txt.includes("réception") || txt.includes(" ar ")) return "L'envoi des accusés de réception";
-            if (txt.includes("caisse") || txt.includes("encaisse") || txt.includes("arrêté")) return "L'arrêté de caisse et la vérification des encaisses";
-            if (txt.includes("pièce") || txt.includes("justificatif")) return "La vérification des pièces justificatives";
-            if (txt.includes("délai") || txt.includes("retard")) return "Le respect des délais d'exécution";
-            if (txt.includes("registre") || txt.includes("journal")) return "La tenue et la mise à jour des registres";
-            if (txt.includes("signature") || txt.includes("validation")) return "La présence des signatures et validations requises";
+            const lower = txt.toLowerCase();
 
-            // Si aucun mot-clé spécifique n'est trouvé, formule l'objet de façon fluide
-            let propre = pcName.trim().replace(/^(est-ce que|vérifier si|s'assurer de|s'assurer que|contrôler le|contrôler la|contrôle du|contrôle de|vérification du|vérification de)/i, '').trim();
+            // Rapprochement factures
+            if (lower.includes("facture") || lower.includes("rapprochement")) {
+                return { sujet: "le rapprochement des factures", defaut: "non réalisé", qualifOk: "réalisé et conforme" };
+            }
+            // Marque licite
+            if (lower.includes("marque")) {
+                return { sujet: "la marque", defaut: "pas licite", qualifOk: "licite" };
+            }
+            // Accusé de réception
+            if (lower.includes("accusé") || lower.includes("réception") || lower.includes(" ar ")) {
+                return { sujet: "l'envoi des accusés de réception", defaut: "non effectué", qualifOk: "effectué" };
+            }
+            // Encaisse / caisse
+            if (lower.includes("caisse") || lower.includes("encaisse")) {
+                return { sujet: "l'arrêté de caisse", defaut: "non conforme", qualifOk: "conforme" };
+            }
+            // Pièces justificatives
+            if (lower.includes("pièce") || lower.includes("justificatif")) {
+                return { sujet: "la présence des pièces justificatives", defaut: "manquante(s)", qualifOk: "présente(s)" };
+            }
+            // Délais
+            if (lower.includes("délai") || lower.includes("retard")) {
+                return { sujet: "le respect des délais", defaut: "non respecté", qualifOk: "respecté" };
+            }
+
+            // Générique si pas de mot-clé
+            let propre = txt.replace(/^(est-ce que|est-il|est-elle|vérifier si|s'assurer de|s'assurer que|contrôler le|contrôler la)/i, '').trim();
             propre = propre.replace(/[\?\.\!]+$/, '').trim();
             
-            if (!propre) return "Le contrôle des opérations";
-            return "Le contrôle relatif à " + propre.charAt(0).toLowerCase() + propre.slice(1);
+            return { 
+                sujet: propre ? propre : "dossier(s)", 
+                defaut: "non conforme(s)", 
+                qualifOk: "conforme(s)" 
+            };
         }
 
-        // Génère un constat direct, contextuel et chiffré axé uniquement sur l'objet du contrôle
+        // Génère une réponse 100% directe sans recopier la question
         function genererTexteConstat(ev, pcName) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
-            const objetControle = analyserEtFormulerObjetPC(pcName);
+            const analyse = analyserPC(pcName);
 
             if (ech === 0) {
-                return `${objetControle} n'a pas pu être effectué (échantillon nul). Taux de conformité : 0.00%.`;
+                return `Aucun dossier vérifié sur ${analyse.sujet} (échantillon = 0). Taux de conformité : 0.00%.`;
             }
 
             if (ko === 0) {
-                return `${objetControle} est intégralement réalisé et conforme sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
+                return `L'ensemble des ${ech} dossier(s) vérifié(s) présente ${analyse.sujet} ${analyse.qualifOk} (taux de conformité : ${tx}%).`;
             } else {
-                return `${objetControle} n'est pas réalisé pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} conforme(s)), avec un taux de conformité de ${tx}%.`;
+                return `${ko} dossier(s) pour le(s)quel(s) ${analyse.sujet} n'est ${analyse.defaut} sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} ${analyse.qualifOk}), soit un taux de conformité de ${tx}%.`;
             }
         }
 
