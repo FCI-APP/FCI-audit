@@ -132,8 +132,37 @@
 
         .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; }
         .field-group { display: flex; flex-direction: column; gap: 4px; }
+        
+        /* En-tête spécial pour le champ Constat avec Crayon Rouge et Sélecteur */
+        .field-header-constat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .constat-mode-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .pencil-icon {
+            color: #EF4444; /* Rouge */
+            font-size: 0.85rem;
+        }
+        .select-constat-mode {
+            font-size: 0.70rem;
+            font-weight: 700;
+            padding: 2px 4px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: #FFFFFF;
+            cursor: pointer;
+            outline: none;
+            color: var(--primary);
+        }
+
         .field-group label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .field-group textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
+        .field-group textarea[readonly] { background-color: #F8FAFC; cursor: not-allowed; color: var(--primary-dark); font-weight: 500; }
 
         .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; margin-bottom: 25px; }
         .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
@@ -149,7 +178,7 @@
         .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
         @media print {
-            .sidebar, .action-buttons { display: none !important; }
+            .sidebar, .action-buttons, .pencil-icon, .select-constat-mode { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
             .eval-section { grid-template-columns: 1fr 1fr; background: white; }
             .meta-item input.input-date-ctrl { border: none; background: transparent; padding: 0; }
@@ -264,10 +293,13 @@
                         nombreKo: 0,
                         tauxConformite: "0.00",
                         statutConstat: 'EN_COURS',
+                        modeConstat: 'MANUEL', // 'MANUEL' ou 'GENERE'
                         constat: '',
                         recommandation: '',
                         avisResponsable: ''
                     };
+                } else if (!item.eval.modeConstat) {
+                    item.eval.modeConstat = 'MANUEL';
                 }
             });
 
@@ -285,6 +317,24 @@
                     <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
                 </div>
             `;
+        }
+
+        // Génère le texte explicatif et significatif du constat selon les chiffres de contrôle
+        function genererTexteConstat(ev) {
+            const ech = ev.echantillon || 0;
+            const ok = ev.nombreOk || 0;
+            const ko = ev.nombreKo || 0;
+            const tx = ev.tauxConformite || "0.00";
+
+            if (ech === 0) {
+                return "Sur un échantillon de 0 dossier vérifié, aucun élément n'a pu être évalué. Le taux de conformité est de 0.00%.";
+            }
+
+            if (ko === 0) {
+                return `Sur un échantillon contrôlé de ${ech} élément(s), la totalité (${ok} conformes) respecte strictement les exigences de procédure. Aucun écart constaté. Taux de conformité : ${tx}%.`;
+            } else {
+                return `Sur un échantillon contrôlé de ${ech} élément(s), il a été relevé ${ko} anomalie(s) pour ${ok} élément(s) conforme(s), soit un taux de conformité de ${tx}%.`;
+            }
         }
 
         function renderPage() {
@@ -340,7 +390,6 @@
                 }
             }
 
-            // Conversion pour l'affichage dans le champ type="date"
             const dateCtrlISO = formatDateToISO(meta.dateControle);
             const pDebut = meta.periodeDebut || '';
             const pFin = meta.periodeFin || '';
@@ -400,6 +449,9 @@
                     const cName = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
                     const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
+                    const isGenere = (evalData.modeConstat === 'GENERE');
+                    const constatValue = isGenere ? genererTexteConstat(evalData) : (evalData.constat || '');
+
                     html += `
                         <div class="control-item">
                             <div style="margin-bottom:10px;">
@@ -436,7 +488,20 @@
                                 </div>
 
                                 <div class="fields-block">
-                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${evalData.constat}</textarea></div>
+                                    <div class="field-group">
+                                        <div class="field-header-constat">
+                                            <label><i class="fa-solid fa-pen-to-square"></i> Constat *</label>
+                                            <div class="constat-mode-container">
+                                                <i class="fa-solid fa-pen pencil-icon" title="Mode de saisie"></i>
+                                                <select class="select-constat-mode" onchange="changerModeConstat(${idx}, this.value)">
+                                                    <option value="MANUEL" ${!isGenere ? 'selected' : ''}>Manuel</option>
+                                                    <option value="GENERE" ${isGenere ? 'selected' : ''}>Généré</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <textarea id="constat-textarea-${idx}" ${isGenere ? 'readonly' : ''} onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${constatValue}</textarea>
+                                    </div>
+
                                     <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${evalData.recommandation}</textarea></div>
                                     <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis de l'entité (Optionnel)...">${evalData.avisResponsable}</textarea></div>
                                 </div>
@@ -499,9 +564,21 @@
             contentArea.innerHTML = html;
         }
 
+        // Bascule entre mode Manuel et Généré
+        function changerModeConstat(index, mode) {
+            const ev = missionData.pointsControle[index].eval;
+            ev.modeConstat = mode;
+
+            if (mode === 'GENERE') {
+                ev.constat = genererTexteConstat(ev);
+            }
+
+            sauvegarderLocalement(false);
+            renderPage();
+        }
+
         function mettreAJourMetadataDate(champ, valeurISO) {
             if (!missionData.metadata) missionData.metadata = {};
-            // Convertit YYYY-MM-DD vers JJ/MM/AAAA pour stockage cohérent
             missionData.metadata[champ] = formatDateToFR(valeurISO);
             sauvegarderLocalement(false);
         }
@@ -523,6 +600,11 @@
                 ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
             } else {
                 ev.nombreKo = 0; ev.tauxConformite = "0.00";
+            }
+
+            // Si le constat est en mode généré, mettre à jour automatiquement son contenu
+            if (ev.modeConstat === 'GENERE') {
+                ev.constat = genererTexteConstat(ev);
             }
 
             sauvegarderLocalement(false);
@@ -563,6 +645,12 @@
             missionData.pointsControle.forEach((p) => {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
+
+                // S'assurer que le constat généré est bien à jour avant validation
+                if (ev.modeConstat === 'GENERE') {
+                    ev.constat = genererTexteConstat(ev);
+                }
+
                 if (!ev.echantillon || ev.echantillon <= 0) {
                     valide = false; messageErreur = `Le point "${pcName}" nécessite un échantillon valide (> 0).`;
                 } else if (!ev.constat || ev.constat.trim() === '') {
@@ -604,27 +692,33 @@
 
             const meta = missionData.metadata || {};
 
-            const rows = missionData.pointsControle.map(p => ({
-                "Date du Contrôle": meta.dateControle || '-',
-                "Début période sous-contrôle": meta.periodeDebut || '-',
-                "Fin période sous-contrôle": meta.periodeFin || '-',
-                "Entité Contrôlée": meta.entite || '-',
-                "Contrôle réalisé par": meta.controleurs || '-',
-                "Type de Contrôle": meta.typeControle || '-',
-                "Processus": getItemVal(p, ['Processus']),
-                "Risque": getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
-                "Contrôle": getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                "Point de Contrôle": getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
-                "Population": p.eval.population,
-                "Échantillon": p.eval.echantillon,
-                "Nombre (OK)": p.eval.nombreOk,
-                "Nombre (KO)": p.eval.nombreKo,
-                "Taux de conformité (%)": p.eval.tauxConformite,
-                "Statut Constat": p.eval.statutConstat,
-                "Constat (Obligatoire)": p.eval.constat,
-                "Recommandation (Obligatoire)": p.eval.recommandation,
-                "Avis Responsable Entité (Facultatif)": p.eval.avisResponsable
-            }));
+            const rows = missionData.pointsControle.map(p => {
+                const ev = p.eval;
+                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev) : ev.constat;
+
+                return {
+                    "Date du Contrôle": meta.dateControle || '-',
+                    "Début période sous-contrôle": meta.periodeDebut || '-',
+                    "Fin période sous-contrôle": meta.periodeFin || '-',
+                    "Entité Contrôlée": meta.entite || '-',
+                    "Contrôle réalisé par": meta.controleurs || '-',
+                    "Type de Contrôle": meta.typeControle || '-',
+                    "Processus": getItemVal(p, ['Processus']),
+                    "Risque": getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
+                    "Contrôle": getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                    "Point de Contrôle": getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                    "Population": ev.population,
+                    "Échantillon": ev.echantillon,
+                    "Nombre (OK)": ev.nombreOk,
+                    "Nombre (KO)": ev.nombreKo,
+                    "Taux de conformité (%)": ev.tauxConformite,
+                    "Statut Constat": ev.statutConstat,
+                    "Mode Constat": ev.modeConstat || 'MANUEL',
+                    "Constat (Obligatoire)": constatFinal,
+                    "Recommandation (Obligatoire)": ev.recommandation,
+                    "Avis Responsable Entité (Facultatif)": ev.avisResponsable
+                };
+            });
 
             const worksheet = XLSX.utils.json_to_sheet(rows);
             const workbook = XLSX.utils.book_new();
