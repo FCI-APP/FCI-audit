@@ -86,6 +86,11 @@
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
+        .bdd-badge-total {
+            background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700;
+            padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px;
+        }
+
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
@@ -95,6 +100,7 @@
 
         .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
         .form-control:focus { border-color: var(--primary-blue); }
+        .form-control[readonly] { background-color: #F8FAFC; cursor: not-allowed; font-weight: 700; color: var(--primary-blue); }
 
         /* KPI COUNTERS GRID */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -122,7 +128,7 @@
         .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        /* CARTE DESCRIPTION ET ÉVALUATION DU CENTRE */
+        /* SYNTHÈSE GLOBAL CENTRE */
         .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
         .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
         .summary-info h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
@@ -193,13 +199,13 @@
                 <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses</h1>
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-accent" onclick="fillDemoData()"><i class="fa-solid fa-wand-magic-sparkles"></i> Remplir Démo</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement BDD...</span>
                 <button class="btn btn-outline" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
             </div>
         </header>
 
-        <!-- KPI DISPLAY CELLS WITH CENTER AVERAGE RATE -->
+        <!-- KPI DISPLAY CELLS -->
         <div class="kpi-row">
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
@@ -227,6 +233,12 @@
         <section class="card">
             <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
             <div class="form-grid">
+                <div class="form-group">
+                    <label>Type de Contrôle *</label>
+                    <select class="form-control" id="typeControle" readonly tabindex="-1">
+                        <option value="Vérification" selected>Vérification</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Date et heure de vérification *</label>
                     <input type="datetime-local" class="form-control" id="dateVerification">
@@ -345,15 +357,19 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            resetDateField();
+            chargerReferentielJSON();
+        });
+
+        function resetDateField() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const dateInput = document.getElementById('dateVerification');
             if (dateInput) dateInput.value = now.toISOString().slice(0, 16);
-
-            chargerReferentielJSON();
-        });
+        }
 
         async function chargerReferentielJSON() {
+            const badge = document.getElementById('bddStatusBadge');
             const filesToTry = [
                 './Encaisses.json?v=' + Date.now(),
                 './encaisses.json?v=' + Date.now(),
@@ -371,6 +387,12 @@
                             rawJsonData = data;
                             console.log("JSON chargé depuis", path, ":", rawJsonData.length, "points.");
                             initCascadeSelects();
+                            
+                            badge.style.backgroundColor = "#DEF7EC";
+                            badge.style.color = "#03543F";
+                            badge.style.borderColor = "#A7F3D0";
+                            badge.innerHTML = `<i class="fa-solid fa-database"></i> BDD à jour (<strong>${rawJsonData.length}</strong> PC)`;
+
                             loaded = true;
                             break;
                         }
@@ -385,6 +407,10 @@
                 if (procSelect) {
                     procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json introuvable --</option>';
                 }
+                badge.style.backgroundColor = "#FDE8E8";
+                badge.style.color = "#9B1C1C";
+                badge.style.borderColor = "#FCA5A5";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> BDD Introuvable`;
             }
         }
 
@@ -679,34 +705,6 @@
             summaryCard.style.display = 'flex';
         }
 
-        function fillDemoData() {
-            document.getElementById('periodeVerifiee').value = 'Du 01/10/2026 au 31/10/2026';
-            document.getElementById('nomSite').value = 'Barid Al-Maghrib - Agence Principale Rabat';
-            document.getElementById('nomControleur').value = 'Ait Baba';
-            document.getElementById('nomResponsable').value = 'Mohammed El Amrani';
-
-            addedPoints = [
-                {
-                    id: 101,
-                    selected: true,
-                    processus: 'Trésorerie et Financement',
-                    risque: 'Détournement des encaissements et des recettes au niveau du réseau',
-                    controle: "Contrôle de l'arrêté journalier des centres / agences",
-                    pointDeControle: 'Les fonds disponibles sont-ils exacts ou présentent-ils un écart ?',
-                    constats: [
-                        {
-                            population: 30, echantillon: 30, ok: 30, ko: 0, rate: 100,
-                            constatText: 'Concordance parfaite entre les arrêtés de caisse physiques et le SI COMMERCIAL sur la période.',
-                            recoText: 'Maintenir la rigueur des arrêtés quotidiens.',
-                            avisText: 'Prise en compte effectuée par l’équipe de caisse.'
-                        }
-                    ]
-                }
-            ];
-
-            renderPoints();
-        }
-
         function clearForm() {
             if (confirm("Voulez-vous vraiment vider toute la fiche de contrôle ?")) {
                 addedPoints = [];
@@ -714,12 +712,17 @@
                 document.getElementById('nomControleur').value = '';
                 document.getElementById('nomResponsable').value = '';
                 document.getElementById('periodeVerifiee').value = '';
+                document.getElementById('selectProcessus').value = '';
+                onProcessusChange();
+                resetDateField();
                 renderPoints();
+                localStorage.removeItem('fci_fiche_verification_encaisses');
             }
         }
 
         function saveToLocalStorage() {
             const dataToSave = {
+                typeControle: document.getElementById('typeControle').value,
                 dateVerif: document.getElementById('dateVerification').value,
                 periode: document.getElementById('periodeVerifiee').value,
                 site: document.getElementById('nomSite').value,
@@ -738,10 +741,13 @@
                 return;
             }
 
+            const typeCtrlValue = document.getElementById('typeControle').value;
             const exportArray = [];
+
             activePoints.forEach(p => {
                 p.constats.forEach((c, idx) => {
                     exportArray.push({
+                        "Type de Contrôle": typeCtrlValue,
                         "Date Vérification": document.getElementById('dateVerification').value,
                         "Période Vérifiée": document.getElementById('periodeVerifiee').value,
                         "Site / Agence": document.getElementById('nomSite').value,
