@@ -133,7 +133,6 @@
         .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; }
         .field-group { display: flex; flex-direction: column; gap: 4px; }
         
-        /* En-tête spécial pour le champ Constat avec Crayon Rouge et Sélecteur */
         .field-header-constat {
             display: flex;
             justify-content: space-between;
@@ -145,7 +144,7 @@
             gap: 5px;
         }
         .pencil-icon {
-            color: #EF4444; /* Rouge */
+            color: #EF4444;
             font-size: 0.85rem;
         }
         .select-constat-mode {
@@ -231,7 +230,6 @@
             return '';
         }
 
-        // Convertit toute date vers le format d'affichage FR (JJ/MM/AAAA)
         function formatDateToFR(val) {
             if (!val || val === '-') return '';
             if (val.includes('-')) {
@@ -241,7 +239,6 @@
             return val;
         }
 
-        // Convertit une date JJ/MM/AAAA ou ISO vers le format ISO YYYY-MM-DD (requis pour <input type="date">)
         function formatDateToISO(val) {
             if (!val || val === '-') return '';
             if (val.includes('/')) {
@@ -251,7 +248,6 @@
             return val;
         }
 
-        // Renvoie la date courante au format ISO (YYYY-MM-DD) pour initialiser le champ date
         function getTodayISO() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -279,7 +275,6 @@
 
             if (!missionData.metadata) missionData.metadata = {};
             
-            // Standardisation des dates : conservation interne en FR pour les exports et affichages
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
             missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
             missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
@@ -293,7 +288,7 @@
                         nombreKo: 0,
                         tauxConformite: "0.00",
                         statutConstat: 'EN_COURS',
-                        modeConstat: 'MANUEL', // 'MANUEL' ou 'GENERE'
+                        modeConstat: 'MANUEL',
                         constat: '',
                         recommandation: '',
                         avisResponsable: ''
@@ -319,21 +314,22 @@
             `;
         }
 
-        // Génère le texte explicatif et significatif du constat selon les chiffres de contrôle
-        function genererTexteConstat(ev) {
+        // Génère le texte explicatif incluant le libellé du point de contrôle et ses données chiffrées
+        function genererTexteConstat(ev, pcName) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
+            const libellePC = pcName ? pcName.trim() : "Point de contrôle";
 
             if (ech === 0) {
-                return "Sur un échantillon de 0 dossier vérifié, aucun élément n'a pu être évalué. Le taux de conformité est de 0.00%.";
+                return `Concernant la vérification relative à "${libellePC}" : Aucun échantillon n'a été testé (Échantillon = 0). Le taux de conformité est de 0.00%.`;
             }
 
             if (ko === 0) {
-                return `Sur un échantillon contrôlé de ${ech} élément(s), la totalité (${ok} conformes) respecte strictement les exigences de procédure. Aucun écart constaté. Taux de conformité : ${tx}%.`;
+                return `Concernant le contrôle sur "${libellePC}" : Les vérifications effectuées sur un échantillon de ${ech} élément(s) ont révélé un respect total des exigences (${ok} élément(s) conforme(s) et 0 anomalie). Le taux de conformité atteint ${tx}%.`;
             } else {
-                return `Sur un échantillon contrôlé de ${ech} élément(s), il a été relevé ${ko} anomalie(s) pour ${ok} élément(s) conforme(s), soit un taux de conformité de ${tx}%.`;
+                return `Concernant le contrôle sur "${libellePC}" : L'évaluation portant sur un échantillon de ${ech} élément(s) a mis en évidence ${ko} anomalie(s) pour ${ok} élément(s) conforme(s), soit un taux de conformité de ${tx}%.`;
             }
         }
 
@@ -450,7 +446,7 @@
                     const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
                     const isGenere = (evalData.modeConstat === 'GENERE');
-                    const constatValue = isGenere ? genererTexteConstat(evalData) : (evalData.constat || '');
+                    const constatValue = isGenere ? genererTexteConstat(evalData, pcName) : (evalData.constat || '');
 
                     html += `
                         <div class="control-item">
@@ -564,13 +560,14 @@
             contentArea.innerHTML = html;
         }
 
-        // Bascule entre mode Manuel et Généré
         function changerModeConstat(index, mode) {
-            const ev = missionData.pointsControle[index].eval;
+            const item = missionData.pointsControle[index];
+            const ev = item.eval;
+            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
             ev.modeConstat = mode;
 
             if (mode === 'GENERE') {
-                ev.constat = genererTexteConstat(ev);
+                ev.constat = genererTexteConstat(ev, pcName);
             }
 
             sauvegarderLocalement(false);
@@ -590,7 +587,10 @@
         }
 
         function mettreAJourCalcul(index, champ, valeur) {
-            const ev = missionData.pointsControle[index].eval;
+            const item = missionData.pointsControle[index];
+            const ev = item.eval;
+            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
+
             if (champ === 'statutConstat') ev.statutConstat = valeur;
             else ev[champ] = parseFloat(valeur) || 0;
 
@@ -602,9 +602,8 @@
                 ev.nombreKo = 0; ev.tauxConformite = "0.00";
             }
 
-            // Si le constat est en mode généré, mettre à jour automatiquement son contenu
             if (ev.modeConstat === 'GENERE') {
-                ev.constat = genererTexteConstat(ev);
+                ev.constat = genererTexteConstat(ev, pcName);
             }
 
             sauvegarderLocalement(false);
@@ -646,9 +645,8 @@
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
 
-                // S'assurer que le constat généré est bien à jour avant validation
                 if (ev.modeConstat === 'GENERE') {
-                    ev.constat = genererTexteConstat(ev);
+                    ev.constat = genererTexteConstat(ev, pcName);
                 }
 
                 if (!ev.echantillon || ev.echantillon <= 0) {
@@ -694,7 +692,8 @@
 
             const rows = missionData.pointsControle.map(p => {
                 const ev = p.eval;
-                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev) : ev.constat;
+                const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
+                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev, pcName) : ev.constat;
 
                 return {
                     "Date du Contrôle": meta.dateControle || '-',
@@ -706,7 +705,7 @@
                     "Processus": getItemVal(p, ['Processus']),
                     "Risque": getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
                     "Contrôle": getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                    "Point de Contrôle": getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                    "Point de Contrôle": pcName,
                     "Population": ev.population,
                     "Échantillon": ev.echantillon,
                     "Nombre (OK)": ev.nombreOk,
