@@ -314,22 +314,21 @@
             `;
         }
 
-        // Génère un constat direct, affirmatif et chiffré basé sur le libellé du PC
-        function genererTexteConstat(ev, pcName) {
+        // Constat direct et concis (sans répéter l'intitulé du PC)
+        function genererTexteConstat(ev) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
-            const libellePC = pcName ? pcName.trim() : "point de contrôle";
 
             if (ech === 0) {
-                return `Les vérifications sur « ${libellePC} » n'ont pas été réalisées (échantillon nul). Taux de conformité : 0.00%.`;
+                return `Les vérifications n'ont pas été réalisées (échantillon nul). Taux de conformité : 0.00%.`;
             }
 
             if (ko === 0) {
-                return `Les éléments de « ${libellePC} » sont intégralement réalisés et conformes sur l'ensemble de l'échantillon de ${ech} dossier(s), avec un taux de conformité de ${tx}%.`;
+                return `Les éléments sont intégralement réalisés et conformes sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
             } else {
-                return `Les éléments de « ${libellePC} » ne sont pas réalisés pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} dossier(s) conforme(s)), avec un taux de conformité de ${tx}%.`;
+                return `Les éléments ne sont pas réalisés pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} dossier(s) conforme(s)), avec un taux de conformité de ${tx}%.`;
             }
         }
 
@@ -446,7 +445,7 @@
                     const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
                     const isGenere = (evalData.modeConstat === 'GENERE');
-                    const constatValue = isGenere ? genererTexteConstat(evalData, pcName) : (evalData.constat || '');
+                    const constatValue = isGenere ? genererTexteConstat(evalData) : (evalData.constat || '');
 
                     html += `
                         <div class="control-item">
@@ -563,11 +562,10 @@
         function changerModeConstat(index, mode) {
             const item = missionData.pointsControle[index];
             const ev = item.eval;
-            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
             ev.modeConstat = mode;
 
             if (mode === 'GENERE') {
-                ev.constat = genererTexteConstat(ev, pcName);
+                ev.constat = genererTexteConstat(ev);
             }
 
             sauvegarderLocalement(false);
@@ -589,7 +587,6 @@
         function mettreAJourCalcul(index, champ, valeur) {
             const item = missionData.pointsControle[index];
             const ev = item.eval;
-            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
             if (champ === 'statutConstat') ev.statutConstat = valeur;
             else ev[champ] = parseFloat(valeur) || 0;
@@ -603,7 +600,7 @@
             }
 
             if (ev.modeConstat === 'GENERE') {
-                ev.constat = genererTexteConstat(ev, pcName);
+                ev.constat = genererTexteConstat(ev);
             }
 
             sauvegarderLocalement(false);
@@ -646,7 +643,7 @@
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
 
                 if (ev.modeConstat === 'GENERE') {
-                    ev.constat = genererTexteConstat(ev, pcName);
+                    ev.constat = genererTexteConstat(ev);
                 }
 
                 if (!ev.echantillon || ev.echantillon <= 0) {
@@ -693,7 +690,7 @@
             const rows = missionData.pointsControle.map(p => {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
-                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev, pcName) : ev.constat;
+                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev) : ev.constat;
 
                 return {
                     "Date du Contrôle": meta.dateControle || '-',
