@@ -314,22 +314,22 @@
             `;
         }
 
-        // Génère le texte explicatif incluant le libellé du point de contrôle et ses données chiffrées
+        // Génère un constat direct, affirmatif et chiffré basé sur le libellé du PC
         function genererTexteConstat(ev, pcName) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
-            const libellePC = pcName ? pcName.trim() : "Point de contrôle";
+            const libellePC = pcName ? pcName.trim() : "point de contrôle";
 
             if (ech === 0) {
-                return `Concernant la vérification relative à "${libellePC}" : Aucun échantillon n'a été testé (Échantillon = 0). Le taux de conformité est de 0.00%.`;
+                return `Les vérifications sur « ${libellePC} » n'ont pas été réalisées (échantillon nul). Taux de conformité : 0.00%.`;
             }
 
             if (ko === 0) {
-                return `Concernant le contrôle sur "${libellePC}" : Les vérifications effectuées sur un échantillon de ${ech} élément(s) ont révélé un respect total des exigences (${ok} élément(s) conforme(s) et 0 anomalie). Le taux de conformité atteint ${tx}%.`;
+                return `Les éléments de « ${libellePC} » sont intégralement réalisés et conformes sur l'ensemble de l'échantillon de ${ech} dossier(s), avec un taux de conformité de ${tx}%.`;
             } else {
-                return `Concernant le contrôle sur "${libellePC}" : L'évaluation portant sur un échantillon de ${ech} élément(s) a mis en évidence ${ko} anomalie(s) pour ${ok} élément(s) conforme(s), soit un taux de conformité de ${tx}%.`;
+                return `Les éléments de « ${libellePC} » ne sont pas réalisés pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} dossier(s) conforme(s)), avec un taux de conformité de ${tx}%.`;
             }
         }
 
