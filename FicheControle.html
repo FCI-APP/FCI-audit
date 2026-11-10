@@ -192,20 +192,17 @@
             const contentArea = document.getElementById('content-area');
 
             if (!dataRaw) {
-                contentArea.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-folder-open" style="font-size:3rem; color:var(--text-muted); margin-bottom:15px;"></i>
-                        <h3>Aucune mission active trouvée</h3>
-                        <p>Veuillez d'abord remplir les métadonnées et valider les points dans l'onglet Planification.</p>
-                        <br>
-                        <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
-                    </div>
-                `;
+                afficherEtatVide();
                 return;
             }
 
             missionData = JSON.parse(dataRaw);
             
+            if (!missionData.pointsControle || missionData.pointsControle.length === 0) {
+                afficherEtatVide();
+                return;
+            }
+
             missionData.pointsControle.forEach((item) => {
                 if (!item.eval) {
                     item.eval = {
@@ -225,10 +222,28 @@
             renderPage();
         }
 
+        function afficherEtatVide() {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-folder-open" style="font-size:3rem; color:var(--text-muted); margin-bottom:15px;"></i>
+                    <h3>Aucune mission active trouvée</h3>
+                    <p>Veuillez d'abord remplir les métadonnées et valider les points dans l'onglet Planification.</p>
+                    <br>
+                    <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
+                </div>
+            `;
+        }
+
         function renderPage() {
             const contentArea = document.getElementById('content-area');
             const meta = missionData.metadata || {};
             const points = missionData.pointsControle || [];
+
+            if (points.length === 0) {
+                afficherEtatVide();
+                return;
+            }
 
             const parProcessus = {};
             points.forEach(p => {
@@ -440,27 +455,26 @@
         }
 
         function viderToutesLesCellules() {
-            if (!confirm("Voulez-vous vraiment vider toutes les saisies (informations générales et évaluations) pour cette mission ?")) {
+            if (!confirm("Voulez-vous vraiment vider l'ensemble de la fiche de contrôle (effacer tous les points et informations) ?")) {
                 return;
             }
 
-            if (missionData) {
-                missionData.metadata = { entite: '', typeControle: '', dateDebutControle: '', dateFinControle: '', controleurs: '' };
+            missionData = {
+                metadata: { entite: '', typeControle: '', dateDebutControle: '', dateFinControle: '', controleurs: '' },
+                pointsControle: []
+            };
 
-                if (missionData.pointsControle) {
-                    missionData.pointsControle.forEach(p => {
-                        p.eval = { population: 0, echantillon: 0, nombreOk: 0, nombreKo: 0, tauxConformite: "0.00", statutConstat: 'EN_COURS', constat: '', recommandation: '', avisResponsable: '' };
-                    });
-                }
-
-                sauvegarderLocalement(false);
-                renderPage();
-            }
+            localStorage.removeItem('fci_fiche_controle_active');
+            afficherEtatVide();
         }
 
         function validerChampsObligatoires() {
             let valide = true;
             let messageErreur = "";
+
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                return { valide: false, messageErreur: "Aucun point de contrôle à valider." };
+            }
 
             missionData.pointsControle.forEach((p) => {
                 const ev = p.eval;
@@ -492,7 +506,10 @@
         }
 
         function exporterExcel() {
-            if (!missionData || !missionData.pointsControle) return;
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune donnée à exporter.");
+                return;
+            }
 
             const val = validerChampsObligatoires();
             if (!val.valide) {
