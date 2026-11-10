@@ -202,6 +202,16 @@
             return '';
         }
 
+        // Utilitaire pour convertir une date ISO (YYYY-MM-DD) au format JJ/MM/AAAA
+        function formatDateFR(dateStr) {
+            if (!dateStr || dateStr === '-') return '-';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
         document.addEventListener('DOMContentLoaded', () => { chargerDonneesMission(); });
 
         function chargerDonneesMission() {
@@ -310,17 +320,23 @@
             }
 
             const dateCtrl = meta.dateControle || '';
-            const pDebut = meta.periodeDebut || meta.dateDebutControle || '-';
-            const pFin = meta.periodeFin || meta.dateFinControle || '-';
+            const pDebut = meta.periodeDebut || meta.dateDebutControle || '';
+            const pFin = meta.periodeFin || meta.dateFinControle || '';
 
             let html = `
                 <div class="meta-card">
                     <div class="meta-item">
                         <span class="label"><i class="fa-regular fa-calendar-check"></i> Date du contrôle *</span>
-                        <input type="date" class="input-date-ctrl" value="${dateCtrl}" oninput="mettreAJourDateControle(this.value)">
+                        <input type="date" class="input-date-ctrl" value="${dateCtrl}" oninput="mettreAJourMetadata('dateControle', this.value)">
                     </div>
-                    <div class="meta-item"><span class="label">Début période sous-contrôle</span><span class="value">${pDebut}</span></div>
-                    <div class="meta-item"><span class="label">Fin période sous-contrôle</span><span class="value">${pFin}</span></div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fa-solid fa-calendar-day"></i> Début période sous-contrôle</span>
+                        <input type="date" class="input-date-ctrl" value="${pDebut}" oninput="mettreAJourMetadata('periodeDebut', this.value)">
+                    </div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fa-solid fa-calendar-day"></i> Fin période sous-contrôle</span>
+                        <input type="date" class="input-date-ctrl" value="${pFin}" oninput="mettreAJourMetadata('periodeFin', this.value)">
+                    </div>
                     <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || '-'}</span></div>
                     <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || '-'}</span></div>
@@ -461,9 +477,9 @@
             contentArea.innerHTML = html;
         }
 
-        function mettreAJourDateControle(valeur) {
+        function mettreAJourMetadata(champ, valeur) {
             if (!missionData.metadata) missionData.metadata = {};
-            missionData.metadata.dateControle = valeur;
+            missionData.metadata[champ] = valeur;
             sauvegarderLocalement(false);
         }
 
@@ -560,9 +576,9 @@
             const meta = missionData.metadata || {};
 
             const rows = missionData.pointsControle.map(p => ({
-                "Date du Contrôle": meta.dateControle || '-',
-                "Début période sous-contrôle": meta.periodeDebut || meta.dateDebutControle || '-',
-                "Fin période sous-contrôle": meta.periodeFin || meta.dateFinControle || '-',
+                "Date du Contrôle": formatDateFR(meta.dateControle),
+                "Début période sous-contrôle": formatDateFR(meta.periodeDebut || meta.dateDebutControle),
+                "Fin période sous-contrôle": formatDateFR(meta.periodeFin || meta.dateFinControle),
                 "Entité Contrôlée": meta.entite || '-',
                 "Contrôle réalisé par": meta.controleurs || '-',
                 "Type de Contrôle": meta.typeControle || '-',
