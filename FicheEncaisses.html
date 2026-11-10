@@ -360,7 +360,6 @@
             return '';
         }
 
-        // Convertit toute date ISO (YYYY-MM-DD) vers le format FR (JJ/MM/AAAA)
         function formatDateToFR(val) {
             if (!val || val === '-') return '';
             if (val.includes('-')) {
@@ -370,7 +369,6 @@
             return val;
         }
 
-        // Convertit une date JJ/MM/AAAA ou ISO vers le format ISO YYYY-MM-DD (pour <input type="date">)
         function formatDateToISO(val) {
             if (!val || val === '-') return '';
             if (val.includes('/')) {
@@ -662,10 +660,10 @@
             const c = addedPoints[pIndex].constats[cIndex];
             c[field] = val;
 
-            // VÉRIFICATION DE COHÉRENCE : ÉCHANTILLON vs POPULATION
+            // VÉRIFICATION DE COHÉRENCE : ÉCHANTILLON vs POPULATION (Remise à 0)
             if (c.echantillon > c.population && c.population > 0) {
                 alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
-                c.echantillon = c.population; // Réinitialise l'échantillon à la valeur maximale autorisée
+                c.echantillon = 0;
             }
 
             if (c.echantillon > 0) {
