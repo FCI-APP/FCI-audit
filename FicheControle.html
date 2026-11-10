@@ -514,10 +514,10 @@
                 ev[champ] = parseFloat(valeur) || 0;
             }
 
-            // VÉRIFICATION ÉCHANTILLON vs POPULATION
+            // VÉRIFICATION ÉCHANTILLON vs POPULATION (Remise à 0)
             if (ev.echantillon > ev.population && ev.population > 0) {
                 alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
-                ev.echantillon = ev.population;
+                ev.echantillon = 0;
             }
 
             if (ev.echantillon > 0) {
