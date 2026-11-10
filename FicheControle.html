@@ -314,40 +314,44 @@
             `;
         }
 
-        // Extrait intelligemment le sujet principal d'un libellé de point de contrôle sans répéter la question entière
-        function extraireSujetPC(pcName) {
-            if (!pcName) return "l'élément vérifié";
+        // Analyse sémantique de l'intitulé du PC pour déterminer l'objet précis du contrôle
+        function analyserEtFormulerObjetPC(pcName) {
+            if (!pcName) return "Le contrôle des opérations";
             
-            let texte = pcName.trim();
-            
-            // Nettoyage des tournures de phrases interrogatives ou protocolaires courantes
-            texte = texte.replace(/^(est-ce que|vérifier si|s'assurer de|s'assurer que|contrôler le|contrôler la|contrôle du|contrôle de|présence de|respect du|respect de|vérification du|vérification de|vérification des)/i, '');
-            
-            // Suppression des points d'interrogation ou ponctuations de fin
-            texte = texte.replace(/[\?\.\!]+$/, '').trim();
-            
-            if (!texte) return "l'élément vérifié";
+            const txt = pcName.toLowerCase();
 
-            // Met la première lettre en minuscule pour une intégration fluide
-            return texte.charAt(0).toLowerCase() + texte.slice(1);
+            if (txt.includes("facture") || txt.includes("rapprochement")) return "Le rapprochement des factures";
+            if (txt.includes("accusé") || txt.includes("réception") || txt.includes(" ar ")) return "L'envoi des accusés de réception";
+            if (txt.includes("caisse") || txt.includes("encaisse") || txt.includes("arrêté")) return "L'arrêté de caisse et la vérification des encaisses";
+            if (txt.includes("pièce") || txt.includes("justificatif")) return "La vérification des pièces justificatives";
+            if (txt.includes("délai") || txt.includes("retard")) return "Le respect des délais d'exécution";
+            if (txt.includes("registre") || txt.includes("journal")) return "La tenue et la mise à jour des registres";
+            if (txt.includes("signature") || txt.includes("validation")) return "La présence des signatures et validations requises";
+
+            // Si aucun mot-clé spécifique n'est trouvé, formule l'objet de façon fluide
+            let propre = pcName.trim().replace(/^(est-ce que|vérifier si|s'assurer de|s'assurer que|contrôler le|contrôler la|contrôle du|contrôle de|vérification du|vérification de)/i, '').trim();
+            propre = propre.replace(/[\?\.\!]+$/, '').trim();
+            
+            if (!propre) return "Le contrôle des opérations";
+            return "Le contrôle relatif à " + propre.charAt(0).toLowerCase() + propre.slice(1);
         }
 
-        // Génère un constat direct, contextuel et chiffré basé sur le sujet extrait du PC
+        // Génère un constat direct, contextuel et chiffré axé uniquement sur l'objet du contrôle
         function genererTexteConstat(ev, pcName) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
-            const sujet = extraireSujetPC(pcName);
+            const objetControle = analyserEtFormulerObjetPC(pcName);
 
             if (ech === 0) {
-                return `Le contrôle relatif à ${sujet} n'a pas pu être réalisé (échantillon nul). Taux de conformité : 0.00%.`;
+                return `${objetControle} n'a pas pu être effectué (échantillon nul). Taux de conformité : 0.00%.`;
             }
 
             if (ko === 0) {
-                return `Le contrôle relatif à ${sujet} est entièrement conforme sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
+                return `${objetControle} est intégralement réalisé et conforme sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
             } else {
-                return `Le contrôle relatif à ${sujet} fait ressortir des manquements ou non-conformités pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} conforme(s)), avec un taux de conformité de ${tx}%.`;
+                return `${objetControle} n'est pas réalisé pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} conforme(s)), avec un taux de conformité de ${tx}%.`;
             }
         }
 
