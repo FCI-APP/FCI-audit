@@ -314,21 +314,40 @@
             `;
         }
 
-        // Constat direct et concis (sans répéter l'intitulé du PC)
-        function genererTexteConstat(ev) {
+        // Extrait intelligemment le sujet principal d'un libellé de point de contrôle sans répéter la question entière
+        function extraireSujetPC(pcName) {
+            if (!pcName) return "l'élément vérifié";
+            
+            let texte = pcName.trim();
+            
+            // Nettoyage des tournures de phrases interrogatives ou protocolaires courantes
+            texte = texte.replace(/^(est-ce que|vérifier si|s'assurer de|s'assurer que|contrôler le|contrôler la|contrôle du|contrôle de|présence de|respect du|respect de|vérification du|vérification de|vérification des)/i, '');
+            
+            // Suppression des points d'interrogation ou ponctuations de fin
+            texte = texte.replace(/[\?\.\!]+$/, '').trim();
+            
+            if (!texte) return "l'élément vérifié";
+
+            // Met la première lettre en minuscule pour une intégration fluide
+            return texte.charAt(0).toLowerCase() + texte.slice(1);
+        }
+
+        // Génère un constat direct, contextuel et chiffré basé sur le sujet extrait du PC
+        function genererTexteConstat(ev, pcName) {
             const ech = ev.echantillon || 0;
             const ok = ev.nombreOk || 0;
             const ko = ev.nombreKo || 0;
             const tx = ev.tauxConformite || "0.00";
+            const sujet = extraireSujetPC(pcName);
 
             if (ech === 0) {
-                return `Les vérifications n'ont pas été réalisées (échantillon nul). Taux de conformité : 0.00%.`;
+                return `Le contrôle relatif à ${sujet} n'a pas pu être réalisé (échantillon nul). Taux de conformité : 0.00%.`;
             }
 
             if (ko === 0) {
-                return `Les éléments sont intégralement réalisés et conformes sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
+                return `Le contrôle relatif à ${sujet} est entièrement conforme sur l'ensemble de l'échantillon de ${ech} dossier(s) vérifié(s), avec un taux de conformité de ${tx}%.`;
             } else {
-                return `Les éléments ne sont pas réalisés pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} dossier(s) conforme(s)), avec un taux de conformité de ${tx}%.`;
+                return `Le contrôle relatif à ${sujet} fait ressortir des manquements ou non-conformités pour ${ko} dossier(s) sur un échantillon de ${ech} dossier(s) vérifié(s) (${ok} conforme(s)), avec un taux de conformité de ${tx}%.`;
             }
         }
 
@@ -445,7 +464,7 @@
                     const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
                     const isGenere = (evalData.modeConstat === 'GENERE');
-                    const constatValue = isGenere ? genererTexteConstat(evalData) : (evalData.constat || '');
+                    const constatValue = isGenere ? genererTexteConstat(evalData, pcName) : (evalData.constat || '');
 
                     html += `
                         <div class="control-item">
@@ -562,10 +581,11 @@
         function changerModeConstat(index, mode) {
             const item = missionData.pointsControle[index];
             const ev = item.eval;
+            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
             ev.modeConstat = mode;
 
             if (mode === 'GENERE') {
-                ev.constat = genererTexteConstat(ev);
+                ev.constat = genererTexteConstat(ev, pcName);
             }
 
             sauvegarderLocalement(false);
@@ -587,6 +607,7 @@
         function mettreAJourCalcul(index, champ, valeur) {
             const item = missionData.pointsControle[index];
             const ev = item.eval;
+            const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
             if (champ === 'statutConstat') ev.statutConstat = valeur;
             else ev[champ] = parseFloat(valeur) || 0;
@@ -600,7 +621,7 @@
             }
 
             if (ev.modeConstat === 'GENERE') {
-                ev.constat = genererTexteConstat(ev);
+                ev.constat = genererTexteConstat(ev, pcName);
             }
 
             sauvegarderLocalement(false);
@@ -643,7 +664,7 @@
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
 
                 if (ev.modeConstat === 'GENERE') {
-                    ev.constat = genererTexteConstat(ev);
+                    ev.constat = genererTexteConstat(ev, pcName);
                 }
 
                 if (!ev.echantillon || ev.echantillon <= 0) {
@@ -690,7 +711,7 @@
             const rows = missionData.pointsControle.map(p => {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
-                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev) : ev.constat;
+                const constatFinal = (ev.modeConstat === 'GENERE') ? genererTexteConstat(ev, pcName) : ev.constat;
 
                 return {
                     "Date du Contrôle": meta.dateControle || '-',
