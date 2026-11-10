@@ -76,6 +76,18 @@
         .meta-item { display: flex; flex-direction: column; }
         .meta-item span.label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
         .meta-item span.value { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+        
+        .meta-item input[type="date"] {
+            margin-top: 3px;
+            padding: 5px 8px;
+            border: 1px solid var(--primary);
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--primary);
+            background-color: #F0F4F8;
+            outline: none;
+        }
 
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 15px; }
@@ -136,6 +148,7 @@
             .sidebar, .action-buttons { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
             .eval-section { grid-template-columns: 1fr 1fr; background: white; }
+            .meta-item input[type="date"] { border: none; background: transparent; padding: 0; }
         }
     </style>
 </head>
@@ -200,6 +213,13 @@
             if (!missionData.pointsControle || missionData.pointsControle.length === 0) {
                 afficherEtatVide();
                 return;
+            }
+
+            // Si la date de contrôle n'est pas définie, initialiser par défaut avec la date du jour
+            if (!missionData.metadata) missionData.metadata = {};
+            if (!missionData.metadata.dateControle) {
+                const today = new Date().toISOString().split('T')[0];
+                missionData.metadata.dateControle = today;
             }
 
             missionData.pointsControle.forEach((item) => {
@@ -287,14 +307,16 @@
                 }
             }
 
-            // Gestion de la compatibilité des dates (Anciennes clés vs Nouvelles clés)
-            const dateCtrl = meta.dateControle || '-';
+            const dateCtrl = meta.dateControle || '';
             const pDebut = meta.periodeDebut || meta.dateDebutControle || '-';
             const pFin = meta.periodeFin || meta.dateFinControle || '-';
 
             let html = `
                 <div class="meta-card">
-                    <div class="meta-item"><span class="label">Date du contrôle</span><span class="value">${dateCtrl}</span></div>
+                    <div class="meta-item">
+                        <span class="label"><i class="fa-regular fa-calendar-check"></i> Date du contrôle *</span>
+                        <input type="date" value="${dateCtrl}" onchange="mettreAJourDateControle(this.value)">
+                    </div>
                     <div class="meta-item"><span class="label">Début période sous-contrôle</span><span class="value">${pDebut}</span></div>
                     <div class="meta-item"><span class="label">Fin période sous-contrôle</span><span class="value">${pFin}</span></div>
                     <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
@@ -396,7 +418,7 @@
             } else if (globalRate < 60) {
                 badgeText = "Gestion non satisfaisante";
                 badgeClass = "avis-non-satisfaisante";
-                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont strongly recommandés pour résorber les anomalies relevées.";
+                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.";
             } else if (globalRate < 80) {
                 badgeText = "Gestion satisfaisante";
                 badgeClass = "avis-satisfaisante";
@@ -436,6 +458,12 @@
             `;
 
             contentArea.innerHTML = html;
+        }
+
+        function mettreAJourDateControle(valeur) {
+            if (!missionData.metadata) missionData.metadata = {};
+            missionData.metadata.dateControle = valeur;
+            sauvegarderLocalement(false);
         }
 
         function mettreAJourCalcul(index, champ, valeur) {
@@ -480,6 +508,10 @@
 
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 return { valide: false, messageErreur: "Aucun point de contrôle à valider." };
+            }
+
+            if (!missionData.metadata || !missionData.metadata.dateControle) {
+                return { valide: false, messageErreur: "Veuillez spécifier la date du contrôle." };
             }
 
             missionData.pointsControle.forEach((p) => {
