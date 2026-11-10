@@ -87,6 +87,7 @@
             color: var(--primary);
             background-color: #FFFFFF;
             outline: none;
+            cursor: pointer;
         }
         .meta-item input.input-date-ctrl:focus {
             border-color: var(--accent);
@@ -201,8 +202,8 @@
             return '';
         }
 
-        // Convertit toute date (ISO YYYY-MM-DD ou texte) vers le format standard JJ/MM/AAAA
-        function toFormatFR(val) {
+        // Convertit toute date vers le format d'affichage FR (JJ/MM/AAAA)
+        function formatDateToFR(val) {
             if (!val || val === '-') return '';
             if (val.includes('-')) {
                 const parts = val.split('-');
@@ -211,13 +212,23 @@
             return val;
         }
 
-        // Renvoie la date courante au format JJ/MM/AAAA
-        function getTodayFR() {
+        // Convertit une date JJ/MM/AAAA ou ISO vers le format ISO YYYY-MM-DD (requis pour <input type="date">)
+        function formatDateToISO(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('/')) {
+                const parts = val.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return val;
+        }
+
+        // Renvoie la date courante au format ISO (YYYY-MM-DD) pour initialiser le champ date
+        function getTodayISO() {
             const today = new Date();
-            const dd = String(today.getDate()).padStart(2, '0');
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
             const yyyy = today.getFullYear();
-            return `${dd}/${mm}/${yyyy}`;
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => { chargerDonneesMission(); });
@@ -239,10 +250,10 @@
 
             if (!missionData.metadata) missionData.metadata = {};
             
-            // Standardisation des dates au format JJ/MM/AAAA
-            missionData.metadata.dateControle = toFormatFR(missionData.metadata.dateControle) || getTodayFR();
-            missionData.metadata.periodeDebut = toFormatFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
-            missionData.metadata.periodeFin = toFormatFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
+            // Standardisation des dates : conservation interne en FR pour les exports et affichages
+            missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
+            missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
+            missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
 
             missionData.pointsControle.forEach((item) => {
                 if (!item.eval) {
@@ -329,7 +340,8 @@
                 }
             }
 
-            const dateCtrl = meta.dateControle || '';
+            // Conversion pour l'affichage dans le champ type="date"
+            const dateCtrlISO = formatDateToISO(meta.dateControle);
             const pDebut = meta.periodeDebut || '';
             const pFin = meta.periodeFin || '';
 
@@ -337,7 +349,7 @@
                 <div class="meta-card">
                     <div class="meta-item">
                         <span class="label"><i class="fa-regular fa-calendar-check"></i> Date du contrôle *</span>
-                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${dateCtrl}" oninput="mettreAJourMetadata('dateControle', this.value)">
+                        <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
                     </div>
                     <div class="meta-item">
                         <span class="label"><i class="fa-solid fa-calendar-day"></i> Début période sous-contrôle</span>
@@ -485,6 +497,13 @@
             `;
 
             contentArea.innerHTML = html;
+        }
+
+        function mettreAJourMetadataDate(champ, valeurISO) {
+            if (!missionData.metadata) missionData.metadata = {};
+            // Convertit YYYY-MM-DD vers JJ/MM/AAAA pour stockage cohérent
+            missionData.metadata[champ] = formatDateToFR(valeurISO);
+            sauvegarderLocalement(false);
         }
 
         function mettreAJourMetadata(champ, valeur) {
