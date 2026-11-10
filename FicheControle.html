@@ -202,7 +202,6 @@
             return '';
         }
 
-        // Convertit toute date vers le format d'affichage FR (JJ/MM/AAAA)
         function formatDateToFR(val) {
             if (!val || val === '-') return '';
             if (val.includes('-')) {
@@ -212,7 +211,6 @@
             return val;
         }
 
-        // Convertit une date JJ/MM/AAAA ou ISO vers le format ISO YYYY-MM-DD (requis pour <input type="date">)
         function formatDateToISO(val) {
             if (!val || val === '-') return '';
             if (val.includes('/')) {
@@ -222,7 +220,6 @@
             return val;
         }
 
-        // Renvoie la date courante au format ISO (YYYY-MM-DD) pour initialiser le champ date
         function getTodayISO() {
             const today = new Date();
             const yyyy = today.getFullYear();
@@ -250,7 +247,6 @@
 
             if (!missionData.metadata) missionData.metadata = {};
             
-            // Standardisation des dates : conservation interne en FR pour les exports et affichages
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
             missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
             missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
@@ -340,7 +336,6 @@
                 }
             }
 
-            // Conversion pour l'affichage dans le champ type="date"
             const dateCtrlISO = formatDateToISO(meta.dateControle);
             const pDebut = meta.periodeDebut || '';
             const pFin = meta.periodeFin || '';
@@ -501,7 +496,6 @@
 
         function mettreAJourMetadataDate(champ, valeurISO) {
             if (!missionData.metadata) missionData.metadata = {};
-            // Convertit YYYY-MM-DD vers JJ/MM/AAAA pour stockage cohérent
             missionData.metadata[champ] = formatDateToFR(valeurISO);
             sauvegarderLocalement(false);
         }
@@ -514,15 +508,25 @@
 
         function mettreAJourCalcul(index, champ, valeur) {
             const ev = missionData.pointsControle[index].eval;
-            if (champ === 'statutConstat') ev.statutConstat = valeur;
-            else ev[champ] = parseFloat(valeur) || 0;
+            if (champ === 'statutConstat') {
+                ev.statutConstat = valeur;
+            } else {
+                ev[champ] = parseFloat(valeur) || 0;
+            }
+
+            // VÉRIFICATION ÉCHANTILLON vs POPULATION
+            if (ev.echantillon > ev.population && ev.population > 0) {
+                alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
+                ev.echantillon = ev.population;
+            }
 
             if (ev.echantillon > 0) {
                 if (ev.nombreOk > ev.echantillon) ev.nombreOk = ev.echantillon;
                 ev.nombreKo = Math.max(0, ev.echantillon - ev.nombreOk);
                 ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
             } else {
-                ev.nombreKo = 0; ev.tauxConformite = "0.00";
+                ev.nombreKo = 0; 
+                ev.tauxConformite = "0.00";
             }
 
             sauvegarderLocalement(false);
@@ -563,12 +567,19 @@
             missionData.pointsControle.forEach((p) => {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
-                if (!ev.echantillon || ev.echantillon <= 0) {
-                    valide = false; messageErreur = `Le point "${pcName}" nécessite un échantillon valide (> 0).`;
+
+                if (ev.echantillon > ev.population && ev.population > 0) {
+                    valide = false;
+                    messageErreur = `Pour le point "${pcName}", l'échantillon (${ev.echantillon}) doit être toujours inférieur ou égal à la population (${ev.population}).`;
+                } else if (!ev.echantillon || ev.echantillon <= 0) {
+                    valide = false; 
+                    messageErreur = `Le point "${pcName}" nécessite un échantillon valide (> 0).`;
                 } else if (!ev.constat || ev.constat.trim() === '') {
-                    valide = false; messageErreur = `Le champ "Constat" est obligatoire pour le point : "${pcName}".`;
+                    valide = false; 
+                    messageErreur = `Le champ "Constat" est obligatoire pour le point : "${pcName}".`;
                 } else if (!ev.recommandation || ev.recommandation.trim() === '') {
-                    valide = false; messageErreur = `Le champ "Recommandation" est obligatoire pour le point : "${pcName}".`;
+                    valide = false; 
+                    messageErreur = `Le champ "Recommandation" est obligatoire pour le point : "${pcName}".`;
                 }
             });
 
