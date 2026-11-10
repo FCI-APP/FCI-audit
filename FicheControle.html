@@ -23,6 +23,11 @@
             --status-cloture: #2E7D32;
             --status-non-cloture: #C62828;
             --status-en-cours: #F57C00;
+
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -112,6 +117,18 @@
         .field-group { display: flex; flex-direction: column; gap: 4px; }
         .field-group label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
         .field-group textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
+
+        /* CARTE SYNTHÈSE & DESCRIPTION DU CENTRE */
+        .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; margin-bottom: 25px; }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
+        .summary-info h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+        .center-description { background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent); padding: 15px; border-radius: 6px; font-size: 0.9rem; line-height: 1.6; color: #E2E8F0; }
+
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
         .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
@@ -235,20 +252,20 @@
             });
 
             const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
+            const globalRate = parseFloat(tauxConformiteMoyen);
             
             let niveauRisqueLabel = "Non évalué";
             let niveauStyle = "color: var(--text-muted);";
 
             if (nbPointsEvalues > 0) {
-                const tx = parseFloat(tauxConformiteMoyen);
-                if (tx >= 90) {
+                if (globalRate >= 95) {
                     niveauRisqueLabel = "Risque Faible";
                     niveauStyle = "color: #2E7D32;";
-                } else if (tx >= 75) {
-                    niveauRisqueLabel = "Risque Moyen";
+                } else if (globalRate >= 80) {
+                    niveauRisqueLabel = "Risque Maîtrisé";
                     niveauStyle = "color: #0288D1;";
-                } else if (tx >= 60) {
-                    niveauRisqueLabel = "Risque Fort";
+                } else if (globalRate >= 60) {
+                    niveauRisqueLabel = "Risque Modéré";
                     niveauStyle = "color: #F57C00;";
                 } else {
                     niveauRisqueLabel = "Risque Critique";
@@ -347,6 +364,55 @@
 
                 html += `</div>`;
             }
+
+            // CARTE SYNTHÈSE DU CENTRE & SITUATION GLOBALE
+            let badgeText = "---", badgeClass = "", descText = "";
+
+            if (nbPointsEvalues === 0) {
+                badgeText = "NON ÉVALUÉ";
+                badgeClass = "avis-satisfaisante";
+                descText = "Aucun point de contrôle n'a encore fait l'objet d'un échantillonnage valide pour calculer le taux global du centre.";
+            } else if (globalRate < 60) {
+                badgeText = "Gestion non satisfaisante";
+                badgeClass = "avis-non-satisfaisante";
+                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.";
+            } else if (globalRate < 80) {
+                badgeText = "Gestion satisfaisante";
+                badgeClass = "avis-satisfaisante";
+                descText = "<strong>Niveau de risque modéré :</strong> Le centre respecte globalement les exigences opérationnelles, mais présente certains dysfonctionnements ou écarts répétitifs. La mise en œuvre rigoureuse des recommandations formulées permettra d'assainir la situation.";
+            } else if (globalRate < 95) {
+                badgeText = "Bonne gestion";
+                badgeClass = "avis-bonne";
+                descText = "<strong>Niveau de risque maîtrisé :</strong> Le niveau global de conformité du centre est élevé. Les opérations sont exécutées conformément aux instructions de la Direction Contrôle Général. De légers ajustements permettront d'atteindre l'excellence opérationnelle.";
+            } else {
+                badgeText = "Très bonne gestion";
+                badgeClass = "avis-tres-bonne";
+                descText = "<strong>Niveau de maîtrise fort :</strong> Excellente maîtrise des processus et strict respect des dispositifs de contrôle permanent. Le centre fait preuve d'une grande rigueur dans le suivi et la gestion de ses activités. Aucun risque majeur à signaler.";
+            }
+
+            html += `
+                <section class="summary-card">
+                    <div class="summary-top">
+                        <div class="summary-info">
+                            <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent);"></i>
+                            <div>
+                                <h3>TAUX MOYEN DU CENTRE : <span>${tauxConformiteMoyen} %</span></h3>
+                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur l'ensemble des points évalués lors de cette mission.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge-avis-global ${badgeClass}">${badgeText}</span>
+                        </div>
+                    </div>
+
+                    <div class="center-description">
+                        <strong style="display: block; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">
+                            <i class="fa-solid fa-file-contract"></i> Description & Situation du Centre :
+                        </strong>
+                        <p>${descText}</p>
+                    </div>
+                </section>
+            `;
 
             contentArea.innerHTML = html;
         }
