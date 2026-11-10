@@ -71,7 +71,7 @@
 
         .meta-card {
             background-color: var(--bg-card); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color);
-            margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;
+            margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;
         }
         .meta-item { display: flex; flex-direction: column; }
         .meta-item span.label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
@@ -189,7 +189,6 @@
 
         function chargerDonneesMission() {
             const dataRaw = localStorage.getItem('fci_fiche_controle_active');
-            const contentArea = document.getElementById('content-area');
 
             if (!dataRaw) {
                 afficherEtatVide();
@@ -288,9 +287,16 @@
                 }
             }
 
+            // Gestion de la compatibilité des dates (Anciennes clés vs Nouvelles clés)
+            const dateCtrl = meta.dateControle || '-';
+            const pDebut = meta.periodeDebut || meta.dateDebutControle || '-';
+            const pFin = meta.periodeFin || meta.dateFinControle || '-';
+
             let html = `
                 <div class="meta-card">
-                    <div class="meta-item"><span class="label">Période du contrôle</span><span class="value">${(meta.dateDebutControle || meta.dateFinControle) ? `${meta.dateDebutControle || ''} au ${meta.dateFinControle || ''}` : '-'}</span></div>
+                    <div class="meta-item"><span class="label">Date du contrôle</span><span class="value">${dateCtrl}</span></div>
+                    <div class="meta-item"><span class="label">Début période sous-contrôle</span><span class="value">${pDebut}</span></div>
+                    <div class="meta-item"><span class="label">Fin période sous-contrôle</span><span class="value">${pFin}</span></div>
                     <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || '-'}</span></div>
                     <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || '-'}</span></div>
@@ -390,7 +396,7 @@
             } else if (globalRate < 60) {
                 badgeText = "Gestion non satisfaisante";
                 badgeClass = "avis-non-satisfaisante";
-                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.";
+                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont strongly recommandés pour résorber les anomalies relevées.";
             } else if (globalRate < 80) {
                 badgeText = "Gestion satisfaisante";
                 badgeClass = "avis-satisfaisante";
@@ -460,7 +466,7 @@
             }
 
             missionData = {
-                metadata: { entite: '', typeControle: '', dateDebutControle: '', dateFinControle: '', controleurs: '' },
+                metadata: { entite: '', typeControle: '', dateControle: '', periodeDebut: '', periodeFin: '', controleurs: '' },
                 pointsControle: []
             };
 
@@ -518,12 +524,15 @@
                 }
             }
 
+            const meta = missionData.metadata || {};
+
             const rows = missionData.pointsControle.map(p => ({
-                "Date Début": missionData.metadata.dateDebutControle,
-                "Date Fin": missionData.metadata.dateFinControle,
-                "Entité Contrôlée": missionData.metadata.entite,
-                "Contrôle réalisé par": missionData.metadata.controleurs,
-                "Type de Contrôle": missionData.metadata.typeControle,
+                "Date du Contrôle": meta.dateControle || '-',
+                "Début période sous-contrôle": meta.periodeDebut || meta.dateDebutControle || '-',
+                "Fin période sous-contrôle": meta.periodeFin || meta.dateFinControle || '-',
+                "Entité Contrôlée": meta.entite || '-',
+                "Contrôle réalisé par": meta.controleurs || '-',
+                "Type de Contrôle": meta.typeControle || '-',
                 "Processus": getItemVal(p, ['Processus']),
                 "Risque": getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
                 "Contrôle": getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
@@ -542,7 +551,7 @@
             const worksheet = XLSX.utils.json_to_sheet(rows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche de Contrôle");
-            const entiteName = (missionData.metadata && missionData.metadata.entite) ? missionData.metadata.entite.replace(/[^a-z0-9]/gi, '_') : 'Centre';
+            const entiteName = (meta.entite) ? meta.entite.replace(/[^a-z0-9]/gi, '_') : 'Centre';
             XLSX.writeFile(workbook, `FCI_FicheControle_${entiteName}.xlsx`);
         }
     </script>
