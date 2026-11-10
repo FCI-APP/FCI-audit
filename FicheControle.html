@@ -87,7 +87,6 @@
             color: var(--primary);
             background-color: #FFFFFF;
             outline: none;
-            cursor: pointer;
         }
         .meta-item input.input-date-ctrl:focus {
             border-color: var(--accent);
@@ -202,14 +201,23 @@
             return '';
         }
 
-        // Utilitaire pour convertir une date ISO (YYYY-MM-DD) au format JJ/MM/AAAA
-        function formatDateFR(dateStr) {
-            if (!dateStr || dateStr === '-') return '-';
-            const parts = dateStr.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        // Convertit toute date (ISO YYYY-MM-DD ou texte) vers le format standard JJ/MM/AAAA
+        function toFormatFR(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('-')) {
+                const parts = val.split('-');
+                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
-            return dateStr;
+            return val;
+        }
+
+        // Renvoie la date courante au format JJ/MM/AAAA
+        function getTodayFR() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const yyyy = today.getFullYear();
+            return `${dd}/${mm}/${yyyy}`;
         }
 
         document.addEventListener('DOMContentLoaded', () => { chargerDonneesMission(); });
@@ -230,9 +238,11 @@
             }
 
             if (!missionData.metadata) missionData.metadata = {};
-            if (!missionData.metadata.dateControle) {
-                missionData.metadata.dateControle = new Date().toISOString().split('T')[0];
-            }
+            
+            // Standardisation des dates au format JJ/MM/AAAA
+            missionData.metadata.dateControle = toFormatFR(missionData.metadata.dateControle) || getTodayFR();
+            missionData.metadata.periodeDebut = toFormatFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
+            missionData.metadata.periodeFin = toFormatFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
 
             missionData.pointsControle.forEach((item) => {
                 if (!item.eval) {
@@ -320,22 +330,22 @@
             }
 
             const dateCtrl = meta.dateControle || '';
-            const pDebut = meta.periodeDebut || meta.dateDebutControle || '';
-            const pFin = meta.periodeFin || meta.dateFinControle || '';
+            const pDebut = meta.periodeDebut || '';
+            const pFin = meta.periodeFin || '';
 
             let html = `
                 <div class="meta-card">
                     <div class="meta-item">
                         <span class="label"><i class="fa-regular fa-calendar-check"></i> Date du contrôle *</span>
-                        <input type="date" class="input-date-ctrl" value="${dateCtrl}" oninput="mettreAJourMetadata('dateControle', this.value)">
+                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${dateCtrl}" oninput="mettreAJourMetadata('dateControle', this.value)">
                     </div>
                     <div class="meta-item">
                         <span class="label"><i class="fa-solid fa-calendar-day"></i> Début période sous-contrôle</span>
-                        <input type="date" class="input-date-ctrl" value="${pDebut}" oninput="mettreAJourMetadata('periodeDebut', this.value)">
+                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${pDebut}" oninput="mettreAJourMetadata('periodeDebut', this.value)">
                     </div>
                     <div class="meta-item">
                         <span class="label"><i class="fa-solid fa-calendar-day"></i> Fin période sous-contrôle</span>
-                        <input type="date" class="input-date-ctrl" value="${pFin}" oninput="mettreAJourMetadata('periodeFin', this.value)">
+                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${pFin}" oninput="mettreAJourMetadata('periodeFin', this.value)">
                     </div>
                     <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || '-'}</span></div>
@@ -576,9 +586,9 @@
             const meta = missionData.metadata || {};
 
             const rows = missionData.pointsControle.map(p => ({
-                "Date du Contrôle": formatDateFR(meta.dateControle),
-                "Début période sous-contrôle": formatDateFR(meta.periodeDebut || meta.dateDebutControle),
-                "Fin période sous-contrôle": formatDateFR(meta.periodeFin || meta.dateFinControle),
+                "Date du Contrôle": meta.dateControle || '-',
+                "Début période sous-contrôle": meta.periodeDebut || '-',
+                "Fin période sous-contrôle": meta.periodeFin || '-',
                 "Entité Contrôlée": meta.entite || '-',
                 "Contrôle réalisé par": meta.controleurs || '-',
                 "Type de Contrôle": meta.typeControle || '-',
