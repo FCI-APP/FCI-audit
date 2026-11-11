@@ -7,7 +7,6 @@
 const FCIDatabase = {
     KEY: 'fci_database',
 
-    // 1. Initialisation de la structure BDD dans localStorage
     init() {
         if (!localStorage.getItem(this.KEY)) {
             const schema = {
@@ -21,21 +20,17 @@ const FCIDatabase = {
         }
     },
 
-    // 2. Récupérer toute la BDD
     getDB() {
         this.init();
         return JSON.parse(localStorage.getItem(this.KEY));
     },
 
-    // 3. Sauvegarder toute la BDD
     saveDB(db) {
         db.derniereMiseAJour = new Date().toISOString();
         localStorage.setItem(this.KEY, JSON.stringify(db));
     },
 
-    // 4. Enregistrer / Mettre à jour une Mission (Feuille 2 - Planification)
     enregistrerMission(dataMission) {
-        // Ex: { idMission, date, dateDebut, dateFin, entite, controleur, pointsSelectionnes }
         const db = this.getDB();
         const index = db.missions.findIndex(m => m.idMission === dataMission.idMission);
         if (index >= 0) {
@@ -46,9 +41,7 @@ const FCIDatabase = {
         this.saveDB(db);
     },
 
-    // 5. Enregistrer / Mettre à jour un Constat de Contrôle (Feuille 3 - Fiche de Contrôle)
     enregistrerConstatControle(dataConstat) {
-        // Ex: { idConstat, idMission, date, processus, risque, controle, pc, pop, ech, ok, ko, tc, constat }
         const db = this.getDB();
         const index = db.constatsControle.findIndex(c => c.idConstat === dataConstat.idConstat);
         if (index >= 0) {
@@ -59,9 +52,7 @@ const FCIDatabase = {
         this.saveDB(db);
     },
 
-    // 6. Enregistrer / Mettre à jour un Constat d'Encaisse (Feuille 4 - Fiche des Encaisses)
     enregistrerConstatEncaisse(dataEncaisse) {
-        // Ex: { idEncaisse, idMission, date, processus, risque, controle, pc, pop, ech, ok, ko, tc, constat }
         const db = this.getDB();
         const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
         if (index >= 0) {
@@ -72,7 +63,6 @@ const FCIDatabase = {
         this.saveDB(db);
     },
 
-    // 7. Exporter la BDD au format JSON (Sauvegarde externe)
     exporterBDD() {
         const db = this.getDB();
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
@@ -85,5 +75,4 @@ const FCIDatabase = {
     }
 };
 
-// Initialisation automatique de la BDD dès le chargement du script
 FCIDatabase.init();
