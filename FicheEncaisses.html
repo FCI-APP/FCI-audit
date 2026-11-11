@@ -194,7 +194,6 @@
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
             
-            <!-- EN-TÊTE : BOUTONS REGROUPÉS EN HAUT ET EN DESSOUS DE VIDER -->
             <div class="header-actions-wrapper">
                 <div class="header-actions-row">
                     <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
@@ -210,7 +209,6 @@
             </div>
         </header>
 
-        <!-- BARRE DE RECHERCHE ET RECHERCHE PAR MISSION ID -->
         <div class="search-card">
             <div class="search-group">
                 <label for="selectEncaisseMissionId"><i class="fa-solid fa-magnifying-glass"></i> Rechercher une FV archivée :</label>
@@ -356,7 +354,6 @@
         </section>
     </main>
 
-    <!-- Inclusion du gestionnaire BDD Centralisée -->
     <script src="fci-db-manager.js"></script>
 
     <script>
@@ -776,6 +773,7 @@
             return true;
         }
 
+        // CORRECTION MAJEURE : ARCHIVAGE DÉTAILLÉ DE TOUS LES CONSTATS, RECOMMANDATIONS ET AVIS RESPONSABLE
         function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
@@ -795,32 +793,27 @@
 
             const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
 
-            let totalPop = 0, totalEch = 0, totalOk = 0, totalKo = 0;
-            activePoints.forEach(p => {
-                p.constats.forEach(c => {
-                    totalPop += c.population || 0;
-                    totalEch += c.echantillon || 0;
-                    totalOk += c.ok || 0;
-                    totalKo += c.ko || 0;
+            // Sauvegarde point par point et constat par constat dans la BDD
+            activePoints.forEach((p, pIdx) => {
+                p.constats.forEach((c, cIdx) => {
+                    FCIDatabase.enregistrerConstatEncaisse({
+                        idEncaisse: `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`,
+                        idMission: idMission,
+                        date: document.getElementById('dateVerification').value.slice(0, 10),
+                        processus: p.processus || "Gestion des Encaisses",
+                        risque: p.risque || "Risque Encaisses",
+                        controle: p.controle || "Vérification physique",
+                        pc: p.pointDeControle || `Contrôle site: ${site}`,
+                        pop: c.population || 0,
+                        ech: c.echantillon || 0,
+                        ok: c.ok || 0,
+                        ko: c.ko || 0,
+                        tc: parseFloat(c.rate) || 0,
+                        constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
+                        recommandation: c.recoText || '--',
+                        avisResponsable: c.avisText || '--'
+                    });
                 });
-            });
-
-            const tc = totalEch > 0 ? ((totalOk / totalEch) * 100).toFixed(1) : 0;
-
-            FCIDatabase.enregistrerConstatEncaisse({
-                idEncaisse: "ENC-" + Date.now(),
-                idMission: idMission,
-                date: document.getElementById('dateVerification').value.slice(0, 10),
-                processus: "Gestion des Encaisses",
-                risque: "Écart de caisse / Manquant d'espèces",
-                controle: "Vérification physique des encaisses",
-                pc: `Contrôle site: ${site}`,
-                pop: totalPop,
-                ech: totalEch,
-                ok: totalOk,
-                ko: totalKo,
-                tc: parseFloat(tc),
-                constat: `Site: ${site} - Contrôleur: ${controleur}`
             });
 
             alert("✅ La Fiche des Encaisses (FV) a été archivée avec succès dans la BDD (Feuille 5 & TDB 6) !");
@@ -862,8 +855,8 @@
                     ko: c.ko,
                     rate: c.tc,
                     constatText: c.constat || '',
-                    recoText: '',
-                    avisText: ''
+                    recoText: c.recommandation || '',
+                    avisText: c.avisResponsable || ''
                 }]
             }));
 
