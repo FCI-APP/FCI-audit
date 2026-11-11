@@ -145,7 +145,7 @@
             </table>
         </div>
 
-        <!-- TABLE 2 : CONSTATS FC (AVEC AVIS RESPONSABLE) -->
+        <!-- TABLE 2 : CONSTATS FC -->
         <div class="table-card">
             <h3><i class="fa-solid fa-list-check"></i> Table B : Constats Fiche de Contrôle (FC)</h3>
             <table>
@@ -171,7 +171,7 @@
             </table>
         </div>
 
-        <!-- TABLE 3 : CONSTATS ENCAISSES -->
+        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - MIS À JOUR -->
         <div class="table-card">
             <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses (FV)</h3>
             <table>
@@ -188,6 +188,9 @@
                         <th>OK</th>
                         <th>KO</th>
                         <th>TC (%)</th>
+                        <th>Constat</th>
+                        <th>Recommandation</th>
+                        <th>Avis Responsable</th>
                     </tr>
                 </thead>
                 <tbody id="tableConstatsEncaisses"></tbody>
@@ -222,7 +225,7 @@
                 });
             }
 
-            // 2. Table Constats FC (incluant Avis du Responsable)
+            // 2. Table Constats FC
             const tbodyFC = document.getElementById('tableConstatsFC');
             tbodyFC.innerHTML = '';
             if (!db.constatsControle || db.constatsControle.length === 0) {
@@ -249,11 +252,11 @@
                 });
             }
 
-            // 3. Table Constats Encaisses (FV)
+            // 3. Table Constats Encaisses (FV) - avec Constat, Recommandation & Avis Responsable
             const tbodyE = document.getElementById('tableConstatsEncaisses');
             tbodyE.innerHTML = '';
             if (!db.constatsEncaisses || db.constatsEncaisses.length === 0) {
-                tbodyE.innerHTML = '<tr><td colspan="11" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
+                tbodyE.innerHTML = '<tr><td colspan="14" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
             } else {
                 db.constatsEncaisses.forEach(e => {
                     tbodyE.innerHTML += `
@@ -269,6 +272,9 @@
                             <td><span style="color:var(--success);font-weight:bold;">${e.ok}</span></td>
                             <td><span style="color:var(--danger);font-weight:bold;">${e.ko}</span></td>
                             <td><b>${parseFloat(e.tc).toFixed(1)}%</b></td>
+                            <td>${e.constat || '--'}</td>
+                            <td>${e.recommandation || '--'}</td>
+                            <td>${e.avisResponsable || '--'}</td>
                         </tr>`;
                 });
             }
