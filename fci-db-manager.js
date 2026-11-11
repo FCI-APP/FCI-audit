@@ -13,7 +13,7 @@ const FCIDatabase = {
                 version: '1.0',
                 derniereMiseAJour: new Date().toISOString(),
                 missions: [],         // Table A (Planification)
-                constatsControle: [], // Table B (Fiche de Contrôle)
+                constatsControle: [], // Table B (Fiche de Contrôle FC)
                 constatsEncaisses: [] // Table C (Fiche des Encaisses)
             };
             localStorage.setItem(this.KEY, JSON.stringify(schema));
@@ -41,14 +41,16 @@ const FCIDatabase = {
         this.saveDB(db);
     },
 
-    enregistrerConstatControle(dataConstat) {
+    enregistrerConstatsControle(constatsArray) {
         const db = this.getDB();
-        const index = db.constatsControle.findIndex(c => c.idConstat === dataConstat.idConstat);
-        if (index >= 0) {
-            db.constatsControle[index] = dataConstat;
-        } else {
-            db.constatsControle.push(dataConstat);
-        }
+        constatsArray.forEach(c => {
+            const index = db.constatsControle.findIndex(existing => existing.idConstat === c.idConstat);
+            if (index >= 0) {
+                db.constatsControle[index] = c;
+            } else {
+                db.constatsControle.push(c);
+            }
+        });
         this.saveDB(db);
     },
 
