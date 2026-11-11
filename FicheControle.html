@@ -3,646 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feuille de Contrôle Terrain - FCI v1.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+    <title>FCI v1.0 - Feuille 3 : Fiche de Contrôle</title>
     <style>
         :root {
-            --primary: #003366;
-            --primary-dark: #002244;
-            --accent: #EAAA00;
-            --bg-body: #F4F6F9;
-            --bg-card: #FFFFFF;
-            --text-main: #2C3E50;
-            --text-muted: #6C757D;
-            --border-color: #E2E8F0;
-            --sidebar-width: 250px;
-            
-            --status-cloture: #2E7D32;
-            --status-non-cloture: #C62828;
-            --status-en-cours: #F57C00;
-
-            --success: #10B981;
-            --danger: #EF4444;
-            --warning: #F59E0B;
-            --info: #3B82F6;
+            --primary: #1e3a8a;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #cbd5e1;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
-
-        .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
-            height: 100vh; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
         }
 
-        .sidebar-header { padding: 20px 15px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
-        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #FFF; line-height: 1.4; }
-
-        .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
-        .sidebar-nav li a {
-            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
-        }
-        .sidebar-nav li.active a, .sidebar-nav li a:hover {
-            background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .badge-active { background: var(--accent); color: var(--primary-dark); }
-
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
-
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
-
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-title h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
-        .header-title p { font-size: 0.9rem; color: var(--text-muted); }
-
-        .btn { padding: 10px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-accent { background-color: var(--accent); color: var(--primary); }
-        .btn-outline { background-color: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .btn-danger:hover { background-color: #FCA5A5; }
-
-        .meta-card {
-            background-color: var(--bg-card); border-radius: 8px; padding: 20px; border: 1px solid var(--border-color);
-            margin-bottom: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;
-        }
-        .meta-item { display: flex; flex-direction: column; }
-        .meta-item span.label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
-        .meta-item span.value { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
-        
-        .meta-item input.input-date-ctrl {
-            margin-top: 4px;
-            padding: 6px 10px;
-            border: 1px solid var(--primary);
-            border-radius: 6px;
-            font-size: 0.88rem;
-            font-weight: 700;
+        h1 {
             color: var(--primary);
-            background-color: #FFFFFF;
-            outline: none;
-            cursor: pointer;
-        }
-        .meta-item input.input-date-ctrl:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(234, 170, 0, 0.2);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-top: 0;
         }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 15px; }
-        .kpi-icon { width: 45px; height: 45px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .mission-header {
+            background: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-weight: 600;
+        }
 
-        .process-group { margin-bottom: 25px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); overflow: hidden; }
-        .process-header { background-color: #F8FAFC; padding: 15px 20px; font-weight: 700; color: var(--primary); font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-
-        .control-item { padding: 20px; border-bottom: 1px solid var(--border-color); }
-        .control-item:last-child { border-bottom: none; }
-
-        .eval-section { 
-            display: grid; 
-            grid-template-columns: 200px 1fr; 
-            gap: 15px; 
-            background: #FAFBFD; 
-            padding: 12px; 
-            border-radius: 6px; 
-            border: 1px solid var(--border-color); 
+        table {
             width: 100%;
-        }
-        .metrics-block { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
-            border-right: 2px solid var(--border-color); 
-            padding-right: 10px; 
+            border-collapse: collapse;
+            margin-top: 15px;
         }
 
-        .input-inline { display: flex; flex-direction: column; gap: 3px; }
-        .input-inline label { font-size: 0.70rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .input-inline input, .input-inline select { padding: 5px 6px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.80rem; outline: none; background: white; width: 100%; }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 8px;
+            text-align: left;
+            font-size: 0.85em;
+        }
 
-        .rate-box { background: #FFFFFF; border: 1px dashed var(--primary); padding: 6px; border-radius: 6px; text-align: center; }
-        .rate-box span { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
-        .rate-box strong { font-size: 1.05rem; color: var(--primary); display: block; margin-top: 1px; }
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
 
-        .fields-block { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; width: 100%; }
-        .field-group { display: flex; flex-direction: column; gap: 4px; }
-        .field-group label { font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .field-group textarea { width: 100%; height: 110px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; resize: vertical; outline: none; background: white; }
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
 
-        .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; margin-bottom: 25px; }
-        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
-        .summary-info h3 { font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
-        .center-description { background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--accent); padding: 15px; border-radius: 6px; font-size: 0.9rem; line-height: 1.6; color: #E2E8F0; }
+        input[type="text"] {
+            width: 95%;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
 
-        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase; }
-        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
-        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
-        .avis-bonne { background-color: var(--info); color: #FFF; }
-        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
+        .tc-cell {
+            font-weight: bold;
+            text-align: center;
+        }
 
-        .empty-state { text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
+        .btn-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
 
-        @media print {
-            .sidebar, .action-buttons { display: none !important; }
-            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .eval-section { grid-template-columns: 1fr 1fr; background: white; }
-            .meta-item input.input-date-ctrl { border: none; background: transparent; padding: 0; }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #64748b;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            white-space: pre-line;
         }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
-            </div>
-            <ul class="sidebar-nav">
-                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li class="active"><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
-            </ul>
-        </div>
-        <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-        </div>
-    </aside>
+<div class="container">
+    <h1>FCI v1.0 — Feuille 3 : Fiche de Contrôle</h1>
+    
+    <div class="mission-header" id="missionHeaderInfo">
+        <div>Mission ID : <span id="infoId">--</span></div>
+        <div>Date : <span id="infoDate">--</span></div>
+        <div>Période : <span id="infoPeriode">--</span></div>
+        <div>Entité : <span id="infoEntite">--</span></div>
+        <div>Contrôleur : <span id="infoControleur">--</span></div>
+    </div>
 
-    <main class="main-content">
-        <div class="header-bar">
-            <div class="header-title">
-                <h1>Fiche de Contrôle Terrain (FC)</h1>
-                <p>Évaluation des points de contrôle, calcul de conformité et avis de l'entité</p>
-            </div>
-            <div class="action-buttons" style="display:flex; gap:8px;">
-                <button class="btn btn-danger" onclick="viderToutesLesCellules()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                <button class="btn btn-outline" onclick="sauvegarderEtValider()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
-                <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
-                <button class="btn btn-primary" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
-            </div>
-        </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Processus</th>
+                <th>Risque</th>
+                <th>Contrôle</th>
+                <th>PC</th>
+                <th style="width: 70px;">Pop</th>
+                <th style="width: 70px;">Ech</th>
+                <th style="width: 70px;">OK</th>
+                <th style="width: 70px;">KO</th>
+                <th style="width: 70px;">TC (%)</th>
+                <th>Constat / Remarques</th>
+            </tr>
+        </thead>
+        <tbody id="ficheControleBody">
+            <!-- Rempli dynamiquement -->
+        </tbody>
+    </table>
 
-        <div id="content-area"></div>
-    </main>
+    <div class="btn-container">
+        <button onclick="sauvegarderFiche()">Enregistrer la Fiche dans la BDD</button>
+    </div>
 
-    <script>
-        let missionData = null;
+    <footer>Fiche de contrôle intelligente (FCI)
+v1.0 © 2026 - 2027</footer>
+</div>
 
-        function getItemVal(item, keys) {
-            for (let k of keys) {
-                if (item && item[k] !== undefined) return item[k];
-            }
-            return '';
+<!-- 1. Script du Gestionnaire de BDD Centralisée -->
+<script src="fci-db-manager.js"></script>
+
+<!-- 2. Logiciel applicatif -->
+<script>
+    let activeMission = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedMission = localStorage.getItem('fci_fiche_controle_active');
+        if (savedMission) {
+            activeMission = JSON.parse(savedMission);
+            document.getElementById('infoId').textContent = activeMission.idMission || '--';
+            document.getElementById('infoDate').textContent = activeMission.date || '--';
+            document.getElementById('infoPeriode').textContent = `${activeMission.dateDebut || ''} au ${activeMission.dateFin || ''}`;
+            document.getElementById('infoEntite').textContent = activeMission.entite || '--';
+            document.getElementById('infoControleur').textContent = activeMission.controleur || '--';
+
+            genererTableauControle(activeMission.pointsSelectionnes || []);
+        } else {
+            document.getElementById('ficheControleBody').innerHTML = '<tr><td colspan="10" style="text-align:center;">Aucune mission active trouvée. Veuillez valider la Feuille 2 (Planification).</td></tr>';
         }
+    });
 
-        function formatDateToFR(val) {
-            if (!val || val === '-') return '';
-            if (val.includes('-')) {
-                const parts = val.split('-');
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            return val;
+    function getItemVal(item, keys) {
+        for (let k of keys) {
+            if (item && item[k] !== undefined) return item[k];
         }
+        return '';
+    }
 
-        function formatDateToISO(val) {
-            if (!val || val === '-') return '';
-            if (val.includes('/')) {
-                const parts = val.split('/');
-                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-            }
-            return val;
-        }
+    function genererTableauControle(points) {
+        const tbody = document.getElementById('ficheControleBody');
+        tbody.innerHTML = '';
 
-        function getTodayISO() {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
+        points.forEach((pt, index) => {
+            const tr = document.createElement('tr');
+            tr.dataset.index = index;
 
-        document.addEventListener('DOMContentLoaded', () => { chargerDonneesMission(); });
+            const proc = getItemVal(pt, ['Processus', 'processus']);
+            const rsk = getItemVal(pt, ['Intitulé du risque', 'Intitulé risque', 'risque']);
+            const ctrl = getItemVal(pt, ['Points de contrôle', 'Point de contrôle', 'controle']);
+            const pc = getItemVal(pt, ['Intitulé du contrôle', 'Intitulé contrôle', 'pc']);
 
-        function chargerDonneesMission() {
-            const dataRaw = localStorage.getItem('fci_fiche_controle_active');
-
-            if (!dataRaw) {
-                afficherEtatVide();
-                return;
-            }
-
-            missionData = JSON.parse(dataRaw);
-            
-            if (!missionData.pointsControle || missionData.pointsControle.length === 0) {
-                afficherEtatVide();
-                return;
-            }
-
-            if (!missionData.metadata) missionData.metadata = {};
-            
-            missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
-            missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
-            missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
-
-            missionData.pointsControle.forEach((item) => {
-                if (!item.eval) {
-                    item.eval = {
-                        population: 0,
-                        echantillon: 0,
-                        nombreOk: 0,
-                        nombreKo: 0,
-                        tauxConformite: "0.00",
-                        statutConstat: 'EN_COURS',
-                        constat: '',
-                        recommandation: '',
-                        avisResponsable: ''
-                    };
-                }
-            });
-
-            renderPage();
-        }
-
-        function afficherEtatVide() {
-            const contentArea = document.getElementById('content-area');
-            contentArea.innerHTML = `
-                <div class="empty-state">
-                    <i class="fa-solid fa-folder-open" style="font-size:3rem; color:var(--text-muted); margin-bottom:15px;"></i>
-                    <h3>Aucune mission active trouvée</h3>
-                    <p>Veuillez d'abord remplir les métadonnées et valider les points dans l'onglet Planification.</p>
-                    <br>
-                    <a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
-                </div>
+            tr.innerHTML = `
+                <td>${proc}</td>
+                <td>${rsk}</td>
+                <td>${ctrl}</td>
+                <td>${pc}</td>
+                <td><input type="number" min="0" value="0" class="input-pop" onchange="mettreAJourCalcul(${index})"></td>
+                <td><input type="number" min="0" value="0" class="input-ech" onchange="mettreAJourCalcul(${index})"></td>
+                <td><input type="number" min="0" value="0" class="input-ok" onchange="mettreAJourCalcul(${index})"></td>
+                <td><input type="number" min="0" value="0" class="input-ko" onchange="mettreAJourCalcul(${index})"></td>
+                <td class="tc-cell" id="tc-${index}">0.0%</td>
+                <td><input type="text" class="input-constat" placeholder="Saisir un constat..."></td>
             `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function mettreAJourCalcul(index) {
+        const tr = document.querySelector(`tr[data-index="${index}"]`);
+        if (!tr) return;
+
+        let pop = parseInt(tr.querySelector('.input-pop').value) || 0;
+        let ech = parseInt(tr.querySelector('.input-ech').value) || 0;
+        let ok = parseInt(tr.querySelector('.input-ok').value) || 0;
+        let ko = parseInt(tr.querySelector('.input-ko').value) || 0;
+
+        // Contrôle Échantillon <= Population
+        if (ech > pop) {
+            alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
+            tr.querySelector('.input-ech').value = 0;
+            ech = 0;
         }
 
-        function renderPage() {
-            const contentArea = document.getElementById('content-area');
-            const meta = missionData.metadata || {};
-            const points = missionData.pointsControle || [];
-
-            if (points.length === 0) {
-                afficherEtatVide();
-                return;
-            }
-
-            const parProcessus = {};
-            points.forEach(p => {
-                const proc = getItemVal(p, ['Processus']) || "Processus Non Spécifié";
-                if (!parProcessus[proc]) parProcessus[proc] = [];
-                parProcessus[proc].push(p);
-            });
-
-            let totalTaux = 0;
-            let nbPointsEvalues = 0;
-            let countCloture = 0, countNonCloture = 0, countEnCours = 0;
-
-            points.forEach(p => {
-                if (parseFloat(p.eval.echantillon) > 0) {
-                    totalTaux += parseFloat(p.eval.tauxConformite || 0);
-                    nbPointsEvalues++;
-                }
-                if (p.eval.statutConstat === 'CLOTURE') countCloture++;
-                else if (p.eval.statutConstat === 'NON_CLOTURE') countNonCloture++;
-                else countEnCours++;
-            });
-
-            const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
-            const globalRate = parseFloat(tauxConformiteMoyen);
-            
-            let niveauRisqueLabel = "Non évalué";
-            let niveauStyle = "color: var(--text-muted);";
-
-            if (nbPointsEvalues > 0) {
-                if (globalRate >= 95) {
-                    niveauRisqueLabel = "Risque Faible";
-                    niveauStyle = "color: #2E7D32;";
-                } else if (globalRate >= 80) {
-                    niveauRisqueLabel = "Risque Maîtrisé";
-                    niveauStyle = "color: #0288D1;";
-                } else if (globalRate >= 60) {
-                    niveauRisqueLabel = "Risque Modéré";
-                    niveauStyle = "color: #F57C00;";
-                } else {
-                    niveauRisqueLabel = "Risque Critique";
-                    niveauStyle = "color: #C62828;";
-                }
-            }
-
-            const dateCtrlISO = formatDateToISO(meta.dateControle);
-            const pDebut = meta.periodeDebut || '';
-            const pFin = meta.periodeFin || '';
-
-            let html = `
-                <div class="meta-card">
-                    <div class="meta-item">
-                        <span class="label"><i class="fa-regular fa-calendar-check"></i> Date du contrôle *</span>
-                        <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
-                    </div>
-                    <div class="meta-item">
-                        <span class="label"><i class="fa-solid fa-calendar-day"></i> Début période sous-contrôle</span>
-                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${pDebut}" oninput="mettreAJourMetadata('periodeDebut', this.value)">
-                    </div>
-                    <div class="meta-item">
-                        <span class="label"><i class="fa-solid fa-calendar-day"></i> Fin période sous-contrôle</span>
-                        <input type="text" class="input-date-ctrl" placeholder="JJ/MM/AAAA" value="${pFin}" oninput="mettreAJourMetadata('periodeFin', this.value)">
-                    </div>
-                    <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
-                    <div class="meta-item"><span class="label">Contrôle réalisé par</span><span class="value">${meta.controleurs || '-'}</span></div>
-                    <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || '-'}</span></div>
-                </div>
-
-                <div class="kpi-grid">
-                    <div class="kpi-card" style="border-left: 4px solid var(--primary);">
-                        <div class="kpi-icon" style="background:#E3F2FD; color:var(--primary);"><i class="fa-solid fa-chart-line"></i></div>
-                        <div><h3>${tauxConformiteMoyen} %</h3><p style="font-size:0.8rem; color:var(--text-muted);">Taux Conformité Moyen</p></div>
-                    </div>
-                    <div class="kpi-card" style="border-left: 4px solid var(--accent);">
-                        <div class="kpi-icon" style="background:#FEF3C7; color:#D97706;"><i class="fa-solid fa-shield-cat"></i></div>
-                        <div><h3 style="${niveauStyle}">${niveauRisqueLabel}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Niveau de Risque Global</p></div>
-                    </div>
-                    <div class="kpi-card"><div class="kpi-icon" style="background:#E8F5E9; color:var(--status-cloture);"><i class="fa-solid fa-check-circle"></i></div><div><h3>${countCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Clôturés</p></div></div>
-                    <div class="kpi-card"><div class="kpi-icon" style="background:#FFEBEE; color:var(--status-non-cloture);"><i class="fa-solid fa-circle-xmark"></i></div><div><h3>${countNonCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Non Clôturés</p></div></div>
-                    <div class="kpi-card"><div class="kpi-icon" style="background:#FFF3E0; color:var(--status-en-cours);"><i class="fa-solid fa-spinner"></i></div><div><h3>${countEnCours}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats en cours</p></div></div>
-                </div>
-            `;
-
-            for (const [proc, items] of Object.entries(parProcessus)) {
-                html += `
-                    <div class="process-group">
-                        <div class="process-header">
-                            <span><i class="fa-solid fa-diagram-project"></i> Processus : ${proc}</span>
-                            <span style="background:var(--primary); color:white; padding:4px 10px; border-radius:12px; font-size:0.75rem;">${items.length} Point(s)</span>
-                        </div>
-                `;
-
-                items.forEach((item) => {
-                    const idx = points.indexOf(item);
-                    const evalData = item.eval;
-
-                    let selectBgColor = "#FFF3E0", selectTxtColor = "var(--status-en-cours)";
-                    if (evalData.statutConstat === 'CLOTURE') { selectBgColor = "#E8F5E9"; selectTxtColor = "var(--status-cloture)"; }
-                    else if (evalData.statutConstat === 'NON_CLOTURE') { selectBgColor = "#FFEBEE"; selectTxtColor = "var(--status-non-cloture)"; }
-
-                    const rName = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
-                    const cName = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
-                    const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
-
-                    html += `
-                        <div class="control-item">
-                            <div style="margin-bottom:10px;">
-                                <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${rName || 'N/A'}</span>
-                                <div style="font-weight:700; margin-top:5px; font-size:0.92rem;">Contrôle : ${cName || 'N/A'}</div>
-                                <div style="font-size:0.85rem; background:#F1F5F9; padding:6px 10px; border-left:3px solid var(--primary); margin-top:5px;"><strong>PC :</strong> ${pcName}</div>
-                            </div>
-
-                            <div class="eval-section">
-                                <div class="metrics-block">
-                                    <div class="input-inline">
-                                        <label>Statut *</label>
-                                        <select style="background-color:${selectBgColor}; color:${selectTxtColor}; font-weight:700;" onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
-                                            <option value="CLOTURE" ${evalData.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Clôturé</option>
-                                            <option value="NON_CLOTURE" ${evalData.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Non clôturé</option>
-                                            <option value="EN_COURS" ${evalData.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 En cours</option>
-                                        </select>
-                                    </div>
-
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                                        <div class="input-inline"><label>Pop. *</label><input type="number" min="0" value="${evalData.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
-                                        <div class="input-inline"><label>Échant. *</label><input type="number" min="0" value="${evalData.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
-                                    </div>
-
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                                        <div class="input-inline"><label>OK *</label><input type="number" min="0" value="${evalData.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
-                                        <div class="input-inline"><label>KO</label><input type="number" min="0" value="${evalData.nombreKo}" readonly style="background:#F1F5F9;"></div>
-                                    </div>
-
-                                    <div class="rate-box">
-                                        <span>Conformité</span>
-                                        <strong>${evalData.tauxConformite} %</strong>
-                                    </div>
-                                </div>
-
-                                <div class="fields-block">
-                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${evalData.constat}</textarea></div>
-                                    <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${evalData.recommandation}</textarea></div>
-                                    <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Avis de l'entité (Optionnel)...">${evalData.avisResponsable}</textarea></div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `</div>`;
-            }
-
-            let badgeText = "---", badgeClass = "", descText = "";
-
-            if (nbPointsEvalues === 0) {
-                badgeText = "NON ÉVALUÉ";
-                badgeClass = "avis-satisfaisante";
-                descText = "Aucun point de contrôle n'a encore fait l'objet d'un échantillonnage valide pour calculer le taux global du centre.";
-            } else if (globalRate < 60) {
-                badgeText = "Gestion non satisfaisante";
-                badgeClass = "avis-non-satisfaisante";
-                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures opérationnelles et des contrôles internes. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.";
-            } else if (globalRate < 80) {
-                badgeText = "Gestion satisfaisante";
-                badgeClass = "avis-satisfaisante";
-                descText = "<strong>Niveau de risque modéré :</strong> Le centre respecte globalement les exigences opérationnelles, mais présente certains dysfonctionnements ou écarts répétitifs. La mise en œuvre rigoureuse des recommandations formulées permettra d'assainir la situation.";
-            } else if (globalRate < 95) {
-                badgeText = "Bonne gestion";
-                badgeClass = "avis-bonne";
-                descText = "<strong>Niveau de risque maîtrisé :</strong> Le niveau global de conformité du centre est élevé. Les opérations sont exécutées conformément aux instructions de la Direction Contrôle Général. De légers ajustements permettront d'atteindre l'excellence opérationnelle.";
-            } else {
-                badgeText = "Très bonne gestion";
-                badgeClass = "avis-tres-bonne";
-                descText = "<strong>Niveau de maîtrise fort :</strong> Excellente maîtrise des processus et strict respect des dispositifs de contrôle permanent. Le centre fait preuve d'une grande rigueur dans le suivi et la gestion de ses activités. Aucun risque majeur à signaler.";
-            }
-
-            html += `
-                <section class="summary-card">
-                    <div class="summary-top">
-                        <div class="summary-info">
-                            <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent);"></i>
-                            <div>
-                                <h3>TAUX MOYEN DU CENTRE : <span>${tauxConformiteMoyen} %</span></h3>
-                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur l'ensemble des points évalués lors de cette mission.</p>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="badge-avis-global ${badgeClass}">${badgeText}</span>
-                        </div>
-                    </div>
-
-                    <div class="center-description">
-                        <strong style="display: block; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">
-                            <i class="fa-solid fa-file-contract"></i> Description & Situation du Centre :
-                        </strong>
-                        <p>${descText}</p>
-                    </div>
-                </section>
-            `;
-
-            contentArea.innerHTML = html;
+        // Ajustement automatique OK + KO <= Echantillon
+        if ((ok + ko) > ech && ech > 0) {
+            ko = Math.max(0, ech - ok);
+            tr.querySelector('.input-ko').value = ko;
         }
 
-        function mettreAJourMetadataDate(champ, valeurISO) {
-            if (!missionData.metadata) missionData.metadata = {};
-            missionData.metadata[champ] = formatDateToFR(valeurISO);
-            sauvegarderLocalement(false);
+        // Calcul du Taux de Conformité TC
+        let tc = 0;
+        if (ech > 0) {
+            tc = ((ok / ech) * 100).toFixed(1);
         }
 
-        function mettreAJourMetadata(champ, valeur) {
-            if (!missionData.metadata) missionData.metadata = {};
-            missionData.metadata[champ] = valeur;
-            sauvegarderLocalement(false);
+        tr.querySelector(`#tc-${index}`).textContent = tc + '%';
+    }
+
+    function sauvegarderFiche() {
+        if (!activeMission) {
+            alert('Aucune mission active.');
+            return;
         }
 
-        function mettreAJourCalcul(index, champ, valeur) {
-            const ev = missionData.pointsControle[index].eval;
-            if (champ === 'statutConstat') {
-                ev.statutConstat = valeur;
-            } else {
-                ev[champ] = parseFloat(valeur) || 0;
-            }
+        const rows = document.querySelectorAll('#ficheControleBody tr');
+        rows.forEach((tr, index) => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length < 10) return;
 
-            // VÉRIFICATION ÉCHANTILLON vs POPULATION (Remise à 0)
-            if (ev.echantillon > ev.population && ev.population > 0) {
-                alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
-                ev.echantillon = 0;
-            }
+            const pop = parseInt(tr.querySelector('.input-pop').value) || 0;
+            const ech = parseInt(tr.querySelector('.input-ech').value) || 0;
+            const ok = parseInt(tr.querySelector('.input-ok').value) || 0;
+            const ko = parseInt(tr.querySelector('.input-ko').value) || 0;
+            const tcStr = tr.querySelector(`#tc-${index}`).textContent.replace('%', '');
+            const tc = parseFloat(tcStr) || 0;
+            const constat = tr.querySelector('.input-constat').value;
 
-            if (ev.echantillon > 0) {
-                if (ev.nombreOk > ev.echantillon) ev.nombreOk = ev.echantillon;
-                ev.nombreKo = Math.max(0, ev.echantillon - ev.nombreOk);
-                ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
-            } else {
-                ev.nombreKo = 0; 
-                ev.tauxConformite = "0.00";
-            }
-
-            sauvegarderLocalement(false);
-            renderPage();
-        }
-
-        function mettreAJourChamp(index, champ, valeur) {
-            missionData.pointsControle[index].eval[champ] = valeur;
-            sauvegarderLocalement(false);
-        }
-
-        function viderToutesLesCellules() {
-            if (!confirm("Voulez-vous vraiment vider l'ensemble de la fiche de contrôle (effacer tous les points et informations) ?")) {
-                return;
-            }
-
-            missionData = {
-                metadata: { entite: '', typeControle: '', dateControle: '', periodeDebut: '', periodeFin: '', controleurs: '' },
-                pointsControle: []
+            const dataConstat = {
+                idConstat: `CST-${activeMission.idMission}-${index + 1}`,
+                idMission: activeMission.idMission,
+                date: new Date().toISOString().slice(0, 10),
+                processus: cells[0].textContent,
+                risque: cells[1].textContent,
+                controle: cells[2].textContent,
+                pc: cells[3].textContent,
+                pop: pop,
+                ech: ech,
+                ok: ok,
+                ko: ko,
+                tc: tc,
+                constat: constat
             };
 
-            localStorage.removeItem('fci_fiche_controle_active');
-            afficherEtatVide();
-        }
+            // Sauvegarde directe dans la BDD Centralisée
+            FCIDatabase.enregistrerConstatControle(dataConstat);
+        });
 
-        function validerChampsObligatoires() {
-            let valide = true;
-            let messageErreur = "";
-
-            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
-                return { valide: false, messageErreur: "Aucun point de contrôle à valider." };
-            }
-
-            if (!missionData.metadata || !missionData.metadata.dateControle) {
-                return { valide: false, messageErreur: "Veuillez spécifier la date du contrôle." };
-            }
-
-            missionData.pointsControle.forEach((p) => {
-                const ev = p.eval;
-                const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
-
-                if (ev.echantillon > ev.population && ev.population > 0) {
-                    valide = false;
-                    messageErreur = `Pour le point "${pcName}", l'échantillon (${ev.echantillon}) doit être toujours inférieur ou égal à la population (${ev.population}).`;
-                } else if (!ev.echantillon || ev.echantillon <= 0) {
-                    valide = false; 
-                    messageErreur = `Le point "${pcName}" nécessite un échantillon valide (> 0).`;
-                } else if (!ev.constat || ev.constat.trim() === '') {
-                    valide = false; 
-                    messageErreur = `Le champ "Constat" est obligatoire pour le point : "${pcName}".`;
-                } else if (!ev.recommandation || ev.recommandation.trim() === '') {
-                    valide = false; 
-                    messageErreur = `Le champ "Recommandation" est obligatoire pour le point : "${pcName}".`;
-                }
-            });
-
-            return { valide, messageErreur };
-        }
-
-        function sauvegarderEtValider() {
-            const val = validerChampsObligatoires();
-            if (!val.valide) {
-                alert(`⚠️ Champs obligatoires manquants :\n${val.messageErreur}`);
-                return;
-            }
-            sauvegarderLocalement(true);
-        }
-
-        function sauvegarderLocalement(notif = true) {
-            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
-            if (notif) alert('Feuille de contrôle enregistrée avec succès.');
-        }
-
-        function exporterExcel() {
-            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
-                alert("Aucune donnée à exporter.");
-                return;
-            }
-
-            const val = validerChampsObligatoires();
-            if (!val.valide) {
-                if (!confirm(`⚠️ Attention : Certains champs obligatoires sont incomplets :\n${val.messageErreur}\n\nVoulez-vous quand même exporter en Excel ?`)) {
-                    return;
-                }
-            }
-
-            const meta = missionData.metadata || {};
-
-            const rows = missionData.pointsControle.map(p => ({
-                "Date du Contrôle": meta.dateControle || '-',
-                "Début période sous-contrôle": meta.periodeDebut || '-',
-                "Fin période sous-contrôle": meta.periodeFin || '-',
-                "Entité Contrôlée": meta.entite || '-',
-                "Contrôle réalisé par": meta.controleurs || '-',
-                "Type de Contrôle": meta.typeControle || '-',
-                "Processus": getItemVal(p, ['Processus']),
-                "Risque": getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
-                "Contrôle": getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                "Point de Contrôle": getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
-                "Population": p.eval.population,
-                "Échantillon": p.eval.echantillon,
-                "Nombre (OK)": p.eval.nombreOk,
-                "Nombre (KO)": p.eval.nombreKo,
-                "Taux de conformité (%)": p.eval.tauxConformite,
-                "Statut Constat": p.eval.statutConstat,
-                "Constat (Obligatoire)": p.eval.constat,
-                "Recommandation (Obligatoire)": p.eval.recommandation,
-                "Avis Responsable Entité (Facultatif)": p.eval.avisResponsable
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(rows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche de Contrôle");
-            const entiteName = (meta.entite) ? meta.entite.replace(/[^a-z0-9]/gi, '_') : 'Centre';
-            XLSX.writeFile(workbook, `FCI_FicheControle_${entiteName}.xlsx`);
-        }
-    </script>
+        alert('L\'ensemble des constats de la fiche de contrôle a été enregistré dans la BDD Centralisée !');
+    }
+</script>
 </body>
 </html>
