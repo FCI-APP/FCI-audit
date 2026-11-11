@@ -86,6 +86,16 @@
             padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px;
         }
 
+        /* SEARCH BAR CARD */
+        .search-card {
+            background-color: var(--card-bg); border-radius: 8px; padding: 15px 20px; border: 1px solid var(--border-color);
+            margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+        .search-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        .search-group label { font-size: 0.82rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; white-space: nowrap; }
+        .search-group select { padding: 8px 12px; border: 1px solid var(--primary-blue); border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; width: 100%; max-width: 400px; font-weight: 700; }
+
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
@@ -127,13 +137,15 @@
         .avis-bonne { background-color: var(--info); color: #FFF; }
         .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
-        .actions-bar { display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px; }
+        .actions-bar { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
         .btn-outline { background-color: transparent; border-color: var(--border-color); color: var(--text-dark); }
+        .btn-warning { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
         .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
         .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
     </style>
 </head>
@@ -150,6 +162,8 @@
                 <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li class="active"><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -160,14 +174,26 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses</h1>
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses (FV)</h1>
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement BDD...</span>
-                <button class="btn btn-outline" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
+                <button class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
             </div>
         </header>
+
+        <!-- 1. BARRE DE RECHERCHE ET RECHERCHE PAR MISSION ID (BOUTONS TROUVER, MODIFIER, SUPPRIMER) -->
+        <div class="search-card">
+            <div class="search-group">
+                <label for="selectEncaisseMissionId"><i class="fa-solid fa-magnifying-glass"></i> Rechercher une FV archivée :</label>
+                <select id="selectEncaisseMissionId">
+                    <option value="">-- Sélectionner un Mission ID --</option>
+                </select>
+                <button class="btn btn-primary" onclick="trouverFicheEncaisse()"><i class="fa-solid fa-search"></i> Trouver</button>
+            </div>
+            <div id="searchEncaisseStatus" style="font-size:0.8rem; font-weight:700; color:var(--primary-blue);"></div>
+        </div>
 
         <div class="kpi-row">
             <div class="kpi-card">
@@ -195,6 +221,10 @@
         <section class="card">
             <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
             <div class="form-grid">
+                <div class="form-group">
+                    <label>Mission ID</label>
+                    <input type="text" class="form-control" id="idMissionEncaisse" placeholder="Identifiant généré automatiquement" readonly style="background:#F1F5F9; font-weight:700;">
+                </div>
                 <div class="form-group">
                     <label>Type de Contrôle *</label>
                     <select class="form-control" id="typeControle">
@@ -298,10 +328,13 @@
             </div>
         </section>
 
+        <!-- 2. BOUTONS D'ACTION AVEC ARCHIVER FV, MODIFIER ET SUPPRIMER -->
         <footer class="actions-bar">
-            <button class="btn btn-outline" onclick="saveToLocalStorage()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
-            <button class="btn btn-primary" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
-            <button class="btn btn-accent" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+            <button class="btn btn-primary" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
+            <button class="btn btn-warning" onclick="modifierFicheEncaisse()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+            <button class="btn btn-danger" onclick="supprimerFicheEncaisse()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+            <button class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
+            <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
         </footer>
     </main>
 
@@ -311,6 +344,7 @@
     <script>
         let rawJsonData = [];
         let addedPoints = [];
+        let currentMissionId = "";
 
         function getItemVal(item, keys) {
             for (let k of keys) {
@@ -341,7 +375,25 @@
             resetDateField();
             chargerDonneesSauvegardees();
             chargerReferentielJSON();
+            remplirListeMissionsEncaissesBDD();
         });
+
+        // REMPLISSAGE DE LA LISTE DÉROULANTE DE MISSIONS POUR RECHERCHE
+        function remplirListeMissionsEncaissesBDD() {
+            const select = document.getElementById('selectEncaisseMissionId');
+            select.innerHTML = '<option value="">-- Sélectionner un Mission ID --</option>';
+            const db = FCIDatabase.getDB();
+            
+            const missionIds = new Set();
+            if (db.constatsEncaisses) db.constatsEncaisses.forEach(e => missionIds.add(e.idMission));
+
+            missionIds.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = id;
+                select.appendChild(opt);
+            });
+        }
 
         function resetDateField() {
             const now = new Date();
@@ -356,6 +408,8 @@
 
             try {
                 const saved = JSON.parse(savedRaw);
+                currentMissionId = saved.idMission || ("MIS-ENC-" + Date.now());
+                document.getElementById('idMissionEncaisse').value = currentMissionId;
                 if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
                 if (saved.periodeDebut) document.getElementById('periodeDebut').value = formatDateToISO(saved.periodeDebut);
                 if (saved.periodeFin) document.getElementById('periodeFin').value = formatDateToISO(saved.periodeFin);
@@ -400,16 +454,12 @@
                             break;
                         }
                     }
-                } catch (error) {
-                    console.warn("Échec du chargement depuis", path);
-                }
+                } catch (error) {}
             }
 
             if (!loaded) {
                 const procSelect = document.getElementById('selectProcessus');
-                if (procSelect) {
-                    procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json introuvable --</option>';
-                }
+                if (procSelect) procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json introuvable --</option>';
                 badge.style.backgroundColor = "#FDE8E8";
                 badge.style.color = "#9B1C1C";
                 badge.style.borderColor = "#FCA5A5";
@@ -603,15 +653,8 @@
             updateKpisAndSummary();
         }
 
-        function selectAllPoints() {
-            addedPoints.forEach(p => p.selected = true);
-            renderPoints();
-        }
-
-        function deselectAllPoints() {
-            addedPoints.forEach(p => p.selected = false);
-            renderPoints();
-        }
+        function selectAllPoints() { addedPoints.forEach(p => p.selected = true); renderPoints(); }
+        function deselectAllPoints() { addedPoints.forEach(p => p.selected = false); renderPoints(); }
 
         function updateConstatNumbers(pIndex, cIndex, field, value) {
             const val = parseInt(value) || 0;
@@ -627,33 +670,19 @@
                 if (c.ok > c.echantillon) c.ok = c.echantillon;
                 c.ko = Math.max(0, c.echantillon - c.ok);
                 c.rate = (c.ok / c.echantillon) * 100;
-            } else {
-                c.ko = 0;
-                c.rate = 100;
-            }
+            } else { c.ko = 0; c.rate = 100; }
             renderPoints();
         }
 
-        function updateConstatText(pIndex, cIndex, field, value) {
-            addedPoints[pIndex].constats[cIndex][field] = value;
-        }
+        function updateConstatText(pIndex, cIndex, field, value) { addedPoints[pIndex].constats[cIndex][field] = value; }
 
         function addConstatToPoint(pIndex) {
-            addedPoints[pIndex].constats.push({
-                population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: ''
-            });
+            addedPoints[pIndex].constats.push({ population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
             renderPoints();
         }
 
-        function removeConstat(pIndex, cIndex) {
-            addedPoints[pIndex].constats.splice(cIndex, 1);
-            renderPoints();
-        }
-
-        function removePoint(pIndex) {
-            addedPoints.splice(pIndex, 1);
-            renderPoints();
-        }
+        function removeConstat(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); }
+        function removePoint(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); }
 
         function updateKpisAndSummary() {
             const activePoints = addedPoints.filter(p => p.selected);
@@ -661,14 +690,9 @@
             const risques = new Set(activePoints.map(p => p.risque)).size;
             const controles = new Set(activePoints.map(p => p.controle)).size;
 
-            let totalRates = 0;
-            let count = 0;
-
+            let totalRates = 0, count = 0;
             activePoints.forEach(p => {
-                p.constats.forEach(c => {
-                    totalRates += c.rate;
-                    count++;
-                });
+                p.constats.forEach(c => { totalRates += c.rate; count++; });
             });
 
             const globalRate = count > 0 ? (totalRates / count) : 0;
@@ -682,10 +706,7 @@
             document.getElementById('selectedCountDisplay').innerText = activePoints.length;
 
             const summaryCard = document.getElementById('summaryCard');
-            if (activePoints.length === 0) {
-                summaryCard.style.display = 'none';
-                return;
-            }
+            if (activePoints.length === 0) { summaryCard.style.display = 'none'; return; }
 
             document.getElementById('globalRateDisplay').innerText = globalRateStr;
             const badge = document.getElementById('globalAvisBadge');
@@ -693,47 +714,44 @@
             badge.className = 'badge-avis-global ';
 
             if (globalRate < 60) {
-                badge.innerText = 'Gestion non satisfaisante';
-                badge.classList.add('avis-non-satisfaisante');
-                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans la gestion et le suivi des encaisses. Les contrôles internes sont insuffisants ou non appliqués de manière rigoureuse. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.`;
+                badge.innerText = 'Gestion non satisfaisante'; badge.classList.add('avis-non-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans la gestion des encaisses. Un plan d'action immédiat est requis.`;
             } else if (globalRate < 80) {
-                badge.innerText = 'Gestion satisfaisante';
-                badge.classList.add('avis-satisfaisante');
-                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Le centre respecte globalement les procédures d'arrêté et d'encaissement, mais présente quelques dysfonctionnements ou écarts ponctuels. La mise en place des recommandations permettra d'optimiser le dispositif de contrôle permanent.`;
+                badge.innerText = 'Gestion satisfaisante'; badge.classList.add('avis-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Exigences d'encaissement globalement respectées, mais quelques ajustements restent nécessaires.`;
             } else if (globalRate < 95) {
-                badge.innerText = 'Bonne gestion';
-                badge.classList.add('avis-bonne');
-                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Le niveau de conformité est élevé. Les opérations de caisse et de versement sont exécutées avec rigueur conformément aux instructions de la Direction Contrôle Général. Quelques ajustements mineurs suffiront à garantir une conformité totale.`;
+                badge.innerText = 'Bonne gestion'; badge.classList.add('avis-bonne');
+                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Élevé niveau de conformité, registres de caisse bien tenus.`;
             } else {
-                badge.innerText = 'Très bonne gestion';
-                badge.classList.add('avis-tres-bonne');
-                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des registres, arrêtés de caisse et délais de versement. Le centre fait preuve d'un haut niveau de maîtrise des risques opérationnels liés aux encaisses. Aucun dysfonctionnement majeur à signaler.`;
+                badge.innerText = 'Très bonne gestion'; badge.classList.add('avis-tres-bonne');
+                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des caisses et strict respect des délais d'encaissement.`;
             }
 
             summaryCard.style.display = 'flex';
         }
 
         function clearForm() {
-            if (confirm("Voulez-vous vraiment vider toute la fiche de contrôle ?")) {
-                addedPoints = [];
-                document.getElementById('nomSite').value = '';
-                document.getElementById('nomControleur').value = '';
-                document.getElementById('nomResponsable').value = '';
-                document.getElementById('periodeDebut').value = '';
-                document.getElementById('periodeFin').value = '';
-                document.getElementById('selectProcessus').value = '';
-                onProcessusChange();
-                resetDateField();
-                renderPoints();
-                localStorage.removeItem('fci_fiche_verification_encaisses');
-            }
+            addedPoints = [];
+            currentMissionId = "";
+            document.getElementById('idMissionEncaisse').value = '';
+            document.getElementById('nomSite').value = '';
+            document.getElementById('nomControleur').value = '';
+            document.getElementById('nomResponsable').value = '';
+            document.getElementById('periodeDebut').value = '';
+            document.getElementById('periodeFin').value = '';
+            document.getElementById('selectProcessus').value = '';
+            onProcessusChange();
+            resetDateField();
+            renderPoints();
+            localStorage.removeItem('fci_fiche_verification_encaisses');
+            document.getElementById('searchEncaisseStatus').innerText = '';
         }
 
         function validateCohérenceEchantillon() {
             for (let p of addedPoints) {
                 for (let c of p.constats) {
                     if (c.echantillon > c.population && c.population > 0) {
-                        alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être toujours inférieur ou égal à la population (${c.population}).`);
+                        alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être <= à la population (${c.population}).`);
                         return false;
                     }
                 }
@@ -741,28 +759,28 @@
             return true;
         }
 
-        function saveToLocalStorage() {
+        // 2. ARCHIVER FV AVEC VIDAGE AUTOMATIQUE APRÈS ENREGISTREMENT DANS LA BDD
+        function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
-            const dataToSave = {
-                typeControle: document.getElementById('typeControle').value,
-                dateVerif: document.getElementById('dateVerification').value,
-                periodeDebut: formatDateToFR(document.getElementById('periodeDebut').value),
-                periodeFin: formatDateToFR(document.getElementById('periodeFin').value),
-                site: document.getElementById('nomSite').value,
-                controleur: document.getElementById('nomControleur').value,
-                responsable: document.getElementById('nomResponsable').value,
-                points: addedPoints
-            };
-            localStorage.setItem('fci_fiche_verification_encaisses', JSON.stringify(dataToSave));
+            const site = document.getElementById('nomSite').value.trim();
+            const controleur = document.getElementById('nomControleur').value.trim();
 
-            // Enregistrement dans la BDD Centralisée fci_database
-            const savedMission = localStorage.getItem('fci_fiche_controle_active');
-            const activeMission = savedMission ? JSON.parse(savedMission) : null;
-            const idMission = activeMission ? activeMission.metadata.idMission : "MIS-DEFAULT";
+            if (!site || !controleur) {
+                alert("Veuillez renseigner le nom du site et le nom du contrôleur.");
+                return;
+            }
+
+            const activePoints = addedPoints.filter(p => p.selected);
+            if (activePoints.length === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle coché.");
+                return;
+            }
+
+            const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
 
             let totalPop = 0, totalEch = 0, totalOk = 0, totalKo = 0;
-            addedPoints.forEach(p => {
+            activePoints.forEach(p => {
                 p.constats.forEach(c => {
                     totalPop += c.population || 0;
                     totalEch += c.echantillon || 0;
@@ -780,61 +798,106 @@
                 processus: "Gestion des Encaisses",
                 risque: "Écart de caisse / Manquant d'espèces",
                 controle: "Vérification physique des encaisses",
-                pc: "Comptage physique des fonds et des valeurs",
+                pc: `Contrôle site: ${site}`,
                 pop: totalPop,
                 ech: totalEch,
                 ok: totalOk,
                 ko: totalKo,
                 tc: parseFloat(tc),
-                constat: `Site: ${document.getElementById('nomSite').value} - Contrôleur: ${document.getElementById('nomControleur').value}`
+                constat: `Site: ${site} - Contrôleur: ${controleur}`
             });
 
-            alert("Fiche enregistrée avec succès dans le navigateur et dans la BDD Centralisée !");
+            alert("✅ La Fiche des Encaisses (FV) a été archivée avec succès dans la BDD (Feuille 5 & TDB 6) !");
+            
+            // VIDAGE AUTOMATIQUE APRÈS ARCHIVAGE
+            clearForm();
+            remplirListeMissionsEncaissesBDD();
+        }
+
+        // 1. BOUTON TROUVER POUR RECHERCHER UNE FV PAR MISSION ID
+        function trouverFicheEncaisse() {
+            const selectedId = document.getElementById('selectEncaisseMissionId').value;
+            if (!selectedId) { alert("Veuillez sélectionner un Mission ID."); return; }
+
+            const db = FCIDatabase.getDB();
+            const constatsFV = (db.constatsEncaisses || []).filter(e => e.idMission === selectedId);
+
+            if (constatsFV.length === 0) {
+                alert(`Aucune fiche des encaisses trouvée pour le Mission ID : ${selectedId}`);
+                return;
+            }
+
+            currentMissionId = selectedId;
+            document.getElementById('idMissionEncaisse').value = currentMissionId;
+            document.getElementById('searchEncaisseStatus').innerText = `Fiche FV [${selectedId}] chargée.`;
+
+            const sample = constatsFV[0];
+            document.getElementById('dateVerification').value = sample.date ? `${sample.date}T10:00` : '';
+
+            addedPoints = constatsFV.map((c, idx) => ({
+                id: Date.now() + idx,
+                selected: true,
+                processus: c.processus,
+                risque: c.risque,
+                controle: c.controle,
+                pointDeControle: c.pc,
+                constats: [{
+                    population: c.pop,
+                    echantillon: c.ech,
+                    ok: c.ok,
+                    ko: c.ko,
+                    rate: c.tc,
+                    constatText: c.constat || '',
+                    recoText: '',
+                    avisText: ''
+                }]
+            }));
+
+            renderPoints();
+        }
+
+        // 1. BOUTON MODIFIER (REMPLACE L'ANCIEN PAR LE NOUVEAU CONSTAT)
+        function modifierFicheEncaisse() {
+            if (!currentMissionId) {
+                alert("Aucune Fiche des Encaisses n'est actuellement chargée à modifier.");
+                return;
+            }
+
+            if (!validateCohérenceEchantillon()) return;
+
+            const db = FCIDatabase.getDB();
+            // Suppression de l'ancienne entrée
+            db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
+            FCIDatabase.saveDB(db);
+
+            // Ré-enregistrement
+            archiverFicheEncaisse();
+            alert(`✅ La Fiche des Encaisses [${currentMissionId}] a été modifiée avec succès dans la BDD.`);
+        }
+
+        // 1. BOUTON SUPPRIMER UNE FV DE LA BDD
+        function supprimerFicheEncaisse() {
+            if (!currentMissionId) {
+                alert("Aucune Fiche des Encaisses n'est actuellement chargée à supprimer.");
+                return;
+            }
+
+            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer la Fiche des Encaisses [${currentMissionId}] de la BDD ?`)) {
+                const db = FCIDatabase.getDB();
+                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
+                FCIDatabase.saveDB(db);
+
+                alert(`La Fiche des Encaisses [${currentMissionId}] a été supprimée.`);
+                clearForm();
+                remplirListeMissionsEncaissesBDD();
+            }
         }
 
         function exportToExcel() {
             if (!validateCohérenceEchantillon()) return;
-
             const activePoints = addedPoints.filter(p => p.selected);
-            if (activePoints.length === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle coché avant d'exporter.");
-                return;
-            }
-
-            const typeCtrlValue = document.getElementById('typeControle').value;
-            const exportArray = [];
-
-            activePoints.forEach(p => {
-                p.constats.forEach((c, idx) => {
-                    exportArray.push({
-                        "Type de Contrôle": typeCtrlValue,
-                        "Date Vérification": document.getElementById('dateVerification').value,
-                        "Début Période Vérifiée": formatDateToFR(document.getElementById('periodeDebut').value),
-                        "Fin Période Vérifiée": formatDateToFR(document.getElementById('periodeFin').value),
-                        "Site / Agence": document.getElementById('nomSite').value,
-                        "Contrôleur": document.getElementById('nomControleur').value,
-                        "Responsable Site": document.getElementById('nomResponsable').value,
-                        "Processus": p.processus,
-                        "Intitulé du Risque": p.risque,
-                        "Intitulé de Contrôle": p.controle,
-                        "Point de Contrôle": p.pointDeControle,
-                        "Constat #": idx + 1,
-                        "Population": c.population,
-                        "Échantillon": c.echantillon,
-                        "Nombre OK": c.ok,
-                        "Nombre KO": c.ko,
-                        "Taux Conformité (%)": c.rate.toFixed(1) + '%',
-                        "Constat / Anomalie": c.constatText,
-                        "Recommandations": c.recoText,
-                        "Avis Responsable": c.avisText
-                    });
-                });
-            });
-
-            const worksheet = XLSX.utils.json_to_sheet(exportArray);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche Vérification Encaisses");
-            XLSX.writeFile(workbook, "Fiche_Verification_Encaisses_BAM.xlsx");
+            if (activePoints.length === 0) { alert("Veuillez cocher au moins un point avant d'exporter."); return; }
+            XLSX.writeFile(XLSX.utils.json_to_sheet(activePoints), "Fiche_Encaisses_Export.xlsx");
         }
     </script>
 </body>
