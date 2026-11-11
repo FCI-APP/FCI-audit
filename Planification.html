@@ -171,10 +171,8 @@
 v1.0 © 2026 - 2027</footer>
 </div>
 
-<!-- 1. Script du Gestionnaire de BDD Centralisée -->
 <script src="fci-db-manager.js"></script>
 
-<!-- 2. Logiciel applicatif -->
 <script>
     let pointsPlanifies = [];
 
@@ -191,7 +189,7 @@ v1.0 © 2026 - 2027</footer>
 
     function getItemVal(item, keys) {
         for (let k of keys) {
-            if (item && item[k] !== undefined) return item[k];
+            if (item && item[k] !== undefined && item[k] !== null) return item[k];
         }
         return '';
     }
@@ -240,15 +238,10 @@ v1.0 © 2026 - 2027</footer>
             pointsSelectionnes: pointsPlanifies
         };
 
-        // Enregistrement dans la BDD Centralisée
         FCIDatabase.enregistrerMission(missionData);
-
-        // Sauvegarde temporaire du contexte de mission active
         localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
 
         alert('Mission validée et enregistrée avec succès dans la BDD Centralisée !');
-        
-        // Redirection exacte sans le suffixe '5'
         window.location.href = 'FicheControle.html';
     }
 </script>
