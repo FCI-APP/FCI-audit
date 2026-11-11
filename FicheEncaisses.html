@@ -170,20 +170,17 @@ v1.0 © 2026 - 2027</footer>
         let ok = parseInt(document.getElementById('okEncaisse').value) || 0;
         let ko = parseInt(document.getElementById('koEncaisse').value) || 0;
 
-        // Échantillon <= Population
         if (ech > pop) {
             alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
             document.getElementById('echEncaisse').value = 0;
             ech = 0;
         }
 
-        // Ajustement automatique OK + KO <= Échantillon
         if ((ok + ko) > ech && ech > 0) {
             ko = Math.max(0, ech - ok);
             document.getElementById('koEncaisse').value = ko;
         }
 
-        // Calcul TC (%)
         let tc = 0;
         if (ech > 0) {
             tc = ((ok / ech) * 100).toFixed(1);
@@ -221,10 +218,12 @@ v1.0 © 2026 - 2027</footer>
             constat: constat
         };
 
-        // Sauvegarde dans la BDD Centralisée
         FCIDatabase.enregistrerConstatEncaisse(dataEncaisse);
 
         alert('Vérification des encaisses enregistrée avec succès dans la BDD Centralisée !');
+        
+        // Redirection vers le Tableau de Bord
+        window.location.href = 'TDB.html';
     }
 </script>
 </body>
