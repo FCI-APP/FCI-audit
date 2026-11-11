@@ -179,11 +179,9 @@ v1.0 © 2026 - 2027</footer>
     let pointsPlanifies = [];
 
     document.addEventListener('DOMContentLoaded', () => {
-        // Définir la date du jour par défaut
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('datePlanification').value = today;
 
-        // Charger les points sélectionnés depuis la Feuille 1 (localStorage)
         const savedData = localStorage.getItem('fci_planification_pc');
         if (savedData) {
             pointsPlanifies = JSON.parse(savedData);
@@ -242,14 +240,16 @@ v1.0 © 2026 - 2027</footer>
             pointsSelectionnes: pointsPlanifies
         };
 
-        // Sauvegarde dans la BDD Centralisée fci_database
+        // Enregistrement dans la BDD Centralisée
         FCIDatabase.enregistrerMission(missionData);
 
-        // Sauvegarde temporaire pour la Feuille 3 (Mission active)
+        // Sauvegarde temporaire du contexte de mission active
         localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData));
 
         alert('Mission validée et enregistrée avec succès dans la BDD Centralisée !');
-        window.location.href = 'FicheControle5.html';
+        
+        // Redirection exacte sans le suffixe '5'
+        window.location.href = 'FicheControle.html';
     }
 </script>
 </body>
