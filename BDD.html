@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI v1.0 - Feuille 5 : Base de Données Centralisée (BDD)</title>
+    <!-- FontAwesome v6.4.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --dark-blue: #002244;
+            --accent-gold: #EAAA00;
+            --bg-light: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --sidebar-width: 250px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-blue);
+            color: #FFFFFF;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            background-color: var(--dark-blue);
+            text-align: center;
+            border-bottom: 2px solid var(--accent-gold);
+        }
+
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+
+        .sidebar-footer {
+            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
+        }
+
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+        }
+
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .btn-danger:hover { background-color: #FCA5A5; }
+
+        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 20px; margin-bottom: 30px; }
+        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        tr:nth-child(even) { background-color: #F8FAFC; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-title">
+                <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
+                <p>Visualisation brute des tables de données stockées localement</p>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+            </div>
+        </header>
+
+        <!-- TABLE 1 : MISSIONS -->
+        <div class="table-card">
+            <h3><i class="fa-solid fa-folder-open"></i> Table A : Missions Planifiées</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mission ID</th>
+                        <th>Date Création</th>
+                        <th>Début</th>
+                        <th>Fin</th>
+                        <th>Entité</th>
+                        <th>Contrôleur(s)</th>
+                        <th>Nb Points</th>
+                    </tr>
+                </thead>
+                <tbody id="tableMissions"></tbody>
+            </table>
+        </div>
+
+        <!-- TABLE 2 : CONSTATS FC -->
+        <div class="table-card">
+            <h3><i class="fa-solid fa-list-check"></i> Table B : Constats Fiche de Contrôle (FC)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Constat ID</th>
+                        <th>Mission ID</th>
+                        <th>Processus</th>
+                        <th>Risque</th>
+                        <th>Contrôle</th>
+                        <th>Point de Contrôle (PC)</th>
+                        <th>Pop</th>
+                        <th>Ech</th>
+                        <th>OK</th>
+                        <th>KO</th>
+                        <th>TC (%)</th>
+                        <th>Constat</th>
+                    </tr>
+                </thead>
+                <tbody id="tableConstatsFC"></tbody>
+            </table>
+        </div>
+
+        <!-- TABLE 3 : CONSTATS ENCAISSES -->
+        <div class="table-card">
+            <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Encaisse ID</th>
+                        <th>Mission ID</th>
+                        <th>Date</th>
+                        <th>Processus</th>
+                        <th>Risque</th>
+                        <th>Contrôle</th>
+                        <th>PC</th>
+                        <th>Ech</th>
+                        <th>OK</th>
+                        <th>KO</th>
+                        <th>TC (%)</th>
+                    </tr>
+                </thead>
+                <tbody id="tableConstatsEncaisses"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="fci-db-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
+
+        function chargerBDDEnVisuel() {
+            const db = FCIDatabase.getDB();
+
+            // 1. Missions
+            const tbodyM = document.getElementById('tableMissions');
+            tbodyM.innerHTML = '';
+            if (!db.missions || db.missions.length === 0) {
+                tbodyM.innerHTML = '<tr><td colspan="7" style="text-align:center;">Aucune mission dans la BDD.</td></tr>';
+            } else {
+                db.missions.forEach(m => {
+                    tbodyM.innerHTML += `
+                        <tr>
+                            <td><b>${m.idMission}</b></td>
+                            <td>${m.date || '--'}</td>
+                            <td>${m.dateDebut || '--'}</td>
+                            <td>${m.dateFin || '--'}</td>
+                            <td>${m.entite || '--'}</td>
+                            <td>${m.controleur || '--'}</td>
+                            <td>${m.pointsSelectionnes ? m.pointsSelectionnes.length : 0}</td>
+                        </tr>`;
+                });
+            }
+
+            // 2. Constats FC
+            const tbodyFC = document.getElementById('tableConstatsFC');
+            tbodyFC.innerHTML = '';
+            if (!db.constatsControle || db.constatsControle.length === 0) {
+                tbodyFC.innerHTML = '<tr><td colspan="12" style="text-align:center;">Aucun constat FC dans la BDD.</td></tr>';
+            } else {
+                db.constatsControle.forEach(c => {
+                    tbodyFC.innerHTML += `
+                        <tr>
+                            <td><b>${c.idConstat}</b></td>
+                            <td>${c.idMission}</td>
+                            <td>${c.processus}</td>
+                            <td>${c.risque}</td>
+                            <td>${c.controle}</td>
+                            <td>${c.pc}</td>
+                            <td>${c.pop}</td>
+                            <td>${c.ech}</td>
+                            <td><span style="color:var(--success);font-weight:bold;">${c.ok}</span></td>
+                            <td><span style="color:var(--danger);font-weight:bold;">${c.ko}</span></td>
+                            <td><b>${parseFloat(c.tc).toFixed(1)}%</b></td>
+                            <td>${c.constat || '--'}</td>
+                        </tr>`;
+                });
+            }
+
+            // 3. Constats Encaisses
+            const tbodyE = document.getElementById('tableConstatsEncaisses');
+            tbodyE.innerHTML = '';
+            if (!db.constatsEncaisses || db.constatsEncaisses.length === 0) {
+                tbodyE.innerHTML = '<tr><td colspan="11" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
+            } else {
+                db.constatsEncaisses.forEach(e => {
+                    tbodyE.innerHTML += `
+                        <tr>
+                            <td><b>${e.idEncaisse}</b></td>
+                            <td>${e.idMission}</td>
+                            <td>${e.date}</td>
+                            <td>${e.processus}</td>
+                            <td>${e.risque}</td>
+                            <td>${e.controle}</td>
+                            <td>${e.pc}</td>
+                            <td>${e.ech}</td>
+                            <td><span style="color:var(--success);font-weight:bold;">${e.ok}</span></td>
+                            <td><span style="color:var(--danger);font-weight:bold;">${e.ko}</span></td>
+                            <td><b>${parseFloat(e.tc).toFixed(1)}%</b></td>
+                        </tr>`;
+                });
+            }
+        }
+
+        function viderTouteLaBDD() {
+            if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD (Missions + FC + Encaisses) ?")) {
+                FCIDatabase.viderBDD();
+                chargerBDDEnVisuel();
+                alert("La BDD a été vidée.");
+            }
+        }
+    </script>
+</body>
+</html>
