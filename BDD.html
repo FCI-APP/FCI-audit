@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 5 : Base de Données Centralisée (BDD)</title>
-    <!-- FontAwesome v6.4.0 -->
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -87,9 +86,9 @@
 
         .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 20px; margin-bottom: 30px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
         th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.74rem; }
         tr:nth-child(even) { background-color: #F8FAFC; }
     </style>
 </head>
@@ -119,7 +118,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Visualisation brute des tables de données stockées localement</p>
+                <p>Visualisation brute des tables de données enregistrées</p>
             </div>
             <div style="display:flex; gap:10px;">
                 <button class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
@@ -146,7 +145,7 @@
             </table>
         </div>
 
-        <!-- TABLE 2 : CONSTATS FC -->
+        <!-- TABLE 2 : CONSTATS FC (AVEC AVIS RESPONSABLE) -->
         <div class="table-card">
             <h3><i class="fa-solid fa-list-check"></i> Table B : Constats Fiche de Contrôle (FC)</h3>
             <table>
@@ -164,6 +163,8 @@
                         <th>KO</th>
                         <th>TC (%)</th>
                         <th>Constat</th>
+                        <th>Recommandation</th>
+                        <th>Avis Responsable</th>
                     </tr>
                 </thead>
                 <tbody id="tableConstatsFC"></tbody>
@@ -221,11 +222,11 @@
                 });
             }
 
-            // 2. Constats FC
+            // 2. Constats FC (avec Avis du Responsable)
             const tbodyFC = document.getElementById('tableConstatsFC');
             tbodyFC.innerHTML = '';
             if (!db.constatsControle || db.constatsControle.length === 0) {
-                tbodyFC.innerHTML = '<tr><td colspan="12" style="text-align:center;">Aucun constat FC dans la BDD.</td></tr>';
+                tbodyFC.innerHTML = '<tr><td colspan="14" style="text-align:center;">Aucun constat FC dans la BDD.</td></tr>';
             } else {
                 db.constatsControle.forEach(c => {
                     tbodyFC.innerHTML += `
@@ -242,6 +243,8 @@
                             <td><span style="color:var(--danger);font-weight:bold;">${c.ko}</span></td>
                             <td><b>${parseFloat(c.tc).toFixed(1)}%</b></td>
                             <td>${c.constat || '--'}</td>
+                            <td>${c.recommandation || '--'}</td>
+                            <td>${c.avisResponsable || '--'}</td>
                         </tr>`;
                 });
             }
