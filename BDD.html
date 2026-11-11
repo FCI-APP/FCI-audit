@@ -118,7 +118,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Visualisation brute des tables de données enregistrées</p>
+                <p>Visualisation brute des tables de données enregistrées en temps réel</p>
             </div>
             <div style="display:flex; gap:10px;">
                 <button class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
@@ -173,7 +173,7 @@
 
         <!-- TABLE 3 : CONSTATS ENCAISSES -->
         <div class="table-card">
-            <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses</h3>
+            <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses (FV)</h3>
             <table>
                 <thead>
                     <tr>
@@ -202,7 +202,7 @@
         function chargerBDDEnVisuel() {
             const db = FCIDatabase.getDB();
 
-            // 1. Missions
+            // 1. Table Missions
             const tbodyM = document.getElementById('tableMissions');
             tbodyM.innerHTML = '';
             if (!db.missions || db.missions.length === 0) {
@@ -222,7 +222,7 @@
                 });
             }
 
-            // 2. Constats FC (avec Avis du Responsable)
+            // 2. Table Constats FC (incluant Avis du Responsable)
             const tbodyFC = document.getElementById('tableConstatsFC');
             tbodyFC.innerHTML = '';
             if (!db.constatsControle || db.constatsControle.length === 0) {
@@ -249,7 +249,7 @@
                 });
             }
 
-            // 3. Constats Encaisses
+            // 3. Table Constats Encaisses (FV)
             const tbodyE = document.getElementById('tableConstatsEncaisses');
             tbodyE.innerHTML = '';
             if (!db.constatsEncaisses || db.constatsEncaisses.length === 0) {
