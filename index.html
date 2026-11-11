@@ -117,6 +117,9 @@
                 <li>
                     <a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a>
                 </li>
+                <li>
+                    <a href="TDB.html"><span>5. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a>
+                </li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -206,6 +209,9 @@
         </div>
     </main>
 
+    <!-- Inclusion du script BDD Centralisée -->
+    <script src="fci-db-manager.js"></script>
+
     <script>
         let bddData = [];
         let filteredData = [];
@@ -214,7 +220,6 @@
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
-        // Helper tolérant pour lire dynamiquement les variantes de clés du JSON
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -225,7 +230,6 @@
         async function chargerBDD() {
             const statusBadge = document.getElementById('bdd-status');
 
-            // Fichiers cibles par ordre strict de priorité (référentiel général en premier)
             const dynamicFiles = [
                 './referentiel.json?v=' + Date.now(),
                 './referentiel_controle_redresse-vf_Référentiel Redressé.json?v=' + Date.now()
