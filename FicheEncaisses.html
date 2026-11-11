@@ -3,230 +3,839 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Feuille 4 : Fiche de la Vérification des Encaisses</title>
+    <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         :root {
-            --primary: #1e3a8a;
-            --primary-hover: #1d4ed8;
-            --bg-main: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #0f172a;
-            --border: #cbd5e1;
+            --primary-blue: #003366;
+            --dark-blue: #002244;
+            --accent-gold: #EAAA00;
+            --accent-gold-hover: #d49900;
+            --bg-light: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --sidebar-width: 250px;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: var(--primary);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 6px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-
-        input[type="number"], input[type="text"], input[type="date"] {
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-        }
-
-        .metric-box {
-            background: #e2e8f0;
-            padding: 15px;
-            border-radius: 6px;
-            display: flex;
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-blue);
+            color: #FFFFFF;
+            position: fixed;
+            top: 0; bottom: 0; left: 0;
+            display: flex; flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 1.1em;
-            font-weight: bold;
+            z-index: 100;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         }
 
-        .btn-container {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        footer {
-            margin-top: 30px;
+        .sidebar-header {
+            padding: 20px 15px;
+            background-color: var(--dark-blue);
             text-align: center;
-            font-size: 0.85em;
-            color: #64748b;
-            border-top: 1px solid var(--border);
-            padding-top: 10px;
-            white-space: pre-line;
+            border-bottom: 2px solid var(--accent-gold);
         }
+
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+        }
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+
+        .sidebar-footer {
+            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
+        }
+
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+        }
+
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .bdd-badge-total {
+            background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700;
+            padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
+
+        .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
+
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .kpi-info h3 { font-size: 1.25rem; color: var(--primary-blue); font-weight: 800; }
+        .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 600; }
+
+        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-top: 15px; }
+        .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 6px; margin-top: 14px; }
+
+        .toolbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+        .pc-card { background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .pc-card-header { background: var(--primary-blue); color: #FFFFFF; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .pc-card-body { padding: 20px; }
+
+        .constat-box { background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-color); padding: 18px; margin-bottom: 18px; }
+        .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+
+        .conformity-badge { font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
+
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
+
+        .actions-bar { display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px; }
+
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-outline { background-color: transparent; border-color: var(--border-color); color: var(--text-dark); }
+        .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
+        .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>FCI v1.0 — Feuille 4 : Fiche de la Vérification des Encaisses</h1>
-    
-    <div class="form-grid">
-        <div class="form-group">
-            <label for="dateEncaisse">Date de Vérification :</label>
-            <input type="date" id="dateEncaisse">
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+            </ul>
         </div>
-        <div class="form-group">
-            <label for="popEncaisse">Population (Total Caisses) :</label>
-            <input type="number" id="popEncaisse" min="0" value="0" onchange="updateConstatNumbers()">
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
-        <div class="form-group">
-            <label for="echEncaisse">Échantillon (Caisses Vérifiées) :</label>
-            <input type="number" id="echEncaisse" min="0" value="0" onchange="updateConstatNumbers()">
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-title">
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses</h1>
+                <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement BDD...</span>
+                <button class="btn btn-outline" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
+            </div>
+        </header>
+
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                <div class="kpi-info"><h3 id="kpi-proc">0</h3><p>Processus</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="kpi-info"><h3 id="kpi-risque">0</h3><p>Risques</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="kpi-info"><h3 id="kpi-controle">0</h3><p>Contrôles</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                <div class="kpi-info"><h3 id="kpi-pc">0</h3><p>PC affichés</p></div>
+            </div>
+            <div class="kpi-card" style="border-left: 4px solid var(--accent-gold);">
+                <div class="kpi-icon" style="background: rgba(234, 170, 0, 0.15); color: var(--primary-blue);"><i class="fa-solid fa-percent"></i></div>
+                <div class="kpi-info"><h3 id="kpi-taux-moyen">0 %</h3><p>Taux Moyen Centre</p></div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="okEncaisse">Nombre OK (Conformes) :</label>
-            <input type="number" id="okEncaisse" min="0" value="0" onchange="updateConstatNumbers()">
+
+        <section class="card">
+            <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Type de Contrôle *</label>
+                    <select class="form-control" id="typeControle">
+                        <option value="Vérification" selected>Vérification</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date et heure de vérification *</label>
+                    <input type="datetime-local" class="form-control" id="dateVerification">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Début période vérifiée *</label>
+                    <input type="date" class="form-control" id="periodeDebut">
+                </div>
+                <div class="form-group">
+                    <label><i class="fa-solid fa-calendar-day"></i> Fin période vérifiée *</label>
+                    <input type="date" class="form-control" id="periodeFin">
+                </div>
+                <div class="form-group">
+                    <label>Nom du site / Agence *</label>
+                    <input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Rabat">
+                </div>
+                <div class="form-group">
+                    <label>Nom du contrôleur *</label>
+                    <input type="text" class="form-control" id="nomControleur" placeholder="Ex: Ahmed El Mansouri / Karima Naji">
+                </div>
+                <div class="form-group">
+                    <label>Nom du responsable du site <span style="font-weight: 400; color: var(--text-muted);">(Facultatif)</span></label>
+                    <input type="text" class="form-control" id="nomResponsable" placeholder="Ex: Mohammed El Amrani">
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</h2>
+            <div class="selection-box">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="selectProcessus">1. Processus</label>
+                        <select class="form-control" id="selectProcessus" onchange="onProcessusChange()">
+                            <option value="">-- Chargement du JSON en cours... --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectRisque">2. Intitulé du risque</label>
+                        <select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled>
+                            <option value="">-- Choisir un risque --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectControle">3. Intitulé de contrôle</label>
+                        <select class="form-control" id="selectControle" onchange="onControleChange()" disabled>
+                            <option value="">-- Choisir un contrôle --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pc-preview" id="pcPreviewBox" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <div>
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE SÉLECTIONNÉ :</strong>
+                            <p id="pcPreviewText" style="margin-top: 5px;"></p>
+                        </div>
+                        <button class="btn btn-primary" onclick="addSelectedPointControl()"><i class="fa-solid fa-plus"></i> Ajouter ce point au contrôle</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="toolbar">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
+                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-blue);">
+                <span id="selectedCountDisplay">0</span> point(s) sélectionné(s) sur cette fiche
+            </div>
         </div>
-        <div class="form-group">
-            <label for="koEncaisse">Nombre KO (Écarts/Anomalies) :</label>
-            <input type="number" id="koEncaisse" min="0" value="0" onchange="updateConstatNumbers()">
-        </div>
-    </div>
 
-    <div class="metric-box">
-        <span>Taux de Conformité Encaisses (TC) :</span>
-        <span id="tcEncaisseDisplay" style="color: var(--primary);">0.0%</span>
-    </div>
+        <div id="pointsEvaluationsContainer"></div>
 
-    <div class="form-group">
-        <label for="constatEncaisseText">Constat / Remarques du Contrôleur :</label>
-        <input type="text" id="constatEncaisseText" placeholder="Saisir les remarques de vérification physique des caisses..." style="width: 100%;">
-    </div>
+        <section class="summary-card" id="summaryCard" style="display: none;">
+            <div class="summary-top">
+                <div class="summary-info">
+                    <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent-gold);"></i>
+                    <div>
+                        <h3>TAUX MOYEN DU CENTRE : <span id="globalRateDisplay">0 %</span></h3>
+                        <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur tous les constats réalisés au niveau du centre.</p>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge-avis-global" id="globalAvisBadge">---</span>
+                </div>
+            </div>
 
-    <div class="btn-container">
-        <button onclick="enregistrerEncaisseBDD()">Enregistrer la Vérification dans la BDD</button>
-    </div>
+            <div class="center-description">
+                <strong style="display: block; color: var(--accent-gold); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">
+                    <i class="fa-solid fa-file-contract"></i> Description & Niveau de Maîtrise du Centre :
+                </strong>
+                <p id="centerDescriptionText">Chargement de la description du centre...</p>
+            </div>
+        </section>
 
-    <footer>Fiche de contrôle intelligente (FCI)
-v1.0 © 2026 - 2027</footer>
-</div>
+        <footer class="actions-bar">
+            <button class="btn btn-outline" onclick="saveToLocalStorage()"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+            <button class="btn btn-primary" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
+            <button class="btn btn-accent" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+        </footer>
+    </main>
 
-<script src="fci-db-manager.js"></script>
+    <!-- Inclusion du gestionnaire BDD Centralisée -->
+    <script src="fci-db-manager.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('dateEncaisse').value = new Date().toISOString().slice(0, 10);
-    });
+    <script>
+        let rawJsonData = [];
+        let addedPoints = [];
 
-    function updateConstatNumbers() {
-        let pop = parseInt(document.getElementById('popEncaisse').value) || 0;
-        let ech = parseInt(document.getElementById('echEncaisse').value) || 0;
-        let ok = parseInt(document.getElementById('okEncaisse').value) || 0;
-
-        if (ech > pop) {
-            alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
-            document.getElementById('echEncaisse').value = 0;
-            ech = 0;
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined) return item[k];
+            }
+            return '';
         }
 
-        if (ok > ech) {
-            alert("Erreur : Le nombre OK ne peut pas dépasser l'échantillon !");
-            document.getElementById('okEncaisse').value = ech;
-            ok = ech;
+        function formatDateToFR(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('-')) {
+                const parts = val.split('-');
+                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return val;
         }
 
-        let ko = 0;
-        if (ech > 0) {
-            ko = Math.max(0, ech - ok);
-        }
-        document.getElementById('koEncaisse').value = ko;
-
-        let tc = 0;
-        if (ech > 0) {
-            tc = ((ok / ech) * 100).toFixed(1);
+        function formatDateToISO(val) {
+            if (!val || val === '-') return '';
+            if (val.includes('/')) {
+                const parts = val.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return val;
         }
 
-        document.getElementById('tcEncaisseDisplay').textContent = tc + '%';
-    }
+        document.addEventListener('DOMContentLoaded', () => {
+            resetDateField();
+            chargerDonneesSauvegardees();
+            chargerReferentielJSON();
+        });
 
-    function enregistrerEncaisseBDD() {
-        const savedMission = localStorage.getItem('fci_fiche_controle_active');
-        const activeMission = savedMission ? JSON.parse(savedMission) : null;
-        const idMission = activeMission ? activeMission.idMission : "MIS-DEFAULT";
+        function resetDateField() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const dateInput = document.getElementById('dateVerification');
+            if (dateInput && !dateInput.value) dateInput.value = now.toISOString().slice(0, 16);
+        }
 
-        const pop = parseInt(document.getElementById('popEncaisse').value) || 0;
-        const ech = parseInt(document.getElementById('echEncaisse').value) || 0;
-        const ok = parseInt(document.getElementById('okEncaisse').value) || 0;
-        const ko = parseInt(document.getElementById('koEncaisse').value) || 0;
-        const tcStr = document.getElementById('tcEncaisseDisplay').textContent.replace('%', '');
-        const tc = parseFloat(tcStr) || 0;
-        const constat = document.getElementById('constatEncaisseText').value;
+        function chargerDonneesSauvegardees() {
+            const savedRaw = localStorage.getItem('fci_fiche_verification_encaisses');
+            if (!savedRaw) return;
 
-        const dataEncaisse = {
-            idEncaisse: "ENC-" + Date.now(),
-            idMission: idMission,
-            date: document.getElementById('dateEncaisse').value,
-            processus: "Gestion des Encaisses",
-            risque: "Écart de caisse / Manquant d'espèces",
-            controle: "Vérification physique des encaisses",
-            pc: "Comptage physique des fonds et des valeurs",
-            pop: pop,
-            ech: ech,
-            ok: ok,
-            ko: ko,
-            tc: tc,
-            constat: constat
-        };
+            try {
+                const saved = JSON.parse(savedRaw);
+                if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
+                if (saved.periodeDebut) document.getElementById('periodeDebut').value = formatDateToISO(saved.periodeDebut);
+                if (saved.periodeFin) document.getElementById('periodeFin').value = formatDateToISO(saved.periodeFin);
+                if (saved.site) document.getElementById('nomSite').value = saved.site;
+                if (saved.controleur) document.getElementById('nomControleur').value = saved.controleur;
+                if (saved.responsable) document.getElementById('nomResponsable').value = saved.responsable;
+                
+                if (Array.isArray(saved.points) && saved.points.length > 0) {
+                    addedPoints = saved.points;
+                    renderPoints();
+                }
+            } catch (e) {
+                console.warn("Impossible de restaurer la fiche sauvegardée :", e);
+            }
+        }
 
-        FCIDatabase.enregistrerConstatEncaisse(dataEncaisse);
+        async function chargerReferentielJSON() {
+            const badge = document.getElementById('bddStatusBadge');
+            const filesToTry = [
+                './Encaisses.json?v=' + Date.now(),
+                './encaisses.json?v=' + Date.now(),
+                './referentiel.json?v=' + Date.now()
+            ];
 
-        alert('Vérification des encaisses enregistrée avec succès dans la BDD Centralisée !');
-        window.location.href = 'TDB.html';
-    }
-</script>
+            let loaded = false;
+
+            for (const path of filesToTry) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            rawJsonData = data;
+                            initCascadeSelects();
+                            
+                            badge.style.backgroundColor = "#DEF7EC";
+                            badge.style.color = "#03543F";
+                            badge.style.borderColor = "#A7F3D0";
+                            badge.innerHTML = `<i class="fa-solid fa-database"></i> BDD à jour (<strong>${rawJsonData.length}</strong> PC)`;
+
+                            loaded = true;
+                            break;
+                        }
+                    }
+                } catch (error) {
+                    console.warn("Échec du chargement depuis", path);
+                }
+            }
+
+            if (!loaded) {
+                const procSelect = document.getElementById('selectProcessus');
+                if (procSelect) {
+                    procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json introuvable --</option>';
+                }
+                badge.style.backgroundColor = "#FDE8E8";
+                badge.style.color = "#9B1C1C";
+                badge.style.borderColor = "#FCA5A5";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> BDD Introuvable`;
+            }
+        }
+
+        function initCascadeSelects() {
+            const procSelect = document.getElementById('selectProcessus');
+            const processes = [...new Set(rawJsonData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean);
+            
+            procSelect.innerHTML = '<option value="">-- Choisir un processus --</option>';
+            processes.forEach(p => {
+                procSelect.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+        }
+
+        function onProcessusChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risqueSelect = document.getElementById('selectRisque');
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            risqueSelect.innerHTML = '<option value="">-- Choisir un risque --</option>';
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+            ctrlSelect.disabled = true;
+
+            if (!proc) {
+                risqueSelect.disabled = true;
+                return;
+            }
+
+            const risques = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc).map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
+            risques.forEach(r => {
+                risqueSelect.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+            risqueSelect.disabled = false;
+        }
+
+        function onRisqueChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+
+            if (!risque) {
+                ctrlSelect.disabled = true;
+                return;
+            }
+
+            const controles = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque).map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean);
+            controles.forEach(c => {
+                ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+            ctrlSelect.disabled = false;
+        }
+
+        function onControleChange() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+
+            if (!ctrl) {
+                document.getElementById('pcPreviewBox').style.display = 'none';
+                return;
+            }
+
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
+            if (item) {
+                document.getElementById('pcPreviewText').innerText = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
+                document.getElementById('pcPreviewBox').style.display = 'block';
+            }
+        }
+
+        function addSelectedPointControl() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
+
+            if (!item) return;
+
+            const pointObj = {
+                id: Date.now(),
+                selected: true,
+                processus: getItemVal(item, ['Processus']),
+                risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
+                controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
+                constats: [
+                    { population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }
+                ]
+            };
+
+            addedPoints.push(pointObj);
+            renderPoints();
+            
+            document.getElementById('selectProcessus').value = '';
+            onProcessusChange();
+        }
+
+        function renderPoints() {
+            const container = document.getElementById('pointsEvaluationsContainer');
+            container.innerHTML = '';
+
+            addedPoints.forEach((point, pIndex) => {
+                const card = document.createElement('div');
+                card.className = 'pc-card';
+
+                let constatsHTML = '';
+                point.constats.forEach((c, cIndex) => {
+                    const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
+                    constatsHTML += `
+                        <div class="constat-box">
+                            <div class="constat-header">
+                                <strong style="font-size: 0.85rem; color: var(--primary-blue);"><i class="fa-solid fa-pen-to-square"></i> Constat #${cIndex + 1}</strong>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span>Taux de conformité :</span>
+                                    <span class="conformity-badge ${badgeClass}">${c.rate.toFixed(1)} %</span>
+                                    ${point.constats.length > 1 ? `<button class="btn-danger-icon" title="Supprimer ce constat" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="form-grid" style="margin-bottom: 14px;">
+                                <div class="form-group">
+                                    <label>Population</label>
+                                    <input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Échantillon</label>
+                                    <input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre OK</label>
+                                    <input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nombre KO</label>
+                                    <input type="number" min="0" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Constat / Anomalie observée *</label>
+                                <textarea class="form-control" rows="2" placeholder="Description détaillée du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Recommandation *</label>
+                                    <textarea class="form-control" rows="2" placeholder="Recommandations du contrôleur..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Avis du responsable du site (Facultatif)</label>
+                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations du responsable..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="pc-card-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" ${point.selected ? 'checked' : ''} style="transform: scale(1.2); cursor: pointer;" onchange="togglePointSelect(${pIndex}, this.checked)">
+                            <h4><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> ${point.processus} &gt; ${point.risque}</h4>
+                        </div>
+                        <button class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
+                    </div>
+                    <div class="pc-card-body">
+                        <div style="background: #F1F5F9; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid var(--primary-blue);">
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
+                            <p style="font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">${point.pointDeControle}</p>
+                        </div>
+                        ${constatsHTML}
+                        <button class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="addConstatToPoint(${pIndex})">
+                            <i class="fa-solid fa-plus"></i> Ajouter un autre constat à ce point
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            updateKpisAndSummary();
+        }
+
+        function togglePointSelect(pIndex, isChecked) {
+            addedPoints[pIndex].selected = isChecked;
+            updateKpisAndSummary();
+        }
+
+        function selectAllPoints() {
+            addedPoints.forEach(p => p.selected = true);
+            renderPoints();
+        }
+
+        function deselectAllPoints() {
+            addedPoints.forEach(p => p.selected = false);
+            renderPoints();
+        }
+
+        function updateConstatNumbers(pIndex, cIndex, field, value) {
+            const val = parseInt(value) || 0;
+            const c = addedPoints[pIndex].constats[cIndex];
+            c[field] = val;
+
+            if (c.echantillon > c.population && c.population > 0) {
+                alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
+                c.echantillon = 0;
+            }
+
+            if (c.echantillon > 0) {
+                if (c.ok > c.echantillon) c.ok = c.echantillon;
+                c.ko = Math.max(0, c.echantillon - c.ok);
+                c.rate = (c.ok / c.echantillon) * 100;
+            } else {
+                c.ko = 0;
+                c.rate = 100;
+            }
+            renderPoints();
+        }
+
+        function updateConstatText(pIndex, cIndex, field, value) {
+            addedPoints[pIndex].constats[cIndex][field] = value;
+        }
+
+        function addConstatToPoint(pIndex) {
+            addedPoints[pIndex].constats.push({
+                population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: ''
+            });
+            renderPoints();
+        }
+
+        function removeConstat(pIndex, cIndex) {
+            addedPoints[pIndex].constats.splice(cIndex, 1);
+            renderPoints();
+        }
+
+        function removePoint(pIndex) {
+            addedPoints.splice(pIndex, 1);
+            renderPoints();
+        }
+
+        function updateKpisAndSummary() {
+            const activePoints = addedPoints.filter(p => p.selected);
+            const procs = new Set(activePoints.map(p => p.processus)).size;
+            const risques = new Set(activePoints.map(p => p.risque)).size;
+            const controles = new Set(activePoints.map(p => p.controle)).size;
+
+            let totalRates = 0;
+            let count = 0;
+
+            activePoints.forEach(p => {
+                p.constats.forEach(c => {
+                    totalRates += c.rate;
+                    count++;
+                });
+            });
+
+            const globalRate = count > 0 ? (totalRates / count) : 0;
+            const globalRateStr = count > 0 ? globalRate.toFixed(1) + ' %' : '0 %';
+
+            document.getElementById('kpi-proc').innerText = procs;
+            document.getElementById('kpi-risque').innerText = risques;
+            document.getElementById('kpi-controle').innerText = controles;
+            document.getElementById('kpi-pc').innerText = activePoints.length;
+            document.getElementById('kpi-taux-moyen').innerText = globalRateStr;
+            document.getElementById('selectedCountDisplay').innerText = activePoints.length;
+
+            const summaryCard = document.getElementById('summaryCard');
+            if (activePoints.length === 0) {
+                summaryCard.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('globalRateDisplay').innerText = globalRateStr;
+            const badge = document.getElementById('globalAvisBadge');
+            const desc = document.getElementById('centerDescriptionText');
+            badge.className = 'badge-avis-global ';
+
+            if (globalRate < 60) {
+                badge.innerText = 'Gestion non satisfaisante';
+                badge.classList.add('avis-non-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans la gestion et le suivi des encaisses. Les contrôles internes sont insuffisants ou non appliqués de manière rigoureuse. Un plan d'action correctif immédiat et un suivi rapproché sont fortement recommandés pour résorber les anomalies relevées.`;
+            } else if (globalRate < 80) {
+                badge.innerText = 'Gestion satisfaisante';
+                badge.classList.add('avis-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Le centre respecte globalement les procédures d'arrêté et d'encaissement, mais présente quelques dysfonctionnements ou écarts ponctuels. La mise en place des recommandations permettra d'optimiser le dispositif de contrôle permanent.`;
+            } else if (globalRate < 95) {
+                badge.innerText = 'Bonne gestion';
+                badge.classList.add('avis-bonne');
+                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Le niveau de conformité est élevé. Les opérations de caisse et de versement sont exécutées avec rigueur conformément aux instructions de la Direction Contrôle Général. Quelques ajustements mineurs suffiront à garantir une conformité totale.`;
+            } else {
+                badge.innerText = 'Très bonne gestion';
+                badge.classList.add('avis-tres-bonne');
+                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des registres, arrêtés de caisse et délais de versement. Le centre fait preuve d'un haut niveau de maîtrise des risques opérationnels liés aux encaisses. Aucun dysfonctionnement majeur à signaler.`;
+            }
+
+            summaryCard.style.display = 'flex';
+        }
+
+        function clearForm() {
+            if (confirm("Voulez-vous vraiment vider toute la fiche de contrôle ?")) {
+                addedPoints = [];
+                document.getElementById('nomSite').value = '';
+                document.getElementById('nomControleur').value = '';
+                document.getElementById('nomResponsable').value = '';
+                document.getElementById('periodeDebut').value = '';
+                document.getElementById('periodeFin').value = '';
+                document.getElementById('selectProcessus').value = '';
+                onProcessusChange();
+                resetDateField();
+                renderPoints();
+                localStorage.removeItem('fci_fiche_verification_encaisses');
+            }
+        }
+
+        function validateCohérenceEchantillon() {
+            for (let p of addedPoints) {
+                for (let c of p.constats) {
+                    if (c.echantillon > c.population && c.population > 0) {
+                        alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être toujours inférieur ou égal à la population (${c.population}).`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function saveToLocalStorage() {
+            if (!validateCohérenceEchantillon()) return;
+
+            const dataToSave = {
+                typeControle: document.getElementById('typeControle').value,
+                dateVerif: document.getElementById('dateVerification').value,
+                periodeDebut: formatDateToFR(document.getElementById('periodeDebut').value),
+                periodeFin: formatDateToFR(document.getElementById('periodeFin').value),
+                site: document.getElementById('nomSite').value,
+                controleur: document.getElementById('nomControleur').value,
+                responsable: document.getElementById('nomResponsable').value,
+                points: addedPoints
+            };
+            localStorage.setItem('fci_fiche_verification_encaisses', JSON.stringify(dataToSave));
+
+            // Enregistrement dans la BDD Centralisée fci_database
+            const savedMission = localStorage.getItem('fci_fiche_controle_active');
+            const activeMission = savedMission ? JSON.parse(savedMission) : null;
+            const idMission = activeMission ? activeMission.metadata.idMission : "MIS-DEFAULT";
+
+            let totalPop = 0, totalEch = 0, totalOk = 0, totalKo = 0;
+            addedPoints.forEach(p => {
+                p.constats.forEach(c => {
+                    totalPop += c.population || 0;
+                    totalEch += c.echantillon || 0;
+                    totalOk += c.ok || 0;
+                    totalKo += c.ko || 0;
+                });
+            });
+
+            const tc = totalEch > 0 ? ((totalOk / totalEch) * 100).toFixed(1) : 0;
+
+            FCIDatabase.enregistrerConstatEncaisse({
+                idEncaisse: "ENC-" + Date.now(),
+                idMission: idMission,
+                date: document.getElementById('dateVerification').value.slice(0, 10),
+                processus: "Gestion des Encaisses",
+                risque: "Écart de caisse / Manquant d'espèces",
+                controle: "Vérification physique des encaisses",
+                pc: "Comptage physique des fonds et des valeurs",
+                pop: totalPop,
+                ech: totalEch,
+                ok: totalOk,
+                ko: totalKo,
+                tc: parseFloat(tc),
+                constat: `Site: ${document.getElementById('nomSite').value} - Contrôleur: ${document.getElementById('nomControleur').value}`
+            });
+
+            alert("Fiche enregistrée avec succès dans le navigateur et dans la BDD Centralisée !");
+        }
+
+        function exportToExcel() {
+            if (!validateCohérenceEchantillon()) return;
+
+            const activePoints = addedPoints.filter(p => p.selected);
+            if (activePoints.length === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle coché avant d'exporter.");
+                return;
+            }
+
+            const typeCtrlValue = document.getElementById('typeControle').value;
+            const exportArray = [];
+
+            activePoints.forEach(p => {
+                p.constats.forEach((c, idx) => {
+                    exportArray.push({
+                        "Type de Contrôle": typeCtrlValue,
+                        "Date Vérification": document.getElementById('dateVerification').value,
+                        "Début Période Vérifiée": formatDateToFR(document.getElementById('periodeDebut').value),
+                        "Fin Période Vérifiée": formatDateToFR(document.getElementById('periodeFin').value),
+                        "Site / Agence": document.getElementById('nomSite').value,
+                        "Contrôleur": document.getElementById('nomControleur').value,
+                        "Responsable Site": document.getElementById('nomResponsable').value,
+                        "Processus": p.processus,
+                        "Intitulé du Risque": p.risque,
+                        "Intitulé de Contrôle": p.controle,
+                        "Point de Contrôle": p.pointDeControle,
+                        "Constat #": idx + 1,
+                        "Population": c.population,
+                        "Échantillon": c.echantillon,
+                        "Nombre OK": c.ok,
+                        "Nombre KO": c.ko,
+                        "Taux Conformité (%)": c.rate.toFixed(1) + '%',
+                        "Constat / Anomalie": c.constatText,
+                        "Recommandations": c.recoText,
+                        "Avis Responsable": c.avisText
+                    });
+                });
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportArray);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Fiche Vérification Encaisses");
+            XLSX.writeFile(workbook, "Fiche_Verification_Encaisses_BAM.xlsx");
+        }
+    </script>
 </body>
 </html>
