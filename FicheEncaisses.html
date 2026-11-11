@@ -155,10 +155,8 @@
 v1.0 © 2026 - 2027</footer>
 </div>
 
-<!-- 1. Script du Gestionnaire de BDD Centralisée -->
 <script src="fci-db-manager.js"></script>
 
-<!-- 2. Logiciel applicatif -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('dateEncaisse').value = new Date().toISOString().slice(0, 10);
@@ -168,7 +166,6 @@ v1.0 © 2026 - 2027</footer>
         let pop = parseInt(document.getElementById('popEncaisse').value) || 0;
         let ech = parseInt(document.getElementById('echEncaisse').value) || 0;
         let ok = parseInt(document.getElementById('okEncaisse').value) || 0;
-        let ko = parseInt(document.getElementById('koEncaisse').value) || 0;
 
         if (ech > pop) {
             alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
@@ -176,10 +173,17 @@ v1.0 © 2026 - 2027</footer>
             ech = 0;
         }
 
-        if ((ok + ko) > ech && ech > 0) {
-            ko = Math.max(0, ech - ok);
-            document.getElementById('koEncaisse').value = ko;
+        if (ok > ech) {
+            alert("Erreur : Le nombre OK ne peut pas dépasser l'échantillon !");
+            document.getElementById('okEncaisse').value = ech;
+            ok = ech;
         }
+
+        let ko = 0;
+        if (ech > 0) {
+            ko = Math.max(0, ech - ok);
+        }
+        document.getElementById('koEncaisse').value = ko;
 
         let tc = 0;
         if (ech > 0) {
@@ -221,8 +225,6 @@ v1.0 © 2026 - 2027</footer>
         FCIDatabase.enregistrerConstatEncaisse(dataEncaisse);
 
         alert('Vérification des encaisses enregistrée avec succès dans la BDD Centralisée !');
-        
-        // Redirection vers le Tableau de Bord
         window.location.href = 'TDB.html';
     }
 </script>
