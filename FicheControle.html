@@ -227,20 +227,17 @@ v1.0 © 2026 - 2027</footer>
         let ok = parseInt(tr.querySelector('.input-ok').value) || 0;
         let ko = parseInt(tr.querySelector('.input-ko').value) || 0;
 
-        // Contrôle Échantillon <= Population
         if (ech > pop) {
             alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
             tr.querySelector('.input-ech').value = 0;
             ech = 0;
         }
 
-        // Ajustement automatique OK + KO <= Echantillon
         if ((ok + ko) > ech && ech > 0) {
             ko = Math.max(0, ech - ok);
             tr.querySelector('.input-ko').value = ko;
         }
 
-        // Calcul du Taux de Conformité TC
         let tc = 0;
         if (ech > 0) {
             tc = ((ok / ech) * 100).toFixed(1);
@@ -284,11 +281,13 @@ v1.0 © 2026 - 2027</footer>
                 constat: constat
             };
 
-            // Sauvegarde directe dans la BDD Centralisée
             FCIDatabase.enregistrerConstatControle(dataConstat);
         });
 
-        alert('L\'ensemble des constats de la fiche de contrôle a été enregistré dans la BDD Centralisée !');
+        alert('L\'ensemble des constats a été enregistré dans la BDD Centralisée !');
+        
+        // Navigation vers la feuille suivante
+        window.location.href = 'FicheEncaisses.html';
     }
 </script>
 </body>
