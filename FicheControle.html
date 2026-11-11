@@ -159,10 +159,8 @@
 v1.0 © 2026 - 2027</footer>
 </div>
 
-<!-- 1. Script du Gestionnaire de BDD Centralisée -->
 <script src="fci-db-manager.js"></script>
 
-<!-- 2. Logiciel applicatif -->
 <script>
     let activeMission = null;
 
@@ -184,7 +182,7 @@ v1.0 © 2026 - 2027</footer>
 
     function getItemVal(item, keys) {
         for (let k of keys) {
-            if (item && item[k] !== undefined) return item[k];
+            if (item && item[k] !== undefined && item[k] !== null) return item[k];
         }
         return '';
     }
@@ -210,7 +208,7 @@ v1.0 © 2026 - 2027</footer>
                 <td><input type="number" min="0" value="0" class="input-pop" onchange="mettreAJourCalcul(${index})"></td>
                 <td><input type="number" min="0" value="0" class="input-ech" onchange="mettreAJourCalcul(${index})"></td>
                 <td><input type="number" min="0" value="0" class="input-ok" onchange="mettreAJourCalcul(${index})"></td>
-                <td><input type="number" min="0" value="0" class="input-ko" onchange="mettreAJourCalcul(${index})"></td>
+                <td><input type="number" min="0" value="0" class="input-ko" onchange="mettreAJourCalculManuel(${index})"></td>
                 <td class="tc-cell" id="tc-${index}">0.0%</td>
                 <td><input type="text" class="input-constat" placeholder="Saisir un constat..."></td>
             `;
@@ -225,18 +223,52 @@ v1.0 © 2026 - 2027</footer>
         let pop = parseInt(tr.querySelector('.input-pop').value) || 0;
         let ech = parseInt(tr.querySelector('.input-ech').value) || 0;
         let ok = parseInt(tr.querySelector('.input-ok').value) || 0;
-        let ko = parseInt(tr.querySelector('.input-ko').value) || 0;
 
+        // Contrôle Échantillon <= Population
         if (ech > pop) {
             alert("Erreur : L'échantillon ne peut pas être supérieur à la population !");
             tr.querySelector('.input-ech').value = 0;
             ech = 0;
         }
 
-        if ((ok + ko) > ech && ech > 0) {
+        // Contrôle OK <= Échantillon
+        if (ok > ech) {
+            alert("Erreur : Le nombre OK ne peut pas dépasser l'échantillon !");
+            tr.querySelector('.input-ok').value = ech;
+            ok = ech;
+        }
+
+        // Calcul exact du Nombre KO = Échantillon - OK
+        let ko = 0;
+        if (ech > 0) {
             ko = Math.max(0, ech - ok);
+        }
+        tr.querySelector('.input-ko').value = ko;
+
+        // Calcul Taux de Conformité TC (%)
+        let tc = 0;
+        if (ech > 0) {
+            tc = ((ok / ech) * 100).toFixed(1);
+        }
+
+        tr.querySelector(`#tc-${index}`).textContent = tc + '%';
+    }
+
+    function mettreAJourCalculManuel(index) {
+        const tr = document.querySelector(`tr[data-index="${index}"]`);
+        if (!tr) return;
+
+        let ech = parseInt(tr.querySelector('.input-ech').value) || 0;
+        let ko = parseInt(tr.querySelector('.input-ko').value) || 0;
+
+        if (ko > ech) {
+            alert("Erreur : Le nombre KO ne peut pas dépasser l'échantillon !");
+            ko = ech;
             tr.querySelector('.input-ko').value = ko;
         }
+
+        let ok = Math.max(0, ech - ko);
+        tr.querySelector('.input-ok').value = ok;
 
         let tc = 0;
         if (ech > 0) {
@@ -285,8 +317,6 @@ v1.0 © 2026 - 2027</footer>
         });
 
         alert('L\'ensemble des constats a été enregistré dans la BDD Centralisée !');
-        
-        // Navigation vers la feuille suivante
         window.location.href = 'FicheEncaisses.html';
     }
 </script>
