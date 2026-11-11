@@ -65,6 +65,17 @@ const FCIDatabase = {
         this.saveDB(db);
     },
 
+    viderBDD() {
+        const emptySchema = {
+            version: '1.0',
+            derniereMiseAJour: new Date().toISOString(),
+            missions: [],
+            constatsControle: [],
+            constatsEncaisses: []
+        };
+        localStorage.setItem(this.KEY, JSON.stringify(emptySchema));
+    },
+
     exporterBDD() {
         const db = this.getDB();
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
