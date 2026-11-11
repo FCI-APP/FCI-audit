@@ -28,33 +28,20 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-blue);
-            color: #FFFFFF;
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            display: flex; flex-direction: column;
-            justify-content: space-between;
-            z-index: 100;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
+            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar-header {
-            padding: 20px 15px;
-            background-color: var(--dark-blue);
-            text-align: center;
-            border-bottom: 2px solid var(--accent-gold);
-        }
-
+        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
         .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
         .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
         .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
-            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
-            border-left: 4px solid transparent;
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            border-left: 4px solid transparent; transition: all 0.2s;
         }
         .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
         .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
@@ -62,11 +49,7 @@
         .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
         .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
 
-        .sidebar-footer {
-            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
-        }
+        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
@@ -171,7 +154,7 @@
             </table>
         </div>
 
-        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - MIS À JOUR -->
+        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - 14 COLONNES COMPLÈTES -->
         <div class="table-card">
             <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses (FV)</h3>
             <table>
@@ -183,7 +166,8 @@
                         <th>Processus</th>
                         <th>Risque</th>
                         <th>Contrôle</th>
-                        <th>PC</th>
+                        <th>Point de Contrôle (PC)</th>
+                        <th>Pop</th>
                         <th>Ech</th>
                         <th>OK</th>
                         <th>KO</th>
@@ -252,11 +236,11 @@
                 });
             }
 
-            // 3. Table Constats Encaisses (FV) - avec Constat, Recommandation & Avis Responsable
+            // 3. Table Constats Encaisses (FV)
             const tbodyE = document.getElementById('tableConstatsEncaisses');
             tbodyE.innerHTML = '';
             if (!db.constatsEncaisses || db.constatsEncaisses.length === 0) {
-                tbodyE.innerHTML = '<tr><td colspan="14" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
+                tbodyE.innerHTML = '<tr><td colspan="15" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
             } else {
                 db.constatsEncaisses.forEach(e => {
                     tbodyE.innerHTML += `
@@ -268,10 +252,11 @@
                             <td>${e.risque}</td>
                             <td>${e.controle}</td>
                             <td>${e.pc}</td>
-                            <td>${e.ech}</td>
-                            <td><span style="color:var(--success);font-weight:bold;">${e.ok}</span></td>
-                            <td><span style="color:var(--danger);font-weight:bold;">${e.ko}</span></td>
-                            <td><b>${parseFloat(e.tc).toFixed(1)}%</b></td>
+                            <td>${e.pop || 0}</td>
+                            <td>${e.ech || 0}</td>
+                            <td><span style="color:var(--success);font-weight:bold;">${e.ok || 0}</span></td>
+                            <td><span style="color:var(--danger);font-weight:bold;">${e.ko || 0}</span></td>
+                            <td><b>${parseFloat(e.tc || 0).toFixed(1)}%</b></td>
                             <td>${e.constat || '--'}</td>
                             <td>${e.recommandation || '--'}</td>
                             <td>${e.avisResponsable || '--'}</td>
