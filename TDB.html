@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
@@ -30,7 +29,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
-        /* SIDEBAR */
         .sidebar {
             width: var(--sidebar-width);
             background-color: var(--primary-blue);
@@ -72,7 +70,6 @@
             font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
         }
 
-        /* MAIN CONTENT */
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
         .page-header {
@@ -86,9 +83,8 @@
 
         .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
-        .btn-primary:hover { background-color: var(--dark-blue); }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
 
-        /* KPI COUNTERS GRID */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--card-bg); padding: 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); border-left: 4px solid var(--primary-blue); }
         .kpi-card.success { border-left-color: var(--success); }
@@ -99,23 +95,20 @@
         .kpi-info h3 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; }
         .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
 
-        /* CHARTS GRID */
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 30px; }
         .chart-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
         .chart-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; margin-bottom: 15px; }
 
-        /* TABLE */
         .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 20px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.78rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
         tr:nth-child(even) { background-color: #F8FAFC; }
     </style>
 </head>
 <body>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
@@ -127,7 +120,8 @@
                 <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li class="active"><a href="TDB.html"><span>5. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li class="active"><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Actif</span></a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -135,17 +129,18 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Tableau de Bord Synthétique (TDB)</h1>
-                <p>Analyse globale des missions et indicateurs de performance des contrôles</p>
+                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Tableau de Bord Synthétique (TDB)</h1>
+                <p>Analyse globale et visuelle des résultats de contrôles</p>
             </div>
-            <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter la BDD (JSON)</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+            </div>
         </header>
 
-        <!-- KPI Cards -->
         <div class="kpi-row">
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
@@ -165,7 +160,6 @@
             </div>
         </div>
 
-        <!-- Graphiques -->
         <div class="charts-grid">
             <div class="chart-card">
                 <h3>Taux de Conformité (TC %) par Processus</h3>
@@ -177,46 +171,37 @@
             </div>
         </div>
 
-        <!-- Synthèse des Missions -->
         <div class="table-card">
-            <h3><i class="fa-solid fa-list-check"></i> Synthèse des Missions et Constats</h3>
+            <h3><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats et Points de Contrôle</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Mission ID</th>
-                        <th>Date</th>
-                        <th>Entité</th>
-                        <th>Contrôleur</th>
-                        <th>Processus Audités</th>
-                        <th>Échantillon (Ech)</th>
-                        <th>Conformes (OK)</th>
-                        <th>Anomalies (KO)</th>
-                        <th>TC Global (%)</th>
+                        <th style="width: 12%;">Processus</th>
+                        <th style="width: 15%;">Risque</th>
+                        <th style="width: 15%;">Contrôle</th>
+                        <th style="width: 20%;">Point de Contrôle (PC)</th>
+                        <th style="width: 6%;">Ech</th>
+                        <th style="width: 5%;">OK</th>
+                        <th style="width: 5%;">KO</th>
+                        <th style="width: 7%;">TC (%)</th>
+                        <th style="width: 15%;">Constat / Remarques</th>
                     </tr>
                 </thead>
-                <tbody id="tdbTableBody">
-                    <!-- Rempli dynamiquement -->
-                </tbody>
+                <tbody id="tdbTableBody"></tbody>
             </table>
         </div>
     </main>
 
-    <!-- Inclusion du script BDD Centralisée -->
     <script src="fci-db-manager.js"></script>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            chargerTableauDeBord();
-        });
+        document.addEventListener('DOMContentLoaded', () => { chargerTableauDeBord(); });
 
         function chargerTableauDeBord() {
             const db = FCIDatabase.getDB();
-
             const missions = db.missions || [];
             const constatsControle = db.constatsControle || [];
             const constatsEncaisses = db.constatsEncaisses || [];
 
-            // 1. Calcul des KPIs généraux
             document.getElementById('kpiMissions').textContent = missions.length;
 
             let totalEchControle = 0, totalOkControle = 0, totalKoControle = 0;
@@ -233,61 +218,49 @@
                 totalKoEncaisse += parseInt(e.ko) || 0;
             });
 
-            const tcControleGlobal = totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : '0.0';
-            const tcEncaisseGlobal = totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : '0.0';
-
-            document.getElementById('kpiTcControle').textContent = tcControleGlobal + ' %';
-            document.getElementById('kpiTcEncaisses').textContent = tcEncaisseGlobal + ' %';
+            document.getElementById('kpiTcControle').textContent = (totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : '0.0') + ' %';
+            document.getElementById('kpiTcEncaisses').textContent = (totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : '0.0') + ' %';
             document.getElementById('kpiTotalKO').textContent = totalKoControle + totalKoEncaisse;
 
-            // 2. Remplissage du tableau de synthèse des missions
             const tbody = document.getElementById('tdbTableBody');
             tbody.innerHTML = '';
+            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
 
-            if (missions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucune mission enregistrée dans la BDD.</td></tr>';
+            if (tousLesConstats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucun constat enregistré dans la BDD.</td></tr>';
             } else {
-                missions.forEach(m => {
-                    const constatsMission = constatsControle.filter(c => c.idMission === m.idMission);
-                    let echM = 0, okM = 0, koM = 0;
-                    let procSet = new Set();
-
-                    constatsMission.forEach(c => {
-                        echM += parseInt(c.ech) || 0;
-                        okM += parseInt(c.ok) || 0;
-                        koM += parseInt(c.ko) || 0;
-                        if (c.processus) procSet.add(c.processus);
-                    });
-
-                    const tcM = echM > 0 ? ((okM / echM) * 100).toFixed(1) : '0.0';
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><b>${m.idMission}</b></td>
-                        <td>${m.date || '--'}</td>
-                        <td>${m.entite || '--'}</td>
-                        <td>${m.controleur || '--'}</td>
-                        <td>${Array.from(procSet).join(', ') || 'N/A'}</td>
-                        <td>${echM}</td>
-                        <td><span style="color:var(--success);font-weight:bold;">${okM}</span></td>
-                        <td><span style="color:var(--danger);font-weight:bold;">${koM}</span></td>
-                        <td><b>${tcM}%</b></td>
-                    `;
-                    tbody.appendChild(tr);
+                tousLesConstats.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${c.processus || 'N/A'}</b></td>
+                            <td>${c.risque || 'N/A'}</td>
+                            <td>${c.controle || 'N/A'}</td>
+                            <td>${c.pc || 'N/A'}</td>
+                            <td>${c.ech || 0}</td>
+                            <td><span style="color:var(--success);font-weight:bold;">${c.ok || 0}</span></td>
+                            <td><span style="color:var(--danger);font-weight:bold;">${c.ko || 0}</span></td>
+                            <td><b>${(c.tc !== undefined ? parseFloat(c.tc).toFixed(1) : '0.0')}%</b></td>
+                            <td>${c.constat || '--'}</td>
+                        </tr>`;
                 });
             }
 
-            // 3. Initialisation des graphiques
             initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
+        }
+
+        function viderBDD() {
+            if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
+                FCIDatabase.viderBDD();
+                chargerTableauDeBord();
+                alert("La BDD a été réinitialisée.");
+            }
         }
 
         function initialiserGraphiques(constatsControle, totalOK, totalKO) {
             const processusMap = {};
             constatsControle.forEach(c => {
                 const proc = c.processus || 'Autres';
-                if (!processusMap[proc]) {
-                    processusMap[proc] = { ok: 0, ech: 0 };
-                }
+                if (!processusMap[proc]) processusMap[proc] = { ok: 0, ech: 0 };
                 processusMap[proc].ok += parseInt(c.ok) || 0;
                 processusMap[proc].ech += parseInt(c.ech) || 0;
             });
@@ -298,40 +271,22 @@
                 return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
             });
 
-            // Graphique à barres par Processus
-            const ctxBar = document.getElementById('chartProcessus').getContext('2d');
-            new Chart(ctxBar, {
+            new Chart(document.getElementById('chartProcessus').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels.length > 0 ? labels : ['Aucune donnée'],
-                    datasets: [{
-                        label: 'Taux de Conformité (%)',
-                        data: values.length > 0 ? values : [0],
-                        backgroundColor: '#003366'
-                    }]
+                    datasets: [{ label: 'Taux de Conformité (%)', data: values.length > 0 ? values : [0], backgroundColor: '#003366' }]
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: true, max: 100 }
-                    }
-                }
+                options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
             });
 
-            // Graphique circulaire OK vs KO
-            const ctxDoughnut = document.getElementById('chartOkKo').getContext('2d');
-            new Chart(ctxDoughnut, {
+            new Chart(document.getElementById('chartOkKo').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Conformes (OK)', 'Anomalies (KO)'],
-                    datasets: [{
-                        data: [totalOK, totalKO],
-                        backgroundColor: ['#10B981', '#EF4444']
-                    }]
+                    datasets: [{ data: [totalOK, totalKO], backgroundColor: ['#10B981', '#EF4444'] }]
                 },
-                options: {
-                    responsive: true
-                }
+                options: { responsive: true }
             });
         }
     </script>
