@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Tableau de Bord (TDB)</title>
-    <!-- Inclusion de Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -64,7 +63,6 @@
             background-color: var(--primary-hover);
         }
 
-        /* En-tête des Métriques (KPIs) */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -97,7 +95,6 @@
             color: var(--text);
         }
 
-        /* Zone des Graphiques */
         .charts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -120,7 +117,6 @@
             padding-bottom: 8px;
         }
 
-        /* Tableau Récapitulatif */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -162,7 +158,6 @@
         <button class="btn-export" onclick="FCIDatabase.exporterBDD()">Exporter la BDD (JSON)</button>
     </div>
 
-    <!-- KPIs -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-title">Missions Enregistrées</div>
@@ -182,7 +177,6 @@
         </div>
     </div>
 
-    <!-- Graphiques -->
     <div class="charts-grid">
         <div class="chart-card">
             <h3>Taux de Conformité (TC %) par Processus</h3>
@@ -194,7 +188,6 @@
         </div>
     </div>
 
-    <!-- Tableau de Synthèse -->
     <h2>Dernières Missions et Synthese des Constats</h2>
     <table>
         <thead>
@@ -219,7 +212,6 @@
 v1.0 © 2026 - 2027</footer>
 </div>
 
-<!-- Script Gestionnaire BDD -->
 <script src="fci-db-manager.js"></script>
 
 <script>
@@ -234,7 +226,6 @@ v1.0 © 2026 - 2027</footer>
         const constatsControle = db.constatsControle || [];
         const constatsEncaisses = db.constatsEncaisses || [];
 
-        // 1. Calcul des KPIs
         document.getElementById('kpiMissions').textContent = missions.length;
 
         let totalEchControle = 0, totalOkControle = 0, totalKoControle = 0;
@@ -258,7 +249,6 @@ v1.0 © 2026 - 2027</footer>
         document.getElementById('kpiTcEncaisses').textContent = tcEncaisseGlobal + '%';
         document.getElementById('kpiTotalKO').textContent = totalKoControle + totalKoEncaisse;
 
-        // 2. Remplissage du tableau récapitulatif
         const tbody = document.getElementById('tdbTableBody');
         tbody.innerHTML = '';
 
@@ -295,12 +285,10 @@ v1.0 © 2026 - 2027</footer>
             });
         }
 
-        // 3. Initialisation des Graphiques
         initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
     }
 
     function initialiserGraphiques(constatsControle, totalOK, totalKO) {
-        // Regroupement par Processus
         const processusData = {};
         constatsControle.forEach(c => {
             const proc = c.processus || 'Autre';
@@ -317,7 +305,6 @@ v1.0 © 2026 - 2027</footer>
             return d.ech > 0 ? ((d.ok / d.ech) * 100).toFixed(1) : 0;
         });
 
-        // Graphique Barres - TC par Processus
         const ctxProc = document.getElementById('chartProcessus').getContext('2d');
         new Chart(ctxProc, {
             type: 'bar',
@@ -337,7 +324,6 @@ v1.0 © 2026 - 2027</footer>
             }
         });
 
-        // Graphique Camembert - OK vs KO Global
         const ctxOkKo = document.getElementById('chartOkKo').getContext('2d');
         new Chart(ctxOkKo, {
             type: 'doughnut',
