@@ -13,7 +13,6 @@
             --primary-blue: #003366;
             --dark-blue: #002244;
             --accent-gold: #EAAA00;
-            --accent-gold-hover: #d49900;
             --bg-light: #F4F6F9;
             --card-bg: #FFFFFF;
             --text-dark: #1E293B;
@@ -30,33 +29,20 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-blue);
-            color: #FFFFFF;
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            display: flex; flex-direction: column;
-            justify-content: space-between;
-            z-index: 100;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
+            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar-header {
-            padding: 20px 15px;
-            background-color: var(--dark-blue);
-            text-align: center;
-            border-bottom: 2px solid var(--accent-gold);
-        }
-
+        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
         .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
         .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
         .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
-            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
-            border-left: 4px solid transparent;
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            border-left: 4px solid transparent; transition: all 0.2s;
         }
         .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
         .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
@@ -64,11 +50,7 @@
         .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
         .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
 
-        .sidebar-footer {
-            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
-        }
+        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
@@ -81,55 +63,35 @@
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .header-actions-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 10px;
-        }
+        .header-actions-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+        .header-actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 
-        .header-actions-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: flex-end;
-        }
+        .bdd-badge-total { background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px; }
 
-        .bdd-badge-total {
-            background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700;
-            padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px;
-        }
-
-        .search-card {
-            background-color: var(--card-bg); border-radius: 8px; padding: 15px 20px; border: 1px solid var(--border-color);
-            margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-        }
+        .search-card { background-color: var(--card-bg); border-radius: 8px; padding: 15px 20px; border: 1px solid var(--border-color); margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
         .search-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
         .search-group label { font-size: 0.82rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; white-space: nowrap; }
         .search-group select { padding: 8px 12px; border: 1px solid var(--primary-blue); border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; width: 100%; max-width: 400px; font-weight: 700; }
 
-        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color); margin-bottom: 25px; }
-        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
-
-        .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-family: inherit; font-size: 0.875rem; outline: none; background-color: #FFF; transition: border-color 0.2s; }
+        .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.875rem; outline: none; background-color: #FFF; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
-        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); }
+        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
         .kpi-info h3 { font-size: 1.25rem; color: var(--primary-blue); font-weight: 800; }
         .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 600; }
 
         .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-top: 15px; }
         .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 6px; margin-top: 14px; }
-
         .toolbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
-        .pc-card { background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+        .pc-card { background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; }
         .pc-card-header { background: var(--primary-blue); color: #FFFFFF; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
         .pc-card-body { padding: 20px; }
 
@@ -141,7 +103,7 @@
         .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 30px; }
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 30px; }
         .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
 
         .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; }
@@ -221,65 +183,24 @@
         </div>
 
         <div class="kpi-row">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
-                <div class="kpi-info"><h3 id="kpi-proc">0</h3><p>Processus</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="kpi-info"><h3 id="kpi-risque">0</h3><p>Risques</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="kpi-info"><h3 id="kpi-controle">0</h3><p>Contrôles</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                <div class="kpi-info"><h3 id="kpi-pc">0</h3><p>PC affichés</p></div>
-            </div>
-            <div class="kpi-card" style="border-left: 4px solid var(--accent-gold);">
-                <div class="kpi-icon" style="background: rgba(234, 170, 0, 0.15); color: var(--primary-blue);"><i class="fa-solid fa-percent"></i></div>
-                <div class="kpi-info"><h3 id="kpi-taux-moyen">0 %</h3><p>Taux Moyen Centre</p></div>
-            </div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="kpi-info"><h3 id="kpi-proc">0</h3><p>Processus</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="kpi-info"><h3 id="kpi-risque">0</h3><p>Risques</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="kpi-info"><h3 id="kpi-controle">0</h3><p>Contrôles</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><h3 id="kpi-pc">0</h3><p>PC affichés</p></div></div>
+            <div class="kpi-card" style="border-left: 4px solid var(--accent-gold);"><div class="kpi-icon" style="background: rgba(234, 170, 0, 0.15); color: var(--primary-blue);"><i class="fa-solid fa-percent"></i></div><div class="kpi-info"><h3 id="kpi-taux-moyen">0 %</h3><p>Taux Moyen Centre</p></div></div>
         </div>
 
         <section class="card">
             <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
             <div class="form-grid">
-                <div class="form-group">
-                    <label>Mission ID</label>
-                    <input type="text" class="form-control" id="idMissionEncaisse" placeholder="Identifiant généré automatiquement" readonly style="background:#F1F5F9; font-weight:700;">
-                </div>
-                <div class="form-group">
-                    <label>Type de Contrôle *</label>
-                    <select class="form-control" id="typeControle">
-                        <option value="Vérification" selected>Vérification</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Date et heure de vérification *</label>
-                    <input type="datetime-local" class="form-control" id="dateVerification">
-                </div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar-day"></i> Début période vérifiée *</label>
-                    <input type="date" class="form-control" id="periodeDebut">
-                </div>
-                <div class="form-group">
-                    <label><i class="fa-solid fa-calendar-day"></i> Fin période vérifiée *</label>
-                    <input type="date" class="form-control" id="periodeFin">
-                </div>
-                <div class="form-group">
-                    <label>Nom du site / Agence *</label>
-                    <input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Rabat">
-                </div>
-                <div class="form-group">
-                    <label>Nom du contrôleur *</label>
-                    <input type="text" class="form-control" id="nomControleur" placeholder="Ex: Ahmed El Mansouri / Karima Naji">
-                </div>
-                <div class="form-group">
-                    <label>Nom du responsable du site <span style="font-weight: 400; color: var(--text-muted);">(Facultatif)</span></label>
-                    <input type="text" class="form-control" id="nomResponsable" placeholder="Ex: Mohammed El Amrani">
-                </div>
+                <div class="form-group"><label>Mission ID</label><input type="text" class="form-control" id="idMissionEncaisse" readonly style="background:#F1F5F9; font-weight:700;"></div>
+                <div class="form-group"><label>Type de Contrôle *</label><select class="form-control" id="typeControle"><option value="Vérification" selected>Vérification</option></select></div>
+                <div class="form-group"><label>Date et heure de vérification *</label><input type="datetime-local" class="form-control" id="dateVerification"></div>
+                <div class="form-group"><label>Début période vérifiée *</label><input type="date" class="form-control" id="periodeDebut"></div>
+                <div class="form-group"><label>Fin période vérifiée *</label><input type="date" class="form-control" id="periodeFin"></div>
+                <div class="form-group"><label>Nom du site / Agence *</label><input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Kénitra"></div>
+                <div class="form-group"><label>Nom du contrôleur *</label><input type="text" class="form-control" id="nomControleur" placeholder="Ex: Mansouri"></div>
+                <div class="form-group"><label>Nom du responsable du site (Facultatif)</label><input type="text" class="form-control" id="nomResponsable" placeholder="Ex: El Amrani"></div>
             </div>
         </section>
 
@@ -287,33 +208,14 @@
             <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</h2>
             <div class="selection-box">
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label for="selectProcessus">1. Processus</label>
-                        <select class="form-control" id="selectProcessus" onchange="onProcessusChange()">
-                            <option value="">-- Chargement du JSON en cours... --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="selectRisque">2. Intitulé du risque</label>
-                        <select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled>
-                            <option value="">-- Choisir un risque --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="selectControle">3. Intitulé de contrôle</label>
-                        <select class="form-control" id="selectControle" onchange="onControleChange()" disabled>
-                            <option value="">-- Choisir un contrôle --</option>
-                        </select>
-                    </div>
+                    <div class="form-group"><label>1. Processus</label><select class="form-control" id="selectProcessus" onchange="onProcessusChange()"><option value="">-- Chargement du JSON... --</option></select></div>
+                    <div class="form-group"><label>2. Intitulé du risque</label><select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled><option value="">-- Choisir un risque --</option></select></div>
+                    <div class="form-group"><label>3. Intitulé de contrôle</label><select class="form-control" id="selectControle" onchange="onControleChange()" disabled><option value="">-- Choisir un contrôle --</option></select></div>
                 </div>
-
                 <div class="pc-preview" id="pcPreviewBox" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
-                        <div>
-                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE SÉLECTIONNÉ :</strong>
-                            <p id="pcPreviewText" style="margin-top: 5px;"></p>
-                        </div>
-                        <button class="btn btn-primary" onclick="addSelectedPointControl()"><i class="fa-solid fa-plus"></i> Ajouter ce point au contrôle</button>
+                        <div><strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE SÉLECTIONNÉ :</strong><p id="pcPreviewText" style="margin-top: 5px;"></p></div>
+                        <button class="btn btn-primary" onclick="addSelectedPointControl()"><i class="fa-solid fa-plus"></i> Ajouter ce point</button>
                     </div>
                 </div>
             </div>
@@ -321,12 +223,10 @@
 
         <div class="toolbar">
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
-                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
+                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Tout sélectionner</button>
+                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Tout désélectionner</button>
             </div>
-            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-blue);">
-                <span id="selectedCountDisplay">0</span> point(s) sélectionné(s) sur cette fiche
-            </div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-blue);"><span id="selectedCountDisplay">0</span> point(s) sélectionné(s)</div>
         </div>
 
         <div id="pointsEvaluationsContainer"></div>
@@ -335,27 +235,18 @@
             <div class="summary-top">
                 <div class="summary-info">
                     <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent-gold);"></i>
-                    <div>
-                        <h3>TAUX MOYEN DU CENTRE : <span id="globalRateDisplay">0 %</span></h3>
-                        <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur tous les constats réalisés au niveau du centre.</p>
-                    </div>
+                    <div><h3>TAUX MOYEN DU CENTRE : <span id="globalRateDisplay">0 %</span></h3><p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur l'ensemble des constats d'encaisses.</p></div>
                 </div>
-                <div>
-                    <span class="badge-avis-global" id="globalAvisBadge">---</span>
-                </div>
+                <div><span class="badge-avis-global" id="globalAvisBadge">---</span></div>
             </div>
-
             <div class="center-description">
-                <strong style="display: block; color: var(--accent-gold); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">
-                    <i class="fa-solid fa-file-contract"></i> Description & Niveau de Maîtrise du Centre :
-                </strong>
-                <p id="centerDescriptionText">Chargement de la description du centre...</p>
+                <strong style="display: block; color: var(--accent-gold); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description & Niveau de Maîtrise :</strong>
+                <p id="centerDescriptionText">Chargement...</p>
             </div>
         </section>
     </main>
 
     <script src="fci-db-manager.js"></script>
-
     <script>
         let rawJsonData = [];
         let addedPoints = [];
@@ -366,15 +257,6 @@
                 if (item && item[k] !== undefined) return item[k];
             }
             return '';
-        }
-
-        function formatDateToFR(val) {
-            if (!val || val === '-') return '';
-            if (val.includes('-')) {
-                const parts = val.split('-');
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            return val;
         }
 
         function formatDateToISO(val) {
@@ -435,20 +317,12 @@
                     addedPoints = saved.points;
                     renderPoints();
                 }
-            } catch (e) {
-                console.warn("Impossible de restaurer la fiche sauvegardée :", e);
-            }
+            } catch (e) {}
         }
 
         async function chargerReferentielJSON() {
             const badge = document.getElementById('bddStatusBadge');
-            const filesToTry = [
-                './Encaisses.json?v=' + Date.now(),
-                './encaisses.json?v=' + Date.now(),
-                './referentiel.json?v=' + Date.now()
-            ];
-
-            let loaded = false;
+            const filesToTry = ['./Encaisses.json?v=' + Date.now(), './encaisses.json?v=' + Date.now(), './referentiel.json?v=' + Date.now()];
 
             for (const path of filesToTry) {
                 try {
@@ -458,37 +332,19 @@
                         if (Array.isArray(data) && data.length > 0) {
                             rawJsonData = data;
                             initCascadeSelects();
-                            
-                            badge.style.backgroundColor = "#DEF7EC";
-                            badge.style.color = "#03543F";
-                            badge.style.borderColor = "#A7F3D0";
                             badge.innerHTML = `<i class="fa-solid fa-database"></i> BDD (<strong>${rawJsonData.length}</strong> PC)`;
-
-                            loaded = true;
                             break;
                         }
                     }
                 } catch (error) {}
-            }
-
-            if (!loaded) {
-                const procSelect = document.getElementById('selectProcessus');
-                if (procSelect) procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json introuvable --</option>';
-                badge.style.backgroundColor = "#FDE8E8";
-                badge.style.color = "#9B1C1C";
-                badge.style.borderColor = "#FCA5A5";
-                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> BDD Introuvable`;
             }
         }
 
         function initCascadeSelects() {
             const procSelect = document.getElementById('selectProcessus');
             const processes = [...new Set(rawJsonData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean);
-            
             procSelect.innerHTML = '<option value="">-- Choisir un processus --</option>';
-            processes.forEach(p => {
-                procSelect.innerHTML += `<option value="${p}">${p}</option>`;
-            });
+            processes.forEach(p => { procSelect.innerHTML += `<option value="${p}">${p}</option>`; });
         }
 
         function onProcessusChange() {
@@ -501,15 +357,10 @@
             ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
             ctrlSelect.disabled = true;
 
-            if (!proc) {
-                risqueSelect.disabled = true;
-                return;
-            }
+            if (!proc) { risqueSelect.disabled = true; return; }
 
             const risques = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc).map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
-            risques.forEach(r => {
-                risqueSelect.innerHTML += `<option value="${r}">${r}</option>`;
-            });
+            risques.forEach(r => { risqueSelect.innerHTML += `<option value="${r}">${r}</option>`; });
             risqueSelect.disabled = false;
         }
 
@@ -520,16 +371,10 @@
             document.getElementById('pcPreviewBox').style.display = 'none';
 
             ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
-
-            if (!risque) {
-                ctrlSelect.disabled = true;
-                return;
-            }
+            if (!risque) { ctrlSelect.disabled = true; return; }
 
             const controles = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque).map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean);
-            controles.forEach(c => {
-                ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`;
-            });
+            controles.forEach(c => { ctrlSelect.innerHTML += `<option value="${c}">${c}</option>`; });
             ctrlSelect.disabled = false;
         }
 
@@ -537,11 +382,7 @@
             const proc = document.getElementById('selectProcessus').value;
             const risque = document.getElementById('selectRisque').value;
             const ctrl = document.getElementById('selectControle').value;
-
-            if (!ctrl) {
-                document.getElementById('pcPreviewBox').style.display = 'none';
-                return;
-            }
+            if (!ctrl) { document.getElementById('pcPreviewBox').style.display = 'none'; return; }
 
             const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
             if (item) {
@@ -558,21 +399,17 @@
 
             if (!item) return;
 
-            const pointObj = {
+            addedPoints.push({
                 id: Date.now(),
                 selected: true,
                 processus: getItemVal(item, ['Processus']),
                 risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
                 controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
                 pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
-                constats: [
-                    { population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }
-                ]
-            };
+                constats: [{ population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }]
+            });
 
-            addedPoints.push(pointObj);
             renderPoints();
-            
             document.getElementById('selectProcessus').value = '';
             onProcessusChange();
         }
@@ -595,42 +432,30 @@
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span>Taux de conformité :</span>
                                     <span class="conformity-badge ${badgeClass}">${c.rate.toFixed(1)} %</span>
-                                    ${point.constats.length > 1 ? `<button class="btn-danger-icon" title="Supprimer ce constat" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                    ${point.constats.length > 1 ? `<button class="btn-danger-icon" title="Supprimer" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
                                 </div>
                             </div>
                             
                             <div class="form-grid" style="margin-bottom: 14px;">
-                                <div class="form-group">
-                                    <label>Population</label>
-                                    <input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)">
-                                </div>
-                                <div class="form-group">
-                                    <label>Échantillon</label>
-                                    <input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)">
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre OK</label>
-                                    <input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)">
-                                </div>
-                                <div class="form-group">
-                                    <label>Nombre KO</label>
-                                    <input type="number" min="0" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;">
-                                </div>
+                                <div class="form-group"><label>Population</label><input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)"></div>
+                                <div class="form-group"><label>Échantillon</label><input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
+                                <div class="form-group"><label>Nombre OK</label><input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
+                                <div class="form-group"><label>Nombre KO</label><input type="number" min="0" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;"></div>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 12px;">
                                 <label>Constat / Anomalie observée *</label>
-                                <textarea class="form-control" rows="2" placeholder="Description détaillée du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
+                                <textarea class="form-control" rows="2" placeholder="Description du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Recommandation *</label>
-                                    <textarea class="form-control" rows="2" placeholder="Recommandations du contrôleur..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
+                                    <textarea class="form-control" rows="2" placeholder="Recommandations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
                                 </div>
                                 <div class="form-group">
                                     <label>Avis du responsable du site (Facultatif)</label>
-                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations du responsable..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
+                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -662,11 +487,7 @@
             updateKpisAndSummary();
         }
 
-        function togglePointSelect(pIndex, isChecked) {
-            addedPoints[pIndex].selected = isChecked;
-            updateKpisAndSummary();
-        }
-
+        function togglePointSelect(pIndex, isChecked) { addedPoints[pIndex].selected = isChecked; updateKpisAndSummary(); }
         function selectAllPoints() { addedPoints.forEach(p => p.selected = true); renderPoints(); }
         function deselectAllPoints() { addedPoints.forEach(p => p.selected = false); renderPoints(); }
 
@@ -676,7 +497,7 @@
             c[field] = val;
 
             if (c.echantillon > c.population && c.population > 0) {
-                alert("⚠️ L'échantillon doit être toujours inférieur ou égal à la population.");
+                alert("⚠️ L'échantillon doit être toujours <= à la population.");
                 c.echantillon = 0;
             }
 
@@ -689,12 +510,7 @@
         }
 
         function updateConstatText(pIndex, cIndex, field, value) { addedPoints[pIndex].constats[cIndex][field] = value; }
-
-        function addConstatToPoint(pIndex) {
-            addedPoints[pIndex].constats.push({ population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
-            renderPoints();
-        }
-
+        function addConstatToPoint(pIndex) { addedPoints[pIndex].constats.push({ population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }); renderPoints(); }
         function removeConstat(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); }
         function removePoint(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); }
 
@@ -705,9 +521,7 @@
             const controles = new Set(activePoints.map(p => p.controle)).size;
 
             let totalRates = 0, count = 0;
-            activePoints.forEach(p => {
-                p.constats.forEach(c => { totalRates += c.rate; count++; });
-            });
+            activePoints.forEach(p => { p.constats.forEach(c => { totalRates += c.rate; count++; }); });
 
             const globalRate = count > 0 ? (totalRates / count) : 0;
             const globalRateStr = count > 0 ? globalRate.toFixed(1) + ' %' : '0 %';
@@ -729,16 +543,16 @@
 
             if (globalRate < 60) {
                 badge.innerText = 'Gestion non satisfaisante'; badge.classList.add('avis-non-satisfaisante');
-                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans la gestion des encaisses. Un plan d'action immédiat est requis.`;
+                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances. Un plan d'action immédiat est requis.`;
             } else if (globalRate < 80) {
                 badge.innerText = 'Gestion satisfaisante'; badge.classList.add('avis-satisfaisante');
-                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Exigences d'encaissement globalement respectées, mais quelques ajustements restent nécessaires.`;
+                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Exigences d'encaissement globalement respectées.`;
             } else if (globalRate < 95) {
                 badge.innerText = 'Bonne gestion'; badge.classList.add('avis-bonne');
-                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Élevé niveau de conformité, registres de caisse bien tenus.`;
+                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Élevé niveau de conformité des caisses.`;
             } else {
                 badge.innerText = 'Très bonne gestion'; badge.classList.add('avis-tres-bonne');
-                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des caisses et strict respect des délais d'encaissement.`;
+                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des caisses.`;
             }
 
             summaryCard.style.display = 'flex';
@@ -773,7 +587,7 @@
             return true;
         }
 
-        // CORRECTION MAJEURE : ARCHIVAGE DÉTAILLÉ DE TOUS LES CONSTATS, RECOMMANDATIONS ET AVIS RESPONSABLE
+        // CORRECTION DE L'ARCHIVAGE DES DÉTAILS (CONSTAT, RECO, AVIS)
         function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
@@ -787,13 +601,13 @@
 
             const activePoints = addedPoints.filter(p => p.selected);
             if (activePoints.length === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle coché.");
+                alert("Veuillez sélectionner au moins un point de contrôle.");
                 return;
             }
 
             const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
 
-            // Sauvegarde point par point et constat par constat dans la BDD
+            // Sauvegarde détaillée point par point et constat par constat
             activePoints.forEach((p, pIdx) => {
                 p.constats.forEach((c, cIdx) => {
                     FCIDatabase.enregistrerConstatEncaisse({
