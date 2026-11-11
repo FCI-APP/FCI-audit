@@ -14,7 +14,7 @@ const FCIDatabase = {
                 derniereMiseAJour: new Date().toISOString(),
                 missions: [],         // Table A (Planification)
                 constatsControle: [], // Table B (Fiche de Contrôle FC)
-                constatsEncaisses: [] // Table C (Fiche des Encaisses)
+                constatsEncaisses: [] // Table C (Fiche des Encaisses FV)
             };
             localStorage.setItem(this.KEY, JSON.stringify(schema));
         }
