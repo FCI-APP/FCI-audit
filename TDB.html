@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Tableau de Bord (TDB)</title>
+    <!-- Graphiques via Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -154,10 +155,11 @@
 
 <div class="container">
     <div class="header-bar">
-        <h1>FCI v1.0 — Tableau de Bord Synthetique</h1>
+        <h1>FCI v1.0 — Tableau de Bord Synthétique</h1>
         <button class="btn-export" onclick="FCIDatabase.exporterBDD()">Exporter la BDD (JSON)</button>
     </div>
 
+    <!-- KPI Cards -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-title">Missions Enregistrées</div>
@@ -177,18 +179,20 @@
         </div>
     </div>
 
+    <!-- Graphiques -->
     <div class="charts-grid">
         <div class="chart-card">
             <h3>Taux de Conformité (TC %) par Processus</h3>
             <canvas id="chartProcessus"></canvas>
         </div>
         <div class="chart-card">
-            <h3>Répartition des Constats (OK vs KO)</h3>
+            <h3>Répartition Globale (OK vs KO)</h3>
             <canvas id="chartOkKo"></canvas>
         </div>
     </div>
 
-    <h2>Dernières Missions et Synthese des Constats</h2>
+    <!-- Synthèse des Missions -->
+    <h2>Synthèse des Missions et Constats</h2>
     <table>
         <thead>
             <tr>
@@ -196,7 +200,7 @@
                 <th>Date</th>
                 <th>Entité</th>
                 <th>Contrôleur</th>
-                <th>Processus</th>
+                <th>Processus Audités</th>
                 <th>Points Vérifiés (Ech)</th>
                 <th>Conformes (OK)</th>
                 <th>Anomalies (KO)</th>
@@ -212,6 +216,7 @@
 v1.0 © 2026 - 2027</footer>
 </div>
 
+<!-- Inclusion du gestionnaire BDD Centralisée -->
 <script src="fci-db-manager.js"></script>
 
 <script>
@@ -226,45 +231,47 @@ v1.0 © 2026 - 2027</footer>
         const constatsControle = db.constatsControle || [];
         const constatsEncaisses = db.constatsEncaisses || [];
 
+        // 1. Calcul des KPIs généraux
         document.getElementById('kpiMissions').textContent = missions.length;
 
         let totalEchControle = 0, totalOkControle = 0, totalKoControle = 0;
         constatsControle.forEach(c => {
-            totalEchControle += c.ech || 0;
-            totalOkControle += c.ok || 0;
-            totalKoControle += c.ko || 0;
+            totalEchControle += parseInt(c.ech) || 0;
+            totalOkControle += parseInt(c.ok) || 0;
+            totalKoControle += parseInt(c.ko) || 0;
         });
 
         let totalEchEncaisse = 0, totalOkEncaisse = 0, totalKoEncaisse = 0;
         constatsEncaisses.forEach(e => {
-            totalEchEncaisse += e.ech || 0;
-            totalOkEncaisse += e.ok || 0;
-            totalKoEncaisse += e.ko || 0;
+            totalEchEncaisse += parseInt(e.ech) || 0;
+            totalOkEncaisse += parseInt(e.ok) || 0;
+            totalKoEncaisse += parseInt(e.ko) || 0;
         });
 
-        const tcControleGlobal = totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : 0;
-        const tcEncaisseGlobal = totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : 0;
+        const tcControleGlobal = totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : '0.0';
+        const tcEncaisseGlobal = totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : '0.0';
 
         document.getElementById('kpiTcControle').textContent = tcControleGlobal + '%';
         document.getElementById('kpiTcEncaisses').textContent = tcEncaisseGlobal + '%';
         document.getElementById('kpiTotalKO').textContent = totalKoControle + totalKoEncaisse;
 
+        // 2. Remplissage du tableau de synthèse des missions
         const tbody = document.getElementById('tdbTableBody');
         tbody.innerHTML = '';
 
         if (missions.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucune donnée enregistrée dans la BDD.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucune mission enregistrée dans la BDD.</td></tr>';
         } else {
             missions.forEach(m => {
                 const constatsMission = constatsControle.filter(c => c.idMission === m.idMission);
                 let echM = 0, okM = 0, koM = 0;
-                let procList = new Set();
+                let procSet = new Set();
 
                 constatsMission.forEach(c => {
-                    echM += c.ech || 0;
-                    okM += c.ok || 0;
-                    koM += c.ko || 0;
-                    if (c.processus) procList.add(c.processus);
+                    echM += parseInt(c.ech) || 0;
+                    okM += parseInt(c.ok) || 0;
+                    koM += parseInt(c.ko) || 0;
+                    if (c.processus) procSet.add(c.processus);
                 });
 
                 const tcM = echM > 0 ? ((okM / echM) * 100).toFixed(1) : '0.0';
@@ -275,7 +282,7 @@ v1.0 © 2026 - 2027</footer>
                     <td>${m.date || '--'}</td>
                     <td>${m.entite || '--'}</td>
                     <td>${m.controleur || '--'}</td>
-                    <td>${Array.from(procList).join(', ') || 'N/A'}</td>
+                    <td>${Array.from(procSet).join(', ') || 'N/A'}</td>
                     <td>${echM}</td>
                     <td><span style="color:var(--success);font-weight:bold;">${okM}</span></td>
                     <td><span style="color:var(--danger);font-weight:bold;">${koM}</span></td>
@@ -285,34 +292,36 @@ v1.0 © 2026 - 2027</footer>
             });
         }
 
+        // 3. Rendu des graphiques
         initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
     }
 
     function initialiserGraphiques(constatsControle, totalOK, totalKO) {
-        const processusData = {};
+        const processusMap = {};
         constatsControle.forEach(c => {
-            const proc = c.processus || 'Autre';
-            if (!processusData[proc]) {
-                processusData[proc] = { ok: 0, ech: 0 };
+            const proc = c.processus || 'Autres';
+            if (!processusMap[proc]) {
+                processusMap[proc] = { ok: 0, ech: 0 };
             }
-            processusData[proc].ok += c.ok || 0;
-            processusData[proc].ech += c.ech || 0;
+            processusMap[proc].ok += parseInt(c.ok) || 0;
+            processusMap[proc].ech += parseInt(c.ech) || 0;
         });
 
-        const labelsProcessus = Object.keys(processusData);
-        const tcProcessus = labelsProcessus.map(p => {
-            const d = processusData[p];
-            return d.ech > 0 ? ((d.ok / d.ech) * 100).toFixed(1) : 0;
+        const labels = Object.keys(processusMap);
+        const values = labels.map(p => {
+            const item = processusMap[p];
+            return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
         });
 
-        const ctxProc = document.getElementById('chartProcessus').getContext('2d');
-        new Chart(ctxProc, {
+        // Graphique à barres par Processus
+        const ctxBar = document.getElementById('chartProcessus').getContext('2d');
+        new Chart(ctxBar, {
             type: 'bar',
             data: {
-                labels: labelsProcessus.length > 0 ? labelsProcessus : ['Aucune donnée'],
+                labels: labels.length > 0 ? labels : ['Aucune donnée'],
                 datasets: [{
                     label: 'Taux de Conformité (%)',
-                    data: tcProcessus.length > 0 ? tcProcessus : [0],
+                    data: values.length > 0 ? values : [0],
                     backgroundColor: '#1e3a8a'
                 }]
             },
@@ -324,8 +333,9 @@ v1.0 © 2026 - 2027</footer>
             }
         });
 
-        const ctxOkKo = document.getElementById('chartOkKo').getContext('2d');
-        new Chart(ctxOkKo, {
+        // Graphique circulaire OK vs KO
+        const ctxDoughnut = document.getElementById('chartOkKo').getContext('2d');
+        new Chart(ctxDoughnut, {
             type: 'doughnut',
             data: {
                 labels: ['Conformes (OK)', 'Anomalies (KO)'],
