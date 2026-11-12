@@ -60,7 +60,7 @@
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
 
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
         .header-title h1 { font-size: 1.6rem; color: var(--primary); font-weight: 800; }
         .header-title p { font-size: 0.9rem; color: var(--text-muted); }
 
@@ -167,9 +167,9 @@
                 <h1>Fiche de Contrôle Terrain (FC)</h1>
                 <p>Saisie, évaluation, consultation et modification des constats d'audit</p>
             </div>
-            <div class="action-buttons" style="display:flex; gap:8px;">
+            <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
                 <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                <button class="btn btn-primary" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
+                <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
                 <button class="btn btn-warning" onclick="modifierFicheControle()"><i class="fa-solid fa-pen-to-square"></i> Modifier FC</button>
                 <button class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
                 <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
@@ -177,7 +177,7 @@
             </div>
         </div>
 
-        <!-- AMÉLIORATION 4 : BARRE DE RECHERCHE ET RECHERCHE PAR MISSION ID -->
+        <!-- BARRE DE RECHERCHE PAR MISSION ID -->
         <div class="search-card">
             <div class="search-group">
                 <label for="selectMissionId"><i class="fa-solid fa-magnifying-glass"></i> Rechercher une FC archivée :</label>
@@ -232,7 +232,6 @@
             remplirListeMissionsBDD();
         });
 
-        // 4. ALIMENTATION DE LA LISTE DÉROULANTE DE MISSIONS DEPUIS LA BDD
         function remplirListeMissionsBDD() {
             const select = document.getElementById('selectMissionId');
             select.innerHTML = '<option value="">-- Sélectionner un Mission ID --</option>';
@@ -262,7 +261,6 @@
             missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
             missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
 
-            // 1. INITIALISATION DE L'AVIS RESPONSABLE (FACULTATIF)
             missionData.pointsControle.forEach((item) => {
                 if (!item.eval) {
                     item.eval = { 
@@ -317,7 +315,6 @@
                 else countEnCours++;
             });
 
-            // 2. CALCUL DU TC MOYEN ET DE LA DESCRIPTION GLOBALE
             const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
             const globalRate = parseFloat(tauxConformiteMoyen);
             const dateCtrlISO = formatDateToISO(meta.dateControle);
@@ -376,7 +373,6 @@
                                 <div class="fields-block">
                                     <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${ev.constat}</textarea></div>
                                     <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${ev.recommandation}</textarea></div>
-                                    <!-- 1. INTÉGRATION AVIS DU RESPONSABLE (FACULTATIF) -->
                                     <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Observations du responsable de l'entité...">${ev.avisResponsable || ''}</textarea></div>
                                 </div>
                             </div>
@@ -385,7 +381,6 @@
                 html += `</div>`;
             }
 
-            // 2. INTÉGRATION DESCRIPTION ET EVALUATION DE L'ENTITÉ SELON LE TC MOYEN
             let badgeText = "---", badgeClass = "", descText = "";
             if (nbPointsEvalues === 0) {
                 badgeText = "NON ÉVALUÉ"; badgeClass = "avis-satisfaisante";
@@ -411,7 +406,7 @@
                             <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent);"></i>
                             <div>
                                 <h3>TAUX MOYEN DU CENTRE : <span>${tauxConformiteMoyen} %</span></h3>
-                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Synthese globabilité calculée sur les points évalués de la mission.</p>
+                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Synthèse globale calculée sur les points évalués de la mission.</p>
                             </div>
                         </div>
                         <div><span class="badge-avis-global ${badgeClass}">${badgeText}</span></div>
@@ -464,55 +459,77 @@
             return { valide: true };
         }
 
-        // ARCHIVAGE FC DANS LA BDD + VIDAGE AUTOMATIQUE (AMÉLIORATIONS 1 & 3)
-        function archiverFicheControle() {
+        // ARCHIVAGE FC DANS LA BDD LOCALE + FICHIER JSON DATÉ SUR GITHUB
+        async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const meta = missionData.metadata || {};
-            const idMission = meta.idMission || ("MIS-" + Date.now());
-            meta.idMission = idMission;
+            const btn = document.getElementById('btnArchiverFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
+            }
 
-            // 1. Enregistrement de la Mission
-            FCIDatabase.enregistrerMission({
-                idMission: idMission,
-                date: meta.dateControle || new Date().toISOString().slice(0, 10),
-                dateDebut: meta.periodeDebut || '',
-                dateFin: meta.periodeFin || '',
-                entite: meta.entite || '',
-                controleur: meta.controleurs || '',
-                pointsSelectionnes: missionData.pointsControle
-            });
+            try {
+                const meta = missionData.metadata || {};
+                const idMission = meta.idMission || ("MIS-" + Date.now());
+                meta.idMission = idMission;
 
-            // 2. Enregistrement des constats détaillés avec Avis Responsable
-            const constatsBDD = missionData.pointsControle.map((p, idx) => ({
-                idConstat: `CST-${idMission}-${idx + 1}`,
-                idMission: idMission,
-                date: meta.dateControle || new Date().toISOString().slice(0, 10),
-                processus: getItemVal(p, ['Processus']),
-                risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
-                controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
-                pop: parseInt(p.eval.population) || 0,
-                ech: parseInt(p.eval.echantillon) || 0,
-                ok: parseInt(p.eval.nombreOk) || 0,
-                ko: parseInt(p.eval.nombreKo) || 0,
-                tc: parseFloat(p.eval.tauxConformite) || 0,
-                constat: p.eval.constat,
-                recommandation: p.eval.recommandation,
-                avisResponsable: p.eval.avisResponsable || '',
-                statut: p.eval.statutConstat
-            }));
+                // 1. Enregistrement de la Mission (local uniquement, car déjà archivée à la planification ou via les constats)
+                await FCIDatabase.enregistrerMission({
+                    idMission: idMission,
+                    date: meta.dateControle || new Date().toISOString().slice(0, 10),
+                    dateDebut: meta.periodeDebut || '',
+                    dateFin: meta.periodeFin || '',
+                    entite: meta.entite || '',
+                    controleur: meta.controleurs || '',
+                    pointsSelectionnes: missionData.pointsControle
+                }, false);
 
-            FCIDatabase.enregistrerConstatsControle(constatsBDD);
-            alert("✅ La Fiche de Contrôle a été archivée avec succès dans la BDD (Feuille 5 & TDB 6) !");
+                // 2. Enregistrement des constats détaillés avec Avis Responsable + Archivage GitHub (FC_YYYY-MM-DD_Entite_MIS.json)
+                const constatsBDD = missionData.pointsControle.map((p, idx) => ({
+                    idConstat: `CST-${idMission}-${idx + 1}`,
+                    idMission: idMission,
+                    entite: meta.entite || 'Controle',
+                    controleur: meta.controleurs || '',
+                    date: meta.dateControle || new Date().toISOString().slice(0, 10),
+                    processus: getItemVal(p, ['Processus']),
+                    risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
+                    controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                    pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                    pop: parseInt(p.eval.population) || 0,
+                    ech: parseInt(p.eval.echantillon) || 0,
+                    ok: parseInt(p.eval.nombreOk) || 0,
+                    ko: parseInt(p.eval.nombreKo) || 0,
+                    tc: parseFloat(p.eval.tauxConformite) || 0,
+                    constat: p.eval.constat,
+                    recommandation: p.eval.recommandation,
+                    avisResponsable: p.eval.avisResponsable || '',
+                    statut: p.eval.statutConstat
+                }));
 
-            // 3. VIDAGE AUTOMATIQUE APRÈS ARCHIVAGE (AMÉLIORATION 3)
-            viderFormulaireFC();
-            remplirListeMissionsBDD();
+                const ghResult = await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
+
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ La Fiche de Contrôle (FC) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
+                    alert("✅ Fiche de Contrôle archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
+                } else {
+                    alert(`⚠️ Fiche archivée dans la BDD locale, mais échec de l'envoi GitHub :\n${ghResult?.error || 'Erreur réseau'}`);
+                }
+
+                // 3. Vidage automatique après archivage
+                viderFormulaireFC();
+                remplirListeMissionsBDD();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
         }
 
-        // 4. BOUTON "TROUVER" : RECHERCHER ET CHARGER UNE FC DEPUIS LA BDD
         function trouverFicheControle() {
             const selectedId = document.getElementById('selectMissionId').value;
             if (!selectedId) { alert("Veuillez sélectionner un Mission ID dans la liste."); return; }
@@ -526,16 +543,17 @@
             }
 
             const missionInfo = (db.missions || []).find(m => m.idMission === selectedId) || {};
+            const premierConstat = constatsMission[0] || {};
 
             missionData = {
                 metadata: {
                     idMission: selectedId,
-                    entite: missionInfo.entite || '',
+                    entite: missionInfo.entite || premierConstat.entite || '',
                     typeControle: 'Thématique',
-                    dateControle: missionInfo.date || getTodayISO(),
+                    dateControle: missionInfo.date || premierConstat.date || getTodayISO(),
                     periodeDebut: missionInfo.dateDebut || '',
                     periodeFin: missionInfo.dateFin || '',
-                    controleurs: missionInfo.controleur || ''
+                    controleurs: missionInfo.controleur || premierConstat.controleur || ''
                 },
                 pointsControle: constatsMission.map(c => ({
                     Processus: c.processus,
@@ -561,8 +579,7 @@
             document.getElementById('searchStatus').innerText = `Fiche de contrôle [${selectedId}] chargée.`;
         }
 
-        // 5. BOUTON "MODIFIER" : REMPLACER LES DONNÉES EXISTANTES PAR LES NOUVELLES
-        function modifierFicheControle() {
+        async function modifierFicheControle() {
             if (!missionData || !missionData.metadata || !missionData.metadata.idMission) {
                 alert("Aucune fiche de contrôle existante n'est actuellement chargée pour modification.");
                 return;
@@ -574,16 +591,12 @@
             const idMission = missionData.metadata.idMission;
             const db = FCIDatabase.getDB();
 
-            // 1. Suppression des anciens constats associés à cette mission
             db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== idMission);
             FCIDatabase.saveDB(db);
 
-            // 2. Réenregistrement avec les nouvelles valeurs
-            archiverFicheControle();
-            alert(`✅ La Fiche de Contrôle [${idMission}] a été modifiée avec succès dans la BDD.`);
+            await archiverFicheControle();
         }
 
-        // 6. BOUTON "SUPPRIMER LA FC" : SUPPRIMER LA FC TROUVÉE DE LA BDD
         function supprimerFicheControle() {
             if (!missionData || !missionData.metadata || !missionData.metadata.idMission) {
                 alert("Aucune fiche de contrôle n'est actuellement chargée à supprimer.");
@@ -591,7 +604,7 @@
             }
 
             const idMission = missionData.metadata.idMission;
-            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer définitivement la Fiche de Contrôle [${idMission}] de la BDD ?`)) {
+            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer définitivement la Fiche de Contrôle [${idMission}] de la BDD locale ?`)) {
                 const db = FCIDatabase.getDB();
                 
                 db.missions = (db.missions || []).filter(m => m.idMission !== idMission);
@@ -599,7 +612,7 @@
                 
                 FCIDatabase.saveDB(db);
                 
-                alert(`La Fiche de Contrôle [${idMission}] a été supprimée de la BDD.`);
+                alert(`La Fiche de Contrôle [${idMission}] a été supprimée de la BDD locale.`);
                 viderFormulaireFC();
                 remplirListeMissionsBDD();
             }
