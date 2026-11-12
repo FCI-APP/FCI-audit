@@ -1,0 +1,24 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-12T17:55:39.054Z",
+  "donnees": {
+    "idMission": "MIS-1794506138410",
+    "region": "OUJEDA",
+    "typeControle": "Systématique",
+    "date": "2026-11-12",
+    "dateDebut": "2026-11-12",
+    "dateFin": "2026-11-12",
+    "entite": "O3",
+    "controleur": "omar",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Administration des Ventes",
+        "Intitulé du risque": "Non MAJ du référentiel client ou référentiel obsolète",
+        "Intitulé Contrôle": "Contrôle de la MAJ du référentiel client ou référentiel obsoléte",
+        "Points de contrôle": "1/ Une campagne de sensibilisation a-t-elle été réalisée au niveau des centres pour la MAJ du référentiel client ?"
+      }
+    ]
+  }
+}
