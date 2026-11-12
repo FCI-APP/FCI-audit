@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-12T17:40:28.142Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794505227555-1-1",
+      "idMission": "MIS-ENC-1794505227555",
+      "typeControle": "Vérification",
+      "region": "AGADIR",
+      "site": "A3",
+      "entite": "A3",
+      "controleur": "mansouri",
+      "date": "2026-11-12",
+      "processus": "Philatélie",
+      "risque": "Spoliation ou vol de timbres",
+      "controle": "Contrôle de la disponibilité du stock au niveau du réseau",
+      "pc": "La valeur des valeurs postales est-elle exacte ?",
+      "pop": 250,
+      "ech": 120,
+      "ok": 119,
+      "ko": 1,
+      "tc": 99.16666666666667,
+      "constat": "eeeee",
+      "recommandation": "ggggg",
+      "avisResponsable": "hhhhh"
+    }
+  ]
+}
