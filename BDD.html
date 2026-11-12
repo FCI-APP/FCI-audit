@@ -72,11 +72,32 @@
         .btn-danger:hover { background-color: #FCA5A5; }
 
         .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; padding: 20px; margin-bottom: 30px; }
-        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.74rem; }
-        tr:nth-child(even) { background-color: #F8FAFC; }
+        .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
+
+        .legend-badges { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; font-weight: 700; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.72rem; white-space: nowrap; }
+
+        /* Distinction visuelle des lignes par Type de contrôle */
+        tr.row-thematique { background-color: #FFFFFF; }
+        tr.row-thematique:hover { background-color: #EFF6FF; }
+
+        tr.row-systematique { background-color: #FFFBEB; }
+        tr.row-systematique:hover { background-color: #FEF3C7; }
+
+        tr.row-verification { background-color: #ECFDF5; }
+        tr.row-verification:hover { background-color: #D1FAE5; }
+
+        .badge-type {
+            display: inline-block; padding: 4px 9px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+        }
+        .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
     </style>
 </head>
 <body>
@@ -105,7 +126,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Visualisation brute des tables de données et synchronisation avec les archives GitHub</p>
+                <p>Table unifiée des constats d'audit et synchronisation avec les archives GitHub</p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
                 <button class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
@@ -115,75 +136,34 @@
             </div>
         </header>
 
-        <!-- TABLE 1 : MISSIONS -->
+        <!-- TABLE UNIFIÉE DES CONSTATS -->
         <div class="table-card">
-            <h3><i class="fa-solid fa-folder-open"></i> Table A : Missions Planifiées</h3>
+            <div class="table-header-bar">
+                <h3><i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))</h3>
+                <div class="legend-badges">
+                    <span class="badge-type badge-thematique">Thématique</span>
+                    <span class="badge-type badge-systematique">Systématique</span>
+                    <span class="badge-type badge-verification">Vérification</span>
+                </div>
+            </div>
             <table>
                 <thead>
                     <tr>
-                        <th>Mission ID</th>
-                        <th>Date Création</th>
-                        <th>Début</th>
-                        <th>Fin</th>
-                        <th>Entité</th>
-                        <th>Contrôleur(s)</th>
-                        <th>Nb Points</th>
-                    </tr>
-                </thead>
-                <tbody id="tableMissions"></tbody>
-            </table>
-        </div>
-
-        <!-- TABLE 2 : CONSTATS FC -->
-        <div class="table-card">
-            <h3><i class="fa-solid fa-list-check"></i> Table B : Constats Fiche de Contrôle (FC)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Constat ID</th>
                         <th>Mission ID</th>
                         <th>Processus</th>
                         <th>Risque</th>
                         <th>Contrôle</th>
-                        <th>Point de Contrôle (PC)</th>
+                        <th>PC</th>
                         <th>Pop</th>
                         <th>Ech</th>
                         <th>OK</th>
                         <th>KO</th>
                         <th>TC (%)</th>
                         <th>Constat</th>
-                        <th>Recommandation</th>
-                        <th>Avis Responsable</th>
+                        <th>Type de contrôle</th>
                     </tr>
                 </thead>
-                <tbody id="tableConstatsFC"></tbody>
-            </table>
-        </div>
-
-        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - 15 COLONNES COMPLÈTES -->
-        <div class="table-card">
-            <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses (FV)</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Encaisse ID</th>
-                        <th>Mission ID</th>
-                        <th>Date</th>
-                        <th>Processus</th>
-                        <th>Risque</th>
-                        <th>Contrôle</th>
-                        <th>Point de Contrôle (PC)</th>
-                        <th>Pop</th>
-                        <th>Ech</th>
-                        <th>OK</th>
-                        <th>KO</th>
-                        <th>TC (%)</th>
-                        <th>Constat</th>
-                        <th>Recommandation</th>
-                        <th>Avis Responsable</th>
-                    </tr>
-                </thead>
-                <tbody id="tableConstatsEncaisses"></tbody>
+                <tbody id="tableBDDUnifiee"></tbody>
             </table>
         </div>
     </main>
@@ -192,83 +172,101 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
 
+        function normaliserTypeControle(valeurBrute, sourceDefaut) {
+            const val = String(valeurBrute || '').trim().toLowerCase();
+            if (val.includes('syst')) {
+                return { label: 'Systématique', rowClass: 'row-systematique', badgeClass: 'badge-systematique' };
+            }
+            if (val.includes('vérif') || val.includes('verif')) {
+                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
+            }
+            if (val.includes('thém') || val.includes('them')) {
+                return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
+            }
+            // Rétrocompatibilité avec les anciennes archives sans champ typeControle explicite
+            if (sourceDefaut === 'FV') {
+                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
+            }
+            return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
+        }
+
         function chargerBDDEnVisuel() {
             const db = FCIDatabase.getDB();
+            const tbody = document.getElementById('tableBDDUnifiee');
+            const totalBadge = document.getElementById('totalLignesBDD');
+            tbody.innerHTML = '';
 
-            // 1. Table Missions
-            const tbodyM = document.getElementById('tableMissions');
-            tbodyM.innerHTML = '';
-            if (!db.missions || db.missions.length === 0) {
-                tbodyM.innerHTML = '<tr><td colspan="7" style="text-align:center;">Aucune mission dans la BDD.</td></tr>';
-            } else {
-                db.missions.forEach(m => {
-                    tbodyM.innerHTML += `
-                        <tr>
-                            <td><b>${m.idMission}</b></td>
-                            <td>${m.date || '--'}</td>
-                            <td>${m.dateDebut || '--'}</td>
-                            <td>${m.dateFin || '--'}</td>
-                            <td>${m.entite || '--'}</td>
-                            <td>${m.controleur || '--'}</td>
-                            <td>${m.pointsSelectionnes ? m.pointsSelectionnes.length : 0}</td>
-                        </tr>`;
+            // Index rapide des missions pour retrouver le typeControle sur d'anciennes archives FC si nécessaire
+            const mapMissions = {};
+            (db.missions || []).forEach(m => {
+                if (m.idMission) mapMissions[m.idMission] = m;
+            });
+
+            const lignesUnifiees = [];
+
+            // 1. Constats issus de la Fiche de Contrôle (FC : Thématique / Systématique)
+            (db.constatsControle || []).forEach(c => {
+                const missionAssociee = mapMissions[c.idMission] || {};
+                const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
+                lignesUnifiees.push({
+                    idMission: c.idMission || '--',
+                    processus: c.processus || '--',
+                    risque: c.risque || '--',
+                    controle: c.controle || '--',
+                    pc: c.pc || '--',
+                    pop: c.pop || 0,
+                    ech: c.ech || 0,
+                    ok: c.ok || 0,
+                    ko: c.ko || 0,
+                    tc: parseFloat(c.tc || 0),
+                    constat: c.constat || '--',
+                    typeInfo: normaliserTypeControle(typeBrut, 'FC')
                 });
+            });
+
+            // 2. Constats issus de la Fiche des Encaisses (FV : Vérification)
+            (db.constatsEncaisses || []).forEach(e => {
+                const typeBrut = e.typeControle || 'Vérification';
+                lignesUnifiees.push({
+                    idMission: e.idMission || '--',
+                    processus: e.processus || '--',
+                    risque: e.risque || '--',
+                    controle: e.controle || '--',
+                    pc: e.pc || '--',
+                    pop: e.pop || 0,
+                    ech: e.ech || 0,
+                    ok: e.ok || 0,
+                    ko: e.ko || 0,
+                    tc: parseFloat(e.tc || 0),
+                    constat: e.constat || '--',
+                    typeInfo: normaliserTypeControle(typeBrut, 'FV')
+                });
+            });
+
+            totalBadge.innerText = lignesUnifiees.length;
+
+            if (lignesUnifiees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:25px; color:var(--text-muted);">Aucun constat enregistré dans la BDD.</td></tr>';
+                return;
             }
 
-            // 2. Table Constats FC
-            const tbodyFC = document.getElementById('tableConstatsFC');
-            tbodyFC.innerHTML = '';
-            if (!db.constatsControle || db.constatsControle.length === 0) {
-                tbodyFC.innerHTML = '<tr><td colspan="14" style="text-align:center;">Aucun constat FC dans la BDD.</td></tr>';
-            } else {
-                db.constatsControle.forEach(c => {
-                    tbodyFC.innerHTML += `
-                        <tr>
-                            <td><b>${c.idConstat}</b></td>
-                            <td>${c.idMission}</td>
-                            <td>${c.processus}</td>
-                            <td>${c.risque}</td>
-                            <td>${c.controle}</td>
-                            <td>${c.pc}</td>
-                            <td>${c.pop}</td>
-                            <td>${c.ech}</td>
-                            <td><span style="color:var(--success);font-weight:bold;">${c.ok}</span></td>
-                            <td><span style="color:var(--danger);font-weight:bold;">${c.ko}</span></td>
-                            <td><b>${parseFloat(c.tc).toFixed(1)}%</b></td>
-                            <td>${c.constat || '--'}</td>
-                            <td>${c.recommandation || '--'}</td>
-                            <td>${c.avisResponsable || '--'}</td>
-                        </tr>`;
-                });
-            }
-
-            // 3. Table Constats Encaisses (FV)
-            const tbodyE = document.getElementById('tableConstatsEncaisses');
-            tbodyE.innerHTML = '';
-            if (!db.constatsEncaisses || db.constatsEncaisses.length === 0) {
-                tbodyE.innerHTML = '<tr><td colspan="15" style="text-align:center;">Aucun constat de caisse dans la BDD.</td></tr>';
-            } else {
-                db.constatsEncaisses.forEach(e => {
-                    tbodyE.innerHTML += `
-                        <tr>
-                            <td><b>${e.idEncaisse}</b></td>
-                            <td>${e.idMission}</td>
-                            <td>${e.date}</td>
-                            <td>${e.processus}</td>
-                            <td>${e.risque}</td>
-                            <td>${e.controle}</td>
-                            <td>${e.pc}</td>
-                            <td>${e.pop || 0}</td>
-                            <td>${e.ech || 0}</td>
-                            <td><span style="color:var(--success);font-weight:bold;">${e.ok || 0}</span></td>
-                            <td><span style="color:var(--danger);font-weight:bold;">${e.ko || 0}</span></td>
-                            <td><b>${parseFloat(e.tc || 0).toFixed(1)}%</b></td>
-                            <td>${e.constat || '--'}</td>
-                            <td>${e.recommandation || '--'}</td>
-                            <td>${e.avisResponsable || '--'}</td>
-                        </tr>`;
-                });
-            }
+            lignesUnifiees.forEach(ligne => {
+                tbody.innerHTML += `
+                    <tr class="${ligne.typeInfo.rowClass}">
+                        <td><b>${ligne.idMission}</b></td>
+                        <td>${ligne.processus}</td>
+                        <td>${ligne.risque}</td>
+                        <td>${ligne.controle}</td>
+                        <td>${ligne.pc}</td>
+                        <td>${ligne.pop}</td>
+                        <td>${ligne.ech}</td>
+                        <td><span style="color:var(--success);font-weight:bold;">${ligne.ok}</span></td>
+                        <td><span style="color:var(--danger);font-weight:bold;">${ligne.ko}</span></td>
+                        <td><b>${ligne.tc.toFixed(1)}%</b></td>
+                        <td>${ligne.constat}</td>
+                        <td><span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span></td>
+                    </tr>`;
+            });
         }
 
         function configurerTokenDepuisBDD() {
