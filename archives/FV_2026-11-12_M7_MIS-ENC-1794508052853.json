@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-12T18:27:33.654Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794508052853-1-1",
+      "idMission": "MIS-ENC-1794508052853",
+      "typeControle": "Vérification",
+      "region": "MEKNES",
+      "site": "M7",
+      "entite": "M7",
+      "controleur": "khaled",
+      "date": "2026-11-12",
+      "processus": "Trésorerie et Financement",
+      "risque": "Détournement des encaissements et des recettes au niveau du réseau",
+      "controle": "Contrôle de la comptabilité des fonds CRBT",
+      "pc": "Le versement des fonds CRBT et des Droits de Douane (DD) au compte des opérations CRBT BAM n° 8515801 est-il conforme aux recettes encaissées et saisies sur SI COMMERCIAL ?",
+      "pop": 220,
+      "ech": 140,
+      "ok": 100,
+      "ko": 40,
+      "tc": 71.42857142857143,
+      "constat": "qqqqqq",
+      "recommandation": "mmmmm",
+      "avisResponsable": "nnnnn"
+    }
+  ]
+}
