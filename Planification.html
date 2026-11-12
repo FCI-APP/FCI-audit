@@ -141,7 +141,7 @@
             <form autocomplete="off" onsubmit="return false;">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="audit-region">1. Région *</label>
+                        <label for="audit-region">Région *</label>
                         <select id="audit-region" autocomplete="off" onchange="onRegionChangePlanif()">
                             <option value="">-- Sélectionner une région --</option>
                             <option value="MARRAKECH">MARRAKECH</option>
@@ -157,7 +157,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="audit-entite">2. Centre / Entité Auditée *</label>
+                        <label for="audit-entite">Entité / Agence Auditée *</label>
                         <select id="audit-entite" autocomplete="off" disabled>
                             <option value="">-- Choisir d'abord une région --</option>
                         </select>
@@ -188,19 +188,19 @@
 
         <div class="toolbar">
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
-                <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
-                <button type="button" class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
+                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
+                <button class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
             </div>
             <div>
-                <button type="button" class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+                <button class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
             </div>
         </div>
 
         <section id="planification-container"></section>
 
         <div class="action-bar">
-            <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
+            <button class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
         </div>
     </main>
 
@@ -384,7 +384,7 @@
                             <td style="width: 23%;">${escapeHtml(cVal || '-')}</td>
                             <td style="width: 23%;">${escapeHtml(pcVal || '-')}</td>
                             <td style="width: 5%; text-align: center;">
-                                <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
+                                <button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </td>
@@ -398,7 +398,7 @@
                             <input type="checkbox" ${allProcChecked ? 'checked' : ''} onchange="toggleProcessusCheckboxes('${escapeJsString(procName)}', this.checked)" style="margin-right: 8px;">
                             <i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)
                         </h3>
-                        <button type="button" style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
+                        <button style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
                             <i class="fa-solid fa-trash"></i> Retirer le Processus
                         </button>
                     </div>
@@ -509,7 +509,7 @@
             const controleurs = document.getElementById('audit-controleurs').value.trim();
 
             if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez renseigner l'ensemble des informations de la mission (Région, Centre, Type de contrôle, Dates et Contrôleurs) avant de continuer.");
+                alert("Veuillez remplir l'ensemble des informations de la mission (Région, Centre, Type de contrôle, Dates et Contrôleurs) avant de continuer.");
                 return;
             }
 
@@ -533,6 +533,7 @@
                     pointsControle: activeItems
                 };
 
+                // Enregistrement dans la BDD Centralisée fci_database + Archivage GitHub (PLAN_YYYY-MM-DD_Entite_MIS.json)
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
                     region: region,
