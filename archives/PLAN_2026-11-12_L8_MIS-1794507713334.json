@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-12T18:21:53.912Z",
+  "donnees": {
+    "idMission": "MIS-1794507713334",
+    "region": "LAAYOUNE",
+    "typeControle": "Thématique",
+    "date": "2026-11-12",
+    "dateDebut": "2026-11-12",
+    "dateFin": "2026-11-12",
+    "entite": "L8",
+    "controleur": "youssef",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Déphasage/ incohérence du SIRD avec l’évolution de l’activité",
+        "Intitulé Contrôle": "contrôle de cohérence du SIRD avec l'évolution des activités",
+        "Points de contrôle": "1/ Est-ce que les demandes d'évolution des indicateurs sont-elles faites et transmises au CDG?"
+      },
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Déphasage/ incohérence du SIRD avec l’évolution de l’activité",
+        "Intitulé Contrôle": "contrôle de cohérence du SIRD avec l'évolution des activités",
+        "Points de contrôle": "2/ Est-ce que le système est mis à jour pour s'adapter à l'évolution de l'activité?"
+      }
+    ]
+  }
+}
