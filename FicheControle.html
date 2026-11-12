@@ -327,7 +327,7 @@
                     <div class="meta-item"><span class="label">Fin période</span><input type="text" class="input-date-ctrl" value="${meta.periodeFin || ''}" oninput="mettreAJourMetadata('periodeFin', this.value)"></div>
                     <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Contrôleur(s)</span><span class="value">${meta.controleurs || '-'}</span></div>
-                    <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || '-'}</span></div>
+                    <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || 'Thématique'}</span></div>
                 </div>
 
                 <div class="kpi-grid">
@@ -459,7 +459,7 @@
             return { valide: true };
         }
 
-        // ARCHIVAGE FC DANS LA BDD LOCALE + FICHIER JSON DATÉ SUR GITHUB
+        // ARCHIVAGE FC DANS LA BDD LOCALE + FICHIER JSON DATÉ SUR GITHUB (AVEC typeControle)
         async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
@@ -475,10 +475,12 @@
                 const meta = missionData.metadata || {};
                 const idMission = meta.idMission || ("MIS-" + Date.now());
                 meta.idMission = idMission;
+                const typeControleMission = meta.typeControle || 'Thématique';
 
                 // 1. Enregistrement de la Mission (local uniquement, car déjà archivée à la planification ou via les constats)
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
+                    typeControle: typeControleMission,
                     date: meta.dateControle || new Date().toISOString().slice(0, 10),
                     dateDebut: meta.periodeDebut || '',
                     dateFin: meta.periodeFin || '',
@@ -487,10 +489,11 @@
                     pointsSelectionnes: missionData.pointsControle
                 }, false);
 
-                // 2. Enregistrement des constats détaillés avec Avis Responsable + Archivage GitHub (FC_YYYY-MM-DD_Entite_MIS.json)
+                // 2. Enregistrement des constats détaillés avec typeControle + Archivage GitHub (FC_YYYY-MM-DD_Entite_MIS.json)
                 const constatsBDD = missionData.pointsControle.map((p, idx) => ({
                     idConstat: `CST-${idMission}-${idx + 1}`,
                     idMission: idMission,
+                    typeControle: typeControleMission,
                     entite: meta.entite || 'Controle',
                     controleur: meta.controleurs || '',
                     date: meta.dateControle || new Date().toISOString().slice(0, 10),
@@ -512,7 +515,7 @@
                 const ghResult = await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche de Contrôle (FC) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche de Contrôle (${typeControleMission}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche de Contrôle archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
@@ -544,12 +547,13 @@
 
             const missionInfo = (db.missions || []).find(m => m.idMission === selectedId) || {};
             const premierConstat = constatsMission[0] || {};
+            const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
 
             missionData = {
                 metadata: {
                     idMission: selectedId,
                     entite: missionInfo.entite || premierConstat.entite || '',
-                    typeControle: 'Thématique',
+                    typeControle: typeCtrlRecupere,
                     dateControle: missionInfo.date || premierConstat.date || getTodayISO(),
                     periodeDebut: missionInfo.dateDebut || '',
                     periodeFin: missionInfo.dateFin || '',
@@ -576,7 +580,7 @@
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `Fiche de contrôle [${selectedId}] chargée.`;
+            document.getElementById('searchStatus').innerText = `Fiche de contrôle [${selectedId}] (${typeCtrlRecupere}) chargée.`;
         }
 
         async function modifierFicheControle() {
