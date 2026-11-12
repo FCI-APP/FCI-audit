@@ -587,12 +587,13 @@
             return true;
         }
 
-        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB)
+        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB AVEC typeControle: "Vérification")
         async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
             const site = document.getElementById('nomSite').value.trim();
             const controleur = document.getElementById('nomControleur').value.trim();
+            const typeControle = document.getElementById('typeControle').value || "Vérification";
 
             if (!site || !controleur) {
                 alert("Veuillez renseigner le nom du site et le nom du contrôleur.");
@@ -620,6 +621,7 @@
                         lotConstatsFV.push({
                             idEncaisse: `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`,
                             idMission: idMission,
+                            typeControle: typeControle,
                             site: site,
                             controleur: controleur,
                             date: dateVerif,
@@ -642,7 +644,7 @@
                 const ghResult = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche des Encaisses (FV) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche des Encaisses (${typeControle}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
