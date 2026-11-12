@@ -162,7 +162,7 @@
                     <button class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
                 </div>
                 <div class="header-actions-row">
-                    <button class="btn btn-primary" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
+                    <button class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
                     <button class="btn btn-warning" onclick="modifierFicheEncaisse()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
                     <button class="btn btn-danger" onclick="supprimerFicheEncaisse()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
@@ -587,8 +587,8 @@
             return true;
         }
 
-        // CORRECTION DE L'ARCHIVAGE DES DÉTAILS (CONSTAT, RECO, AVIS)
-        function archiverFicheEncaisse() {
+        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB)
+        async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
             const site = document.getElementById('nomSite').value.trim();
@@ -605,35 +605,56 @@
                 return;
             }
 
-            const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
+            const btn = document.getElementById('btnArchiverFV');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
 
-            // Sauvegarde détaillée point par point et constat par constat
-            activePoints.forEach((p, pIdx) => {
-                p.constats.forEach((c, cIdx) => {
-                    FCIDatabase.enregistrerConstatEncaisse({
-                        idEncaisse: `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`,
-                        idMission: idMission,
-                        date: document.getElementById('dateVerification').value.slice(0, 10),
-                        processus: p.processus || "Gestion des Encaisses",
-                        risque: p.risque || "Risque Encaisses",
-                        controle: p.controle || "Vérification physique",
-                        pc: p.pointDeControle || `Contrôle site: ${site}`,
-                        pop: c.population || 0,
-                        ech: c.echantillon || 0,
-                        ok: c.ok || 0,
-                        ko: c.ko || 0,
-                        tc: parseFloat(c.rate) || 0,
-                        constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
-                        recommandation: c.recoText || '--',
-                        avisResponsable: c.avisText || '--'
+            try {
+                const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
+                const dateVerif = document.getElementById('dateVerification').value.slice(0, 10);
+                const lotConstatsFV = [];
+
+                activePoints.forEach((p, pIdx) => {
+                    p.constats.forEach((c, cIdx) => {
+                        lotConstatsFV.push({
+                            idEncaisse: `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`,
+                            idMission: idMission,
+                            site: site,
+                            controleur: controleur,
+                            date: dateVerif,
+                            processus: p.processus || "Gestion des Encaisses",
+                            risque: p.risque || "Risque Encaisses",
+                            controle: p.controle || "Vérification physique",
+                            pc: p.pointDeControle || `Contrôle site: ${site}`,
+                            pop: c.population || 0,
+                            ech: c.echantillon || 0,
+                            ok: c.ok || 0,
+                            ko: c.ko || 0,
+                            tc: parseFloat(c.rate) || 0,
+                            constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
+                            recommandation: c.recoText || '--',
+                            avisResponsable: c.avisText || '--'
+                        });
                     });
                 });
-            });
 
-            alert("✅ La Fiche des Encaisses (FV) a été archivée avec succès dans la BDD (Feuille 5 & TDB 6) !");
-            
-            clearForm();
-            remplirListeMissionsEncaissesBDD();
+                const ghResult = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
+
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ La Fiche des Encaisses (FV) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
+                    alert("✅ Fiche archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
+                } else {
+                    alert(`⚠️ Fiche archivée dans la BDD locale, mais échec de l'envoi GitHub :\n${ghResult?.error || 'Erreur réseau'}`);
+                }
+                
+                clearForm();
+                remplirListeMissionsEncaissesBDD();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
         }
 
         function trouverFicheEncaisse() {
@@ -654,6 +675,8 @@
 
             const sample = constatsFV[0];
             document.getElementById('dateVerification').value = sample.date ? `${sample.date}T10:00` : '';
+            if (sample.site) document.getElementById('nomSite').value = sample.site;
+            if (sample.controleur) document.getElementById('nomControleur').value = sample.controleur;
 
             addedPoints = constatsFV.map((c, idx) => ({
                 id: Date.now() + idx,
@@ -677,7 +700,7 @@
             renderPoints();
         }
 
-        function modifierFicheEncaisse() {
+        async function modifierFicheEncaisse() {
             if (!currentMissionId) {
                 alert("Aucune Fiche des Encaisses n'est actuellement chargée à modifier.");
                 return;
@@ -689,8 +712,7 @@
             db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
             FCIDatabase.saveDB(db);
 
-            archiverFicheEncaisse();
-            alert(`✅ La Fiche des Encaisses [${currentMissionId}] a été modifiée avec succès dans la BDD.`);
+            await archiverFicheEncaisse();
         }
 
         function supprimerFicheEncaisse() {
@@ -699,12 +721,12 @@
                 return;
             }
 
-            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer la Fiche des Encaisses [${currentMissionId}] de la BDD ?`)) {
+            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer la Fiche des Encaisses [${currentMissionId}] de la BDD locale ?`)) {
                 const db = FCIDatabase.getDB();
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
                 FCIDatabase.saveDB(db);
 
-                alert(`La Fiche des Encaisses [${currentMissionId}] a été supprimée.`);
+                alert(`La Fiche des Encaisses [${currentMissionId}] a été supprimée de la BDD locale.`);
                 clearForm();
                 remplirListeMissionsEncaissesBDD();
             }
