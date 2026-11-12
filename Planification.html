@@ -57,10 +57,10 @@
         .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
         .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; background-color: #FFF; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
@@ -140,7 +140,23 @@
             <form autocomplete="off" onsubmit="return false;">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="audit-entite">Entité / Agence Auditée *</label>
+                        <label for="audit-region">Région *</label>
+                        <select id="audit-region" autocomplete="off">
+                            <option value="">-- Sélectionner une région --</option>
+                            <option value="MARRAKECH">MARRAKECH</option>
+                            <option value="AGADIR">AGADIR</option>
+                            <option value="CASA">CASA</option>
+                            <option value="SETTAT">SETTAT</option>
+                            <option value="RABAT">RABAT</option>
+                            <option value="TANGER">TANGER</option>
+                            <option value="FES">FES</option>
+                            <option value="MEKNES">MEKNES</option>
+                            <option value="OUJDA">OUJDA</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-entite">Centre / Entité Auditée *</label>
                         <input type="text" id="audit-entite" name="fci_entite_audit_noautofill" autocomplete="off" placeholder="Ex: Agence Principale Rabat">
                     </div>
                     <div class="form-group">
@@ -159,7 +175,7 @@
                         <label for="audit-date-fin">Fin de la période du contrôle *</label>
                         <input type="date" id="audit-date-fin" autocomplete="off">
                     </div>
-                    <div class="form-group" style="grid-column: span 2;">
+                    <div class="form-group">
                         <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
                         <input type="text" id="audit-controleurs" name="fci_controleurs_noautofill" autocomplete="off" placeholder="Ex: A. Ismail / M. Tahiri">
                     </div>
@@ -207,6 +223,7 @@
 
         function initFormDefaults() {
             const today = new Date().toISOString().split('T')[0];
+            document.getElementById('audit-region').value = "";
             document.getElementById('audit-entite').value = "";
             document.getElementById('audit-controleurs').value = "";
             document.getElementById('audit-type-controle').value = "";
@@ -402,14 +419,15 @@
         }
 
         async function lancerFicheControle() {
+            const region = document.getElementById('audit-region').value;
             const entite = document.getElementById('audit-entite').value.trim();
             const typeControle = document.getElementById('audit-type-controle').value;
             const dateDebut = document.getElementById('audit-date-debut').value;
             const dateFin = document.getElementById('audit-date-fin').value;
             const controleurs = document.getElementById('audit-controleurs').value.trim();
 
-            if (!entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez remplir l'ensemble des informations de la mission avant de continuer.");
+            if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
+                alert("Veuillez remplir l'ensemble des informations de la mission (y compris la Région) avant de continuer.");
                 return;
             }
 
@@ -429,13 +447,15 @@
             try {
                 const idMission = "MIS-" + Date.now();
                 const activeCampaign = {
-                    metadata: { idMission, entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
+                    metadata: { idMission, region, entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
                     pointsControle: activeItems
                 };
 
                 // Enregistrement dans la BDD Centralisée fci_database + Archivage GitHub (PLAN_YYYY-MM-DD_Entite_MIS.json)
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
+                    region: region,
+                    typeControle: typeControle,
                     date: new Date().toISOString().slice(0, 10),
                     dateDebut: dateDebut,
                     dateFin: dateFin,
