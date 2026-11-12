@@ -1,0 +1,24 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-12T18:03:59.925Z",
+  "donnees": {
+    "idMission": "MIS-1794506639344",
+    "region": "AGADIR",
+    "typeControle": "Systématique",
+    "date": "2026-11-12",
+    "dateDebut": "2026-11-12",
+    "dateFin": "2026-11-12",
+    "entite": "A3",
+    "controleur": "sava",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Développement commercial",
+        "Intitulé du risque": "Perte de marché suite à la concurrence déloyale exercée par des transporteurs non autorisés",
+        "Intitulé Contrôle": "Contrôle du respect de monopole",
+        "Points de contrôle": "1/ des enquêtes de vérification de monopole sont elle réalisées?"
+      }
+    ]
+  }
+}
