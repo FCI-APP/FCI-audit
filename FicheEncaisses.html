@@ -194,11 +194,27 @@
             <h2 class="card-title"><i class="fa-solid fa-circle-info"></i> Informations de la Mission</h2>
             <div class="form-grid">
                 <div class="form-group"><label>Mission ID</label><input type="text" class="form-control" id="idMissionEncaisse" readonly style="background:#F1F5F9; font-weight:700;"></div>
+                <div class="form-group">
+                    <label>Région *</label>
+                    <select class="form-control" id="regionEncaisse">
+                        <option value="">-- Sélectionner une région --</option>
+                        <option value="MARRAKECH">MARRAKECH</option>
+                        <option value="AGADIR">AGADIR</option>
+                        <option value="CASA">CASA</option>
+                        <option value="SETTAT">SETTAT</option>
+                        <option value="RABAT">RABAT</option>
+                        <option value="TANGER">TANGER</option>
+                        <option value="FES">FES</option>
+                        <option value="MEKNES">MEKNES</option>
+                        <option value="OUJDA">OUJDA</option>
+                        <option value="LAAYOUNE">LAAYOUNE</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Nom du centre / Agence *</label><input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Kénitra"></div>
                 <div class="form-group"><label>Type de Contrôle *</label><select class="form-control" id="typeControle"><option value="Vérification" selected>Vérification</option></select></div>
                 <div class="form-group"><label>Date et heure de vérification *</label><input type="datetime-local" class="form-control" id="dateVerification"></div>
                 <div class="form-group"><label>Début période vérifiée *</label><input type="date" class="form-control" id="periodeDebut"></div>
                 <div class="form-group"><label>Fin période vérifiée *</label><input type="date" class="form-control" id="periodeFin"></div>
-                <div class="form-group"><label>Nom du site / Agence *</label><input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Kénitra"></div>
                 <div class="form-group"><label>Nom du contrôleur *</label><input type="text" class="form-control" id="nomControleur" placeholder="Ex: Mansouri"></div>
                 <div class="form-group"><label>Nom du responsable du site (Facultatif)</label><input type="text" class="form-control" id="nomResponsable" placeholder="Ex: El Amrani"></div>
             </div>
@@ -306,6 +322,7 @@
                 const saved = JSON.parse(savedRaw);
                 currentMissionId = saved.idMission || ("MIS-ENC-" + Date.now());
                 document.getElementById('idMissionEncaisse').value = currentMissionId;
+                if (saved.region) document.getElementById('regionEncaisse').value = saved.region;
                 if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
                 if (saved.periodeDebut) document.getElementById('periodeDebut').value = formatDateToISO(saved.periodeDebut);
                 if (saved.periodeFin) document.getElementById('periodeFin').value = formatDateToISO(saved.periodeFin);
@@ -562,6 +579,7 @@
             addedPoints = [];
             currentMissionId = "";
             document.getElementById('idMissionEncaisse').value = '';
+            document.getElementById('regionEncaisse').value = '';
             document.getElementById('nomSite').value = '';
             document.getElementById('nomControleur').value = '';
             document.getElementById('nomResponsable').value = '';
@@ -587,16 +605,17 @@
             return true;
         }
 
-        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB AVEC typeControle: "Vérification")
+        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB AVEC region & typeControle: "Vérification")
         async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
+            const region = document.getElementById('regionEncaisse').value;
             const site = document.getElementById('nomSite').value.trim();
             const controleur = document.getElementById('nomControleur').value.trim();
             const typeControle = document.getElementById('typeControle').value || "Vérification";
 
-            if (!site || !controleur) {
-                alert("Veuillez renseigner le nom du site et le nom du contrôleur.");
+            if (!region || !site || !controleur) {
+                alert("Veuillez renseigner la Région, le nom du centre/site et le nom du contrôleur.");
                 return;
             }
 
@@ -621,6 +640,7 @@
                         lotConstatsFV.push({
                             idEncaisse: `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`,
                             idMission: idMission,
+                            region: region,
                             typeControle: typeControle,
                             site: site,
                             controleur: controleur,
@@ -644,7 +664,7 @@
                 const ghResult = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche des Encaisses (${typeControle}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche des Encaisses (${typeControle} - ${region}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
@@ -673,12 +693,13 @@
 
             currentMissionId = selectedId;
             document.getElementById('idMissionEncaisse').value = currentMissionId;
-            document.getElementById('searchEncaisseStatus').innerText = `Fiche FV [${selectedId}] chargée.`;
 
             const sample = constatsFV[0];
             document.getElementById('dateVerification').value = sample.date ? `${sample.date}T10:00` : '';
+            document.getElementById('regionEncaisse').value = sample.region || '';
             if (sample.site) document.getElementById('nomSite').value = sample.site;
             if (sample.controleur) document.getElementById('nomControleur').value = sample.controleur;
+            document.getElementById('searchEncaisseStatus').innerText = `Fiche FV [${selectedId}]${sample.region ? ' (' + sample.region + ')' : ''} chargée.`;
 
             addedPoints = constatsFV.map((c, idx) => ({
                 id: Date.now() + idx,
