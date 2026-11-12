@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)">
+    <link href="[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap)" rel="stylesheet">
+    <script src="[https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js](https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js)"></script>
 
     <style>
         :root {
@@ -76,10 +76,11 @@
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 25px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
         .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.875rem; outline: none; background-color: #FFF; }
+        .form-control:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); }
@@ -196,7 +197,7 @@
                 <div class="form-group"><label>Mission ID</label><input type="text" class="form-control" id="idMissionEncaisse" readonly style="background:#F1F5F9; font-weight:700;"></div>
                 <div class="form-group">
                     <label>Région *</label>
-                    <select class="form-control" id="regionEncaisse">
+                    <select class="form-control" id="regionEncaisse" onchange="onRegionEncaisseChange()">
                         <option value="">-- Sélectionner une région --</option>
                         <option value="MARRAKECH">MARRAKECH</option>
                         <option value="AGADIR">AGADIR</option>
@@ -206,11 +207,16 @@
                         <option value="TANGER">TANGER</option>
                         <option value="FES">FES</option>
                         <option value="MEKNES">MEKNES</option>
-                        <option value="OUJDA">OUJDA</option>
+                        <option value="OUJEDA">OUJEDA</option>
                         <option value="LAAYOUNE">LAAYOUNE</option>
                     </select>
                 </div>
-                <div class="form-group"><label>Nom du centre / Agence *</label><input type="text" class="form-control" id="nomSite" placeholder="Ex: Agence Principale Kénitra"></div>
+                <div class="form-group">
+                    <label>Centre / Entité vérifiée *</label>
+                    <select class="form-control" id="nomSite" disabled>
+                        <option value="">-- Choisir d'abord une région --</option>
+                    </select>
+                </div>
                 <div class="form-group"><label>Type de Contrôle *</label><select class="form-control" id="typeControle"><option value="Vérification" selected>Vérification</option></select></div>
                 <div class="form-group"><label>Date et heure de vérification *</label><input type="datetime-local" class="form-control" id="dateVerification"></div>
                 <div class="form-group"><label>Début période vérifiée *</label><input type="date" class="form-control" id="periodeDebut"></div>
@@ -264,6 +270,69 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
+        const CENTRES_PAR_REGION = {
+            "MARRAKECH": [
+                "MARRAKECH CTD",
+                "MARRAKECH SYBA CD",
+                "AGENCE MESSAGERIE GUELIZ MARRAKECH",
+                "ESSOUIRA CCC",
+                "SAFI CD",
+                "SAFI CM",
+                "OUARZAZATE CCC",
+                "EL KELAA DES SERAGHNAS CCC",
+                "BENGUERIR CLD",
+                "EL YOUSSOUFIA CLD",
+                "TINEGHIR CLD",
+                "SERVICE DES OPERATIONS MARRAKECH",
+                "SERVICE SUPPORT MARRAKECH"
+            ],
+            "AGADIR": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS AGADIR",
+                "SERVICE SUPPORT AGADIR"
+            ],
+            "CASA": [
+                "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10",
+                "SERVICE DES OPERATIONS CASA",
+                "SERVICE SUPPORT CASA"
+            ],
+            "SETTAT": [
+                "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10",
+                "SERVICE DES OPERATIONS SETTAT",
+                "SERVICE SUPPORT SETTAT"
+            ],
+            "RABAT": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS RABAT",
+                "SERVICE SUPPORT RABAT"
+            ],
+            "TANGER": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS TANGER",
+                "SERVICE SUPPORT TANGER"
+            ],
+            "FES": [
+                "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
+                "SERVICE DES OPERATIONS FES",
+                "SERVICE SUPPORT FES"
+            ],
+            "MEKNES": [
+                "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+                "SERVICE DES OPERATIONS MEKNES",
+                "SERVICE SUPPORT MEKNES"
+            ],
+            "OUJEDA": [
+                "O1", "O2", "O3", "O4", "O5", "O6", "O7", "O8", "O9", "O10",
+                "SERVICE DES OPERATIONS OUJEDA",
+                "SERVICE SUPPORT OUJEDA"
+            ],
+            "LAAYOUNE": [
+                "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10",
+                "SERVICE DES OPERATIONS LAAYOUNE",
+                "SERVICE SUPPORT LAAYOUNE"
+            ]
+        };
+
         let rawJsonData = [];
         let addedPoints = [];
         let currentMissionId = "";
@@ -290,6 +359,36 @@
             chargerReferentielJSON();
             remplirListeMissionsEncaissesBDD();
         });
+
+        function onRegionEncaisseChange(centrePreselectionne = '') {
+            const region = document.getElementById('regionEncaisse').value;
+            const siteSelect = document.getElementById('nomSite');
+            siteSelect.innerHTML = '';
+
+            if (!region || !CENTRES_PAR_REGION[region]) {
+                siteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
+                siteSelect.disabled = true;
+                return;
+            }
+
+            siteSelect.innerHTML = '<option value="">-- Sélectionner un centre --</option>';
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                siteSelect.appendChild(opt);
+            });
+
+            if (centrePreselectionne && !CENTRES_PAR_REGION[region].includes(centrePreselectionne)) {
+                const opt = document.createElement('option');
+                opt.value = centrePreselectionne;
+                opt.textContent = centrePreselectionne;
+                siteSelect.appendChild(opt);
+            }
+
+            siteSelect.disabled = false;
+            if (centrePreselectionne) siteSelect.value = centrePreselectionne;
+        }
 
         function remplirListeMissionsEncaissesBDD() {
             const select = document.getElementById('selectEncaisseMissionId');
@@ -322,11 +421,14 @@
                 const saved = JSON.parse(savedRaw);
                 currentMissionId = saved.idMission || ("MIS-ENC-" + Date.now());
                 document.getElementById('idMissionEncaisse').value = currentMissionId;
-                if (saved.region) document.getElementById('regionEncaisse').value = saved.region;
+                if (saved.region) {
+                    const regNorm = saved.region === 'OUJDA' ? 'OUJEDA' : saved.region;
+                    document.getElementById('regionEncaisse').value = regNorm;
+                    onRegionEncaisseChange(saved.site || '');
+                }
                 if (saved.dateVerif) document.getElementById('dateVerification').value = saved.dateVerif;
                 if (saved.periodeDebut) document.getElementById('periodeDebut').value = formatDateToISO(saved.periodeDebut);
                 if (saved.periodeFin) document.getElementById('periodeFin').value = formatDateToISO(saved.periodeFin);
-                if (saved.site) document.getElementById('nomSite').value = saved.site;
                 if (saved.controleur) document.getElementById('nomControleur').value = saved.controleur;
                 if (saved.responsable) document.getElementById('nomResponsable').value = saved.responsable;
                 
@@ -580,7 +682,7 @@
             currentMissionId = "";
             document.getElementById('idMissionEncaisse').value = '';
             document.getElementById('regionEncaisse').value = '';
-            document.getElementById('nomSite').value = '';
+            onRegionEncaisseChange('');
             document.getElementById('nomControleur').value = '';
             document.getElementById('nomResponsable').value = '';
             document.getElementById('periodeDebut').value = '';
@@ -605,17 +707,16 @@
             return true;
         }
 
-        // ARCHIVAGE COMPLET (BDD LOCALE + FICHIER JSON UNIQUE SUR GITHUB AVEC region & typeControle: "Vérification")
         async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
             const region = document.getElementById('regionEncaisse').value;
-            const site = document.getElementById('nomSite').value.trim();
+            const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const typeControle = document.getElementById('typeControle').value || "Vérification";
 
             if (!region || !site || !controleur) {
-                alert("Veuillez renseigner la Région, le nom du centre/site et le nom du contrôleur.");
+                alert("Veuillez sélectionner la Région, le Centre / Entité vérifiée et renseigner le nom du contrôleur.");
                 return;
             }
 
@@ -664,7 +765,7 @@
                 const ghResult = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche des Encaisses (${typeControle} - ${region}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche des Encaisses (${typeControle} - ${region} / ${site}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
@@ -696,10 +797,12 @@
 
             const sample = constatsFV[0];
             document.getElementById('dateVerification').value = sample.date ? `${sample.date}T10:00` : '';
-            document.getElementById('regionEncaisse').value = sample.region || '';
-            if (sample.site) document.getElementById('nomSite').value = sample.site;
+            let regNorm = (sample.region || '').toUpperCase().trim();
+            if (regNorm === 'OUJDA') regNorm = 'OUJEDA';
+            document.getElementById('regionEncaisse').value = regNorm;
+            onRegionEncaisseChange(sample.site || '');
             if (sample.controleur) document.getElementById('nomControleur').value = sample.controleur;
-            document.getElementById('searchEncaisseStatus').innerText = `Fiche FV [${selectedId}]${sample.region ? ' (' + sample.region + ')' : ''} chargée.`;
+            document.getElementById('searchEncaisseStatus').innerText = `Fiche FV [${selectedId}]${regNorm ? ' (' + regNorm + ')' : ''} chargée.`;
 
             addedPoints = constatsFV.map((c, idx) => ({
                 id: Date.now() + idx,
