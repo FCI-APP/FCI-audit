@@ -54,7 +54,7 @@
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
         .page-header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
             margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
         }
@@ -64,10 +64,14 @@
 
         .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-success { background-color: var(--success); color: #FFF; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-neutral { background-color: #F1F5F9; color: var(--primary-blue); border: 1px solid #CBD5E1; }
+        .btn-neutral:hover { background-color: #E2E8F0; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
         .btn-danger:hover { background-color: #FCA5A5; }
 
-        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 20px; margin-bottom: 30px; }
+        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; padding: 20px; margin-bottom: 30px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
         th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
@@ -101,9 +105,11 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Visualisation brute des tables de données enregistrées en temps réel</p>
+                <p>Visualisation brute des tables de données et synchronisation avec les archives GitHub</p>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
+                <button class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
                 <button class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
                 <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
@@ -154,7 +160,7 @@
             </table>
         </div>
 
-        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - 14 COLONNES COMPLÈTES -->
+        <!-- TABLE 3 : CONSTATS ENCAISSES (FV) - 15 COLONNES COMPLÈTES -->
         <div class="table-card">
             <h3><i class="fa-solid fa-vault"></i> Table C : Constats Vérification Encaisses (FV)</h3>
             <table>
@@ -265,11 +271,36 @@
             }
         }
 
+        function configurerTokenDepuisBDD() {
+            const token = FCIDatabase.configurerGitHubToken();
+            if (token) {
+                alert("✅ Token GitHub enregistré localement sur ce poste.");
+            }
+        }
+
+        async function synchroniserArchivesGitHub() {
+            const btn = document.getElementById('btnSyncGitHubBDD');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...';
+
+            try {
+                const resultat = await FCIDatabase.restaurerDepuisGitHub();
+                chargerBDDEnVisuel();
+                alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
+            } catch (err) {
+                alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
+        }
+
         function viderTouteLaBDD() {
-            if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD (Missions + FC + Encaisses) ?")) {
+            if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD locale (Missions + FC + Encaisses) ?\n(Les fichiers archivés sur GitHub restent conservés.)")) {
                 FCIDatabase.viderBDD();
                 chargerBDDEnVisuel();
-                alert("La BDD a été vidée.");
+                alert("La BDD locale a été vidée.");
             }
         }
     </script>
