@@ -125,11 +125,11 @@
                 <p>Préparation du programme de contrôle, ciblage des risques et lancement de la Fiche de Contrôle</p>
             </div>
             <div class="header-actions">
-                <button class="btn btn-danger" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                <button class="btn btn-primary" id="btnArchiverPlan" onclick="archiverPlanification()"><i class="fa-solid fa-box-archive"></i> Archiver Planification</button>
-                <button class="btn btn-warning" onclick="modifierPlanification()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                <button class="btn btn-danger" onclick="supprimerPlanification()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
-                <button class="btn btn-success" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer Fiche de Contrôle (FC)</button>
+                <button type="button" class="btn btn-danger" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button type="button" class="btn btn-primary" id="btnArchiverPlan" onclick="archiverPlanification()"><i class="fa-solid fa-box-archive"></i> Archiver Planification</button>
+                <button type="button" class="btn btn-warning" onclick="modifierPlanification()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button type="button" class="btn btn-danger" onclick="supprimerPlanification()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                <button type="button" class="btn btn-success" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer Fiche de Contrôle (FC)</button>
             </div>
         </header>
 
@@ -139,7 +139,7 @@
                 <select id="selectPlanMissionId">
                     <option value="">-- Sélectionner un Mission ID --</option>
                 </select>
-                <button class="btn btn-primary" onclick="trouverPlanification()"><i class="fa-solid fa-search"></i> Trouver</button>
+                <button type="button" class="btn btn-primary" onclick="trouverPlanification()"><i class="fa-solid fa-search"></i> Trouver</button>
             </div>
             <div id="planStatus" style="font-size:0.8rem; font-weight:700; color:var(--primary-blue);"></div>
         </div>
@@ -208,28 +208,28 @@
             <div class="selection-box">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Processus</label>
+                        <label>1. Processus</label>
                         <select class="form-control" id="filtreProcessus" onchange="onFiltreProcessusChange()">
-                            <option value="">-- Tous les processus --</option>
+                            <option value="">-- Choisir un processus --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Intitulé du risque</label>
+                        <label>2. Intitulé du risque</label>
                         <select class="form-control" id="filtreRisque" onchange="filtrerPointsReferentiel()">
                             <option value="">-- Tous les risques --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Recherche mot-clé</label>
-                        <input type="text" class="form-control" id="filtreKeyword" placeholder="Rechercher un contrôle ou PC..." oninput="filtrerPointsReferentiel()">
+                        <label>3. Recherche mot-clé</label>
+                        <input type="text" class="form-control" id="filtreKeyword" placeholder="Rechercher un contrôle ou PC..." oninput="debouncedFilter()">
                     </div>
                 </div>
             </div>
 
             <div class="toolbar">
                 <div style="display:flex; gap:8px;">
-                    <button class="btn btn-outline" onclick="cocherTout(true)"><i class="fa-solid fa-check-double"></i> Tout sélectionner</button>
-                    <button class="btn btn-outline" onclick="cocherTout(false)"><i class="fa-regular fa-square"></i> Tout désélectionner</button>
+                    <button type="button" class="btn btn-outline" onclick="cocherTout(true)"><i class="fa-solid fa-check-double"></i> Tout sélectionner (affichés)</button>
+                    <button type="button" class="btn btn-outline" onclick="cocherTout(false)"><i class="fa-regular fa-square"></i> Tout désélectionner</button>
                 </div>
                 <div style="font-size:0.85rem; font-weight:700; color:var(--primary-blue);">
                     <span id="nbPointsCoches">0</span> point(s) sélectionné(s) pour la mission
@@ -240,14 +240,20 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width:45px; text-align:center;">Choix</th>
+                            <th style="width:55px; text-align:center;">Choix</th>
                             <th>Processus</th>
                             <th>Intitulé du risque</th>
                             <th>Intitulé Contrôle</th>
                             <th>Points de contrôle</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyReferentielPlan"></tbody>
+                    <tbody id="tbodyReferentielPlan">
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:25px; color:var(--text-muted);">
+                                Sélectionnez un <b>Processus</b> ou saisissez un mot-clé pour afficher les points de contrôle.
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </section>
@@ -320,16 +326,14 @@
 
         let referentielData = [];
         let selectedKeys = new Set();
+        let filterTimer = null;
 
         function getItemVal(item, keys) {
+            if (!item) return '';
             for (let k of keys) {
-                if (item && item[k] !== undefined) return item[k];
+                if (item[k] !== undefined && item[k] !== null) return String(item[k]).trim();
             }
             return '';
-        }
-
-        function makePointKey(item, idx) {
-            return `${getItemVal(item, ['Processus'])}||${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}||${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}||${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}||${idx}`;
         }
 
         function genererMissionId() {
@@ -341,11 +345,11 @@
             return `MIS-${y}${m}${d}-${rand}`;
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('planMissionId').value = genererMissionId();
             document.getElementById('planDateControle').value = new Date().toISOString().slice(0, 10);
-            remplirListePlanificationsBDD();
-            await chargerReferentiel();
+            try { remplirListePlanificationsBDD(); } catch (e) {}
+            chargerReferentiel();
         });
 
         function onRegionPlanChange(centrePreselectionne = '') {
@@ -379,30 +383,40 @@
         }
 
         async function chargerReferentiel() {
-            const paths = ['./referentiel.json?v=' + Date.now(), './Referentiel.json?v=' + Date.now()];
+            const badge = document.getElementById('refBadge');
+            const paths = [
+                './referentiel.json?v=' + Date.now(),
+                './Referentiel.json?v=' + Date.now(),
+                './data.json?v=' + Date.now()
+            ];
+
             for (const p of paths) {
                 try {
                     const res = await fetch(p);
                     if (res.ok) {
                         const data = await res.json();
                         if (Array.isArray(data) && data.length > 0) {
-                            referentielData = data.map((item, idx) => ({ ...item, _key: makePointKey(item, idx) }));
-                            document.getElementById('refBadge').innerText = `${referentielData.length} points chargés`;
+                            referentielData = data.map((item, idx) => ({ ...item, _idx: idx }));
+                            badge.innerText = `${referentielData.length} points chargés`;
                             initialiserFiltresReferentiel();
-                            filtrerPointsReferentiel();
                             return;
                         }
                     }
                 } catch (e) {}
             }
-            document.getElementById('refBadge').innerText = "Référentiel introuvable";
+            badge.innerText = "Référentiel non chargé";
         }
 
         function initialiserFiltresReferentiel() {
             const selectProc = document.getElementById('filtreProcessus');
             const procs = [...new Set(referentielData.map(i => getItemVal(i, ['Processus'])))].filter(Boolean);
-            selectProc.innerHTML = '<option value="">-- Tous les processus --</option>';
-            procs.forEach(p => { selectProc.innerHTML += `<option value="${p}">${p}</option>`; });
+            selectProc.innerHTML = '<option value="">-- Choisir un processus --</option>';
+            procs.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                selectProc.appendChild(opt);
+            });
             onFiltreProcessusChange();
         }
 
@@ -412,8 +426,18 @@
             const subset = proc ? referentielData.filter(i => getItemVal(i, ['Processus']) === proc) : referentielData;
             const risques = [...new Set(subset.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
             selectRisque.innerHTML = '<option value="">-- Tous les risques --</option>';
-            risques.forEach(r => { selectRisque.innerHTML += `<option value="${r}">${r}</option>`; });
+            risques.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                selectRisque.appendChild(opt);
+            });
             filtrerPointsReferentiel();
+        }
+
+        function debouncedFilter() {
+            clearTimeout(filterTimer);
+            filterTimer = setTimeout(filtrerPointsReferentiel, 200);
         }
 
         function getFilteredItems() {
@@ -421,19 +445,34 @@
             const risque = document.getElementById('filtreRisque').value;
             const kw = document.getElementById('filtreKeyword').value.trim().toLowerCase();
 
+            if (!proc && !risque && !kw) return [];
+
             return referentielData.filter(item => {
                 const matchProc = !proc || getItemVal(item, ['Processus']) === proc;
+                if (!matchProc) return false;
                 const matchRisque = !risque || getItemVal(item, ['Intitulé du risque', 'Intitulé risque']) === risque;
+                if (!matchRisque) return false;
+                if (!kw) return true;
                 const fullText = `${getItemVal(item, ['Processus'])} ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])} ${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])} ${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}`.toLowerCase();
-                const matchKw = !kw || fullText.includes(kw);
-                return matchProc && matchRisque && matchKw;
+                return fullText.includes(kw);
             });
         }
 
         function filtrerPointsReferentiel() {
             const tbody = document.getElementById('tbodyReferentielPlan');
-            const items = getFilteredItems();
+            const proc = document.getElementById('filtreProcessus').value;
+            const risque = document.getElementById('filtreRisque').value;
+            const kw = document.getElementById('filtreKeyword').value.trim();
+
             tbody.innerHTML = '';
+
+            if (!proc && !risque && !kw) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:25px; color:var(--text-muted);">Sélectionnez un <b>Processus</b> ou saisissez un mot-clé pour afficher les points de contrôle.</td></tr>`;
+                updateCompteurSelection();
+                return;
+            }
+
+            const items = getFilteredItems();
 
             if (items.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Aucun point de contrôle correspondant.</td></tr>`;
@@ -441,34 +480,46 @@
                 return;
             }
 
-            items.forEach(item => {
-                const checked = selectedKeys.has(item._key) ? 'checked' : '';
-                tbody.innerHTML += `
-                    <tr>
-                        <td style="text-align:center;">
-                            <input type="checkbox" ${checked} style="transform:scale(1.2); cursor:pointer;" onchange="togglePointSelection('${item._key.replace(/'/g, "\\'")}', this.checked)">
-                        </td>
-                        <td><b>${getItemVal(item, ['Processus'])}</b></td>
-                        <td>${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</td>
-                        <td>${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</td>
-                        <td>${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</td>
-                    </tr>
+            const fragment = document.createDocumentFragment();
+            const limite = items.slice(0, 150);
+
+            limite.forEach(item => {
+                const tr = document.createElement('tr');
+                const checked = selectedKeys.has(item._idx) ? 'checked' : '';
+                tr.innerHTML = `
+                    <td style="text-align:center;">
+                        <input type="checkbox" ${checked} style="transform:scale(1.2); cursor:pointer;" onchange="togglePointSelection(${item._idx}, this.checked)">
+                    </td>
+                    <td><b>${getItemVal(item, ['Processus'])}</b></td>
+                    <td>${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</td>
+                    <td>${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</td>
+                    <td>${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</td>
                 `;
+                fragment.appendChild(tr);
             });
+
+            tbody.appendChild(fragment);
+
+            if (items.length > 150) {
+                const infoTr = document.createElement('tr');
+                infoTr.innerHTML = `<td colspan="5" style="text-align:center; background:#FEF3C7; color:#92400E; font-weight:700; padding:10px;">Affichage limité aux 150 premiers résultats sur ${items.length}. Affinez avec le filtre Risque ou Mot-clé.</td>`;
+                tbody.appendChild(infoTr);
+            }
+
             updateCompteurSelection();
         }
 
-        function togglePointSelection(key, isChecked) {
-            if (isChecked) selectedKeys.add(key);
-            else selectedKeys.delete(key);
+        function togglePointSelection(idx, isChecked) {
+            if (isChecked) selectedKeys.add(idx);
+            else selectedKeys.delete(idx);
             updateCompteurSelection();
         }
 
         function cocherTout(etat) {
             const items = getFilteredItems();
             items.forEach(item => {
-                if (etat) selectedKeys.add(item._key);
-                else selectedKeys.delete(item._key);
+                if (etat) selectedKeys.add(item._idx);
+                else selectedKeys.delete(item._idx);
             });
             filtrerPointsReferentiel();
         }
@@ -478,9 +529,9 @@
         }
 
         function getPointsSelectionnesObjects() {
-            return referentielData.filter(item => selectedKeys.has(item._key)).map(item => {
+            return referentielData.filter(item => selectedKeys.has(item._idx)).map(item => {
                 const copy = { ...item };
-                delete copy._key;
+                delete copy._idx;
                 return copy;
             });
         }
@@ -559,6 +610,7 @@
         }
 
         function remplirListePlanificationsBDD() {
+            if (typeof FCIDatabase === 'undefined') return;
             const select = document.getElementById('selectPlanMissionId');
             select.innerHTML = '<option value="">-- Sélectionner un Mission ID --</option>';
             const db = FCIDatabase.getDB();
@@ -596,10 +648,19 @@
                     getItemVal(sp, ['Processus']) === getItemVal(refItem, ['Processus']) &&
                     getItemVal(sp, ['Points de contrôle', 'Point de contrôle']) === getItemVal(refItem, ['Points de contrôle', 'Point de contrôle'])
                 );
-                if (match) selectedKeys.add(refItem._key);
+                if (match) selectedKeys.add(refItem._idx);
             });
 
-            filtrerPointsReferentiel();
+            if (savedPts.length > 0) {
+                const premierProc = getItemVal(savedPts[0], ['Processus']);
+                if (premierProc) {
+                    document.getElementById('filtreProcessus').value = premierProc;
+                    onFiltreProcessusChange();
+                }
+            } else {
+                filtrerPointsReferentiel();
+            }
+
             document.getElementById('planStatus').innerText = `Planification [${id}] chargée.`;
         }
 
@@ -634,6 +695,9 @@
             document.getElementById('planPeriodeDebut').value = '';
             document.getElementById('planPeriodeFin').value = '';
             document.getElementById('planControleurs').value = '';
+            document.getElementById('filtreProcessus').value = '';
+            document.getElementById('filtreRisque').innerHTML = '<option value="">-- Tous les risques --</option>';
+            document.getElementById('filtreKeyword').value = '';
             selectedKeys.clear();
             filtrerPointsReferentiel();
             document.getElementById('planStatus').innerText = '';
