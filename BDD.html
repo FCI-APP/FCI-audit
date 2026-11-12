@@ -75,7 +75,24 @@
         .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-        .legend-badges { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem; font-weight: 700; }
+        /* Boutons de filtrage par type de contrôle */
+        .filter-buttons-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .filter-btn {
+            padding: 6px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 800;
+            text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 6px; opacity: 0.72;
+        }
+        .filter-btn:hover { opacity: 1; transform: translateY(-1px); }
+        .filter-btn.active {
+            opacity: 1;
+            box-shadow: 0 0 0 2px var(--primary-blue);
+            transform: translateY(-1px);
+        }
+
+        .filter-tous { background-color: #E2E8F0; color: var(--primary-blue); border: 1px solid #94A3B8; }
+        .filter-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .filter-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .filter-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
         th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
@@ -140,10 +157,19 @@
         <div class="table-card">
             <div class="table-header-bar">
                 <h3><i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))</h3>
-                <div class="legend-badges">
-                    <span class="badge-type badge-thematique">Thématique</span>
-                    <span class="badge-type badge-systematique">Systématique</span>
-                    <span class="badge-type badge-verification">Vérification</span>
+                <div class="filter-buttons-group">
+                    <button type="button" class="filter-btn filter-tous active" data-filtre="TOUS" onclick="filtrerParType('TOUS')">
+                        <i class="fa-solid fa-layer-group"></i> Tous (<span id="count-TOUS">0</span>)
+                    </button>
+                    <button type="button" class="filter-btn filter-thematique" data-filtre="Thématique" onclick="filtrerParType('Thématique')">
+                        Thématique (<span id="count-Thématique">0</span>)
+                    </button>
+                    <button type="button" class="filter-btn filter-systematique" data-filtre="Systématique" onclick="filtrerParType('Systématique')">
+                        Systématique (<span id="count-Systématique">0</span>)
+                    </button>
+                    <button type="button" class="filter-btn filter-verification" data-filtre="Vérification" onclick="filtrerParType('Vérification')">
+                        Vérification (<span id="count-Vérification">0</span>)
+                    </button>
                 </div>
             </div>
             <table>
@@ -170,6 +196,8 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
+        let filtreActif = 'TOUS';
+
         document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
 
         function normaliserTypeControle(valeurBrute, sourceDefaut) {
@@ -188,6 +216,14 @@
                 return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
             }
             return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
+        }
+
+        function filtrerParType(type) {
+            filtreActif = type;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filtre === type);
+            });
+            chargerBDDEnVisuel();
         }
 
         function chargerBDDEnVisuel() {
@@ -243,14 +279,34 @@
                 });
             });
 
-            totalBadge.innerText = lignesUnifiees.length;
+            // Mise à jour des compteurs sur les 4 boutons
+            const counts = {
+                'TOUS': lignesUnifiees.length,
+                'Thématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Thématique').length,
+                'Systématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Systématique').length,
+                'Vérification': lignesUnifiees.filter(l => l.typeInfo.label === 'Vérification').length
+            };
+            Object.entries(counts).forEach(([key, val]) => {
+                const el = document.getElementById(`count-${key}`);
+                if (el) el.innerText = val;
+            });
 
-            if (lignesUnifiees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:25px; color:var(--text-muted);">Aucun constat enregistré dans la BDD.</td></tr>';
+            // Application du filtre actif ('TOUS' affiché d'office)
+            const lignesAffichees = filtreActif === 'TOUS'
+                ? lignesUnifiees
+                : lignesUnifiees.filter(l => l.typeInfo.label === filtreActif);
+
+            totalBadge.innerText = lignesAffichees.length;
+
+            if (lignesAffichees.length === 0) {
+                const msgVide = filtreActif === 'TOUS'
+                    ? 'Aucun constat enregistré dans la BDD.'
+                    : `Aucun constat de type « ${filtreActif} » dans la BDD.`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
 
-            lignesUnifiees.forEach(ligne => {
+            lignesAffichees.forEach(ligne => {
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td><b>${ligne.idMission}</b></td>
@@ -284,7 +340,7 @@
 
             try {
                 const resultat = await FCIDatabase.restaurerDepuisGitHub();
-                chargerBDDEnVisuel();
+                filtrerParType('TOUS');
                 alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
             } catch (err) {
                 alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
@@ -297,7 +353,7 @@
         function viderTouteLaBDD() {
             if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD locale (Missions + FC + Encaisses) ?\n(Les fichiers archivés sur GitHub restent conservés.)")) {
                 FCIDatabase.viderBDD();
-                chargerBDDEnVisuel();
+                filtrerParType('TOUS');
                 alert("La BDD locale a été vidée.");
             }
         }
