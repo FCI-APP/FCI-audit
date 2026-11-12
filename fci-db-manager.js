@@ -147,9 +147,27 @@ const FCIDatabase = {
         this.saveDB(db);
 
         if (syncGitHub) {
-            const entite = dataEncaisse.entite || dataEncaisse.bureau || dataEncaisse.agence || 'Encaisse';
+            const entite = dataEncaisse.site || dataEncaisse.entite || dataEncaisse.bureau || 'Encaisse';
             const id = dataEncaisse.idEncaisse || dataEncaisse.idMission || Date.now();
             return this.archiverSurGitHub('FV', entite, id, dataEncaisse);
+        }
+        return Promise.resolve({ success: true, localOnly: true });
+    },
+
+    enregistrerLotEncaisses(listeEncaisses, site, idMission, syncGitHub = true) {
+        const db = this.getDB();
+        listeEncaisses.forEach(dataEncaisse => {
+            const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
+            if (index >= 0) {
+                db.constatsEncaisses[index] = dataEncaisse;
+            } else {
+                db.constatsEncaisses.push(dataEncaisse);
+            }
+        });
+        this.saveDB(db);
+
+        if (syncGitHub && listeEncaisses.length > 0) {
+            return this.archiverSurGitHub('FV', site || 'Encaisse', idMission || Date.now(), listeEncaisses);
         }
         return Promise.resolve({ success: true, localOnly: true });
     },
@@ -181,7 +199,7 @@ const FCIDatabase = {
         };
 
         try {
-            // 1. Récupération du SHA si le fichier existe déjà (pour mise à jour sans erreur 422)
+            // 1. Récupération du SHA si le fichier existe déjà (mise à jour sans erreur HTTP 422)
             let existingSha = null;
             const checkResponse = await fetch(`${apiUrl}?ref=${FCI_GITHUB_CONFIG.branch}`, {
                 method: 'GET',
@@ -192,7 +210,7 @@ const FCIDatabase = {
                 existingSha = fileInfo.sha;
             }
 
-            // 2. Préparation du contenu JSON structuré
+            // 2. Préparation de l'enveloppe JSON
             const enveloppeArchive = {
                 application: "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
                 organisme: "Barid Al-Maghrib - Direction Contrôle Générale",
@@ -261,12 +279,12 @@ const FCIDatabase = {
 
         const fichiers = await this.listerArchivesGitHub();
         if (fichiers.length === 0) {
-            return { success: true, count: 0, message: "Aucune archive JSON trouvée dans archives/." };
+            return { success: true, count: 0, message: "Aucune archive JSON trouvée dans le dossier archives/." };
         }
 
         let nbRestaures = 0;
         for (const f of fichiers) {
-            const res = await fetch(`${f.url}`, {
+            const res = await fetch(f.url, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/vnd.github+json'
@@ -286,7 +304,11 @@ const FCIDatabase = {
                 this.enregistrerConstatsControle(archive.donnees, false);
                 nbRestaures++;
             } else if (archive.typeArchive === 'FV') {
-                this.enregistrerConstatEncaisse(archive.donnees, false);
+                if (Array.isArray(archive.donnees)) {
+                    this.enregistrerLotEncaisses(archive.donnees, '', '', false);
+                } else {
+                    this.enregistrerConstatEncaisse(archive.donnees, false);
+                }
                 nbRestaures++;
             }
         }
