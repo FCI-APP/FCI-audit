@@ -67,7 +67,7 @@
         .kpi-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
         .kpi-info h3 { font-size: 1.3rem; color: var(--primary-blue); font-weight: 800; }
 
-        .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 
         .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
@@ -99,6 +99,8 @@
                 <li class="active"><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle</span><span class="badge-status badge-active">Disponible</span></a></li>
                 <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -166,7 +168,7 @@
         </section>
 
         <div class="toolbar">
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
                 <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
                 <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
                 <button class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
@@ -179,7 +181,7 @@
         <section id="planification-container"></section>
 
         <div class="action-bar">
-            <button class="btn btn-primary" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
+            <button class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
         </div>
     </main>
 
@@ -399,7 +401,7 @@
             document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
         }
 
-        function lancerFicheControle() {
+        async function lancerFicheControle() {
             const entite = document.getElementById('audit-entite').value.trim();
             const typeControle = document.getElementById('audit-type-controle').value;
             const dateDebut = document.getElementById('audit-date-debut').value;
@@ -417,26 +419,40 @@
                 return;
             }
 
-            const idMission = "MIS-" + Date.now();
-            const activeCampaign = {
-                metadata: { idMission, entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
-                pointsControle: activeItems
-            };
+            const btn = document.getElementById('btnLancerFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement mission...';
+            }
 
-            // Enregistrement dans la BDD Centralisée fci_database
-            FCIDatabase.enregistrerMission({
-                idMission: idMission,
-                date: new Date().toISOString().slice(0, 10),
-                dateDebut: dateDebut,
-                dateFin: dateFin,
-                entite: entite,
-                controleur: controleurs,
-                pointsSelectionnes: activeItems
-            });
+            try {
+                const idMission = "MIS-" + Date.now();
+                const activeCampaign = {
+                    metadata: { idMission, entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
+                    pointsControle: activeItems
+                };
 
-            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
-            viderPlanification();
-            window.location.href = 'FicheControle.html';
+                // Enregistrement dans la BDD Centralisée fci_database + Archivage GitHub (PLAN_YYYY-MM-DD_Entite_MIS.json)
+                await FCIDatabase.enregistrerMission({
+                    idMission: idMission,
+                    date: new Date().toISOString().slice(0, 10),
+                    dateDebut: dateDebut,
+                    dateFin: dateFin,
+                    entite: entite,
+                    controleur: controleurs,
+                    pointsSelectionnes: activeItems
+                }, true);
+
+                localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
+                viderPlanification();
+                window.location.href = 'FicheControle.html';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
         }
 
         function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
