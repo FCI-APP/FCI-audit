@@ -1,0 +1,27 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-12T12:43:45.434Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794487424811-1-1",
+      "idMission": "MIS-ENC-1794487424811",
+      "site": "kenitra",
+      "controleur": "motrib",
+      "date": "2026-11-12",
+      "processus": "Trésorerie et Financement",
+      "risque": "Retard dans la remise à l'encaissement (chèques et effets) ou au versement (espèce) au niveau des métiers et des centres",
+      "controle": "Contrôle de versement des fonds et remise des chèques et effets à l'encaissement dans les délais",
+      "pc": "Les versements des recettes budgétaires et DTQ payées en espèces au compte BAM n° 8515743 sont-ils :\n- Conformes aux montants saisis sur SI COMMERCIAL ?\n- Effectués à J+1 ?\n- Effectués auprès de l’agence BAM la plus proche ?",
+      "pop": 500,
+      "ech": 300,
+      "ok": 290,
+      "ko": 10,
+      "tc": 96.66666666666667,
+      "constat": "ddddddddddddd",
+      "recommandation": "dddddddddddddddd",
+      "avisResponsable": "--"
+    }
+  ]
+}
