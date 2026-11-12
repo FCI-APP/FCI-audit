@@ -88,16 +88,15 @@
         }
         .meta-item { display: flex; flex-direction: column; }
         .meta-item span.label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
-        .meta-item span.value { font-size: 0.95rem; font-weight: 700; color: var(--primary); }
+        .meta-item span.value { font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-top: 4px; }
         
-        .meta-item input.input-date-ctrl {
+        .meta-item input.input-date-ctrl, .meta-item select.input-date-ctrl {
             margin-top: 4px; padding: 6px 10px; border: 1px solid var(--primary); border-radius: 6px;
             font-size: 0.88rem; font-weight: 700; color: var(--primary); background-color: #FFFFFF; outline: none; cursor: pointer;
         }
 
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 15px; }
-        .kpi-icon { width: 45px; height: 45px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 
         .process-group { margin-bottom: 25px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-card); overflow: hidden; }
         .process-header { background-color: #F8FAFC; padding: 15px 20px; font-weight: 700; color: var(--primary); font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
@@ -196,6 +195,7 @@
     <script src="fci-db-manager.js"></script>
     <script>
         let missionData = null;
+        const LISTE_REGIONS = ["MARRAKECH", "AGADIR", "CASA", "SETTAT", "RABAT", "TANGER", "FES", "MEKNES", "OUJDA", "LAAYOUNE"];
 
         function getItemVal(item, keys) {
             for (let k of keys) {
@@ -319,13 +319,24 @@
             const globalRate = parseFloat(tauxConformiteMoyen);
             const dateCtrlISO = formatDateToISO(meta.dateControle);
 
+            const regionOptionsHtml = LISTE_REGIONS.map(r => 
+                `<option value="${r}" ${meta.region === r ? 'selected' : ''}>${r}</option>`
+            ).join('');
+
             let html = `
                 <div class="meta-card">
                     <div class="meta-item"><span class="label">Mission ID</span><span class="value">${meta.idMission || 'Nouvelle Mission'}</span></div>
+                    <div class="meta-item">
+                        <span class="label">Région *</span>
+                        <select class="input-date-ctrl" onchange="mettreAJourMetadata('region', this.value)">
+                            <option value="">-- Sélectionner une région --</option>
+                            ${regionOptionsHtml}
+                        </select>
+                    </div>
+                    <div class="meta-item"><span class="label">Centre / Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Date du contrôle *</span><input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)"></div>
                     <div class="meta-item"><span class="label">Début période</span><input type="text" class="input-date-ctrl" value="${meta.periodeDebut || ''}" oninput="mettreAJourMetadata('periodeDebut', this.value)"></div>
                     <div class="meta-item"><span class="label">Fin période</span><input type="text" class="input-date-ctrl" value="${meta.periodeFin || ''}" oninput="mettreAJourMetadata('periodeFin', this.value)"></div>
-                    <div class="meta-item"><span class="label">Entité contrôlée</span><span class="value">${meta.entite || '-'}</span></div>
                     <div class="meta-item"><span class="label">Contrôleur(s)</span><span class="value">${meta.controleurs || '-'}</span></div>
                     <div class="meta-item"><span class="label">Type de contrôle</span><span class="value">${meta.typeControle || 'Thématique'}</span></div>
                 </div>
@@ -448,6 +459,9 @@
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 return { valide: false, messageErreur: "Aucune donnée de contrôle valide." };
             }
+            if (!missionData.metadata || !missionData.metadata.region) {
+                return { valide: false, messageErreur: "Veuillez sélectionner une Région avant d'archiver." };
+            }
             for (let p of missionData.pointsControle) {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
@@ -459,7 +473,7 @@
             return { valide: true };
         }
 
-        // ARCHIVAGE FC DANS LA BDD LOCALE + FICHIER JSON DATÉ SUR GITHUB (AVEC typeControle)
+        // ARCHIVAGE FC DANS LA BDD LOCALE + FICHIER JSON DATÉ SUR GITHUB (AVEC region & typeControle)
         async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
@@ -476,10 +490,12 @@
                 const idMission = meta.idMission || ("MIS-" + Date.now());
                 meta.idMission = idMission;
                 const typeControleMission = meta.typeControle || 'Thématique';
+                const regionMission = meta.region || '';
 
-                // 1. Enregistrement de la Mission (local uniquement, car déjà archivée à la planification ou via les constats)
+                // 1. Enregistrement de la Mission (local uniquement)
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
+                    region: regionMission,
                     typeControle: typeControleMission,
                     date: meta.dateControle || new Date().toISOString().slice(0, 10),
                     dateDebut: meta.periodeDebut || '',
@@ -489,10 +505,11 @@
                     pointsSelectionnes: missionData.pointsControle
                 }, false);
 
-                // 2. Enregistrement des constats détaillés avec typeControle + Archivage GitHub (FC_YYYY-MM-DD_Entite_MIS.json)
+                // 2. Enregistrement des constats détaillés avec region + typeControle + Archivage GitHub
                 const constatsBDD = missionData.pointsControle.map((p, idx) => ({
                     idConstat: `CST-${idMission}-${idx + 1}`,
                     idMission: idMission,
+                    region: regionMission,
                     typeControle: typeControleMission,
                     entite: meta.entite || 'Controle',
                     controleur: meta.controleurs || '',
@@ -515,7 +532,7 @@
                 const ghResult = await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche de Contrôle (${typeControleMission}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche de Contrôle (${typeControleMission} - ${regionMission}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche de Contrôle archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
@@ -548,10 +565,12 @@
             const missionInfo = (db.missions || []).find(m => m.idMission === selectedId) || {};
             const premierConstat = constatsMission[0] || {};
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
+            const regionRecuperee = premierConstat.region || missionInfo.region || '';
 
             missionData = {
                 metadata: {
                     idMission: selectedId,
+                    region: regionRecuperee,
                     entite: missionInfo.entite || premierConstat.entite || '',
                     typeControle: typeCtrlRecupere,
                     dateControle: missionInfo.date || premierConstat.date || getTodayISO(),
@@ -580,7 +599,7 @@
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `Fiche de contrôle [${selectedId}] (${typeCtrlRecupere}) chargée.`;
+            document.getElementById('searchStatus').innerText = `Fiche de contrôle [${selectedId}] (${typeCtrlRecupere}${regionRecuperee ? ' - ' + regionRecuperee : ''}) chargée.`;
         }
 
         async function modifierFicheControle() {
