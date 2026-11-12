@@ -3,104 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI - Planification de la Mission de Contrôle</title>
+    <title>FCI v1.0 - Feuille 2 : Planification des Missions</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         :root {
             --primary-blue: #003366;
-            --blue-dark: #002244;
+            --dark-blue: #002244;
             --accent-gold: #EAAA00;
             --bg-light: #F4F6F9;
-            --text-dark: #2C3E50;
-            --white: #FFFFFF;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
             --border-color: #E2E8F0;
-            --danger: #E74C3C;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
             --sidebar-width: 250px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
         .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary-blue); color: var(--white);
-            display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.15); justify-content: space-between;
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
+            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
         }
 
-        .sidebar-brand { padding: 20px 15px; text-align: center; border-bottom: 2px solid var(--accent-gold); background-color: var(--blue-dark); }
-        .sidebar-brand h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--white); line-height: 1.4; }
+        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
-        .sidebar-menu { list-style: none; margin-top: 10px; flex-grow: 1; }
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
             display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            border-left: 4px solid transparent; transition: all 0.2s;
         }
-        .sidebar-menu li.active a, .sidebar-menu li a:hover {
-            background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left: 4px solid var(--accent-gold);
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+
+        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
+
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
         }
 
-        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .badge-active { background: var(--accent-gold); color: var(--blue-dark); }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
+        .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100% - var(--sidebar-width)); }
+        .search-card { background-color: var(--card-bg); border-radius: 8px; padding: 15px 20px; border: 1px solid var(--border-color); margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+        .search-group { display: flex; align-items: center; gap: 10px; flex-grow: 1; }
+        .search-group label { font-size: 0.82rem; font-weight: 700; color: var(--primary-blue); text-transform: uppercase; white-space: nowrap; }
+        .search-group select { padding: 8px 12px; border: 1px solid var(--primary-blue); border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; width: 100%; max-width: 400px; font-weight: 700; }
 
-        .top-header {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
-            background: var(--white); padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary-blue);
-        }
-        .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 25px; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-        .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
-
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; background-color: #FFF; }
+        .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--primary-blue); }
+        .form-control { padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.875rem; outline: none; background-color: #FFF; }
+        .form-control:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
-        .kpi-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .kpi-info h3 { font-size: 1.3rem; color: var(--primary-blue); font-weight: 800; }
+        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-bottom: 20px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; padding: 10px 15px; background: #F1F5F9; border-radius: 6px; }
 
-        .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+        th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        th { background-color: var(--primary-blue); color: #FFFFFF; font-weight: 700; text-transform: uppercase; font-size: 0.74rem; }
+        tr:hover { background-color: #F8FAFC; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
-        .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
-        .btn-excel { background-color: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
-        .btn-danger-outline { background-color: #FFFFFF; color: var(--danger); border-color: #FCA5A5; }
-
-        .processus-block { background: var(--white); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); overflow: hidden; }
-        .processus-header { background-color: var(--primary-blue); color: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: rgba(0, 51, 102, 0.03); color: var(--primary-blue); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
-        tr.row-selected { background-color: #FEFCE8; }
-
-        .empty-state { text-align: center; padding: 50px 20px; background: var(--white); border-radius: 8px; border: 2px dashed var(--border-color); }
-        .action-bar { display: flex; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
+        .btn { padding: 9px 15px; border-radius: 6px; font-size: 0.84rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-primary:hover { background-color: var(--dark-blue); }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-success { background-color: var(--success); color: #FFF; }
+        .btn-warning { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+        .btn-outline { background-color: #FFF; border-color: var(--border-color); color: var(--text-dark); }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div>
-            <div class="sidebar-brand">
+            <div class="sidebar-header">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
             </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
             <ul class="sidebar-menu">
-                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li class="active"><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle</span><span class="badge-status badge-active">Disponible</span></a></li>
-                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
-                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a></li>
-                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -109,105 +119,207 @@
     </aside>
 
     <main class="main-content">
-        <header class="top-header">
-            <div>
-                <h1>Planification de la mission de contrôle</h1>
-                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
+        <header class="page-header">
+            <div class="page-title">
+                <h1><i class="fa-solid fa-calendar-check" style="color: var(--accent-gold);"></i> Feuille 2 : Planification des Missions</h1>
+                <p>Préparation du programme de contrôle, ciblage des risques et lancement de la Fiche de Contrôle</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-danger" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button class="btn btn-primary" id="btnArchiverPlan" onclick="archiverPlanification()"><i class="fa-solid fa-box-archive"></i> Archiver Planification</button>
+                <button class="btn btn-warning" onclick="modifierPlanification()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button class="btn btn-danger" onclick="supprimerPlanification()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                <button class="btn btn-success" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer Fiche de Contrôle (FC)</button>
             </div>
         </header>
 
-        <div class="kpi-row">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
-                <div class="kpi-info"><h3 id="kpi-proc-count">0</h3><p>Processus cochés</p></div>
+        <div class="search-card">
+            <div class="search-group">
+                <label for="selectPlanMissionId"><i class="fa-solid fa-magnifying-glass"></i> Rechercher une planification :</label>
+                <select id="selectPlanMissionId">
+                    <option value="">-- Sélectionner un Mission ID --</option>
+                </select>
+                <button class="btn btn-primary" onclick="trouverPlanification()"><i class="fa-solid fa-search"></i> Trouver</button>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="kpi-info"><h3 id="kpi-risque-count">0</h3><p>Risques cochés</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="kpi-info"><h3 id="kpi-controle-count">0</h3><p>Contrôles cochés</p></div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
-                <div class="kpi-info"><h3 id="kpi-pc-count">0</h3><p>PC sélectionnés (FC)</p></div>
-            </div>
+            <div id="planStatus" style="font-size:0.8rem; font-weight:700; color:var(--primary-blue);"></div>
         </div>
 
         <section class="card">
-            <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</div>
-            <form autocomplete="off" onsubmit="return false;">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="audit-region">Région *</label>
-                        <select id="audit-region" autocomplete="off">
-                            <option value="">-- Sélectionner une région --</option>
-                            <option value="MARRAKECH">MARRAKECH</option>
-                            <option value="AGADIR">AGADIR</option>
-                            <option value="CASA">CASA</option>
-                            <option value="SETTAT">SETTAT</option>
-                            <option value="RABAT">RABAT</option>
-                            <option value="TANGER">TANGER</option>
-                            <option value="FES">FES</option>
-                            <option value="MEKNES">MEKNES</option>
-                            <option value="OUJDA">OUJDA</option>
-                            <option value="LAAYOUNE">LAAYOUNE</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-entite">Centre / Entité Auditée *</label>
-                        <input type="text" id="audit-entite" name="fci_entite_audit_noautofill" autocomplete="off" placeholder="Ex: Agence Principale Rabat">
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-type-controle">Type de Contrôle *</label>
-                        <select id="audit-type-controle" autocomplete="off">
-                            <option value="">-- Sélectionner le type --</option>
-                            <option value="Thématique">Thématique</option>
-                            <option value="Systématique">Systématique</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-date-debut">Début de la période du contrôle *</label>
-                        <input type="date" id="audit-date-debut" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-date-fin">Fin de la période du contrôle *</label>
-                        <input type="date" id="audit-date-fin" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                        <input type="text" id="audit-controleurs" name="fci_controleurs_noautofill" autocomplete="off" placeholder="Ex: A. Ismail / M. Tahiri">
-                    </div>
+            <h2 class="card-title"><span><i class="fa-solid fa-clipboard-list"></i> Paramètres de la Mission</span></h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Mission ID</label>
+                    <input type="text" class="form-control" id="planMissionId" readonly style="background:#F1F5F9; font-weight:700;">
                 </div>
-            </form>
+                <div class="form-group">
+                    <label>Région *</label>
+                    <select class="form-control" id="planRegion" onchange="onRegionPlanChange()">
+                        <option value="">-- Sélectionner une région --</option>
+                        <option value="MARRAKECH">MARRAKECH</option>
+                        <option value="AGADIR">AGADIR</option>
+                        <option value="CASA">CASA</option>
+                        <option value="SETTAT">SETTAT</option>
+                        <option value="RABAT">RABAT</option>
+                        <option value="TANGER">TANGER</option>
+                        <option value="FES">FES</option>
+                        <option value="MEKNES">MEKNES</option>
+                        <option value="OUJEDA">OUJEDA</option>
+                        <option value="LAAYOUNE">LAAYOUNE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Centre / Entité à contrôler *</label>
+                    <select class="form-control" id="planEntite" disabled>
+                        <option value="">-- Choisir d'abord une région --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type de Contrôle *</label>
+                    <select class="form-control" id="planTypeControle">
+                        <option value="Thématique">Thématique</option>
+                        <option value="Systématique">Systématique</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date du contrôle *</label>
+                    <input type="date" class="form-control" id="planDateControle">
+                </div>
+                <div class="form-group">
+                    <label>Début période contrôlée</label>
+                    <input type="date" class="form-control" id="planPeriodeDebut">
+                </div>
+                <div class="form-group">
+                    <label>Fin période contrôlée</label>
+                    <input type="date" class="form-control" id="planPeriodeFin">
+                </div>
+                <div class="form-group">
+                    <label>Contrôleur(s) assigné(s) *</label>
+                    <input type="text" class="form-control" id="planControleurs" placeholder="Ex: Ait Baba Ismail">
+                </div>
+            </div>
         </section>
 
-        <div class="toolbar">
-            <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
-                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
-                <button class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-            </div>
-            <div>
-                <button class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
-            </div>
-        </div>
+        <section class="card">
+            <h2 class="card-title">
+                <span><i class="fa-solid fa-filter"></i> Sélection des Points de Contrôle (Référentiel)</span>
+                <span id="refBadge" style="font-size:0.78rem; background:#DBEAFE; color:#1E40AF; padding:4px 10px; border-radius:12px;">Chargement...</span>
+            </h2>
 
-        <section id="planification-container"></section>
+            <div class="selection-box">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Processus</label>
+                        <select class="form-control" id="filtreProcessus" onchange="onFiltreProcessusChange()">
+                            <option value="">-- Tous les processus --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Intitulé du risque</label>
+                        <select class="form-control" id="filtreRisque" onchange="filtrerPointsReferentiel()">
+                            <option value="">-- Tous les risques --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Recherche mot-clé</label>
+                        <input type="text" class="form-control" id="filtreKeyword" placeholder="Rechercher un contrôle ou PC..." oninput="filtrerPointsReferentiel()">
+                    </div>
+                </div>
+            </div>
 
-        <div class="action-bar">
-            <button class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
-        </div>
+            <div class="toolbar">
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-outline" onclick="cocherTout(true)"><i class="fa-solid fa-check-double"></i> Tout sélectionner</button>
+                    <button class="btn btn-outline" onclick="cocherTout(false)"><i class="fa-regular fa-square"></i> Tout désélectionner</button>
+                </div>
+                <div style="font-size:0.85rem; font-weight:700; color:var(--primary-blue);">
+                    <span id="nbPointsCoches">0</span> point(s) sélectionné(s) pour la mission
+                </div>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:45px; text-align:center;">Choix</th>
+                            <th>Processus</th>
+                            <th>Intitulé du risque</th>
+                            <th>Intitulé Contrôle</th>
+                            <th>Points de contrôle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyReferentielPlan"></tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
-    <!-- Inclusion du gestionnaire BDD -->
     <script src="fci-db-manager.js"></script>
-
     <script>
-        let selectedData = [];
-        let checkedKeys = new Set();
-        const PLANIFICATION_PC_KEY = "fci_planification_pc";
+        const CENTRES_PAR_REGION = {
+            "MARRAKECH": [
+                "MARRAKECH CTD",
+                "MARRAKECH SYBA CD",
+                "AGENCE MESSAGERIE GUELIZ MARRAKECH",
+                "ESSOUIRA CCC",
+                "SAFI CD",
+                "SAFI CM",
+                "OUARZAZATE CCC",
+                "EL KELAA DES SERAGHNAS CCC",
+                "BENGUERIR CLD",
+                "EL YOUSSOUFIA CLD",
+                "TINEGHIR CLD",
+                "SERVICE DES OPERATIONS MARRAKECH",
+                "SERVICE SUPPORT MARRAKECH"
+            ],
+            "AGADIR": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS AGADIR",
+                "SERVICE SUPPORT AGADIR"
+            ],
+            "CASA": [
+                "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10",
+                "SERVICE DES OPERATIONS CASA",
+                "SERVICE SUPPORT CASA"
+            ],
+            "SETTAT": [
+                "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10",
+                "SERVICE DES OPERATIONS SETTAT",
+                "SERVICE SUPPORT SETTAT"
+            ],
+            "RABAT": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS RABAT",
+                "SERVICE SUPPORT RABAT"
+            ],
+            "TANGER": [
+                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
+                "SERVICE DES OPERATIONS TANGER",
+                "SERVICE SUPPORT TANGER"
+            ],
+            "FES": [
+                "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
+                "SERVICE DES OPERATIONS FES",
+                "SERVICE SUPPORT FES"
+            ],
+            "MEKNES": [
+                "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
+                "SERVICE DES OPERATIONS MEKNES",
+                "SERVICE SUPPORT MEKNES"
+            ],
+            "OUJEDA": [
+                "O1", "O2", "O3", "O4", "O5", "O6", "O7", "O8", "O9", "O10",
+                "SERVICE DES OPERATIONS OUJEDA",
+                "SERVICE SUPPORT OUJEDA"
+            ],
+            "LAAYOUNE": [
+                "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10",
+                "SERVICE DES OPERATIONS LAAYOUNE",
+                "SERVICE SUPPORT LAAYOUNE"
+            ]
+        };
+
+        let referentielData = [];
+        let selectedKeys = new Set();
 
         function getItemVal(item, keys) {
             for (let k of keys) {
@@ -216,267 +328,316 @@
             return '';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initFormDefaults();
-            loadPlanificationData();
+        function makePointKey(item, idx) {
+            return `${getItemVal(item, ['Processus'])}||${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}||${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}||${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}||${idx}`;
+        }
+
+        function genererMissionId() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            const rand = Math.floor(100 + Math.random() * 900);
+            return `MIS-${y}${m}${d}-${rand}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('planMissionId').value = genererMissionId();
+            document.getElementById('planDateControle').value = new Date().toISOString().slice(0, 10);
+            remplirListePlanificationsBDD();
+            await chargerReferentiel();
         });
 
-        function initFormDefaults() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('audit-region').value = "";
-            document.getElementById('audit-entite').value = "";
-            document.getElementById('audit-controleurs').value = "";
-            document.getElementById('audit-type-controle').value = "";
-            document.getElementById('audit-date-debut').value = today;
-            document.getElementById('audit-date-fin').value = today;
+        function onRegionPlanChange(centrePreselectionne = '') {
+            const region = document.getElementById('planRegion').value;
+            const entiteSelect = document.getElementById('planEntite');
+            entiteSelect.innerHTML = '';
+
+            if (!region || !CENTRES_PAR_REGION[region]) {
+                entiteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
+                entiteSelect.disabled = true;
+                return;
+            }
+
+            entiteSelect.innerHTML = '<option value="">-- Sélectionner un centre --</option>';
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                entiteSelect.appendChild(opt);
+            });
+
+            if (centrePreselectionne && !CENTRES_PAR_REGION[region].includes(centrePreselectionne)) {
+                const opt = document.createElement('option');
+                opt.value = centrePreselectionne;
+                opt.textContent = centrePreselectionne;
+                entiteSelect.appendChild(opt);
+            }
+
+            entiteSelect.disabled = false;
+            if (centrePreselectionne) entiteSelect.value = centrePreselectionne;
         }
 
-        function getPointKey(item) {
-            const p = getItemVal(item, ['Processus']);
-            const r = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
-            const c = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
-            const pc = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
-            return `${p}__${r}__${c}__${pc}`;
-        }
-
-        function loadPlanificationData() {
-            const rawData = localStorage.getItem(PLANIFICATION_PC_KEY);
-            if (rawData) {
+        async function chargerReferentiel() {
+            const paths = ['./referentiel.json?v=' + Date.now(), './Referentiel.json?v=' + Date.now()];
+            for (const p of paths) {
                 try {
-                    selectedData = JSON.parse(rawData);
-                    checkedKeys = new Set(selectedData.map(getPointKey));
-                } catch (e) {
-                    selectedData = []; checkedKeys.clear();
-                }
+                    const res = await fetch(p);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            referentielData = data.map((item, idx) => ({ ...item, _key: makePointKey(item, idx) }));
+                            document.getElementById('refBadge').innerText = `${referentielData.length} points chargés`;
+                            initialiserFiltresReferentiel();
+                            filtrerPointsReferentiel();
+                            return;
+                        }
+                    }
+                } catch (e) {}
             }
-            renderPlanification();
+            document.getElementById('refBadge').innerText = "Référentiel introuvable";
         }
 
-        function renderPlanification() {
-            const container = document.getElementById('planification-container');
-            container.innerHTML = '';
+        function initialiserFiltresReferentiel() {
+            const selectProc = document.getElementById('filtreProcessus');
+            const procs = [...new Set(referentielData.map(i => getItemVal(i, ['Processus'])))].filter(Boolean);
+            selectProc.innerHTML = '<option value="">-- Tous les processus --</option>';
+            procs.forEach(p => { selectProc.innerHTML += `<option value="${p}">${p}</option>`; });
+            onFiltreProcessusChange();
+        }
 
-            if (!selectedData || selectedData.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 15px;"></i>
-                        <h3>Aucun point de contrôle dans la planification</h3>
-                        <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer.</p>
-                    </div>
+        function onFiltreProcessusChange() {
+            const proc = document.getElementById('filtreProcessus').value;
+            const selectRisque = document.getElementById('filtreRisque');
+            const subset = proc ? referentielData.filter(i => getItemVal(i, ['Processus']) === proc) : referentielData;
+            const risques = [...new Set(subset.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
+            selectRisque.innerHTML = '<option value="">-- Tous les risques --</option>';
+            risques.forEach(r => { selectRisque.innerHTML += `<option value="${r}">${r}</option>`; });
+            filtrerPointsReferentiel();
+        }
+
+        function getFilteredItems() {
+            const proc = document.getElementById('filtreProcessus').value;
+            const risque = document.getElementById('filtreRisque').value;
+            const kw = document.getElementById('filtreKeyword').value.trim().toLowerCase();
+
+            return referentielData.filter(item => {
+                const matchProc = !proc || getItemVal(item, ['Processus']) === proc;
+                const matchRisque = !risque || getItemVal(item, ['Intitulé du risque', 'Intitulé risque']) === risque;
+                const fullText = `${getItemVal(item, ['Processus'])} ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])} ${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])} ${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}`.toLowerCase();
+                const matchKw = !kw || fullText.includes(kw);
+                return matchProc && matchRisque && matchKw;
+            });
+        }
+
+        function filtrerPointsReferentiel() {
+            const tbody = document.getElementById('tbodyReferentielPlan');
+            const items = getFilteredItems();
+            tbody.innerHTML = '';
+
+            if (items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Aucun point de contrôle correspondant.</td></tr>`;
+                updateCompteurSelection();
+                return;
+            }
+
+            items.forEach(item => {
+                const checked = selectedKeys.has(item._key) ? 'checked' : '';
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="text-align:center;">
+                            <input type="checkbox" ${checked} style="transform:scale(1.2); cursor:pointer;" onchange="togglePointSelection('${item._key.replace(/'/g, "\\'")}', this.checked)">
+                        </td>
+                        <td><b>${getItemVal(item, ['Processus'])}</b></td>
+                        <td>${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</td>
+                        <td>${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</td>
+                        <td>${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</td>
+                    </tr>
                 `;
-                updateKPIs(0, 0, 0, 0);
-                return;
-            }
-
-            const groupedData = selectedData.reduce((acc, item) => {
-                const proc = getItemVal(item, ['Processus']) || "Processus Non Spécifié";
-                if (!acc[proc]) acc[proc] = [];
-                acc[proc].push(item);
-                return acc;
-            }, {});
-
-            Object.keys(groupedData).forEach(procName => {
-                const items = groupedData[procName];
-                const procBlock = document.createElement('div');
-                procBlock.className = 'processus-block';
-
-                const allProcChecked = items.every(item => checkedKeys.has(getPointKey(item)));
-
-                let rowsHtml = items.map(item => {
-                    const key = getPointKey(item);
-                    const isChecked = checkedKeys.has(key);
-                    const globalIdx = selectedData.findIndex(d => getPointKey(d) === key);
-
-                    const pVal = getItemVal(item, ['Processus']);
-                    const rVal = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
-                    const cVal = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
-                    const pcVal = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
-
-                    return `
-                        <tr class="${isChecked ? 'row-selected' : ''}">
-                            <td style="width: 4%; text-align: center;">
-                                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePointCheckbox('${escapeJsString(key)}', this.checked)">
-                            </td>
-                            <td style="width: 20%; font-weight:700; color:var(--primary-blue);">${escapeHtml(pVal || '-')}</td>
-                            <td style="width: 25%;"><strong>${escapeHtml(rVal || '-')}</strong></td>
-                            <td style="width: 23%;">${escapeHtml(cVal || '-')}</td>
-                            <td style="width: 23%;">${escapeHtml(pcVal || '-')}</td>
-                            <td style="width: 5%; text-align: center;">
-                                <button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-
-                procBlock.innerHTML = `
-                    <div class="processus-header">
-                        <h3>
-                            <input type="checkbox" ${allProcChecked ? 'checked' : ''} onchange="toggleProcessusCheckboxes('${escapeJsString(procName)}', this.checked)" style="margin-right: 8px;">
-                            <i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)
-                        </h3>
-                        <button style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
-                            <i class="fa-solid fa-trash"></i> Retirer le Processus
-                        </button>
-                    </div>
-                    <div style="overflow-x:auto;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th style="text-align: center;">✓</th>
-                                    <th>Processus</th>
-                                    <th>Intitulé du Risque</th>
-                                    <th>Intitulé du Contrôle</th>
-                                    <th>Point de Contrôle</th>
-                                    <th style="text-align: center;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rowsHtml}</tbody>
-                        </table>
-                    </div>
-                `;
-                container.appendChild(procBlock);
             });
-
-            recalculateKPIs();
+            updateCompteurSelection();
         }
 
-        function recalculateKPIs() {
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            const activeProcSet = new Set(activeItems.map(i => getItemVal(i, ['Processus'])));
-            const activeRisqueSet = new Set(activeItems.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])));
-            const activeControleSet = new Set(activeItems.map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])));
-            updateKPIs(activeProcSet.size, activeRisqueSet.size, activeControleSet.size, activeItems.length);
+        function togglePointSelection(key, isChecked) {
+            if (isChecked) selectedKeys.add(key);
+            else selectedKeys.delete(key);
+            updateCompteurSelection();
         }
 
-        function updateKPIs(p, r, c, pc) {
-            document.getElementById('kpi-proc-count').innerText = p;
-            document.getElementById('kpi-risque-count').innerText = r;
-            document.getElementById('kpi-controle-count').innerText = c;
-            document.getElementById('kpi-pc-count').innerText = pc;
-        }
-
-        function togglePointCheckbox(key, isChecked) {
-            if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
-            renderPlanification();
-        }
-
-        function toggleProcessusCheckboxes(procName, isChecked) {
-            selectedData.forEach(item => {
-                if (getItemVal(item, ['Processus']) === procName) {
-                    const key = getPointKey(item);
-                    if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
-                }
+        function cocherTout(etat) {
+            const items = getFilteredItems();
+            items.forEach(item => {
+                if (etat) selectedKeys.add(item._key);
+                else selectedKeys.delete(item._key);
             });
-            renderPlanification();
+            filtrerPointsReferentiel();
         }
 
-        function selectAllPoints() { checkedKeys = new Set(selectedData.map(getPointKey)); renderPlanification(); }
-        function deselectAllPoints() { checkedKeys.clear(); renderPlanification(); }
-
-        function removePoint(index) {
-            if (index >= 0 && index < selectedData.length) {
-                checkedKeys.delete(getPointKey(selectedData[index]));
-                selectedData.splice(index, 1);
-                saveAndRefresh();
-            }
+        function updateCompteurSelection() {
+            document.getElementById('nbPointsCoches').innerText = selectedKeys.size;
         }
 
-        function removeProcessus(procName) {
-            selectedData = selectedData.filter(item => {
-                if (getItemVal(item, ['Processus']) === procName) {
-                    checkedKeys.delete(getPointKey(item)); return false;
-                }
-                return true;
+        function getPointsSelectionnesObjects() {
+            return referentielData.filter(item => selectedKeys.has(item._key)).map(item => {
+                const copy = { ...item };
+                delete copy._key;
+                return copy;
             });
-            saveAndRefresh();
         }
 
-        function viderPlanification() { 
-            selectedData = []; 
-            checkedKeys.clear(); 
-            initFormDefaults();
-            saveAndRefresh(); 
+        function validerFormulairePlanification() {
+            const region = document.getElementById('planRegion').value;
+            const entite = document.getElementById('planEntite').value;
+            const dateCtrl = document.getElementById('planDateControle').value;
+            const controleurs = document.getElementById('planControleurs').value.trim();
+            const points = getPointsSelectionnesObjects();
+
+            if (!region) { alert("⚠️ Veuillez sélectionner une Région."); return null; }
+            if (!entite) { alert("⚠️ Veuillez sélectionner un Centre / Entité à contrôler."); return null; }
+            if (!dateCtrl) { alert("⚠️ Veuillez renseigner la date du contrôle."); return null; }
+            if (!controleurs) { alert("⚠️ Veuillez renseigner le(s) contrôleur(s)."); return null; }
+            if (points.length === 0) { alert("⚠️ Veuillez sélectionner au moins un point de contrôle."); return null; }
+
+            return {
+                idMission: document.getElementById('planMissionId').value || genererMissionId(),
+                region: region,
+                entite: entite,
+                typeControle: document.getElementById('planTypeControle').value || 'Thématique',
+                date: dateCtrl,
+                dateDebut: document.getElementById('planPeriodeDebut').value || '',
+                dateFin: document.getElementById('planPeriodeFin').value || '',
+                controleur: controleurs,
+                pointsSelectionnes: points
+            };
         }
 
-        function saveAndRefresh() {
-            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
-            renderPlanification();
-        }
+        async function archiverPlanification() {
+            const mission = validerFormulairePlanification();
+            if (!mission) return;
 
-        function exportToExcel() {
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            if (!activeItems || activeItems.length === 0) { alert("Aucun point coché à exporter."); return; }
-            const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
-            const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
-            const rows = [headers.map(h => `"${h}"`).join(';'), ...activeItems.map(item => [escapeCSV(getItemVal(item, ['Processus'])), escapeCSV(getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])), escapeCSV(getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])), escapeCSV(getItemVal(item, ['Points de contrôle', 'Point de contrôle']))].join(';'))];
-            const csvContent = '\uFEFF' + rows.join('\r\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a'); link.href = url; link.download = `Planification_Mission_${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
-        }
-
-        async function lancerFicheControle() {
-            const region = document.getElementById('audit-region').value;
-            const entite = document.getElementById('audit-entite').value.trim();
-            const typeControle = document.getElementById('audit-type-controle').value;
-            const dateDebut = document.getElementById('audit-date-debut').value;
-            const dateFin = document.getElementById('audit-date-fin').value;
-            const controleurs = document.getElementById('audit-controleurs').value.trim();
-
-            if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez remplir l'ensemble des informations de la mission (y compris la Région) avant de continuer.");
-                return;
-            }
-
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            if (!activeItems || activeItems.length === 0) {
-                alert("Veuillez cocher au moins un point de contrôle.");
-                return;
-            }
-
-            const btn = document.getElementById('btnLancerFC');
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement mission...';
-            }
+            const btn = document.getElementById('btnArchiverPlan');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
 
             try {
-                const idMission = "MIS-" + Date.now();
-                const activeCampaign = {
-                    metadata: { idMission, region, entite, typeControle, dateDebutControle: dateDebut, dateFinControle: dateFin, controleurs, createdAt: new Date().toISOString() },
-                    pointsControle: activeItems
-                };
-
-                // Enregistrement dans la BDD Centralisée fci_database + Archivage GitHub (PLAN_YYYY-MM-DD_Entite_MIS.json)
-                await FCIDatabase.enregistrerMission({
-                    idMission: idMission,
-                    region: region,
-                    typeControle: typeControle,
-                    date: new Date().toISOString().slice(0, 10),
-                    dateDebut: dateDebut,
-                    dateFin: dateFin,
-                    entite: entite,
-                    controleur: controleurs,
-                    pointsSelectionnes: activeItems
-                }, true);
-
-                localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
-                viderPlanification();
-                window.location.href = 'FicheControle.html';
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = texteOriginal;
+                const ghResult = await FCIDatabase.enregistrerMission(mission, true);
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ Planification [${mission.idMission}] (${mission.region} - ${mission.entite}) archivée localement ET sur GitHub :\n${ghResult.path}`);
+                } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
+                    alert(`✅ Planification [${mission.idMission}] archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).`);
+                } else {
+                    alert(`⚠️ Planification archivée dans la BDD locale, mais échec GitHub :\n${ghResult?.error || 'Erreur réseau'}`);
                 }
+                remplirListePlanificationsBDD();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
             }
         }
 
-        function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
-        function escapeJsString(str) { return str ? String(str).replace(/'/g, "\\'") : ''; }
+        function lancerFicheControle() {
+            const mission = validerFormulairePlanification();
+            if (!mission) return;
+
+            const payloadFC = {
+                metadata: {
+                    idMission: mission.idMission,
+                    region: mission.region,
+                    entite: mission.entite,
+                    typeControle: mission.typeControle,
+                    dateControle: mission.date,
+                    periodeDebut: mission.dateDebut,
+                    periodeFin: mission.dateFin,
+                    controleurs: mission.controleur
+                },
+                pointsControle: mission.pointsSelectionnes
+            };
+
+            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(payloadFC));
+            window.location.href = 'FicheControle.html';
+        }
+
+        function remplirListePlanificationsBDD() {
+            const select = document.getElementById('selectPlanMissionId');
+            select.innerHTML = '<option value="">-- Sélectionner un Mission ID --</option>';
+            const db = FCIDatabase.getDB();
+            (db.missions || []).forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.idMission;
+                opt.textContent = `${m.idMission} (${m.region ? m.region + ' - ' : ''}${m.entite || ''})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function trouverPlanification() {
+            const id = document.getElementById('selectPlanMissionId').value;
+            if (!id) { alert("Veuillez sélectionner un Mission ID."); return; }
+
+            const db = FCIDatabase.getDB();
+            const mission = (db.missions || []).find(m => m.idMission === id);
+            if (!mission) { alert("Planification introuvable."); return; }
+
+            document.getElementById('planMissionId').value = mission.idMission;
+            let regNorm = (mission.region || '').toUpperCase().trim();
+            if (regNorm === 'OUJDA') regNorm = 'OUJEDA';
+            document.getElementById('planRegion').value = regNorm;
+            onRegionPlanChange(mission.entite || '');
+            document.getElementById('planTypeControle').value = mission.typeControle || 'Thématique';
+            document.getElementById('planDateControle').value = mission.date || '';
+            document.getElementById('planPeriodeDebut').value = mission.dateDebut || '';
+            document.getElementById('planPeriodeFin').value = mission.dateFin || '';
+            document.getElementById('planControleurs').value = mission.controleur || '';
+
+            selectedKeys.clear();
+            const savedPts = mission.pointsSelectionnes || [];
+            referentielData.forEach(refItem => {
+                const match = savedPts.some(sp =>
+                    getItemVal(sp, ['Processus']) === getItemVal(refItem, ['Processus']) &&
+                    getItemVal(sp, ['Points de contrôle', 'Point de contrôle']) === getItemVal(refItem, ['Points de contrôle', 'Point de contrôle'])
+                );
+                if (match) selectedKeys.add(refItem._key);
+            });
+
+            filtrerPointsReferentiel();
+            document.getElementById('planStatus').innerText = `Planification [${id}] chargée.`;
+        }
+
+        async function modifierPlanification() {
+            const id = document.getElementById('planMissionId').value;
+            if (!id) return;
+            const db = FCIDatabase.getDB();
+            db.missions = (db.missions || []).filter(m => m.idMission !== id);
+            FCIDatabase.saveDB(db);
+            await archiverPlanification();
+        }
+
+        function supprimerPlanification() {
+            const id = document.getElementById('planMissionId').value;
+            if (!id) return;
+            if (confirm(`⚠️ Supprimer la planification [${id}] de la BDD locale ?`)) {
+                const db = FCIDatabase.getDB();
+                db.missions = (db.missions || []).filter(m => m.idMission !== id);
+                FCIDatabase.saveDB(db);
+                alert(`Planification [${id}] supprimée.`);
+                viderPlanification();
+                remplirListePlanificationsBDD();
+            }
+        }
+
+        function viderPlanification() {
+            document.getElementById('planMissionId').value = genererMissionId();
+            document.getElementById('planRegion').value = '';
+            onRegionPlanChange('');
+            document.getElementById('planTypeControle').value = 'Thématique';
+            document.getElementById('planDateControle').value = new Date().toISOString().slice(0, 10);
+            document.getElementById('planPeriodeDebut').value = '';
+            document.getElementById('planPeriodeFin').value = '';
+            document.getElementById('planControleurs').value = '';
+            selectedKeys.clear();
+            filtrerPointsReferentiel();
+            document.getElementById('planStatus').innerText = '';
+        }
     </script>
 </body>
 </html>
