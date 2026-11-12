@@ -75,7 +75,16 @@
         .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-        /* Boutons de filtrage par type de contrôle */
+        /* Filtres Région + Type de contrôle */
+        .filters-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+        .region-filter-box { display: flex; align-items: center; gap: 8px; background: #F8FAFC; padding: 5px 12px; border-radius: 20px; border: 1px solid #CBD5E1; }
+        .region-filter-box label { font-size: 0.75rem; font-weight: 800; color: var(--primary-blue); text-transform: uppercase; white-space: nowrap; }
+        .region-filter-box select {
+            border: none; background: transparent; font-size: 0.78rem; font-weight: 800;
+            color: var(--primary-blue); outline: none; cursor: pointer;
+        }
+
         .filter-buttons-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .filter-btn {
             padding: 6px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 800;
@@ -94,9 +103,9 @@
         .filter-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .filter-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-        th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.72rem; white-space: nowrap; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
+        th, td { padding: 10px 9px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.71rem; white-space: nowrap; }
 
         /* Distinction visuelle des lignes par Type de contrôle */
         tr.row-thematique { background-color: #FFFFFF; }
@@ -110,11 +119,17 @@
 
         .badge-type {
             display: inline-block; padding: 4px 9px; border-radius: 12px;
-            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+            font-size: 0.71rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
         }
         .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+        .badge-region {
+            display: inline-block; padding: 3px 8px; border-radius: 6px;
+            font-size: 0.72rem; font-weight: 800; background-color: #F1F5F9;
+            color: var(--primary-blue); border: 1px solid #CBD5E1; white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -157,25 +172,50 @@
         <div class="table-card">
             <div class="table-header-bar">
                 <h3><i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))</h3>
-                <div class="filter-buttons-group">
-                    <button type="button" class="filter-btn filter-tous active" data-filtre="TOUS" onclick="filtrerParType('TOUS')">
-                        <i class="fa-solid fa-layer-group"></i> Tous (<span id="count-TOUS">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-thematique" data-filtre="Thématique" onclick="filtrerParType('Thématique')">
-                        Thématique (<span id="count-Thématique">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-systematique" data-filtre="Systématique" onclick="filtrerParType('Systématique')">
-                        Systématique (<span id="count-Systématique">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-verification" data-filtre="Vérification" onclick="filtrerParType('Vérification')">
-                        Vérification (<span id="count-Vérification">0</span>)
-                    </button>
+                
+                <div class="filters-toolbar">
+                    <!-- Filtre par Région -->
+                    <div class="region-filter-box">
+                        <label for="selectFiltreRegion"><i class="fa-solid fa-location-dot"></i> Région :</label>
+                        <select id="selectFiltreRegion" onchange="filtrerParRegion(this.value)">
+                            <option value="TOUTES">Toutes les régions</option>
+                            <option value="MARRAKECH">MARRAKECH</option>
+                            <option value="AGADIR">AGADIR</option>
+                            <option value="CASA">CASA</option>
+                            <option value="SETTAT">SETTAT</option>
+                            <option value="RABAT">RABAT</option>
+                            <option value="TANGER">TANGER</option>
+                            <option value="FES">FES</option>
+                            <option value="MEKNES">MEKNES</option>
+                            <option value="OUJDA">OUJDA</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
+                        </select>
+                    </div>
+
+                    <!-- Boutons de filtrage par Type de contrôle -->
+                    <div class="filter-buttons-group">
+                        <button type="button" class="filter-btn filter-tous active" data-filtre="TOUS" onclick="filtrerParType('TOUS')">
+                            <i class="fa-solid fa-layer-group"></i> Tous (<span id="count-TOUS">0</span>)
+                        </button>
+                        <button type="button" class="filter-btn filter-thematique" data-filtre="Thématique" onclick="filtrerParType('Thématique')">
+                            Thématique (<span id="count-Thématique">0</span>)
+                        </button>
+                        <button type="button" class="filter-btn filter-systematique" data-filtre="Systématique" onclick="filtrerParType('Systématique')">
+                            Systématique (<span id="count-Systématique">0</span>)
+                        </button>
+                        <button type="button" class="filter-btn filter-verification" data-filtre="Vérification" onclick="filtrerParType('Vérification')">
+                            Vérification (<span id="count-Vérification">0</span>)
+                        </button>
+                    </div>
                 </div>
             </div>
             <table>
                 <thead>
                     <tr>
                         <th>Mission ID</th>
+                        <th>Date</th>
+                        <th>Région</th>
+                        <th>Centre contrôlé</th>
                         <th>Processus</th>
                         <th>Risque</th>
                         <th>Contrôle</th>
@@ -197,6 +237,7 @@
     <script src="fci-db-manager.js"></script>
     <script>
         let filtreActif = 'TOUS';
+        let filtreRegionActif = 'TOUTES';
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
 
@@ -226,13 +267,18 @@
             chargerBDDEnVisuel();
         }
 
+        function filtrerParRegion(region) {
+            filtreRegionActif = region;
+            chargerBDDEnVisuel();
+        }
+
         function chargerBDDEnVisuel() {
             const db = FCIDatabase.getDB();
             const tbody = document.getElementById('tableBDDUnifiee');
             const totalBadge = document.getElementById('totalLignesBDD');
             tbody.innerHTML = '';
 
-            // Index rapide des missions pour retrouver le typeControle sur d'anciennes archives FC si nécessaire
+            // Index rapide des missions pour retrouver typeControle, region, entite ou date sur d'anciennes archives
             const mapMissions = {};
             (db.missions || []).forEach(m => {
                 if (m.idMission) mapMissions[m.idMission] = m;
@@ -244,8 +290,15 @@
             (db.constatsControle || []).forEach(c => {
                 const missionAssociee = mapMissions[c.idMission] || {};
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
+                const regionVal = (c.region || missionAssociee.region || '').toUpperCase().trim();
+                const centreVal = c.entite || missionAssociee.entite || '--';
+                const dateVal = c.date || missionAssociee.date || '--';
+
                 lignesUnifiees.push({
                     idMission: c.idMission || '--',
+                    date: dateVal,
+                    region: regionVal,
+                    centre: centreVal,
                     processus: c.processus || '--',
                     risque: c.risque || '--',
                     controle: c.controle || '--',
@@ -263,8 +316,15 @@
             // 2. Constats issus de la Fiche des Encaisses (FV : Vérification)
             (db.constatsEncaisses || []).forEach(e => {
                 const typeBrut = e.typeControle || 'Vérification';
+                const regionVal = (e.region || '').toUpperCase().trim();
+                const centreVal = e.site || e.entite || '--';
+                const dateVal = e.date || '--';
+
                 lignesUnifiees.push({
                     idMission: e.idMission || '--',
+                    date: dateVal,
+                    region: regionVal,
+                    centre: centreVal,
                     processus: e.processus || '--',
                     risque: e.risque || '--',
                     controle: e.controle || '--',
@@ -279,12 +339,17 @@
                 });
             });
 
-            // Mise à jour des compteurs sur les 4 boutons
+            // Filtrage préalable par Région si une région spécifique est sélectionnée
+            const lignesSelonRegion = filtreRegionActif === 'TOUTES'
+                ? lignesUnifiees
+                : lignesUnifiees.filter(l => l.region === filtreRegionActif);
+
+            // Mise à jour des compteurs sur les 4 boutons (reflétant la région sélectionnée)
             const counts = {
-                'TOUS': lignesUnifiees.length,
-                'Thématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Thématique').length,
-                'Systématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Systématique').length,
-                'Vérification': lignesUnifiees.filter(l => l.typeInfo.label === 'Vérification').length
+                'TOUS': lignesSelonRegion.length,
+                'Thématique': lignesSelonRegion.filter(l => l.typeInfo.label === 'Thématique').length,
+                'Systématique': lignesSelonRegion.filter(l => l.typeInfo.label === 'Systématique').length,
+                'Vérification': lignesSelonRegion.filter(l => l.typeInfo.label === 'Vérification').length
             };
             Object.entries(counts).forEach(([key, val]) => {
                 const el = document.getElementById(`count-${key}`);
@@ -293,23 +358,28 @@
 
             // Application du filtre actif ('TOUS' affiché d'office)
             const lignesAffichees = filtreActif === 'TOUS'
-                ? lignesUnifiees
-                : lignesUnifiees.filter(l => l.typeInfo.label === filtreActif);
+                ? lignesSelonRegion
+                : lignesSelonRegion.filter(l => l.typeInfo.label === filtreActif);
 
             totalBadge.innerText = lignesAffichees.length;
 
             if (lignesAffichees.length === 0) {
-                const msgVide = filtreActif === 'TOUS'
-                    ? 'Aucun constat enregistré dans la BDD.'
-                    : `Aucun constat de type « ${filtreActif} » dans la BDD.`;
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
+                const msgVide = 'Aucun constat trouvé pour les critères sélectionnés.';
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
 
             lignesAffichees.forEach(ligne => {
+                const badgeRegionHtml = ligne.region
+                    ? `<span class="badge-region">${ligne.region}</span>`
+                    : `<span style="color:var(--text-muted);">--</span>`;
+
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td><b>${ligne.idMission}</b></td>
+                        <td style="white-space:nowrap;">${ligne.date}</td>
+                        <td>${badgeRegionHtml}</td>
+                        <td><b>${ligne.centre}</b></td>
                         <td>${ligne.processus}</td>
                         <td>${ligne.risque}</td>
                         <td>${ligne.controle}</td>
@@ -340,6 +410,8 @@
 
             try {
                 const resultat = await FCIDatabase.restaurerDepuisGitHub();
+                filtreRegionActif = 'TOUTES';
+                document.getElementById('selectFiltreRegion').value = 'TOUTES';
                 filtrerParType('TOUS');
                 alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
             } catch (err) {
@@ -353,6 +425,8 @@
         function viderTouteLaBDD() {
             if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD locale (Missions + FC + Encaisses) ?\n(Les fichiers archivés sur GitHub restent conservés.)")) {
                 FCIDatabase.viderBDD();
+                filtreRegionActif = 'TOUTES';
+                document.getElementById('selectFiltreRegion').value = 'TOUTES';
                 filtrerParType('TOUS');
                 alert("La BDD locale a été vidée.");
             }
