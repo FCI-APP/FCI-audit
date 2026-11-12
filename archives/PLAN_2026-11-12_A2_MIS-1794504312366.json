@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-12T17:25:12.968Z",
+  "donnees": {
+    "idMission": "MIS-1794504312366",
+    "region": "RABAT",
+    "typeControle": "Systématique",
+    "date": "2026-11-12",
+    "dateDebut": "2026-11-12",
+    "dateFin": "2026-11-12",
+    "entite": "A2",
+    "controleur": "meliani",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Exploitation E-sign",
+        "Intitulé du risque": "Divulgation des données de certification",
+        "Intitulé Contrôle": "Contrôle d'accès aux données",
+        "Points de contrôle": "1/ Les opérateurs chargés du traitement des dossiers ont-ils signé leur engagement sur le respect des procédures Barid eSign et de confidentialité ?"
+      },
+      {
+        "Processus": "Exploitation E-sign",
+        "Intitulé du risque": "Divulgation des données de certification",
+        "Intitulé Contrôle": "Contrôle d'accès aux données",
+        "Points de contrôle": "2/ Des habilitations ont-elles été définies pour l'utilisation du système et sont-elles à jour ?"
+      }
+    ]
+  }
+}
