@@ -256,14 +256,14 @@
                 <p>Saisie, évaluation, consultation et suivi sélectif par date des constats d'audit</p>
             </div>
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
-                <button type="button" class="btn btn-refresh" id="btnActualiserFC" onclick="actualiserFCAction()" title="Actualiser les données de la fiche et les listes de la BDD"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
-                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Copie uniquement les points dont la date a été modifiée en nouvelles lignes de suivi, sans dupliquer les points inchangés"><i class="fa-solid fa-code-branch"></i> Suivi</button>
-                <button class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
-                <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
-                <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+                <button type="button" class="btn btn-refresh" id="btnActualiserFC" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button type="button" class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button type="button" class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
+                <button type="button" class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button type="button" class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Copie uniquement les points dont la date a été modifiée en nouvelles lignes de suivi, sans dupliquer les points inchangés"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                <button type="button" class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
+                <button type="button" class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+                <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
             </div>
         </div>
 
@@ -295,7 +295,7 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:6px;">
-                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltresBDD()" title="Réinitialiser les 3 listes déroulantes"><i class="fa-solid fa-arrows-rotate"></i></button>
+                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltresBDD()" title="Réinitialiser les 3 listes déroulantes"><i class="fa-solid fa-filter-circle-xmark"></i></button>
                     <button type="button" class="btn btn-primary" onclick="trouverFicheControleBDD()"><i class="fa-solid fa-search"></i> Charger depuis BDD</button>
                 </div>
             </div>
@@ -474,20 +474,6 @@
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
-
-        function actualiserFCAction() {
-            const btn = document.getElementById('btnActualiserFC');
-            const icon = btn ? btn.querySelector('i') : null;
-            if (icon) icon.classList.add('fa-spin');
-
-            chargerDonneesMission();
-            remplirFiltresBDD();
-            actualiserBadgeHorodatageFC();
-
-            setTimeout(() => {
-                if (icon) icon.classList.remove('fa-spin');
-            }, 350);
         }
 
         function lireDBSecurisee() {
