@@ -134,7 +134,7 @@
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
             </div>
             <div>
-                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="window.location.reload()" title="Actualiser la page">
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPlanification()" title="Actualiser les données de planification">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
                 </button>
             </div>
@@ -399,6 +399,44 @@
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
+        }
+
+        function actualiserPlanification() {
+            const btn = document.getElementById('btnActualiserPlanif');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+
+            const clesDejaCochees = new Set(checkedKeys);
+            const avaitDejaDesDonnees = selectedData.length > 0;
+
+            const rawData = localStorage.getItem(PLANIFICATION_PC_KEY);
+            if (rawData) {
+                try {
+                    selectedData = JSON.parse(rawData);
+                    if (avaitDejaDesDonnees) {
+                        const clesValides = new Set(selectedData.map(getPointKey));
+                        checkedKeys = new Set([...clesDejaCochees].filter(k => clesValides.has(k)));
+                        if (checkedKeys.size === 0 && selectedData.length > 0 && clesDejaCochees.size > 0) {
+                            checkedKeys = clesValides;
+                        }
+                    } else {
+                        checkedKeys = new Set(selectedData.map(getPointKey));
+                    }
+                } catch (e) {
+                    selectedData = [];
+                    checkedKeys.clear();
+                }
+            } else {
+                selectedData = [];
+                checkedKeys.clear();
+            }
+
+            renderPlanification();
+            actualiserBadgeHorodatagePlanif();
+
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+            }, 350);
         }
 
         function getItemVal(item, keys) {
