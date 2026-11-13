@@ -73,24 +73,11 @@
 
         .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-validate { background: #059669; color: #FFFFFF; border: 1px solid #047857; }
-        .btn-validate:hover { background: #047857; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-accent { background: var(--accent); color: var(--primary); }
         .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-excel { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-
-        .validation-pill {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #065F46;
-            background-color: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            padding: 5px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
 
         .table-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
         .table-toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
@@ -151,8 +138,7 @@
                 <h1>Feuille 1 : Référentiel de contrôle</h1>
                 <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
-            <div class="btn-group" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span class="validation-pill" id="validationStatusBadge" style="display:none;"><i class="fa-solid fa-circle-check"></i> Sélection validée</span>
+            <div class="btn-group">
                 <span class="selection-count" id="bdd-status">Chargement BDD...</span>
             </div>
         </div>
@@ -196,7 +182,7 @@
                     <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-validate" id="btnValiderSelection" onclick="validerSelectionReferentiel()"><i class="fa-solid fa-circle-check"></i> Valider</button>
+                    <button type="button" class="btn btn-refresh" id="btnActualiserRef" onclick="actualiserReferentielAction()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
                     <button type="button" class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
                 </div>
@@ -240,11 +226,65 @@
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
+        window.addEventListener('storage', (e) => {
+            if (e.key === PLANIFICATION_PC_KEY) {
+                selectedPoints.clear();
+                restaurerSelectionExistante();
+                afficherTableau();
+            }
+        });
+
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
             }
             return '';
+        }
+
+        async function actualiserReferentielAction() {
+            const btn = document.getElementById('btnActualiserRef');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+
+            const prevProc = document.getElementById('select-processus').value;
+            const prevRisque = document.getElementById('select-risque').value;
+            const prevControle = document.getElementById('select-controle').value;
+
+            try {
+                selectedPoints.clear();
+                await chargerBDD();
+
+                if (prevProc) {
+                    const selProc = document.getElementById('select-processus');
+                    if ([...selProc.options].some(o => o.value === prevProc)) {
+                        selProc.value = prevProc;
+                        onProcessusChange();
+
+                        if (prevRisque) {
+                            const selRisque = document.getElementById('select-risque');
+                            if ([...selRisque.options].some(o => o.value === prevRisque)) {
+                                selRisque.value = prevRisque;
+                                onRisqueChange();
+
+                                if (prevControle) {
+                                    const selCtrl = document.getElementById('select-controle');
+                                    if ([...selCtrl.options].some(o => o.value === prevControle)) {
+                                        selCtrl.value = prevControle;
+                                        onControleChange();
+                                    }
+                                }
+                            }
+                        }
+                        appliquerFiltre();
+                    }
+                } else {
+                    afficherTableau();
+                }
+            } finally {
+                setTimeout(() => {
+                    if (icon) icon.classList.remove('fa-spin');
+                }, 350);
+            }
         }
 
         async function chargerBDD() {
@@ -394,6 +434,7 @@
             if (filteredData.length === 0) {
                 emptyState.style.display = 'block';
                 document.getElementById('rendered-count').textContent = '0';
+                mettreAJourCompteurSelection();
                 return;
             }
 
@@ -462,35 +503,10 @@
                     const parsed = JSON.parse(saved);
                     parsed.forEach(item => selectedPoints.add(JSON.stringify(item)));
                     mettreAJourCompteurSelection();
-                    if (parsed.length > 0) {
-                        const valBadge = document.getElementById('validationStatusBadge');
-                        if (valBadge) {
-                            valBadge.style.display = 'inline-flex';
-                            valBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${parsed.length} PC validé(s) pour la Planification`;
-                        }
-                    }
                 } catch(e){}
+            } else {
+                mettreAJourCompteurSelection();
             }
-        }
-
-        function validerSelectionReferentiel() {
-            if (selectedPoints.size === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle avant de valider.");
-                return;
-            }
-            const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
-            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(dataToSave));
-
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const valBadge = document.getElementById('validationStatusBadge');
-            if (valBadge) {
-                valBadge.style.display = 'inline-flex';
-                valBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${dataToSave.length} PC validé(s) à ${hh}:${mm}`;
-            }
-
-            alert(`✅ Sélection validée : ${dataToSave.length} point(s) de contrôle enregistré(s) pour la Planification.`);
         }
 
         function exporterExcel() {
