@@ -41,8 +41,21 @@
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 25px 35px; width: calc(100% - var(--sidebar-width)); }
 
         .header-bar { display: flex; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 18px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 18px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
-        .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; }
+        .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
+
+        .last-refresh-pill {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: #065F46;
+            background-color: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
         .saisie-line-card {
             background-color: var(--card-bg);
@@ -98,6 +111,8 @@
         .btn-warning { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
         .btn-suivi:hover { background-color: #BFDBFE; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
 
         .date-bdd-pill {
             display: inline-flex;
@@ -234,10 +249,14 @@
     <main class="main-content">
         <div class="header-bar">
             <div class="header-title">
-                <h1>Fiche de Contrôle Terrain (FC)</h1>
+                <h1>
+                    Fiche de Contrôle Terrain (FC)
+                    <span class="last-refresh-pill" id="lastRefreshBadgeFC"><i class="fa-solid fa-check-circle"></i> À jour</span>
+                </h1>
                 <p>Saisie, évaluation, consultation et suivi sélectif par date des constats d'audit</p>
             </div>
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button type="button" class="btn btn-refresh" id="btnActualiserFC" onclick="actualiserFCAction()" title="Actualiser les données de la fiche et les listes de la BDD"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
                 <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
                 <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
@@ -447,6 +466,30 @@
         const LISTE_REGIONS = Object.keys(CENTRES_PAR_REGION);
         let missionData = null;
 
+        function actualiserBadgeHorodatageFC() {
+            const badge = document.getElementById('lastRefreshBadgeFC');
+            if (!badge) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
+        }
+
+        function actualiserFCAction() {
+            const btn = document.getElementById('btnActualiserFC');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+
+            chargerDonneesMission();
+            remplirFiltresBDD();
+            actualiserBadgeHorodatageFC();
+
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+            }, 350);
+        }
+
         function lireDBSecurisee() {
             let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
@@ -539,11 +582,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             chargerDonneesMission();
             remplirFiltresBDD();
+            actualiserBadgeHorodatageFC();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
                 remplirFiltresBDD();
+                actualiserBadgeHorodatageFC();
+            } else if (e.key === 'fci_fiche_controle_active') {
+                chargerDonneesMission();
+                actualiserBadgeHorodatageFC();
             }
         });
 
@@ -1051,6 +1099,7 @@
 
                 viderFormulaireFC();
                 remplirFiltresBDD();
+                actualiserBadgeHorodatageFC();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1130,6 +1179,7 @@
 
             sauvegarderLocalement();
             renderPage();
+            actualiserBadgeHorodatageFC();
             document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) importé(s) — Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
         }
 
@@ -1205,6 +1255,7 @@
 
                 viderFormulaireFC();
                 remplirFiltresBDD();
+                actualiserBadgeHorodatageFC();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1282,6 +1333,7 @@
 
                 viderFormulaireFC();
                 remplirFiltresBDD();
+                actualiserBadgeHorodatageFC();
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1315,6 +1367,7 @@
                 alert(`Les enregistrements de [${libelleCible}] ont été supprimés de la BDD locale.`);
                 viderFormulaireFC();
                 remplirFiltresBDD();
+                actualiserBadgeHorodatageFC();
             }
         }
 
