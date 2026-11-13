@@ -150,10 +150,10 @@
                             <option value="SETTAT">SETTAT</option>
                             <option value="RABAT">RABAT</option>
                             <option value="TANGER">TANGER</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
                             <option value="FES">FES</option>
                             <option value="MEKNES">MEKNES</option>
-                            <option value="OUJEDA">OUJEDA</option>
-                            <option value="LAAYOUNE">LAAYOUNE</option>
+                            <option value="OUEJDA">OUEJDA</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -180,7 +180,7 @@
                     </div>
                     <div class="form-group">
                         <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
-                        <input type="text" id="audit-controleurs" name="fci_controleurs_noautofill" autocomplete="off" placeholder="Ex: A. Ismail / M. Tahiri">
+                        <input type="text" id="audit-controleurs" name="fci_planif_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Saisir le nom du contrôleur">
                     </div>
                 </div>
             </form>
@@ -204,7 +204,6 @@
         </div>
     </main>
 
-    <!-- Inclusion du gestionnaire BDD -->
     <script src="fci-db-manager.js"></script>
 
     <script>
@@ -213,61 +212,155 @@
                 "MARRAKECH CTD",
                 "MARRAKECH SYBA CD",
                 "AGENCE MESSAGERIE GUELIZ MARRAKECH",
-                "ESSOUIRA CCC",
+                "ESSAOUIRA CCC",
                 "SAFI CD",
                 "SAFI CM",
-                "OUARZAZATE CCC",
                 "EL KELAA DES SERAGHNAS CCC",
+                "OUARZAZATE CCC",
+                "TINEGIR CLD",
                 "BENGUERIR CLD",
                 "EL YOUSSOUFIA CLD",
-                "TINEGHIR CLD",
-                "SERVICE DES OPERATIONS MARRAKECH",
-                "SERVICE SUPPORT MARRAKECH"
+                "SERVICE OPERATION REGIONAL MARRAKECH",
+                "SERVICE SUPPORT REGIONAL MARRAKECH"
             ],
             "AGADIR": [
-                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
-                "SERVICE DES OPERATIONS AGADIR",
-                "SERVICE SUPPORT AGADIR"
+                "AGADIR CTD",
+                "AGADIR CM",
+                "AGADIR AM",
+                "INEZEGANE CD",
+                "AIT MELLOUL CD",
+                "OULED TAIMA CLD",
+                "TAROUDANT CCC",
+                "TIZNIT CCC",
+                "GUELMIM CCC",
+                "TANTAN CLD",
+                "SERVICE OPERATION REGIONAL AGADIR",
+                "SERVICE SUPPORT REGIONAL AGADIR"
             ],
             "CASA": [
-                "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9", "C10",
-                "SERVICE DES OPERATIONS CASA",
-                "SERVICE SUPPORT CASA"
+                "PNC",
+                "CNA",
+                "CASA COMPLEXE MOHAMMED 5 CD",
+                "CASA HAY HASSANI CD",
+                "CASA HAY MESSALA CD",
+                "CASA HAY MOHAMMADI CD",
+                "CASA BONDANG CTD",
+                "CASA EL AZZHAR CD",
+                "CASA SIDI MOUMEN CD",
+                "CASA SIDI OUTHMANE CD",
+                "BOUSSKOURA CD",
+                "AIN HARROUDA CLD",
+                "TIT MELLILCLD",
+                "AGENCE MESSAGERIE AVENUE DES FAR",
+                "CPX",
+                "CASA SOUKRATE AM",
+                "AIN SEBAA PLAGE AM",
+                "MOHAMMADIA CCC",
+                "MOHAMMADIA AM",
+                "BEN SLIMANE CLD",
+                "BOUZNIKA CLD",
+                "DAR BOUAZZA CLD",
+                "AGENCE COURRIER CASA BONDANG",
+                "CASA BONDANG CM",
+                "SERVICE OPERATION REGIONAL CASA",
+                "SERVICE SUPPORT REGIONAL CASA"
             ],
             "SETTAT": [
-                "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10",
-                "SERVICE DES OPERATIONS SETTAT",
-                "SERVICE SUPPORT SETTAT"
+                "BENI MELLAL CCC",
+                "BERRECHID CCC",
+                "LHOURIBGA CCC",
+                "SETTAT CCC",
+                "SETTAT CD",
+                "EL JADIDA CM",
+                "EL JADIDA CD",
+                "DEROUA OULED ZIANE CLD",
+                "OUED ZEM CLD",
+                "FKIH BEN SALEH CLD",
+                "SOUK SEBT OULED NEMA CLD",
+                "KASBAT TADLA CLD",
+                "SERVICE OPERATION REGIONAL SETTAT",
+                "SERVICE SUPPORT REGIONAL SETTAT"
             ],
             "RABAT": [
-                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
-                "SERVICE DES OPERATIONS RABAT",
-                "SERVICE SUPPORT RABAT"
+                "RABAT CM",
+                "RABAT CTD",
+                "RABAT IRRFANE",
+                "TEMARA CD",
+                "TEMARA AM",
+                "KENITRA CD",
+                "KENITRA AM",
+                "KENITRA CM",
+                "SALE AM",
+                "SALE CD",
+                "SALE EL JADIDA CD",
+                "SALE EL JADIDA CM",
+                "SOUK LARBAA DU GHARB CLD",
+                "SIDI SLIMANE CLD",
+                "OUAZZANE CLD",
+                "SIDI KACEM CD",
+                "TIFFELT CLD",
+                "KHEMISSAT CD",
+                "SERVICE OPERATION REGIONAL RABAT",
+                "SERVICE SUPPORT REGIONAL RABAT"
             ],
             "TANGER": [
-                "A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A10",
-                "SERVICE DES OPERATIONS TANGER",
-                "SERVICE SUPPORT TANGER"
-            ],
-            "FES": [
-                "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
-                "SERVICE DES OPERATIONS FES",
-                "SERVICE SUPPORT FES"
-            ],
-            "MEKNES": [
-                "M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8", "M9", "M10",
-                "SERVICE DES OPERATIONS MEKNES",
-                "SERVICE SUPPORT MEKNES"
-            ],
-            "OUJEDA": [
-                "O1", "O2", "O3", "O4", "O5", "O6", "O7", "O8", "O9", "O10",
-                "SERVICE DES OPERATIONS OUJEDA",
-                "SERVICE SUPPORT OUJEDA"
+                "TANGER AM",
+                "TANGER CM",
+                "TANGER CD",
+                "TETOUAN CD",
+                "TETOUAN AM",
+                "TETOUAN CCC",
+                "KSAR LAKBIR CD",
+                "ARACHE CCC",
+                "SERVICE OPERATION REGIONAL TANGER",
+                "SERVICE SUPPORT REGIONAL TANGER"
             ],
             "LAAYOUNE": [
-                "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "L9", "L10",
-                "SERVICE DES OPERATIONS LAAYOUNE",
-                "SERVICE SUPPORT LAAYOUNE"
+                "DAKHLA AM",
+                "DAKHLA CLD",
+                "ESSEMARA CLD",
+                "LAAYOUNE CCC",
+                "LAAYOUNE AM",
+                "LAAYOUNE AM PORT",
+                "BOUJDOUR AM",
+                "GUERGURATE AM",
+                "SERVICE OPERATION REGIONAL LAAYOUNE",
+                "SERVICE SUPPORT REGIONAL LAAYOUNE"
+            ],
+            "FES": [
+                "FES AM",
+                "FES CM",
+                "FES CTD",
+                "EL HOUCEIMA CLD",
+                "SEFFROU CLD",
+                "TAZA CLD",
+                "TAZA CM",
+                "GUERCIF CLD",
+                "SERVICE OPERATION REGIONAL FES",
+                "SERVICE SUPPORT REGIONAL FES"
+            ],
+            "MEKNES": [
+                "MEKNES CD",
+                "MEKNES AM",
+                "MEKNES CM",
+                "AZEROU CLD",
+                "MIDELT CLD",
+                "ERRACHIDIA CD",
+                "SERVICE OPERATION REGIONAL MEKNES",
+                "SERVICE SUPPORT REGIONAL MEKNES"
+            ],
+            "OUEJDA": [
+                "OUEJDA CD",
+                "OUEJDA AM",
+                "OUEJDA CM",
+                "BERKANE CD",
+                "BERKANE AM",
+                "NADOR CD",
+                "NADOR AM",
+                "NADOR CM",
+                "TAOURIRTE CLD",
+                "SERVICE OPERATION REGIONAL OUJEDA",
+                "SERVICE SUPPORT REGIONAL OUJEDA"
             ]
         };
 
@@ -285,6 +378,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
             loadPlanificationData();
+            setTimeout(() => {
+                const ctrlInput = document.getElementById('audit-controleurs');
+                if (ctrlInput) ctrlInput.value = '';
+            }, 50);
         });
 
         function onRegionChangePlanif() {
@@ -307,7 +404,9 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('audit-region').value = "";
             onRegionChangePlanif();
-            document.getElementById('audit-controleurs').value = "";
+            const ctrlInput = document.getElementById('audit-controleurs');
+            ctrlInput.value = "";
+            ctrlInput.setAttribute('readonly', 'readonly');
             document.getElementById('audit-type-controle').value = "";
             document.getElementById('audit-date-debut').value = today;
             document.getElementById('audit-date-fin').value = today;
@@ -533,7 +632,6 @@
                     pointsControle: activeItems
                 };
 
-                // Enregistrement dans la BDD Centralisée fci_database + Archivage GitHub (PLAN_YYYY-MM-DD_Entite_MIS.json)
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
                     region: region,
