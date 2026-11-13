@@ -61,8 +61,21 @@
             flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .last-refresh-pill {
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: #065F46;
+            background-color: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
         .header-actions-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
         .header-actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
@@ -233,6 +246,8 @@
         .btn-warning { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
         .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
         .btn-suivi:hover { background-color: #BFDBFE; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
         .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
@@ -274,13 +289,18 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses (FV)</h1>
+                <h1>
+                    <i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i>
+                    Feuille 4 : Fiche de la vérification des encaisses (FV)
+                    <span class="last-refresh-pill" id="lastRefreshBadgeFV"><i class="fa-solid fa-check-circle"></i> À jour</span>
+                </h1>
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
 
             <div class="header-actions-wrapper">
                 <div class="header-actions-row">
                     <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
+                    <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="actualiserFVAction()" title="Actualiser le référentiel, les filtres BDD et les indicateurs"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
                 </div>
                 <div class="header-actions-row">
@@ -618,6 +638,34 @@
         let currentMissionId = "";
         let loadedEncaisseIds = [];
 
+        function actualiserBadgeHorodatageFV() {
+            const badge = document.getElementById('lastRefreshBadgeFV');
+            if (!badge) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
+        }
+
+        async function actualiserFVAction() {
+            const btn = document.getElementById('btnActualiserFV');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+
+            try {
+                await chargerReferentielJSON();
+                remplirFiltresEncaissesBDD();
+                updateHeaderDateVerifBadge();
+                renderPoints();
+                actualiserBadgeHorodatageFV();
+            } finally {
+                setTimeout(() => {
+                    if (icon) icon.classList.remove('fa-spin');
+                }, 350);
+            }
+        }
+
         function lireDBSecurisee() {
             try {
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
@@ -754,6 +802,14 @@
             } catch (e) {}
             try { remplirFiltresEncaissesBDD(); } catch (e) {}
             chargerReferentielJSON();
+            actualiserBadgeHorodatageFV();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                remplirFiltresEncaissesBDD();
+                actualiserBadgeHorodatageFV();
+            }
         });
 
         function remplirFiltresEncaissesBDD() {
@@ -790,13 +846,13 @@
                     .filter(Boolean)
             )].sort();
 
-            selDate.innerHTML = '<option value="">-- Toutes les dates --</option>' + datesISO.map(dISO => {
+            selDate.innerHTML = '<option value="">-- Toutes les dates (' + datesISO.length + ') --</option>' + datesISO.map(dISO => {
                 const labelJJMMAAAA = formatDateToJJMMAAAA(dISO);
                 return `<option value="${dISO}" ${dISO === valDateISO ? 'selected' : ''}>${labelJJMMAAAA}</option>`;
             }).join('');
 
-            selProc.innerHTML = '<option value="">-- Tous les processus --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
-            selSite.innerHTML = '<option value="">-- Tous les sites --</option>' + sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
+            selProc.innerHTML = '<option value="">-- Tous les processus (' + procs.length + ') --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
+            selSite.innerHTML = '<option value="">-- Tous les sites (' + sites.length + ') --</option>' + sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
         }
 
         function resetDateField() {
@@ -1286,6 +1342,7 @@
 
                 clearForm();
                 remplirFiltresEncaissesBDD();
+                actualiserBadgeHorodatageFV();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
@@ -1369,6 +1426,7 @@
             });
 
             renderPoints();
+            actualiserBadgeHorodatageFV();
         }
 
         async function modifierFicheEncaisse() {
@@ -1430,13 +1488,13 @@
 
                 clearForm();
                 remplirFiltresEncaissesBDD();
+                actualiserBadgeHorodatageFV();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
             }
         }
 
-        // BOUTON 2 : SUIVI -> Copie UNIQUEMENT les constats dont la date a été modifiée en nouvelles lignes de suivi, puis vide la FV
         async function suiviFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée pour créer un suivi.");
@@ -1487,6 +1545,7 @@
 
                 clearForm();
                 remplirFiltresEncaissesBDD();
+                actualiserBadgeHorodatageFV();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
@@ -1515,6 +1574,7 @@
                 alert(`La Fiche de Vérification [${site} - ${dateVerifJJMMAAAA}] a été supprimée de la BDD locale.`);
                 clearForm();
                 remplirFiltresEncaissesBDD();
+                actualiserBadgeHorodatageFV();
             }
         }
 
