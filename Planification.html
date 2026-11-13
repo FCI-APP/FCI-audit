@@ -134,7 +134,7 @@
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
             </div>
             <div>
-                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPlanificationAction()" title="Actualiser la liste des points de contrôle sélectionnés depuis le Référentiel">
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="window.location.reload()" title="Actualiser la page">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
                 </button>
             </div>
@@ -211,19 +211,19 @@
 
         <div class="toolbar">
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <button class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
-                <button class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
-                <button class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
+                <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
+                <button type="button" class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
             </div>
             <div>
-                <button class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+                <button type="button" class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
             </div>
         </div>
 
         <section id="planification-container"></section>
 
         <div class="action-bar">
-            <button class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
+            <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
         </div>
     </main>
 
@@ -401,19 +401,6 @@
             badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
         }
 
-        function actualiserPlanificationAction() {
-            const btn = document.getElementById('btnActualiserPlanif');
-            const icon = btn ? btn.querySelector('i') : null;
-            if (icon) icon.classList.add('fa-spin');
-
-            loadPlanificationData();
-            actualiserBadgeHorodatagePlanif();
-
-            setTimeout(() => {
-                if (icon) icon.classList.remove('fa-spin');
-            }, 350);
-        }
-
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -540,7 +527,7 @@
                             <td style="width: 23%;">${escapeHtml(cVal || '-')}</td>
                             <td style="width: 23%;">${escapeHtml(pcVal || '-')}</td>
                             <td style="width: 5%; text-align: center;">
-                                <button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
+                                <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </td>
@@ -554,7 +541,7 @@
                             <input type="checkbox" ${allProcChecked ? 'checked' : ''} onchange="toggleProcessusCheckboxes('${escapeJsString(procName)}', this.checked)" style="margin-right: 8px;">
                             <i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)
                         </h3>
-                        <button style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
+                        <button type="button" style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
                             <i class="fa-solid fa-trash"></i> Retirer le Processus
                         </button>
                     </div>
