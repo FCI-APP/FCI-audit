@@ -1,0 +1,32 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FC",
+  "dateArchivage": "2026-11-13T19:35:33.252Z",
+  "donnees": [
+    {
+      "idConstat": "CST-SUIVI-1794598532681-1",
+      "idMission": "MIS-SUIVI-1794598532681",
+      "region": "FES",
+      "typeControle": "Thématique",
+      "entite": "FES AM",
+      "site": "FES AM",
+      "controleur": "baba",
+      "date": "31/12/2026",
+      "dateControle": "31/12/2026",
+      "processus": "Budget et résultats",
+      "risque": "Non respect du délai d'élaboration du budget (S)",
+      "controle": "Contrôle de la réception des propositions budgétaires de l'ensemble des entités de BAM.SA dans les délais",
+      "pc": "1/ Est - ce que le calendrier budgétaire est communiqué dans les délais impartis à l'ensemble des entités de BAM.SA ?",
+      "pop": 280,
+      "ech": 220,
+      "ok": 210,
+      "ko": 10,
+      "tc": 95.45,
+      "constat": "OH",
+      "recommandation": "bbbbbbbbbbbbbbb",
+      "avisResponsable": "",
+      "statut": "CLOTURE"
+    }
+  ]
+}
