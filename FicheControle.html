@@ -104,15 +104,38 @@
         .date-bdd-pill {
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             background-color: #EFF6FF;
             color: var(--primary);
-            border: 1px solid #BFDBFE;
-            padding: 3px 9px;
+            border: 1px solid #93C5FD;
+            padding: 4px 11px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 800;
         }
+
+        /* Barre récapitulative des données importées avec la date sur chaque point */
+        .imported-meta-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+        }
+        .imported-chip {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .imported-chip strong { color: var(--primary); }
 
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
@@ -206,8 +229,8 @@
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
                 <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
                 <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
-                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour la ligne existante dans la BDD sans la supprimer ni dupliquer"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Conserve la ligne existante et ajoute une nouvelle ligne de suivi avec les nouvelles données"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour la ligne existante dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Conserve la ligne existante, ajoute une ligne de suivi puis vide la fiche"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                 <button class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
                 <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
                 <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
@@ -225,7 +248,7 @@
             </div>
             <div class="single-row-modif">
                 <div class="meta-item">
-                    <label for="filterBddDate">Date de contrôle</label>
+                    <label for="filterBddDate">Date de contrôle (jj/mm/aaaa)</label>
                     <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange()">
                         <option value="">-- Toutes les dates --</option>
                     </select>
@@ -421,18 +444,22 @@
         }
 
         function formatDateToFR(val) {
-            if (!val || val === '-') return '';
+            if (!val || val === '-' || val === '--') return '';
             let str = String(val).trim();
             if (str.includes('T')) str = str.split('T')[0];
             if (str.includes('-')) {
                 const parts = str.split('-');
                 if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
             }
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+            }
             return str;
         }
 
         function formatDateToISO(val) {
-            if (!val || val === '-') return '';
+            if (!val || val === '-' || val === '--') return '';
             let str = String(val).trim();
             if (str.includes('T')) str = str.split('T')[0];
             if (str.includes('/')) {
@@ -445,6 +472,12 @@
         function getTodayISO() {
             const today = new Date();
             return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+
+        function libelleStatut(code) {
+            if (code === 'CLOTURE') return '🟢 Clôturé';
+            if (code === 'NON_CLOTURE') return '🔴 Non clôturé';
+            return '🟡 En cours';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -464,9 +497,9 @@
             const valProc = selProc.value;
             const valSite = selSite.value;
 
-            const dates = [...new Set(constats.filter(c => (!valProc || c.processus === valProc) && (!valSite || c.entite === valSite)).map(c => formatDateToFR(c.date)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
-            const procs = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date) === valDate) && (!valSite || c.entite === valSite)).map(c => c.processus).filter(Boolean))].sort();
-            const sites = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date) === valDate) && (!valProc || c.processus === valProc)).map(c => c.entite).filter(Boolean))].sort();
+            const dates = [...new Set(constats.filter(c => (!valProc || c.processus === valProc) && (!valSite || c.entite === valSite)).map(c => formatDateToFR(c.date || c.dateControle)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
+            const procs = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date || c.dateControle) === valDate) && (!valSite || c.entite === valSite)).map(c => c.processus).filter(Boolean))].sort();
+            const sites = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date || c.dateControle) === valDate) && (!valProc || c.processus === valProc)).map(c => c.entite).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
@@ -654,15 +687,28 @@
                     html += `
                         <div class="control-item">
                             <div style="margin-bottom:10px;">
+                                <!-- Bandeau récapitulatif Date + Indicateurs importés -->
+                                <div class="imported-meta-strip">
+                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateLigne}</span>
+                                    <span class="imported-chip">Pop : <strong>${ev.population}</strong></span>
+                                    <span class="imported-chip">Ech : <strong>${ev.echantillon}</strong></span>
+                                    <span class="imported-chip">OK : <strong style="color:var(--success);">${ev.nombreOk}</strong></span>
+                                    <span class="imported-chip">KO : <strong style="color:var(--danger);">${ev.nombreKo}</strong></span>
+                                    <span class="imported-chip">TC : <strong>${ev.tauxConformite} %</strong></span>
+                                    <span class="imported-chip">Statut : <strong>${libelleStatut(ev.statutConstat)}</strong></span>
+                                </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</span>
-                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar"></i> Date contrôle : ${dateLigne}</span>
                                 </div>
                                 <div style="font-weight:700; margin-top:5px; font-size:0.92rem;">Contrôle : ${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</div>
                                 <div style="font-size:0.85rem; background:#F1F5F9; padding:6px 10px; border-left:3px solid var(--primary); margin-top:5px;"><strong>PC :</strong> ${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</div>
                             </div>
                             <div class="eval-section">
                                 <div class="metrics-block">
+                                    <div class="input-inline">
+                                        <label>Date</label>
+                                        <input type="text" value="${dateLigne}" readonly style="width:125px; padding:5px 8px; border:1px solid #CBD5E1; border-radius:4px; background:#EFF6FF; color:var(--primary); font-weight:800; font-size:0.8rem;">
+                                    </div>
                                     <div class="input-inline">
                                         <label>Statut *</label>
                                         <select onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
@@ -775,10 +821,10 @@
                 return { valide: false, messageErreur: "Aucune donnée de contrôle valide." };
             }
             if (!missionData.metadata || !missionData.metadata.region) {
-                return { valide: false, messageErreur: "Veuillez sélectionner une Région avant d'archiver." };
+                return { valide: false, messageErreur: "Veuillez sélectionner une Région avant d'enregistrer." };
             }
             if (!missionData.metadata.entite) {
-                return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'archiver." };
+                return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'enregistrer." };
             }
             for (let p of missionData.pointsControle) {
                 const ev = p.eval;
@@ -889,7 +935,7 @@
 
             const db = FCIDatabase.getDB();
             const constatsTrouves = (db.constatsControle || []).filter(c =>
-                (!fDate || formatDateToFR(c.date) === fDate) &&
+                (!fDate || formatDateToFR(c.date || c.dateControle) === fDate) &&
                 (!fProc || c.processus === fProc) &&
                 (!fSite || c.entite === fSite)
             );
@@ -905,7 +951,7 @@
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
             let regionRecuperee = (premierConstat.region || missionInfo.region || '').toUpperCase().trim();
             if (regionRecuperee === 'OUJDA') regionRecuperee = 'OUEJDA';
-            const dateCtrlTrouvee = formatDateToFR(premierConstat.date || missionInfo.date) || formatDateToFR(getTodayISO());
+            const dateCtrlTrouvee = formatDateToFR(premierConstat.date || premierConstat.dateControle || missionInfo.date) || formatDateToFR(getTodayISO());
 
             missionData = {
                 _loadedFromBDDFilter: { date: fDate, processus: fProc, site: fSite },
@@ -920,33 +966,36 @@
                     periodeFin: formatDateToFR(missionInfo.dateFin || ''),
                     controleurs: premierConstat.controleur || missionInfo.controleur || ''
                 },
-                pointsControle: constatsTrouves.map(c => ({
-                    _bddIdConstat: c.idConstat,
-                    _bddDateControle: formatDateToFR(c.date) || dateCtrlTrouvee,
-                    Processus: c.processus,
-                    "Intitulé du risque": c.risque,
-                    "Intitulé Contrôle": c.controle,
-                    "Points de contrôle": c.pc,
-                    eval: {
-                        population: c.pop,
-                        echantillon: c.ech,
-                        nombreOk: c.ok,
-                        nombreKo: c.ko,
-                        tauxConformite: c.tc.toString(),
-                        statutConstat: c.statut || 'EN_COURS',
-                        constat: c.constat || '',
-                        recommandation: c.recommandation || '',
-                        avisResponsable: c.avisResponsable || ''
-                    }
-                }))
+                pointsControle: constatsTrouves.map(c => {
+                    const dLigne = formatDateToFR(c.date || c.dateControle) || dateCtrlTrouvee;
+                    return {
+                        _bddIdConstat: c.idConstat,
+                        _bddDateControle: dLigne,
+                        Processus: c.processus,
+                        "Intitulé du risque": c.risque,
+                        "Intitulé Contrôle": c.controle,
+                        "Points de contrôle": c.pc,
+                        eval: {
+                            population: c.pop,
+                            echantillon: c.ech,
+                            nombreOk: c.ok,
+                            nombreKo: c.ko,
+                            tauxConformite: c.tc.toString(),
+                            statutConstat: c.statut || 'EN_COURS',
+                            constat: c.constat || '',
+                            recommandation: c.recommandation || '',
+                            avisResponsable: c.avisResponsable || ''
+                        }
+                    };
+                })
             };
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) chargé(s) — Site : ${premierConstat.entite || '--'} | Date de contrôle : ${dateCtrlTrouvee}`;
+            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) importé(s) — Site : ${premierConstat.entite || '--'} | Date de contrôle : ${dateCtrlTrouvee}`;
         }
 
-        // BOUTON 1 : MODIFIER -> Met à jour la ligne existante dans la BDD sans supprimer ni dupliquer
+        // BOUTON 1 : MODIFIER -> Met à jour la ligne existante dans la BDD puis vide la FC
         async function modifierFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune fiche de contrôle n'est actuellement chargée pour modification.");
@@ -1017,8 +1066,9 @@
                     alert(`✅ Modification enregistrée directement sur les lignes existantes dans la BDD locale (aucune ligne supprimée ni dupliquée).`);
                 }
 
+                // Vider la FC après modification
+                viderFormulaireFC();
                 remplirFiltresBDD();
-                document.getElementById('searchStatus').innerText = `Modifications enregistrées (${meta.entite || '--'} - Date contrôle : ${dateCtrl}).`;
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1027,7 +1077,7 @@
             }
         }
 
-        // BOUTON 2 : SUIVI -> Conserve la ligne existante dans la BDD et crée une nouvelle ligne de suivi avec les nouvelles données
+        // BOUTON 2 : SUIVI -> Conserve la ligne existante dans la BDD, crée une nouvelle ligne de suivi puis vide la FC
         async function suiviFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune fiche de contrôle n'est actuellement chargée pour créer un suivi.");
@@ -1051,7 +1101,6 @@
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
 
-                // Conserver les anciennes lignes intactes et créer de nouvelles lignes avec les données mises à jour
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, true);
 
                 await FCIDatabase.enregistrerMission({
@@ -1074,8 +1123,9 @@
                     alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateCtrl}) ont été ajoutées.`);
                 }
 
+                // Vider la FC après suivi
+                viderFormulaireFC();
                 remplirFiltresBDD();
-                document.getElementById('searchStatus').innerText = `Suivi ajouté (${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) créée(s) — Date contrôle : ${dateCtrl}).`;
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1119,6 +1169,9 @@
             missionData = null;
             afficherEtatVide();
             document.getElementById('searchStatus').innerText = '';
+            document.getElementById('filterBddDate').value = '';
+            document.getElementById('filterBddProcessus').value = '';
+            document.getElementById('filterBddSite').value = '';
         }
 
         function exporterExcel() {
