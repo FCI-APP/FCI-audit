@@ -70,7 +70,6 @@
         .bdd-badge-total { background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px; }
         .bdd-badge-error { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
 
-        /* Ligne 1 : Espace Saisie regroupé sur une seule ligne */
         .saisie-line-card {
             background-color: var(--card-bg);
             border-radius: 8px;
@@ -97,7 +96,6 @@
             align-items: end;
         }
 
-        /* Ligne 2 : Espace Modification BDD sur une seule ligne */
         .modif-line-card {
             background-color: #FFFBEB;
             border-radius: 8px;
@@ -113,7 +111,6 @@
             align-items: end;
         }
 
-        /* Espace Synthèse sous l'espace de modification */
         .suivi-summary-strip {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -138,8 +135,8 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
         .metrics-statut-row {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
+            grid-template-columns: 1.05fr 0.85fr 0.85fr 0.85fr 0.85fr 1.15fr;
+            gap: 10px;
             margin-bottom: 14px;
         }
         .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
@@ -153,14 +150,35 @@
             gap: 5px;
             background-color: #EFF6FF;
             color: var(--primary-blue);
-            border: 1px solid #BFDBFE;
-            padding: 3px 9px;
+            border: 1px solid #93C5FD;
+            padding: 3px 10px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            font-size: 0.76rem;
             font-weight: 800;
         }
 
-        /* Couleurs dynamiques pour la liste déroulante de statut */
+        .imported-meta-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin-bottom: 12px;
+            font-size: 0.78rem;
+        }
+        .imported-chip {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .imported-chip strong { color: var(--primary-blue); }
+
         .statut-select-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; font-weight: 800 !important; }
         .statut-select-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; font-weight: 800 !important; }
         .statut-select-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; font-weight: 800 !important; }
@@ -210,7 +228,7 @@
         @media (max-width: 1280px) {
             .single-row-saisie-fv { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
             .single-row-modif-fv { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-            .metrics-statut-row { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+            .metrics-statut-row { grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); }
         }
 
         @media print {
@@ -255,8 +273,8 @@
                 </div>
                 <div class="header-actions-row">
                     <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
-                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour la ligne existante dans la BDD sans supprimer ni dupliquer"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne existante et ajoute une nouvelle ligne de suivi avec les nouvelles données"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour la ligne existante dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne existante, ajoute une ligne de suivi puis vide la fiche"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                     <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
@@ -264,7 +282,6 @@
             </div>
         </header>
 
-        <!-- Ligne 1 : Espace Saisie regroupé sur une seule ligne -->
         <section class="saisie-line-card">
             <div class="section-line-label">
                 <span><i class="fa-solid fa-circle-info"></i> Espace Saisie de la Vérification</span>
@@ -326,7 +343,6 @@
             </form>
         </section>
 
-        <!-- Ligne 2 : Espace Modification / Suivi depuis la BDD -->
         <section class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
@@ -357,7 +373,6 @@
             </div>
         </section>
 
-        <!-- Espace Synthèse sous l'espace de modification -->
         <div class="suivi-summary-strip">
             <div class="suivi-box" style="border-left: 4px solid var(--primary-blue);">
                 <span class="s-label">Taux moyen de conformité</span>
@@ -619,7 +634,7 @@
         }
 
         function formatDateToISO(val) {
-            if (!val || val === '-') return '';
+            if (!val || val === '-' || val === '--') return '';
             let str = String(val).trim();
             if (str.includes('T')) str = str.split('T')[0];
             if (str.includes('/')) {
@@ -629,9 +644,8 @@
             return str;
         }
 
-        // Formatage jj/mm/aaaa pour l'espace de modification et les données trouvées
         function formatDateToJJMMAAAA(val) {
-            if (!val || val === '-') return '';
+            if (!val || val === '-' || val === '--') return '';
             let str = String(val).trim();
             if (str.includes('T')) str = str.split('T')[0];
             if (str.includes('-')) {
@@ -643,6 +657,12 @@
                 if (parts.length === 3) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
             }
             return str;
+        }
+
+        function libelleStatutFV(code) {
+            if (code === 'CLOTURE') return '🟢 Clôturé';
+            if (code === 'NON_CLOTURE') return '🔴 Non clôturé';
+            return '🟡 En cours';
         }
 
         function updateHeaderDateVerifBadge() {
@@ -723,27 +743,27 @@
             const selSite = document.getElementById('filterFvBddSite');
             if (!selDate || !selProc || !selSite) return;
 
-            const valDateISO = selDate.value; // Stocké en YYYY-MM-DD, affiché en jj/mm/aaaa
+            const valDateISO = selDate.value;
             const valProc = selProc.value;
             const valSite = selSite.value;
 
             const datesISO = [...new Set(
                 encaisses
                     .filter(e => (!valProc || e.processus === valProc) && (!valSite || (e.site || e.entite) === valSite))
-                    .map(e => formatDateToISO(e.date))
+                    .map(e => formatDateToISO(e.date || e.dateVerification))
                     .filter(Boolean)
             )].sort().reverse();
 
             const procs = [...new Set(
                 encaisses
-                    .filter(e => (!valDateISO || formatDateToISO(e.date) === valDateISO) && (!valSite || (e.site || e.entite) === valSite))
+                    .filter(e => (!valDateISO || formatDateToISO(e.date || e.dateVerification) === valDateISO) && (!valSite || (e.site || e.entite) === valSite))
                     .map(e => e.processus)
                     .filter(Boolean)
             )].sort();
 
             const sites = [...new Set(
                 encaisses
-                    .filter(e => (!valDateISO || formatDateToISO(e.date) === valDateISO) && (!valProc || e.processus === valProc))
+                    .filter(e => (!valDateISO || formatDateToISO(e.date || e.dateVerification) === valDateISO) && (!valProc || e.processus === valProc))
                     .map(e => e.site || e.entite)
                     .filter(Boolean)
             )].sort();
@@ -922,7 +942,21 @@
                                 </div>
                             </div>
 
+                            <div class="imported-meta-strip">
+                                <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateAffichage || '--'}</span>
+                                <span class="imported-chip">Pop : <strong>${c.population}</strong></span>
+                                <span class="imported-chip">Ech : <strong>${c.echantillon}</strong></span>
+                                <span class="imported-chip">OK : <strong style="color:var(--success);">${c.ok}</strong></span>
+                                <span class="imported-chip">KO : <strong style="color:var(--danger);">${c.ko}</strong></span>
+                                <span class="imported-chip">TC : <strong>${c.rate.toFixed(1)} %</strong></span>
+                                <span class="imported-chip">Statut : <strong>${libelleStatutFV(statutVal)}</strong></span>
+                            </div>
+
                             <div class="metrics-statut-row">
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="text" class="form-control" value="${dateAffichage}" readonly style="background:#EFF6FF; color:var(--primary-blue); font-weight:800;">
+                                </div>
                                 <div class="form-group"><label>Pop.</label><input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)"></div>
                                 <div class="form-group"><label>Ech.</label><input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
                                 <div class="form-group"><label>OK</label><input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
@@ -969,6 +1003,7 @@
                     </div>
                     <div class="pc-card-body">
                         <div style="background: #F1F5F9; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid var(--primary-blue);">
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">CONTRÔLE :</strong> ${point.controle}<br>
                             <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
                             <p style="font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">${point.pointDeControle}</p>
                         </div>
@@ -1096,6 +1131,9 @@
             renderPoints();
             localStorage.removeItem('fci_fiche_verification_encaisses');
             document.getElementById('searchEncaisseStatus').innerText = '';
+            document.getElementById('filterFvBddDate').value = '';
+            document.getElementById('filterFvBddProcessus').value = '';
+            document.getElementById('filterFvBddSite').value = '';
         }
 
         function validateCohérenceEchantillon() {
@@ -1227,7 +1265,7 @@
 
             const db = lireDBSecurisee();
             const constatsFV = (db.constatsEncaisses || []).filter(e =>
-                (!fDateISO || formatDateToISO(e.date) === fDateISO) &&
+                (!fDateISO || formatDateToISO(e.date || e.dateVerification) === fDateISO) &&
                 (!fProc || e.processus === fProc) &&
                 (!fSite || (e.site || e.entite) === fSite)
             );
@@ -1241,10 +1279,10 @@
             currentMissionId = sample.idMission || ("MIS-ENC-" + Date.now());
             loadedEncaisseIds = constatsFV.map(c => c.idEncaisse).filter(Boolean);
 
-            const dateVerifISO = formatDateToISO(sample.date);
-            const dateVerifJJMMAAAA = formatDateToJJMMAAAA(sample.date);
+            const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification);
+            const dateVerifJJMMAAAA = formatDateToJJMMAAAA(sample.date || sample.dateVerification);
 
-            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV chargée(s) — Site : ${sample.site || sample.entite || '--'} | Date de vérification : ${dateVerifJJMMAAAA}`;
+            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date de vérification : ${dateVerifJJMMAAAA}`;
 
             document.getElementById('dateVerification').value = dateVerifISO;
             updateHeaderDateVerifBadge();
@@ -1264,32 +1302,34 @@
             ctrlInput.value = sample.controleur || '';
             respInput.value = sample.responsable || '';
 
-            addedPoints = constatsFV.map((c, idx) => ({
-                id: Date.now() + idx,
-                selected: true,
-                dateVerification: formatDateToJJMMAAAA(c.date) || dateVerifJJMMAAAA,
-                processus: c.processus,
-                risque: c.risque,
-                controle: c.controle,
-                pointDeControle: c.pc,
-                constats: [{
-                    _bddIdEncaisse: c.idEncaisse,
-                    statut: c.statut || 'EN_COURS',
-                    population: c.pop,
-                    echantillon: c.ech,
-                    ok: c.ok,
-                    ko: c.ko,
-                    rate: c.tc,
-                    constatText: c.constat || '',
-                    recoText: c.recommandation || '',
-                    avisText: c.avisResponsable || ''
-                }]
-            }));
+            addedPoints = constatsFV.map((c, idx) => {
+                const dLigne = formatDateToJJMMAAAA(c.date || c.dateVerification) || dateVerifJJMMAAAA;
+                return {
+                    id: Date.now() + idx,
+                    selected: true,
+                    dateVerification: dLigne,
+                    processus: c.processus,
+                    risque: c.risque,
+                    controle: c.controle,
+                    pointDeControle: c.pc,
+                    constats: [{
+                        _bddIdEncaisse: c.idEncaisse,
+                        statut: c.statut || 'EN_COURS',
+                        population: c.pop,
+                        echantillon: c.ech,
+                        ok: c.ok,
+                        ko: c.ko,
+                        rate: parseFloat(c.tc) || 0,
+                        constatText: c.constat || '',
+                        recoText: c.recommandation || '',
+                        avisText: c.avisResponsable || ''
+                    }]
+                };
+            });
 
             renderPoints();
         }
 
-        // BOUTON 1 : MODIFIER -> Met à jour directement les lignes existantes dans la BDD sans supprimer ni dupliquer
         async function modifierFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée à modifier.");
@@ -1347,15 +1387,14 @@
                     alert(`✅ Modification enregistrée directement sur les lignes existantes dans la BDD locale (aucune ligne supprimée ni dupliquée).`);
                 }
 
+                clearForm();
                 remplirFiltresEncaissesBDD();
-                document.getElementById('searchEncaisseStatus').innerText = `Modifications enregistrées (${site} — Date vérification : ${dateVerifJJMMAAAA}).`;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
             }
         }
 
-        // BOUTON 2 : SUIVI -> Conserve la ligne existante dans la BDD et crée une nouvelle ligne de suivi avec les nouvelles données
         async function suiviFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée pour créer un suivi.");
@@ -1397,8 +1436,8 @@
                     alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateVerifJJMMAAAA}) ont été ajoutées.`);
                 }
 
+                clearForm();
                 remplirFiltresEncaissesBDD();
-                document.getElementById('searchEncaisseStatus').innerText = `Suivi ajouté (${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) créée(s) — Date vérification : ${dateVerifJJMMAAAA}).`;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
