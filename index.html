@@ -138,8 +138,11 @@
                 <h1>Feuille 1 : Référentiel de contrôle</h1>
                 <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
-            <div class="btn-group">
+            <div class="btn-group" style="display:flex; align-items:center; gap:10px;">
                 <span class="selection-count" id="bdd-status">Chargement BDD...</span>
+                <button type="button" class="btn btn-refresh" onclick="window.location.reload()" title="Actualiser la page">
+                    <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+                </button>
             </div>
         </div>
 
@@ -182,7 +185,6 @@
                     <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-refresh" id="btnActualiserRef" onclick="actualiserReferentielAction()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
                     <button type="button" class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
                 </div>
@@ -226,65 +228,11 @@
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
-        window.addEventListener('storage', (e) => {
-            if (e.key === PLANIFICATION_PC_KEY) {
-                selectedPoints.clear();
-                restaurerSelectionExistante();
-                afficherTableau();
-            }
-        });
-
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
             }
             return '';
-        }
-
-        async function actualiserReferentielAction() {
-            const btn = document.getElementById('btnActualiserRef');
-            const icon = btn ? btn.querySelector('i') : null;
-            if (icon) icon.classList.add('fa-spin');
-
-            const prevProc = document.getElementById('select-processus').value;
-            const prevRisque = document.getElementById('select-risque').value;
-            const prevControle = document.getElementById('select-controle').value;
-
-            try {
-                selectedPoints.clear();
-                await chargerBDD();
-
-                if (prevProc) {
-                    const selProc = document.getElementById('select-processus');
-                    if ([...selProc.options].some(o => o.value === prevProc)) {
-                        selProc.value = prevProc;
-                        onProcessusChange();
-
-                        if (prevRisque) {
-                            const selRisque = document.getElementById('select-risque');
-                            if ([...selRisque.options].some(o => o.value === prevRisque)) {
-                                selRisque.value = prevRisque;
-                                onRisqueChange();
-
-                                if (prevControle) {
-                                    const selCtrl = document.getElementById('select-controle');
-                                    if ([...selCtrl.options].some(o => o.value === prevControle)) {
-                                        selCtrl.value = prevControle;
-                                        onControleChange();
-                                    }
-                                }
-                            }
-                        }
-                        appliquerFiltre();
-                    }
-                } else {
-                    afficherTableau();
-                }
-            } finally {
-                setTimeout(() => {
-                    if (icon) icon.classList.remove('fa-spin');
-                }, 350);
-            }
         }
 
         async function chargerBDD() {
@@ -434,7 +382,6 @@
             if (filteredData.length === 0) {
                 emptyState.style.display = 'block';
                 document.getElementById('rendered-count').textContent = '0';
-                mettreAJourCompteurSelection();
                 return;
             }
 
@@ -504,8 +451,6 @@
                     parsed.forEach(item => selectedPoints.add(JSON.stringify(item)));
                     mettreAJourCompteurSelection();
                 } catch(e){}
-            } else {
-                mettreAJourCompteurSelection();
             }
         }
 
