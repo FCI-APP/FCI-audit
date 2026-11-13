@@ -133,7 +133,7 @@
         /* Calibrage proportionnel des colonnes du tableau BDD selon le type de données */
         table.bdd-table {
             width: 100%;
-            min-width: 1950px;
+            min-width: 1980px;
             border-collapse: collapse;
             font-size: 0.82rem;
             table-layout: auto;
@@ -163,8 +163,8 @@
 
         /* 1. Colonnes compactes : Date & Région */
         .col-date {
-            width: 108px;
-            min-width: 108px;
+            width: 115px;
+            min-width: 115px;
             white-space: nowrap;
             text-align: center !important;
         }
@@ -221,8 +221,8 @@
 
         /* 5. Colonnes badges : Statut & Type de contrôle */
         .col-badge {
-            width: 132px;
-            min-width: 132px;
+            width: 145px;
+            min-width: 145px;
             text-align: center !important;
             white-space: nowrap;
         }
@@ -243,6 +243,20 @@
         .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+        /* Badge Suivi / Initial pour tracer l'historique sans perte */
+        .badge-suivi-tag {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #E0E7FF;
+            color: #3730A3;
+            border: 1px solid #A5B4FC;
+        }
 
         /* Badges de la colonne Statut constat */
         .badge-statut-constat {
@@ -280,7 +294,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Table unifiée des constats d'audit et synchronisation avec les archives GitHub</p>
+                <p>Table unifiée des constats d'audit (initiaux et suivis) et synchronisation avec les archives GitHub</p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
                 <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
@@ -372,9 +386,25 @@
             if (str.includes('T')) str = str.split('T')[0];
             if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
                 const [y, m, d] = str.split('-');
-                return `${d}/${m}/${y}`;
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+            }
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+                const [d, m, y] = str.split('/');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
             }
             return str;
+        }
+
+        function dateVersISOComparable(valeurBrute) {
+            if (!valeurBrute) return '0000-00-00';
+            let str = String(valeurBrute).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+                const [d, m, y] = str.split('/');
+                return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+            return '0000-00-00';
         }
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
@@ -405,6 +435,12 @@
                 return { code: 'NON_CLOTURE', label: 'Non clôturé', badgeClass: 'statut-noncloture' };
             }
             return { code: 'EN_COURS', label: 'En cours', badgeClass: 'statut-encours' };
+        }
+
+        function estLigneSuivi(idEnregistrement, idMission) {
+            const id1 = String(idEnregistrement || '').toUpperCase();
+            const id2 = String(idMission || '').toUpperCase();
+            return id1.includes('SUIVI') || id2.includes('SUIVI');
         }
 
         function mettreAJourStylesSelectsFiltres() {
@@ -476,13 +512,28 @@
                 if (m.idMission) mapMissions[m.idMission] = m;
             });
 
+            // Déduplication par identifiant unique (idConstat / idEncaisse) pour éviter les doublons après modification/sync
+            const mapConstatsFC = new Map();
+            (db.constatsControle || []).forEach((c, idx) => {
+                const key = c.idConstat || `FC-LEGACY-${c.idMission || ''}-${c.pc || ''}-${idx}`;
+                mapConstatsFC.set(key, c);
+            });
+
+            const mapConstatsFV = new Map();
+            (db.constatsEncaisses || []).forEach((e, idx) => {
+                const key = e.idEncaisse || `FV-LEGACY-${e.idMission || ''}-${e.pc || ''}-${idx}`;
+                mapConstatsFV.set(key, e);
+            });
+
             const lignesUnifiees = [];
 
-            (db.constatsControle || []).forEach(c => {
+            mapConstatsFC.forEach(c => {
                 const missionAssociee = mapMissions[c.idMission] || {};
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
+                const isSuivi = estLigneSuivi(c.idConstat, c.idMission);
                 lignesUnifiees.push({
+                    dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: c.region || missionAssociee.region || '--',
                     entite: c.entite || missionAssociee.entite || '--',
@@ -497,18 +548,21 @@
                     tc: parseFloat(c.tc || 0),
                     constat: c.constat || '--',
                     statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
-                    typeInfo: normaliserTypeControle(typeBrut, 'FC')
+                    typeInfo: normaliserTypeControle(typeBrut, 'FC'),
+                    isSuivi: isSuivi
                 });
             });
 
-            (db.constatsEncaisses || []).forEach(e => {
+            mapConstatsFV.forEach(e => {
                 const missionAssociee = mapMissions[e.idMission] || {};
                 const typeBrut = e.typeControle || 'Vérification';
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
+                const isSuivi = estLigneSuivi(e.idEncaisse, e.idMission);
                 lignesUnifiees.push({
+                    dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: e.region || missionAssociee.region || '--',
-                    entite: e.entite || e.agence || missionAssociee.entite || '--',
+                    entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
                     processus: e.processus || '--',
                     risque: e.risque || '--',
                     controle: e.controle || '--',
@@ -520,8 +574,17 @@
                     tc: parseFloat(e.tc || 0),
                     constat: e.constat || '--',
                     statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
-                    typeInfo: normaliserTypeControle(typeBrut, 'FV')
+                    typeInfo: normaliserTypeControle(typeBrut, 'FV'),
+                    isSuivi: isSuivi
                 });
+            });
+
+            // Tri chronologique décroissant (les constats et suivis les plus récents en haut)
+            lignesUnifiees.sort((a, b) => {
+                const cmpDate = b.dateISO.localeCompare(a.dateISO);
+                if (cmpDate !== 0) return cmpDate;
+                if (a.isSuivi !== b.isSuivi) return a.isSuivi ? -1 : 1;
+                return 0;
             });
 
             mettreAJourCompteursOptions(lignesUnifiees);
@@ -543,6 +606,10 @@
             }
 
             lignesAffichees.forEach(ligne => {
+                const suiviTagHtml = ligne.isSuivi
+                    ? `<br><span class="badge-suivi-tag"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
+                    : '';
+
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${ligne.dateCtrlVerif}</td>
@@ -559,7 +626,10 @@
                         <td class="col-tc"><b>${ligne.tc.toFixed(1)}%</b></td>
                         <td class="col-constat">${ligne.constat}</td>
                         <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
-                        <td class="col-badge"><span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span></td>
+                        <td class="col-badge">
+                            <span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span>
+                            ${suiviTagHtml}
+                        </td>
                     </tr>`;
             });
         }
