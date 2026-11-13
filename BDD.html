@@ -75,7 +75,7 @@
         .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-        /* Multi-filtre listes déroulantes */
+        /* Multi-filtre avec deux listes déroulantes colorées */
         .multi-filter-bar {
             display: flex;
             flex-wrap: wrap;
@@ -108,14 +108,16 @@
             cursor: pointer;
             background-color: #FFFFFF;
             color: var(--text-dark);
-            min-width: 195px;
+            min-width: 210px;
+            transition: all 0.2s;
         }
 
-        /* Couleurs dynamiques des listes déroulantes de filtre */
+        /* Coloration dynamique de la liste déroulante Statut Constat */
         .select-statut-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; }
         .select-statut-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; }
         .select-statut-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; }
 
+        /* Coloration dynamique de la liste déroulante Type de Contrôle */
         .select-type-Thematique { background-color: #DBEAFE !important; color: #1E40AF !important; border-color: #93C5FD !important; }
         .select-type-Systematique { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #FCD34D !important; }
         .select-type-Verification { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #6EE7B7 !important; }
@@ -141,7 +143,7 @@
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 
-        /* Badges Statut Constat */
+        /* Badges de la colonne Statut constat */
         .badge-statut-constat {
             display: inline-block; padding: 4px 10px; border-radius: 12px;
             font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
@@ -195,24 +197,24 @@
                     <div class="filter-select-group">
                         <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut constat :</label>
                         <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">Tous les statuts</option>
-                            <option value="EN_COURS" style="background:#FEF3C7; color:#92400E;">🟡 En cours</option>
-                            <option value="CLOTURE" style="background:#D1FAE5; color:#065F46;">🟢 Clôturé</option>
-                            <option value="NON_CLOTURE" style="background:#FEE2E2; color:#991B1B;">🔴 Non clôturé</option>
+                            <option value="TOUS">Tous les statuts (0)</option>
+                            <option value="EN_COURS" style="background-color:#FEF3C7; color:#92400E;">🟡 En cours (0)</option>
+                            <option value="CLOTURE" style="background-color:#D1FAE5; color:#065F46;">🟢 Clôturé (0)</option>
+                            <option value="NON_CLOTURE" style="background-color:#FEE2E2; color:#991B1B;">🔴 Non clôturé (0)</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group">
                         <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle :</label>
                         <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">Tous les types</option>
-                            <option value="Thématique" style="background:#DBEAFE; color:#1E40AF;">🔵 Thématique</option>
-                            <option value="Systématique" style="background:#FEF3C7; color:#92400E;">🟠 Systématique</option>
-                            <option value="Vérification" style="background:#D1FAE5; color:#065F46;">🟢 Vérification</option>
+                            <option value="TOUS">Tous les types (0)</option>
+                            <option value="Thématique" style="background-color:#DBEAFE; color:#1E40AF;">🔵 Thématique (0)</option>
+                            <option value="Systématique" style="background-color:#FEF3C7; color:#92400E;">🟠 Systématique (0)</option>
+                            <option value="Vérification" style="background-color:#D1FAE5; color:#065F46;">🟢 Vérification (0)</option>
                         </select>
                     </div>
 
-                    <button type="button" class="btn btn-neutral" style="padding:6px 11px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
+                    <button type="button" class="btn btn-neutral" style="padding:7px 12px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
                         <i class="fa-solid fa-rotate-left"></i> Réinitialiser
                     </button>
                 </div>
@@ -221,6 +223,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>Date contrôle / vérif.</th>
                         <th>Région</th>
                         <th>Centre / Entité</th>
                         <th>Processus</th>
@@ -244,8 +247,8 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        let filtreTypeActif = 'TOUS';
         let filtreStatutActif = 'TOUS';
+        let filtreTypeActif = 'TOUS';
 
         function lireBDDLocaleSecurisee() {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
@@ -257,6 +260,18 @@
             } catch (e) {
                 return { missions: [], constatsControle: [], constatsEncaisses: [] };
             }
+        }
+
+        function formaterDateBDD(valeurBrute) {
+            if (!valeurBrute) return '--';
+            let str = String(valeurBrute).trim();
+            if (!str || str === '--' || str === '-') return '--';
+            if (str.includes('T')) str = str.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const [y, m, d] = str.split('-');
+                return `${d}/${m}/${y}`;
+            }
+            return str;
         }
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDDEnVisuel(); });
@@ -320,6 +335,33 @@
             chargerBDDEnVisuel();
         }
 
+        function mettreAJourCompteursOptions(lignesUnifiees) {
+            const selStatut = document.getElementById('selectFiltreStatut');
+            const selType = document.getElementById('selectFiltreType');
+
+            const cEnCours = lignesUnifiees.filter(l => l.statutInfo.code === 'EN_COURS').length;
+            const cCloture = lignesUnifiees.filter(l => l.statutInfo.code === 'CLOTURE').length;
+            const cNonCloture = lignesUnifiees.filter(l => l.statutInfo.code === 'NON_CLOTURE').length;
+
+            if (selStatut && selStatut.options.length >= 4) {
+                selStatut.options[0].text = `Tous les statuts (${lignesUnifiees.length})`;
+                selStatut.options[1].text = `🟡 En cours (${cEnCours})`;
+                selStatut.options[2].text = `🟢 Clôturé (${cCloture})`;
+                selStatut.options[3].text = `🔴 Non clôturé (${cNonCloture})`;
+            }
+
+            const cThem = lignesUnifiees.filter(l => l.typeInfo.label === 'Thématique').length;
+            const cSyst = lignesUnifiees.filter(l => l.typeInfo.label === 'Systématique').length;
+            const cVerif = lignesUnifiees.filter(l => l.typeInfo.label === 'Vérification').length;
+
+            if (selType && selType.options.length >= 4) {
+                selType.options[0].text = `Tous les types (${lignesUnifiees.length})`;
+                selType.options[1].text = `🔵 Thématique (${cThem})`;
+                selType.options[2].text = `🟠 Systématique (${cSyst})`;
+                selType.options[3].text = `🟢 Vérification (${cVerif})`;
+            }
+        }
+
         function chargerBDDEnVisuel() {
             const db = lireBDDLocaleSecurisee();
             const tbody = document.getElementById('tableBDDUnifiee');
@@ -336,7 +378,9 @@
             (db.constatsControle || []).forEach(c => {
                 const missionAssociee = mapMissions[c.idMission] || {};
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
+                const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
                 lignesUnifiees.push({
+                    dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: c.region || missionAssociee.region || '--',
                     entite: c.entite || missionAssociee.entite || '--',
                     processus: c.processus || '--',
@@ -357,7 +401,9 @@
             (db.constatsEncaisses || []).forEach(e => {
                 const missionAssociee = mapMissions[e.idMission] || {};
                 const typeBrut = e.typeControle || 'Vérification';
+                const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
                 lignesUnifiees.push({
+                    dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: e.region || missionAssociee.region || '--',
                     entite: e.entite || e.agence || missionAssociee.entite || '--',
                     processus: e.processus || '--',
@@ -375,25 +421,28 @@
                 });
             });
 
+            mettreAJourCompteursOptions(lignesUnifiees);
+
             const lignesAffichees = lignesUnifiees.filter(l => {
-                const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
                 const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
-                return matchType && matchStatut;
+                const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
+                return matchStatut && matchType;
             });
 
             totalBadge.innerText = lignesAffichees.length;
 
             if (lignesAffichees.length === 0) {
-                const msgVide = (filtreTypeActif === 'TOUS' && filtreStatutActif === 'TOUS')
+                const msgVide = (filtreStatutActif === 'TOUS' && filtreTypeActif === 'TOUS')
                     ? 'Aucun constat enregistré dans la BDD.'
                     : 'Aucun constat ne correspond aux critères sélectionnés.';
-                tbody.innerHTML = `<tr><td colspan="14" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
 
             lignesAffichees.forEach(ligne => {
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
+                        <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${ligne.dateCtrlVerif}</td>
                         <td><b>${ligne.region}</b></td>
                         <td>${ligne.entite}</td>
                         <td>${ligne.processus}</td>
