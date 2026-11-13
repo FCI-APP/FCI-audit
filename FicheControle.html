@@ -62,6 +62,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
+            flex-wrap: wrap;
         }
         .single-row-7 {
             display: grid;
@@ -97,6 +98,21 @@
         .btn-outline { background-color: white; border: 1px solid var(--border-color); color: var(--text-dark); }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
         .btn-warning { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .btn-suivi:hover { background-color: #BFDBFE; }
+
+        .date-bdd-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #EFF6FF;
+            color: var(--primary);
+            border: 1px solid #BFDBFE;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
 
         .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
@@ -190,7 +206,8 @@
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
                 <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
                 <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
-                <button class="btn btn-warning" onclick="modifierFicheControle()"><i class="fa-solid fa-pen-to-square"></i> Modifier/suivi</button>
+                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour la ligne existante dans la BDD sans la supprimer ni dupliquer"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Conserve la ligne existante et ajoute une nouvelle ligne de suivi avec les nouvelles données"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                 <button class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
                 <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
                 <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
@@ -405,20 +422,24 @@
 
         function formatDateToFR(val) {
             if (!val || val === '-') return '';
-            if (val.includes('-')) {
-                const parts = val.split('-');
-                if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('-')) {
+                const parts = str.split('-');
+                if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
             }
-            return val;
+            return str;
         }
 
         function formatDateToISO(val) {
             if (!val || val === '-') return '';
-            if (val.includes('/')) {
-                const parts = val.split('/');
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('/')) {
+                const parts = str.split('/');
                 if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
             }
-            return val;
+            return str;
         }
 
         function getTodayISO() {
@@ -443,9 +464,9 @@
             const valProc = selProc.value;
             const valSite = selSite.value;
 
-            const dates = [...new Set(constats.filter(c => (!valProc || c.processus === valProc) && (!valSite || c.entite === valSite)).map(c => c.date).filter(Boolean))].sort().reverse();
-            const procs = [...new Set(constats.filter(c => (!valDate || c.date === valDate) && (!valSite || c.entite === valSite)).map(c => c.processus).filter(Boolean))].sort();
-            const sites = [...new Set(constats.filter(c => (!valDate || c.date === valDate) && (!valProc || c.processus === valProc)).map(c => c.entite).filter(Boolean))].sort();
+            const dates = [...new Set(constats.filter(c => (!valProc || c.processus === valProc) && (!valSite || c.entite === valSite)).map(c => formatDateToFR(c.date)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
+            const procs = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date) === valDate) && (!valSite || c.entite === valSite)).map(c => c.processus).filter(Boolean))].sort();
+            const sites = [...new Set(constats.filter(c => (!valDate || formatDateToFR(c.date) === valDate) && (!valProc || c.processus === valProc)).map(c => c.entite).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
@@ -500,7 +521,8 @@
             }
 
             const meta = missionData.metadata || {};
-            const dateCtrlISO = formatDateToISO(meta.dateControle);
+            const dateCtrlFR = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+            const dateCtrlISO = formatDateToISO(dateCtrlFR);
             const dateDebutISO = formatDateToISO(meta.periodeDebut);
             const dateFinISO = formatDateToISO(meta.periodeFin);
 
@@ -523,9 +545,14 @@
                 }
             }
 
+            const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
+
             barContainer.innerHTML = `
                 <div class="saisie-line-card">
-                    <div class="section-line-label"><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</div>
+                    <div class="section-line-label">
+                        <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
+                        <span style="margin-left:auto;">${badgeDateInfo}</span>
+                    </div>
                     <div class="single-row-7">
                         <div class="meta-item">
                             <span class="label">Région *</span>
@@ -607,6 +634,7 @@
 
             const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
             const globalRate = parseFloat(tauxConformiteMoyen);
+            const dateCtrlCourante = formatDateToFR(missionData.metadata?.dateControle) || formatDateToFR(getTodayISO());
 
             let html = `
                 <div class="kpi-grid">
@@ -622,10 +650,14 @@
                 items.forEach((item) => {
                     const idx = points.indexOf(item);
                     const ev = item.eval;
+                    const dateLigne = formatDateToFR(item._bddDateControle || dateCtrlCourante);
                     html += `
                         <div class="control-item">
                             <div style="margin-bottom:10px;">
-                                <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</span>
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</span>
+                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar"></i> Date contrôle : ${dateLigne}</span>
+                                </div>
                                 <div style="font-weight:700; margin-top:5px; font-size:0.92rem;">Contrôle : ${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</div>
                                 <div style="font-size:0.85rem; background:#F1F5F9; padding:6px 10px; border-left:3px solid var(--primary); margin-top:5px;"><strong>PC :</strong> ${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</div>
                             </div>
@@ -707,7 +739,15 @@
             renderPage();
         }
 
-        function mettreAJourMetadataDate(champ, val) { missionData.metadata[champ] = formatDateToFR(val); sauvegarderLocalement(); }
+        function mettreAJourMetadataDate(champ, val) {
+            const frDate = formatDateToFR(val);
+            missionData.metadata[champ] = frDate;
+            if (champ === 'dateControle' && Array.isArray(missionData.pointsControle)) {
+                missionData.pointsControle.forEach(p => { p._bddDateControle = frDate; });
+            }
+            sauvegarderLocalement();
+            renderPage();
+        }
         function mettreAJourMetadata(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); }
 
         function mettreAJourCalcul(index, champ, valeur) {
@@ -751,6 +791,40 @@
             return { valide: true };
         }
 
+        function construirePayloadConstatsFC(idMission, nouveauModeSuivi = false) {
+            const meta = missionData.metadata || {};
+            const typeControleMission = meta.typeControle || 'Thématique';
+            const regionMission = meta.region || '';
+            const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+            const timestampSuivi = Date.now();
+
+            return missionData.pointsControle.map((p, idx) => ({
+                idConstat: nouveauModeSuivi
+                    ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
+                    : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
+                idMission: idMission,
+                region: regionMission,
+                typeControle: typeControleMission,
+                entite: meta.entite || 'Controle',
+                controleur: meta.controleurs || '',
+                date: dateCtrl,
+                dateControle: dateCtrl,
+                processus: getItemVal(p, ['Processus']),
+                risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
+                controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                pop: parseInt(p.eval.population) || 0,
+                ech: parseInt(p.eval.echantillon) || 0,
+                ok: parseInt(p.eval.nombreOk) || 0,
+                ko: parseInt(p.eval.nombreKo) || 0,
+                tc: parseFloat(p.eval.tauxConformite) || 0,
+                constat: p.eval.constat,
+                recommandation: p.eval.recommandation,
+                avisResponsable: p.eval.avisResponsable || '',
+                statut: p.eval.statutConstat
+            }));
+        }
+
         async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
@@ -768,12 +842,13 @@
                 meta.idMission = idMission;
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
 
                 await FCIDatabase.enregistrerMission({
                     idMission: idMission,
                     region: regionMission,
                     typeControle: typeControleMission,
-                    date: meta.dateControle || new Date().toISOString().slice(0, 10),
+                    date: dateCtrl,
                     dateDebut: meta.periodeDebut || '',
                     dateFin: meta.periodeFin || '',
                     entite: meta.entite || '',
@@ -781,33 +856,11 @@
                     pointsSelectionnes: missionData.pointsControle
                 }, false);
 
-                const constatsBDD = missionData.pointsControle.map((p, idx) => ({
-                    idConstat: p._bddIdConstat || `CST-${idMission}-${idx + 1}`,
-                    idMission: idMission,
-                    region: regionMission,
-                    typeControle: typeControleMission,
-                    entite: meta.entite || 'Controle',
-                    controleur: meta.controleurs || '',
-                    date: meta.dateControle || new Date().toISOString().slice(0, 10),
-                    processus: getItemVal(p, ['Processus']),
-                    risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
-                    controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                    pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
-                    pop: parseInt(p.eval.population) || 0,
-                    ech: parseInt(p.eval.echantillon) || 0,
-                    ok: parseInt(p.eval.nombreOk) || 0,
-                    ko: parseInt(p.eval.nombreKo) || 0,
-                    tc: parseFloat(p.eval.tauxConformite) || 0,
-                    constat: p.eval.constat,
-                    recommandation: p.eval.recommandation,
-                    avisResponsable: p.eval.avisResponsable || '',
-                    statut: p.eval.statutConstat
-                }));
-
+                const constatsBDD = construirePayloadConstatsFC(idMission, false);
                 const ghResult = await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche de Contrôle (${typeControleMission} - ${regionMission} / ${meta.entite}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ La Fiche de Contrôle (${typeControleMission} - ${regionMission} / ${meta.entite} du ${dateCtrl}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
                 } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
                     alert("✅ Fiche de Contrôle archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
                 } else {
@@ -836,7 +889,7 @@
 
             const db = FCIDatabase.getDB();
             const constatsTrouves = (db.constatsControle || []).filter(c =>
-                (!fDate || c.date === fDate) &&
+                (!fDate || formatDateToFR(c.date) === fDate) &&
                 (!fProc || c.processus === fProc) &&
                 (!fSite || c.entite === fSite)
             );
@@ -852,6 +905,7 @@
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
             let regionRecuperee = (premierConstat.region || missionInfo.region || '').toUpperCase().trim();
             if (regionRecuperee === 'OUJDA') regionRecuperee = 'OUEJDA';
+            const dateCtrlTrouvee = formatDateToFR(premierConstat.date || missionInfo.date) || formatDateToFR(getTodayISO());
 
             missionData = {
                 _loadedFromBDDFilter: { date: fDate, processus: fProc, site: fSite },
@@ -861,13 +915,14 @@
                     region: regionRecuperee,
                     entite: premierConstat.entite || missionInfo.entite || '',
                     typeControle: typeCtrlRecupere,
-                    dateControle: premierConstat.date || missionInfo.date || getTodayISO(),
-                    periodeDebut: missionInfo.dateDebut || '',
-                    periodeFin: missionInfo.dateFin || '',
+                    dateControle: dateCtrlTrouvee,
+                    periodeDebut: formatDateToFR(missionInfo.dateDebut || ''),
+                    periodeFin: formatDateToFR(missionInfo.dateFin || ''),
                     controleurs: premierConstat.controleur || missionInfo.controleur || ''
                 },
                 pointsControle: constatsTrouves.map(c => ({
                     _bddIdConstat: c.idConstat,
+                    _bddDateControle: formatDateToFR(c.date) || dateCtrlTrouvee,
                     Processus: c.processus,
                     "Intitulé du risque": c.risque,
                     "Intitulé Contrôle": c.controle,
@@ -888,28 +943,145 @@
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) chargé(s) (${premierConstat.entite || '--'} - ${premierConstat.date || '--'}).`;
+            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) chargé(s) — Site : ${premierConstat.entite || '--'} | Date de contrôle : ${dateCtrlTrouvee}`;
         }
 
+        // BOUTON 1 : MODIFIER -> Met à jour la ligne existante dans la BDD sans supprimer ni dupliquer
         async function modifierFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
-                alert("Aucune fiche de contrôle n'est actuellement chargée pour modification/suivi.");
+                alert("Aucune fiche de contrôle n'est actuellement chargée pour modification.");
                 return;
             }
 
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const db = FCIDatabase.getDB();
-            if (Array.isArray(missionData._loadedConstatIds) && missionData._loadedConstatIds.length > 0) {
-                const idsSet = new Set(missionData._loadedConstatIds);
-                db.constatsControle = (db.constatsControle || []).filter(c => !idsSet.has(c.idConstat));
-            } else if (missionData.metadata && missionData.metadata.idMission) {
-                db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== missionData.metadata.idMission);
+            const btn = document.getElementById('btnModifierFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
             }
-            FCIDatabase.saveDB(db);
 
-            await archiverFicheControle();
+            try {
+                const db = FCIDatabase.getDB();
+                const meta = missionData.metadata || {};
+                const idMission = meta.idMission || ("MIS-" + Date.now());
+                meta.idMission = idMission;
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+
+                const constatsMisAJour = construirePayloadConstatsFC(idMission, false);
+                const listeExistante = db.constatsControle || [];
+
+                constatsMisAJour.forEach(itemMaj => {
+                    const idxExistant = listeExistante.findIndex(c =>
+                        (itemMaj.idConstat && c.idConstat === itemMaj.idConstat) ||
+                        (c.idMission === itemMaj.idMission && c.pc === itemMaj.pc && c.controle === itemMaj.controle)
+                    );
+                    if (idxExistant !== -1) {
+                        listeExistante[idxExistant] = { ...listeExistante[idxExistant], ...itemMaj };
+                    } else {
+                        listeExistante.push(itemMaj);
+                    }
+                });
+
+                db.constatsControle = listeExistante;
+
+                const idxMission = (db.missions || []).findIndex(m => m.idMission === idMission);
+                if (idxMission !== -1) {
+                    db.missions[idxMission] = {
+                        ...db.missions[idxMission],
+                        region: meta.region || db.missions[idxMission].region,
+                        typeControle: meta.typeControle || db.missions[idxMission].typeControle,
+                        date: dateCtrl,
+                        dateDebut: meta.periodeDebut || db.missions[idxMission].dateDebut,
+                        dateFin: meta.periodeFin || db.missions[idxMission].dateFin,
+                        entite: meta.entite || db.missions[idxMission].entite,
+                        controleur: meta.controleurs || db.missions[idxMission].controleur
+                    };
+                }
+
+                FCIDatabase.saveDB(db);
+
+                let ghResult = { success: true, localOnly: true };
+                if (typeof FCIDatabase.archiverSurGitHub === 'function') {
+                    ghResult = await FCIDatabase.archiverSurGitHub(
+                        { type: 'MODIFICATION_FC', idMission, date: dateCtrl, constats: constatsMisAJour },
+                        `FC_MODIF_${(meta.entite || 'Site').replace(/\s+/g, '_')}`
+                    );
+                }
+
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ Modification enregistrée sur les lignes existantes dans la BDD et archivée sur GitHub :\n${ghResult.path}`);
+                } else {
+                    alert(`✅ Modification enregistrée directement sur les lignes existantes dans la BDD locale (aucune ligne supprimée ni dupliquée).`);
+                }
+
+                remplirFiltresBDD();
+                document.getElementById('searchStatus').innerText = `Modifications enregistrées (${meta.entite || '--'} - Date contrôle : ${dateCtrl}).`;
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
+        }
+
+        // BOUTON 2 : SUIVI -> Conserve la ligne existante dans la BDD et crée une nouvelle ligne de suivi avec les nouvelles données
+        async function suiviFicheControle() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune fiche de contrôle n'est actuellement chargée pour créer un suivi.");
+                return;
+            }
+
+            const val = validerChampsObligatoires();
+            if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
+
+            const btn = document.getElementById('btnSuiviFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+            }
+
+            try {
+                const meta = missionData.metadata || {};
+                const idMissionSuivi = "MIS-SUIVI-" + Date.now();
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+                const typeControleMission = meta.typeControle || 'Thématique';
+                const regionMission = meta.region || '';
+
+                // Conserver les anciennes lignes intactes et créer de nouvelles lignes avec les données mises à jour
+                const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, true);
+
+                await FCIDatabase.enregistrerMission({
+                    idMission: idMissionSuivi,
+                    region: regionMission,
+                    typeControle: typeControleMission,
+                    date: dateCtrl,
+                    dateDebut: meta.periodeDebut || '',
+                    dateFin: meta.periodeFin || '',
+                    entite: meta.entite || '',
+                    controleur: meta.controleurs || '',
+                    pointsSelectionnes: missionData.pointsControle
+                }, false);
+
+                const ghResult = await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
+
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateCtrl}) ont été ajoutées et archivées sur GitHub :\n${ghResult.path}`);
+                } else {
+                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateCtrl}) ont été ajoutées.`);
+                }
+
+                remplirFiltresBDD();
+                document.getElementById('searchStatus').innerText = `Suivi ajouté (${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) créée(s) — Date contrôle : ${dateCtrl}).`;
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
         }
 
         function supprimerFicheControle() {
