@@ -76,13 +76,29 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 12px;
         }
 
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .last-refresh-pill {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #065F46;
+            background-color: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            padding: 5px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -135,7 +151,9 @@
                 <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Tableau de Bord Synthétique (TDB)</h1>
                 <p>Analyse globale et visuelle des résultats de contrôles</p>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items: center;">
+                <span class="last-refresh-pill" id="lastRefreshBadgeTDB"><i class="fa-solid fa-check-circle"></i> À jour</span>
+                <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
                 <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
@@ -162,17 +180,17 @@
 
         <div class="charts-grid">
             <div class="chart-card">
-                <h3>Taux de Conformité (TC %) par Processus[cite: 5]</h3>
+                <h3>Taux de Conformité (TC %) par Processus</h3>
                 <canvas id="chartProcessus"></canvas>
             </div>
             <div class="chart-card">
-                <h3>Répartition Globale (OK vs KO)[cite: 5]</h3>
+                <h3>Répartition Globale (OK vs KO)</h3>
                 <canvas id="chartOkKo"></canvas>
             </div>
         </div>
 
         <div class="table-card">
-            <h3><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats et Points de Contrôle[cite: 5]</h3>
+            <h3><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats et Points de Contrôle</h3>
             <table>
                 <thead>
                     <tr>
@@ -194,7 +212,20 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => { chargerTableauDeBord(); });
+        function actualiserBadgeHorodatageTDB() {
+            const badge = document.getElementById('lastRefreshBadgeTDB');
+            if (!badge) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            chargerTableauDeBord(); 
+            actualiserBadgeHorodatageTDB();
+        });
 
         function chargerTableauDeBord() {
             const db = FCIDatabase.getDB();
