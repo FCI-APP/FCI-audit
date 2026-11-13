@@ -20,6 +20,7 @@
             --border-color: #E2E8F0;
             --success: #10B981;
             --danger: #EF4444;
+            --warning: #F59E0B;
             --sidebar-width: 250px;
         }
 
@@ -71,26 +72,53 @@
         .btn-danger:hover { background-color: #FCA5A5; }
 
         .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow-x: auto; padding: 20px; margin-bottom: 30px; }
-        .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; }
+        .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
         .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; }
 
-        .filter-buttons-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .filter-btn {
-            padding: 6px 13px; border-radius: 20px; font-size: 0.76rem; font-weight: 800;
-            text-transform: uppercase; cursor: pointer; transition: all 0.2s;
-            display: inline-flex; align-items: center; gap: 6px; opacity: 0.72;
+        /* Multi-filtre listes déroulantes */
+        .multi-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            background: #F8FAFC;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
-        .filter-btn:hover { opacity: 1; transform: translateY(-1px); }
-        .filter-btn.active {
-            opacity: 1;
-            box-shadow: 0 0 0 2px var(--primary-blue);
-            transform: translateY(-1px);
+        .filter-select-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-select-group label {
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            white-space: nowrap;
+        }
+        .filter-dropdown {
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            border: 1px solid #CBD5E1;
+            outline: none;
+            cursor: pointer;
+            background-color: #FFFFFF;
+            color: var(--text-dark);
+            min-width: 195px;
         }
 
-        .filter-tous { background-color: #E2E8F0; color: var(--primary-blue); border: 1px solid #94A3B8; }
-        .filter-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
-        .filter-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-        .filter-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+        /* Couleurs dynamiques des listes déroulantes de filtre */
+        .select-statut-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; }
+        .select-statut-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; }
+        .select-statut-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; }
+
+        .select-type-Thematique { background-color: #DBEAFE !important; color: #1E40AF !important; border-color: #93C5FD !important; }
+        .select-type-Systematique { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #FCD34D !important; }
+        .select-type-Verification { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #6EE7B7 !important; }
 
         table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
         th, td { padding: 10px 10px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
@@ -112,6 +140,15 @@
         .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+        /* Badges Statut Constat */
+        .badge-statut-constat {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+        }
+        .statut-encours { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
+        .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
     </style>
 </head>
 <body>
@@ -153,25 +190,37 @@
         <div class="table-card">
             <div class="table-header-bar">
                 <h3><i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))</h3>
-                <div class="filter-buttons-group">
-                    <button type="button" class="filter-btn filter-tous active" data-filtre="TOUS" onclick="filtrerParType('TOUS')">
-                        <i class="fa-solid fa-layer-group"></i> Tous (<span id="count-TOUS">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-thematique" data-filtre="Thématique" onclick="filtrerParType('Thématique')">
-                        Thématique (<span id="count-Thématique">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-systematique" data-filtre="Systématique" onclick="filtrerParType('Systématique')">
-                        Systématique (<span id="count-Systématique">0</span>)
-                    </button>
-                    <button type="button" class="filter-btn filter-verification" data-filtre="Vérification" onclick="filtrerParType('Vérification')">
-                        Vérification (<span id="count-Vérification">0</span>)
+
+                <div class="multi-filter-bar">
+                    <div class="filter-select-group">
+                        <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut constat :</label>
+                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">Tous les statuts</option>
+                            <option value="EN_COURS" style="background:#FEF3C7; color:#92400E;">🟡 En cours</option>
+                            <option value="CLOTURE" style="background:#D1FAE5; color:#065F46;">🟢 Clôturé</option>
+                            <option value="NON_CLOTURE" style="background:#FEE2E2; color:#991B1B;">🔴 Non clôturé</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group">
+                        <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle :</label>
+                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">Tous les types</option>
+                            <option value="Thématique" style="background:#DBEAFE; color:#1E40AF;">🔵 Thématique</option>
+                            <option value="Systématique" style="background:#FEF3C7; color:#92400E;">🟠 Systématique</option>
+                            <option value="Vérification" style="background:#D1FAE5; color:#065F46;">🟢 Vérification</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn btn-neutral" style="padding:6px 11px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
+                        <i class="fa-solid fa-rotate-left"></i> Réinitialiser
                     </button>
                 </div>
             </div>
+
             <table>
                 <thead>
                     <tr>
-                        <th>Mission ID</th>
                         <th>Région</th>
                         <th>Centre / Entité</th>
                         <th>Processus</th>
@@ -184,6 +233,7 @@
                         <th>KO</th>
                         <th>TC (%)</th>
                         <th>Constat</th>
+                        <th>Statut constat</th>
                         <th>Type de contrôle</th>
                     </tr>
                 </thead>
@@ -194,7 +244,8 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        let filtreActif = 'TOUS';
+        let filtreTypeActif = 'TOUS';
+        let filtreStatutActif = 'TOUS';
 
         function lireBDDLocaleSecurisee() {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
@@ -227,11 +278,45 @@
             return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
         }
 
-        function filtrerParType(type) {
-            filtreActif = type;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.filtre === type);
-            });
+        function normaliserStatutConstat(valeurBrute) {
+            const val = String(valeurBrute || '').trim().toUpperCase();
+            if (val === 'CLOTURE' || val === 'CLÔTURÉ' || val === 'CLOTURÉ') {
+                return { code: 'CLOTURE', label: 'Clôturé', badgeClass: 'statut-cloture' };
+            }
+            if (val === 'NON_CLOTURE' || val === 'NON CLÔTURÉ' || val === 'NON CLOTURE') {
+                return { code: 'NON_CLOTURE', label: 'Non clôturé', badgeClass: 'statut-noncloture' };
+            }
+            return { code: 'EN_COURS', label: 'En cours', badgeClass: 'statut-encours' };
+        }
+
+        function mettreAJourStylesSelectsFiltres() {
+            const selStatut = document.getElementById('selectFiltreStatut');
+            const selType = document.getElementById('selectFiltreType');
+
+            selStatut.className = 'filter-dropdown';
+            if (filtreStatutActif === 'EN_COURS') selStatut.classList.add('select-statut-EN_COURS');
+            else if (filtreStatutActif === 'CLOTURE') selStatut.classList.add('select-statut-CLOTURE');
+            else if (filtreStatutActif === 'NON_CLOTURE') selStatut.classList.add('select-statut-NON_CLOTURE');
+
+            selType.className = 'filter-dropdown';
+            if (filtreTypeActif === 'Thématique') selType.classList.add('select-type-Thematique');
+            else if (filtreTypeActif === 'Systématique') selType.classList.add('select-type-Systematique');
+            else if (filtreTypeActif === 'Vérification') selType.classList.add('select-type-Verification');
+        }
+
+        function appliquerMultiFiltre() {
+            filtreStatutActif = document.getElementById('selectFiltreStatut').value;
+            filtreTypeActif = document.getElementById('selectFiltreType').value;
+            mettreAJourStylesSelectsFiltres();
+            chargerBDDEnVisuel();
+        }
+
+        function reinitialiserFiltresBDD() {
+            filtreStatutActif = 'TOUS';
+            filtreTypeActif = 'TOUS';
+            document.getElementById('selectFiltreStatut').value = 'TOUS';
+            document.getElementById('selectFiltreType').value = 'TOUS';
+            mettreAJourStylesSelectsFiltres();
             chargerBDDEnVisuel();
         }
 
@@ -252,7 +337,6 @@
                 const missionAssociee = mapMissions[c.idMission] || {};
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 lignesUnifiees.push({
-                    idMission: c.idMission || '--',
                     region: c.region || missionAssociee.region || '--',
                     entite: c.entite || missionAssociee.entite || '--',
                     processus: c.processus || '--',
@@ -265,6 +349,7 @@
                     ko: c.ko || 0,
                     tc: parseFloat(c.tc || 0),
                     constat: c.constat || '--',
+                    statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FC')
                 });
             });
@@ -273,7 +358,6 @@
                 const missionAssociee = mapMissions[e.idMission] || {};
                 const typeBrut = e.typeControle || 'Vérification';
                 lignesUnifiees.push({
-                    idMission: e.idMission || '--',
                     region: e.region || missionAssociee.region || '--',
                     entite: e.entite || e.agence || missionAssociee.entite || '--',
                     processus: e.processus || '--',
@@ -286,31 +370,23 @@
                     ko: e.ko || 0,
                     tc: parseFloat(e.tc || 0),
                     constat: e.constat || '--',
+                    statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FV')
                 });
             });
 
-            const counts = {
-                'TOUS': lignesUnifiees.length,
-                'Thématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Thématique').length,
-                'Systématique': lignesUnifiees.filter(l => l.typeInfo.label === 'Systématique').length,
-                'Vérification': lignesUnifiees.filter(l => l.typeInfo.label === 'Vérification').length
-            };
-            Object.entries(counts).forEach(([key, val]) => {
-                const el = document.getElementById(`count-${key}`);
-                if (el) el.innerText = val;
+            const lignesAffichees = lignesUnifiees.filter(l => {
+                const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
+                const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
+                return matchType && matchStatut;
             });
-
-            const lignesAffichees = filtreActif === 'TOUS'
-                ? lignesUnifiees
-                : lignesUnifiees.filter(l => l.typeInfo.label === filtreActif);
 
             totalBadge.innerText = lignesAffichees.length;
 
             if (lignesAffichees.length === 0) {
-                const msgVide = filtreActif === 'TOUS'
+                const msgVide = (filtreTypeActif === 'TOUS' && filtreStatutActif === 'TOUS')
                     ? 'Aucun constat enregistré dans la BDD.'
-                    : `Aucun constat de type « ${filtreActif} » dans la BDD.`;
+                    : 'Aucun constat ne correspond aux critères sélectionnés.';
                 tbody.innerHTML = `<tr><td colspan="14" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
@@ -318,7 +394,6 @@
             lignesAffichees.forEach(ligne => {
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
-                        <td><b>${ligne.idMission}</b></td>
                         <td><b>${ligne.region}</b></td>
                         <td>${ligne.entite}</td>
                         <td>${ligne.processus}</td>
@@ -331,6 +406,7 @@
                         <td><span style="color:var(--danger);font-weight:bold;">${ligne.ko}</span></td>
                         <td><b>${ligne.tc.toFixed(1)}%</b></td>
                         <td>${ligne.constat}</td>
+                        <td><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
                         <td><span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span></td>
                     </tr>`;
             });
@@ -353,7 +429,7 @@
 
             try {
                 const resultat = await FCIDatabase.restaurerDepuisGitHub();
-                filtrerParType('TOUS');
+                reinitialiserFiltresBDD();
                 alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
             } catch (err) {
                 alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
@@ -367,7 +443,7 @@
             if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD locale (Missions + FC + Encaisses) ?\n(Les fichiers archivés sur GitHub restent conservés.)")) {
                 if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
                 else localStorage.removeItem('fci_database');
-                filtrerParType('TOUS');
+                reinitialiserFiltresBDD();
                 alert("La BDD locale a été vidée.");
             }
         }
