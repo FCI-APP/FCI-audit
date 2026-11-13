@@ -1,0 +1,42 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-13T17:31:15.658Z",
+  "donnees": {
+    "idMission": "MIS-1794591075091",
+    "region": "FES",
+    "typeControle": "Thématique",
+    "date": "2026-11-13",
+    "dateDebut": "2026-11-13",
+    "dateFin": "2026-11-13",
+    "entite": "FES AM",
+    "controleur": "baba",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Non respect du délai d'élaboration du budget (S)",
+        "Intitulé Contrôle": "Contrôle de la réception des propositions budgétaires de l'ensemble des entités de BAM.SA dans les délais",
+        "Points de contrôle": "1/ Est - ce que le calendrier budgétaire est communiqué dans les délais impartis à l'ensemble des entités de BAM.SA ?"
+      },
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Non respect du délai d'élaboration du budget (S)",
+        "Intitulé Contrôle": "Contrôle de la réception des propositions budgétaires de l'ensemble des entités de BAM.SA dans les délais",
+        "Points de contrôle": "2/ Est - ce que une assistance est fournie aux utilisateurs par le service gestionnaire pour mieux exprimer leurs besoins ?"
+      },
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Non respect du délai d'élaboration du budget (S)",
+        "Intitulé Contrôle": "Contrôle de la réception des propositions budgétaires de l'ensemble des entités de BAM.SA dans les délais",
+        "Points de contrôle": "3/ En cas de non communication desdites propositions dans les délais impartis, Des relances systématiques des différents pôles métiers, des services utilisateurs pour l'expression de leur besoin prévisionnel ou la communication de leurs objectifs commercia"
+      },
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Non respect du délai d'élaboration du budget (S)",
+        "Intitulé Contrôle": "Contrôle de la réception des propositions budgétaires de l'ensemble des entités de BAM.SA dans les délais",
+        "Points de contrôle": "4/ Est -ce que un rapport de suivie de la communication des propositions budgétaire est réalisé?"
+      }
+    ]
+  }
+}
