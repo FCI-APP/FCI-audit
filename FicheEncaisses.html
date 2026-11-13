@@ -135,7 +135,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
         .metrics-statut-row {
             display: grid;
-            grid-template-columns: 1.05fr 0.85fr 0.85fr 0.85fr 0.85fr 1.15fr;
+            grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 1.15fr;
             gap: 10px;
             margin-bottom: 14px;
         }
@@ -154,6 +154,18 @@
             padding: 3px 10px;
             border-radius: 12px;
             font-size: 0.76rem;
+            font-weight: 800;
+        }
+        .date-modified-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #60A5FA;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.73rem;
             font-weight: 800;
         }
 
@@ -273,8 +285,8 @@
                 </div>
                 <div class="header-actions-row">
                     <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
-                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour la ligne existante dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne existante, ajoute une ligne de suivi puis vide la fiche"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Copie uniquement les points dont la date a été modifiée en nouvelles lignes de suivi, sans dupliquer les points inchangés"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                     <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
@@ -678,7 +690,17 @@
         function onDateVerificationChange() {
             updateHeaderDateVerifBadge();
             const dateFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
-            addedPoints.forEach(p => { p.dateVerification = dateFR; });
+            addedPoints.forEach(p => {
+                p.dateVerification = dateFR;
+                p.constats.forEach(c => { c.dateVerification = dateFR; });
+            });
+            renderPoints();
+        }
+
+        function updateConstatDate(pIndex, cIndex, valISO) {
+            const dateFR = formatDateToJJMMAAAA(valISO);
+            addedPoints[pIndex].constats[cIndex].dateVerification = dateFR;
+            if (cIndex === 0) addedPoints[pIndex].dateVerification = dateFR;
             renderPoints();
         }
 
@@ -903,7 +925,7 @@
                 risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
                 controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
                 pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
-                constats: [{ statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }]
+                constats: [{ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }]
             });
 
             renderPoints();
@@ -925,12 +947,20 @@
             addedPoints.forEach((point, pIndex) => {
                 const card = document.createElement('div');
                 card.className = 'pc-card';
-                const dateAffichage = formatDateToJJMMAAAA(point.dateVerification) || defaultDateVerifFR;
+                const datePointFR = formatDateToJJMMAAAA(point.dateVerification) || defaultDateVerifFR;
 
                 let constatsHTML = '';
                 point.constats.forEach((c, cIndex) => {
                     const statutVal = c.statut || 'EN_COURS';
                     const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
+                    const dateConstatFR = formatDateToJJMMAAAA(c.dateVerification) || datePointFR;
+                    const dateConstatISO = formatDateToISO(dateConstatFR);
+
+                    const isDateModifieeSuivi = Boolean(c._initialDate && formatDateToISO(c._initialDate) !== dateConstatISO);
+                    const badgeSuiviStatus = isDateModifieeSuivi
+                        ? `<span class="date-modified-pill"><i class="fa-solid fa-code-branch"></i> Date modifiée (Suivi prêt : ${formatDateToJJMMAAAA(c._initialDate)} → ${dateConstatFR})</span>`
+                        : (c._initialDate ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Date initiale : ${formatDateToJJMMAAAA(c._initialDate)} — inchangée)</span>` : '');
+
                     constatsHTML += `
                         <div class="constat-box">
                             <div class="constat-header">
@@ -943,19 +973,20 @@
                             </div>
 
                             <div class="imported-meta-strip">
-                                <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateAffichage || '--'}</span>
+                                <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateConstatFR || '--'}</span>
                                 <span class="imported-chip">Pop : <strong>${c.population}</strong></span>
                                 <span class="imported-chip">Ech : <strong>${c.echantillon}</strong></span>
                                 <span class="imported-chip">OK : <strong style="color:var(--success);">${c.ok}</strong></span>
                                 <span class="imported-chip">KO : <strong style="color:var(--danger);">${c.ko}</strong></span>
                                 <span class="imported-chip">TC : <strong>${c.rate.toFixed(1)} %</strong></span>
                                 <span class="imported-chip">Statut : <strong>${libelleStatutFV(statutVal)}</strong></span>
+                                ${badgeSuiviStatus}
                             </div>
 
                             <div class="metrics-statut-row">
                                 <div class="form-group">
-                                    <label>Date</label>
-                                    <input type="text" class="form-control" value="${dateAffichage}" readonly style="background:#EFF6FF; color:var(--primary-blue); font-weight:800;">
+                                    <label>Date *</label>
+                                    <input type="date" class="form-control" value="${dateConstatISO}" onchange="updateConstatDate(${pIndex}, ${cIndex}, this.value)" style="background:#EFF6FF; color:var(--primary-blue); font-weight:800;">
                                 </div>
                                 <div class="form-group"><label>Pop.</label><input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)"></div>
                                 <div class="form-group"><label>Ech.</label><input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
@@ -997,7 +1028,7 @@
                             <h4><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> ${point.processus} &gt; ${point.risque}</h4>
                         </div>
                         <div style="display:flex; align-items:center; gap:12px;">
-                            ${dateAffichage ? `<span style="background:rgba(255,255,255,0.16); padding:4px 10px; border-radius:12px; font-size:0.76rem; font-weight:700;"><i class="fa-regular fa-calendar"></i> Date vérif. : ${dateAffichage}</span>` : ''}
+                            ${datePointFR ? `<span style="background:rgba(255,255,255,0.16); padding:4px 10px; border-radius:12px; font-size:0.76rem; font-weight:700;"><i class="fa-regular fa-calendar"></i> Date vérif. : ${datePointFR}</span>` : ''}
                             <button type="button" class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
                         </div>
                     </div>
@@ -1047,7 +1078,11 @@
         }
 
         function updateConstatText(pIndex, cIndex, field, value) { addedPoints[pIndex].constats[cIndex][field] = value; }
-        function addConstatToPoint(pIndex) { addedPoints[pIndex].constats.push({ statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }); renderPoints(); }
+        function addConstatToPoint(pIndex) {
+            const dateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+            addedPoints[pIndex].constats.push({ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
+            renderPoints();
+        }
         function removeConstat(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); }
         function removePoint(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); }
 
@@ -1154,7 +1189,7 @@
             const controleur = document.getElementById('nomControleur').value.trim();
             const responsable = document.getElementById('nomResponsable').value.trim();
             const typeControle = document.getElementById('typeControle').value || "Vérification";
-            const dateVerif = document.getElementById('dateVerification').value.slice(0, 10);
+            const dateVerifGlobaleISO = document.getElementById('dateVerification').value.slice(0, 10);
             const periodeDebut = document.getElementById('periodeDebut').value;
             const periodeFin = document.getElementById('periodeFin').value;
             const activePoints = addedPoints.filter(p => p.selected);
@@ -1163,6 +1198,10 @@
 
             activePoints.forEach((p, pIdx) => {
                 p.constats.forEach((c, cIdx) => {
+                    const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
+                    if (nouveauModeSuivi && c._initialDate && formatDateToISO(c._initialDate) === dateConstatISO) {
+                        return;
+                    }
                     lot.push({
                         idEncaisse: nouveauModeSuivi
                             ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
@@ -1174,8 +1213,8 @@
                         entite: site,
                         controleur: controleur,
                         responsable: responsable,
-                        date: dateVerif,
-                        dateVerification: dateVerif,
+                        date: dateConstatISO,
+                        dateVerification: dateConstatISO,
                         dateDebut: periodeDebut,
                         dateFin: periodeFin,
                         processus: p.processus || "Gestion des Encaisses",
@@ -1282,7 +1321,7 @@
             const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification);
             const dateVerifJJMMAAAA = formatDateToJJMMAAAA(sample.date || sample.dateVerification);
 
-            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date de vérification : ${dateVerifJJMMAAAA}`;
+            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date initiale : ${dateVerifJJMMAAAA}`;
 
             document.getElementById('dateVerification').value = dateVerifISO;
             updateHeaderDateVerifBadge();
@@ -1314,6 +1353,8 @@
                     pointDeControle: c.pc,
                     constats: [{
                         _bddIdEncaisse: c.idEncaisse,
+                        _initialDate: dLigne,
+                        dateVerification: dLigne,
                         statut: c.statut || 'EN_COURS',
                         population: c.pop,
                         echantillon: c.ech,
@@ -1395,6 +1436,7 @@
             }
         }
 
+        // BOUTON 2 : SUIVI -> Copie UNIQUEMENT les constats dont la date a été modifiée en nouvelles lignes de suivi, puis vide la FV
         async function suiviFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée pour créer un suivi.");
@@ -1411,15 +1453,22 @@
                 return;
             }
 
+            const idMissionSuivi = "MIS-ENC-SUIVI-" + Date.now();
+            const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, true);
+
+            if (nouvellesLignesSuivi.length === 0) {
+                alert("⚠️ Aucune date n'a été modifiée.\nPour enregistrer un suivi, modifiez d'abord la date du ou des points suivis (les points dont la date reste inchangée ne seront pas recopiés).");
+                return;
+            }
+
             const btn = document.getElementById('btnSuiviFV');
             const texteOriginal = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
 
             try {
-                const idMissionSuivi = "MIS-ENC-SUIVI-" + Date.now();
-                const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, true);
-                const dateVerifJJMMAAAA = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+                const totalConstatsActifs = addedPoints.filter(p => p.selected).reduce((acc, p) => acc + p.constats.length, 0);
+                const nbIgnores = Math.max(0, totalConstatsActifs - nouvellesLignesSuivi.length);
 
                 let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
@@ -1431,9 +1480,9 @@
                 }
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateVerifJJMMAAAA}) ont été ajoutées et archivées sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)) et archivé(s) sur GitHub :\n${ghResult.path}`);
                 } else {
-                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateVerifJJMMAAAA}) ont été ajoutées.`);
+                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)).`);
                 }
 
                 clearForm();
