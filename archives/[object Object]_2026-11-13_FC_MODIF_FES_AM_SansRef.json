@@ -27,7 +27,7 @@
         "constat": "yyyyyy-non",
         "recommandation": "bbbbbbbbbbbbbbb",
         "avisResponsable": "",
-        "statut": "CLOTURE"
+        "statut": "NON_CLOTURE"
       },
       {
         "idConstat": "CST-MIS-1794591075091-2",
@@ -100,5 +100,5 @@
       }
     ]
   },
-  "dateArchivage": "2026-11-13T18:36:07.585Z"
+  "dateArchivage": "2026-11-13T18:37:34.194Z"
 }
