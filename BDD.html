@@ -253,7 +253,7 @@
                 <p>Table unifiée des constats d'audit (initiaux et suivis) et synchronisation avec les archives GitHub</p>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
-                <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="actualiserBDDAction()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
                 <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
                 <button type="button" class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
@@ -375,19 +375,6 @@
             const mm = String(now.getMinutes()).padStart(2, '0');
             const ss = String(now.getSeconds()).padStart(2, '0');
             badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
-
-        function actualiserBDDAction() {
-            const btn = document.getElementById('btnActualiserBDD');
-            const icon = btn ? btn.querySelector('i') : null;
-            if (icon) icon.classList.add('fa-spin');
-
-            chargerBDDEnVisuel();
-            actualiserBadgeHorodatage();
-
-            setTimeout(() => {
-                if (icon) icon.classList.remove('fa-spin');
-            }, 350);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
