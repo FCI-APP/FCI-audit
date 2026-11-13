@@ -50,9 +50,22 @@
         .top-header {
             display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
             background: var(--white); padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border-left: 5px solid var(--primary-blue);
+            border-left: 5px solid var(--primary-blue); flex-wrap: wrap; gap: 12px;
         }
-        .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; }
+        .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .last-refresh-pill {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #065F46;
+            background-color: #D1FAE5;
+            border: 1px solid #6EE7B7;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
         .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
         .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
@@ -73,6 +86,8 @@
         .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
         .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-excel { background-color: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
         .btn-danger-outline { background-color: #FFFFFF; color: var(--danger); border-color: #FCA5A5; }
 
@@ -112,8 +127,16 @@
     <main class="main-content">
         <header class="top-header">
             <div>
-                <h1>Planification de la mission de contrôle</h1>
+                <h1>
+                    Planification de la mission de contrôle
+                    <span class="last-refresh-pill" id="lastRefreshBadgePlanif"><i class="fa-solid fa-check-circle"></i> À jour</span>
+                </h1>
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPlanificationAction()" title="Actualiser la liste des points de contrôle sélectionnés depuis le Référentiel">
+                    <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+                </button>
             </div>
         </header>
 
@@ -368,6 +391,29 @@
         let checkedKeys = new Set();
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
+        function actualiserBadgeHorodatagePlanif() {
+            const badge = document.getElementById('lastRefreshBadgePlanif');
+            if (!badge) return;
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
+        }
+
+        function actualiserPlanificationAction() {
+            const btn = document.getElementById('btnActualiserPlanif');
+            const icon = btn ? btn.querySelector('i') : null;
+            if (icon) icon.classList.add('fa-spin');
+
+            loadPlanificationData();
+            actualiserBadgeHorodatagePlanif();
+
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+            }, 350);
+        }
+
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -378,10 +424,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
             loadPlanificationData();
+            actualiserBadgeHorodatagePlanif();
             setTimeout(() => {
                 const ctrlInput = document.getElementById('audit-controleurs');
                 if (ctrlInput) ctrlInput.value = '';
             }, 50);
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === PLANIFICATION_PC_KEY) {
+                loadPlanificationData();
+                actualiserBadgeHorodatagePlanif();
+            }
         });
 
         function onRegionChangePlanif() {
@@ -429,6 +483,9 @@
                 } catch (e) {
                     selectedData = []; checkedKeys.clear();
                 }
+            } else {
+                selectedData = [];
+                checkedKeys.clear();
             }
             renderPlanification();
         }
@@ -584,6 +641,7 @@
         function saveAndRefresh() {
             localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
             renderPlanification();
+            actualiserBadgeHorodatagePlanif();
         }
 
         function exportToExcel() {
