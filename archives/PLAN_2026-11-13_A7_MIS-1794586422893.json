@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-13T16:13:43.511Z",
+  "donnees": {
+    "idMission": "MIS-1794586422893",
+    "region": "AGADIR",
+    "typeControle": "Thématique",
+    "date": "2026-11-13",
+    "dateDebut": "2026-11-13",
+    "dateFin": "2026-11-13",
+    "entite": "A7",
+    "controleur": "baba",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Défaillance du suivi analytique de la consommation des charges",
+        "Intitulé Contrôle": "Contrôle de l'insuffisance de système de calcul de la consommation interne",
+        "Points de contrôle": "1/ Est-ce que les données comptables sont-elles remontées dans les délais par la DFG ?"
+      },
+      {
+        "Processus": "Budget et résultats",
+        "Intitulé du risque": "Défaillance du suivi analytique de la consommation des charges",
+        "Intitulé Contrôle": "Contrôle de l'insuffisance de système de calcul de la consommation interne",
+        "Points de contrôle": "2/ Est-ce que les données comptables remontés sont validées par les commissaires aux comptes ?"
+      }
+    ]
+  }
+}
