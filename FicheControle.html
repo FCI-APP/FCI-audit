@@ -44,7 +44,6 @@
         .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; }
         .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
 
-        /* Ligne 1 : Espace Saisie sur une seule ligne */
         .saisie-line-card {
             background-color: var(--card-bg);
             border-radius: 8px;
@@ -71,7 +70,6 @@
             align-items: end;
         }
 
-        /* Ligne 2 : Espace Modification / Recherche BDD sur une seule ligne */
         .modif-line-card {
             background-color: #FFFBEB;
             border-radius: 8px;
@@ -113,8 +111,19 @@
             font-size: 0.78rem;
             font-weight: 800;
         }
+        .date-modified-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #60A5FA;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.73rem;
+            font-weight: 800;
+        }
 
-        /* Barre récapitulative des données importées avec la date sur chaque point */
         .imported-meta-strip {
             display: flex;
             flex-wrap: wrap;
@@ -145,7 +154,7 @@
         .process-header { background-color: #EEF2F6; padding: 12px 20px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); }
         .control-item { padding: 18px 20px; border-bottom: 1px solid var(--border-color); }
 
-        .eval-section { display: grid; grid-template-columns: 320px 1fr; gap: 18px; background-color: #FAFAFA; padding: 14px; border-radius: 6px; border: 1px solid #E2E8F0; }
+        .eval-section { display: grid; grid-template-columns: 330px 1fr; gap: 18px; background-color: #FAFAFA; padding: 14px; border-radius: 6px; border: 1px solid #E2E8F0; }
         .metrics-block { display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
         .input-inline { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
         .input-inline label { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
@@ -157,13 +166,15 @@
             text-align: left !important;
             font-weight: 700;
         }
-        .input-inline select {
-            width: 125px;
+        .input-inline select, .input-inline input[type="date"] {
+            width: 138px;
             padding: 5px 8px;
             border: 1px solid #CBD5E1;
             border-radius: 4px;
             text-align: left !important;
             font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--primary);
         }
         .rate-box { margin-top: 4px; padding: 8px; background-color: #F1F5F9; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); }
 
@@ -224,23 +235,21 @@
         <div class="header-bar">
             <div class="header-title">
                 <h1>Fiche de Contrôle Terrain (FC)</h1>
-                <p>Saisie, évaluation, consultation et suivi des constats d'audit</p>
+                <p>Saisie, évaluation, consultation et suivi sélectif par date des constats d'audit</p>
             </div>
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
                 <button class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
                 <button class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
-                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour la ligne existante dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Conserve la ligne existante, ajoute une ligne de suivi puis vide la fiche"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                <button class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
+                <button class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Copie uniquement les points dont la date a été modifiée en nouvelles lignes de suivi, sans dupliquer les points inchangés"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                 <button class="btn btn-danger" onclick="supprimerFicheControle()"><i class="fa-solid fa-trash-can"></i> Supprimer la FC</button>
                 <button class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
                 <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
             </div>
         </div>
 
-        <!-- Espace Ligne Saisie (Regroupé en une seule ligne) -->
         <div id="saisie-bar-container"></div>
 
-        <!-- Espace Ligne Modification / Recherche depuis la BDD -->
         <div class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
@@ -528,6 +537,9 @@
             missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
 
             missionData.pointsControle.forEach((item) => {
+                if (!item._bddDateControle) {
+                    item._bddDateControle = missionData.metadata.dateControle;
+                }
                 if (!item.eval) {
                     item.eval = {
                         population: 0,
@@ -683,19 +695,26 @@
                 items.forEach((item) => {
                     const idx = points.indexOf(item);
                     const ev = item.eval;
-                    const dateLigne = formatDateToFR(item._bddDateControle || dateCtrlCourante);
+                    const dateLigneFR = formatDateToFR(item._bddDateControle || dateCtrlCourante);
+                    const dateLigneISO = formatDateToISO(dateLigneFR);
+                    const isDateModifieePourSuivi = Boolean(item._initialDate && formatDateToISO(item._initialDate) !== dateLigneISO);
+
+                    const badgeSuiviStatus = isDateModifiePourSuivi
+                        ? `<span class="date-modified-pill"><i class="fa-solid fa-code-branch"></i> Date modifiée (Suivi prêt : ${formatDateToFR(item._initialDate)} → ${dateLigneFR})</span>`
+                        : (item._initialDate ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Date initiale : ${formatDateToFR(item._initialDate)} — inchangée)</span>` : '');
+
                     html += `
                         <div class="control-item">
                             <div style="margin-bottom:10px;">
-                                <!-- Bandeau récapitulatif Date + Indicateurs importés -->
                                 <div class="imported-meta-strip">
-                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateLigne}</span>
+                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateLigneFR}</span>
                                     <span class="imported-chip">Pop : <strong>${ev.population}</strong></span>
                                     <span class="imported-chip">Ech : <strong>${ev.echantillon}</strong></span>
                                     <span class="imported-chip">OK : <strong style="color:var(--success);">${ev.nombreOk}</strong></span>
                                     <span class="imported-chip">KO : <strong style="color:var(--danger);">${ev.nombreKo}</strong></span>
                                     <span class="imported-chip">TC : <strong>${ev.tauxConformite} %</strong></span>
                                     <span class="imported-chip">Statut : <strong>${libelleStatut(ev.statutConstat)}</strong></span>
+                                    ${badgeSuiviStatus}
                                 </div>
                                 <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</span>
@@ -706,8 +725,8 @@
                             <div class="eval-section">
                                 <div class="metrics-block">
                                     <div class="input-inline">
-                                        <label>Date</label>
-                                        <input type="text" value="${dateLigne}" readonly style="width:125px; padding:5px 8px; border:1px solid #CBD5E1; border-radius:4px; background:#EFF6FF; color:var(--primary); font-weight:800; font-size:0.8rem;">
+                                        <label>Date *</label>
+                                        <input type="date" value="${dateLigneISO}" onchange="mettreAJourDatePoint(${idx}, this.value)">
                                     </div>
                                     <div class="input-inline">
                                         <label>Statut *</label>
@@ -794,6 +813,14 @@
             sauvegarderLocalement();
             renderPage();
         }
+
+        function mettreAJourDatePoint(index, valISO) {
+            const frDate = formatDateToFR(valISO);
+            missionData.pointsControle[index]._bddDateControle = frDate;
+            sauvegarderLocalement();
+            renderPage();
+        }
+
         function mettreAJourMetadata(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); }
 
         function mettreAJourCalcul(index, champ, valeur) {
@@ -816,8 +843,9 @@
 
         function mettreAJourChamp(index, champ, val) { missionData.pointsControle[index].eval[champ] = val; sauvegarderLocalement(); }
 
-        function validerChampsObligatoires() {
-            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+        function validerChampsObligatoires(listePointsCibles = null) {
+            const pointsAValider = listePointsCibles || (missionData ? missionData.pointsControle : []);
+            if (!missionData || !pointsAValider || pointsAValider.length === 0) {
                 return { valide: false, messageErreur: "Aucune donnée de contrôle valide." };
             }
             if (!missionData.metadata || !missionData.metadata.region) {
@@ -826,7 +854,7 @@
             if (!missionData.metadata.entite) {
                 return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'enregistrer." };
             }
-            for (let p of missionData.pointsControle) {
+            for (let p of pointsAValider) {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
                 if (ev.echantillon > ev.population && ev.population > 0) return { valide: false, messageErreur: `Point "${pcName}" : Échantillon > Population.` };
@@ -837,38 +865,42 @@
             return { valide: true };
         }
 
-        function construirePayloadConstatsFC(idMission, nouveauModeSuivi = false) {
+        function construirePayloadConstatsFC(idMission, nouveauModeSuivi = false, listePointsFiltres = null) {
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
             const regionMission = meta.region || '';
-            const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+            const dateCtrlDefaut = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const timestampSuivi = Date.now();
+            const sourcePoints = listePointsFiltres || missionData.pointsControle;
 
-            return missionData.pointsControle.map((p, idx) => ({
-                idConstat: nouveauModeSuivi
-                    ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
-                    : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
-                idMission: idMission,
-                region: regionMission,
-                typeControle: typeControleMission,
-                entite: meta.entite || 'Controle',
-                controleur: meta.controleurs || '',
-                date: dateCtrl,
-                dateControle: dateCtrl,
-                processus: getItemVal(p, ['Processus']),
-                risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
-                controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
-                pop: parseInt(p.eval.population) || 0,
-                ech: parseInt(p.eval.echantillon) || 0,
-                ok: parseInt(p.eval.nombreOk) || 0,
-                ko: parseInt(p.eval.nombreKo) || 0,
-                tc: parseFloat(p.eval.tauxConformite) || 0,
-                constat: p.eval.constat,
-                recommandation: p.eval.recommandation,
-                avisResponsable: p.eval.avisResponsable || '',
-                statut: p.eval.statutConstat
-            }));
+            return sourcePoints.map((p, idx) => {
+                const dateLigne = formatDateToFR(p._bddDateControle) || dateCtrlDefaut;
+                return {
+                    idConstat: nouveauModeSuivi
+                        ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
+                        : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
+                    idMission: idMission,
+                    region: regionMission,
+                    typeControle: typeControleMission,
+                    entite: meta.entite || 'Controle',
+                    controleur: meta.controleurs || '',
+                    date: dateLigne,
+                    dateControle: dateLigne,
+                    processus: getItemVal(p, ['Processus']),
+                    risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
+                    controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                    pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                    pop: parseInt(p.eval.population) || 0,
+                    ech: parseInt(p.eval.echantillon) || 0,
+                    ok: parseInt(p.eval.nombreOk) || 0,
+                    ko: parseInt(p.eval.nombreKo) || 0,
+                    tc: parseFloat(p.eval.tauxConformite) || 0,
+                    constat: p.eval.constat,
+                    recommandation: p.eval.recommandation,
+                    avisResponsable: p.eval.avisResponsable || '',
+                    statut: p.eval.statutConstat
+                };
+            });
         }
 
         async function archiverFicheControle() {
@@ -970,6 +1002,7 @@
                     const dLigne = formatDateToFR(c.date || c.dateControle) || dateCtrlTrouvee;
                     return {
                         _bddIdConstat: c.idConstat,
+                        _initialDate: dLigne,
                         _bddDateControle: dLigne,
                         Processus: c.processus,
                         "Intitulé du risque": c.risque,
@@ -992,10 +1025,10 @@
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) importé(s) — Site : ${premierConstat.entite || '--'} | Date de contrôle : ${dateCtrlTrouvee}`;
+            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} constat(s) importé(s) — Site : ${premierConstat.entite || '--'} | Date initiale : ${dateCtrlTrouvee}`;
         }
 
-        // BOUTON 1 : MODIFIER -> Met à jour la ligne existante dans la BDD puis vide la FC
+        // BOUTON 1 : MODIFIER -> Met à jour les lignes existantes dans la BDD puis vide la FC
         async function modifierFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune fiche de contrôle n'est actuellement chargée pour modification.");
@@ -1066,7 +1099,6 @@
                     alert(`✅ Modification enregistrée directement sur les lignes existantes dans la BDD locale (aucune ligne supprimée ni dupliquée).`);
                 }
 
-                // Vider la FC après modification
                 viderFormulaireFC();
                 remplirFiltresBDD();
             } finally {
@@ -1077,14 +1109,25 @@
             }
         }
 
-        // BOUTON 2 : SUIVI -> Conserve la ligne existante dans la BDD, crée une nouvelle ligne de suivi puis vide la FC
+        // BOUTON 2 : SUIVI -> Copie UNIQUEMENT les points dont la date a été modifiée en nouvelles lignes de suivi, puis vide la FC
         async function suiviFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune fiche de contrôle n'est actuellement chargée pour créer un suivi.");
                 return;
             }
 
-            const val = validerChampsObligatoires();
+            const pointsAvecDateModifiee = missionData.pointsControle.filter(p => {
+                const dateActuelleISO = formatDateToISO(p._bddDateControle || missionData.metadata?.dateControle);
+                if (!p._initialDate) return true;
+                return formatDateToISO(p._initialDate) !== dateActuelleISO;
+            });
+
+            if (pointsAvecDateModifiee.length === 0) {
+                alert("⚠️ Aucune date n'a été modifiée.\nPour enregistrer un suivi, modifiez d'abord la date du ou des points suivis (les points dont la date reste inchangée ne seront pas recopiés).");
+                return;
+            }
+
+            const val = validerChampsObligatoires(pointsAvecDateModifiee);
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
             const btn = document.getElementById('btnSuiviFC');
@@ -1097,11 +1140,11 @@
             try {
                 const meta = missionData.metadata || {};
                 const idMissionSuivi = "MIS-SUIVI-" + Date.now();
-                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+                const dateCtrl = formatDateToFR(pointsAvecDateModifiee[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
 
-                const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, true);
+                const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, true, pointsAvecDateModifiee);
 
                 await FCIDatabase.enregistrerMission({
                     idMission: idMissionSuivi,
@@ -1112,18 +1155,18 @@
                     dateFin: meta.periodeFin || '',
                     entite: meta.entite || '',
                     controleur: meta.controleurs || '',
-                    pointsSelectionnes: missionData.pointsControle
+                    pointsSelectionnes: pointsAvecDateModifiee
                 }, false);
 
                 const ghResult = await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
+                const nbIgnores = missionData.pointsControle.length - pointsAvecDateModifiee.length;
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateCtrl}) ont été ajoutées et archivées sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)) et archivé(s) sur GitHub :\n${ghResult.path}`);
                 } else {
-                    alert(`✅ Suivi enregistré : les lignes initiales sont conservées dans la BDD et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (Date : ${dateCtrl}) ont été ajoutées.`);
+                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)).`);
                 }
 
-                // Vider la FC après suivi
                 viderFormulaireFC();
                 remplirFiltresBDD();
             } finally {
