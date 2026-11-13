@@ -76,36 +76,13 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
-            flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .validation-pill {
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: #92400E;
-            background-color: #FEF3C7;
-            border: 1px solid #FCD34D;
-            padding: 3px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .validation-pill.validated {
-            color: #065F46;
-            background-color: #D1FAE5;
-            border-color: #6EE7B7;
-        }
-
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
-        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
-        .btn-refresh:hover { background-color: #BAE6FD; }
-        .btn-validate { background-color: #059669; color: #FFF; border-color: #047857; }
-        .btn-validate:hover { background-color: #047857; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -155,14 +132,163 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1>
-                    <i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i>
-                    Feuille 6 : Tableau de Bord Synthétique (TDB)
-                    <span class="validation-pill" id="tdbValidationBadge"><i class="fa-solid fa-clock"></i> En attente de validation</span>
-                </h1>
+                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Tableau de Bord Synthétique (TDB)</h1>
                 <p>Analyse globale et visuelle des résultats de contrôles</p>
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <button type="button" class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button type="button" class="btn btn-validate" id="btnValiderTDB" onclick="validerTableauDeBord()"><i class="fa-solid fa-circle-check"></i> Valider</button>
-                <button type="button" class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+            </div>
+        </header>
+
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
+                <div class="kpi-info"><h3 id="kpiMissions">0</h3><p>Missions Enregistrées</p></div>
+            </div>
+            <div class="kpi-card success">
+                <div class="kpi-icon" style="color: var(--success);"><i class="fa-solid fa-square-check"></i></div>
+                <div class="kpi-info"><h3 id="kpiTcControle">0.0 %</h3><p>TC Moyen Fiches Contrôle</p></div>
+            </div>
+            <div class="kpi-card warning">
+                <div class="kpi-icon" style="color: var(--warning);"><i class="fa-solid fa-vault"></i></div>
+                <div class="kpi-info"><h3 id="kpiTcEncaisses">0.0 %</h3><p>TC Moyen Encaisses</p></div>
+            </div>
+            <div class="kpi-card danger">
+                <div class="kpi-icon" style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="kpi-info"><h3 id="kpiTotalKO">0</h3><p>Total Anomalies (KO)</p></div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Taux de Conformité (TC %) par Processus[cite: 5]</h3>
+                <canvas id="chartProcessus"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Répartition Globale (OK vs KO)[cite: 5]</h3>
+                <canvas id="chartOkKo"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats et Points de Contrôle[cite: 5]</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Processus</th>
+                        <th style="width: 15%;">Risque</th>
+                        <th style="width: 15%;">Contrôle</th>
+                        <th style="width: 20%;">Point de Contrôle (PC)</th>
+                        <th style="width: 6%;">Ech</th>
+                        <th style="width: 5%;">OK</th>
+                        <th style="width: 5%;">KO</th>
+                        <th style="width: 7%;">TC (%)</th>
+                        <th style="width: 15%;">Constat / Remarques</th>
+                    </tr>
+                </thead>
+                <tbody id="tdbTableBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="fci-db-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => { chargerTableauDeBord(); });
+
+        function chargerTableauDeBord() {
+            const db = FCIDatabase.getDB();
+            const missions = db.missions || [];
+            const constatsControle = db.constatsControle || [];
+            const constatsEncaisses = db.constatsEncaisses || [];
+
+            document.getElementById('kpiMissions').textContent = missions.length;
+
+            let totalEchControle = 0, totalOkControle = 0, totalKoControle = 0;
+            constatsControle.forEach(c => {
+                totalEchControle += parseInt(c.ech) || 0;
+                totalOkControle += parseInt(c.ok) || 0;
+                totalKoControle += parseInt(c.ko) || 0;
+            });
+
+            let totalEchEncaisse = 0, totalOkEncaisse = 0, totalKoEncaisse = 0;
+            constatsEncaisses.forEach(e => {
+                totalEchEncaisse += parseInt(e.ech) || 0;
+                totalOkEncaisse += parseInt(e.ok) || 0;
+                totalKoEncaisse += parseInt(e.ko) || 0;
+            });
+
+            document.getElementById('kpiTcControle').textContent = (totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : '0.0') + ' %';
+            document.getElementById('kpiTcEncaisses').textContent = (totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : '0.0') + ' %';
+            document.getElementById('kpiTotalKO').textContent = totalKoControle + totalKoEncaisse;
+
+            const tbody = document.getElementById('tdbTableBody');
+            tbody.innerHTML = '';
+            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
+
+            if (tousLesConstats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucun constat enregistré dans la BDD.</td></tr>';
+            } else {
+                tousLesConstats.forEach(c => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><b>${c.processus || 'N/A'}</b></td>
+                            <td>${c.risque || 'N/A'}</td>
+                            <td>${c.controle || 'N/A'}</td>
+                            <td>${c.pc || 'N/A'}</td>
+                            <td>${c.ech || 0}</td>
+                            <td><span style="color:var(--success);font-weight:bold;">${c.ok || 0}</span></td>
+                            <td><span style="color:var(--danger);font-weight:bold;">${c.ko || 0}</span></td>
+                            <td><b>${(c.tc !== undefined ? parseFloat(c.tc).toFixed(1) : '0.0')}%</b></td>
+                            <td>${c.constat || '--'}</td>
+                        </tr>`;
+                });
+            }
+
+            initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
+        }
+
+        function viderBDD() {
+            if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
+                FCIDatabase.viderBDD();
+                chargerTableauDeBord();
+                alert("La BDD a été réinitialisée.");
+            }
+        }
+
+        function initialiserGraphiques(constatsControle, totalOK, totalKO) {
+            const processusMap = {};
+            constatsControle.forEach(c => {
+                const proc = c.processus || 'Autres';
+                if (!processusMap[proc]) processusMap[proc] = { ok: 0, ech: 0 };
+                processusMap[proc].ok += parseInt(c.ok) || 0;
+                processusMap[proc].ech += parseInt(c.ech) || 0;
+            });
+
+            const labels = Object.keys(processusMap);
+            const values = labels.map(p => {
+                const item = processusMap[p];
+                return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
+            });
+
+            new Chart(document.getElementById('chartProcessus').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Aucune donnée'],
+                    datasets: [{ label: 'Taux de Conformité (%)', data: values.length > 0 ? values : [0], backgroundColor: '#003366' }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+
+            new Chart(document.getElementById('chartOkKo').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Conformes (OK)', 'Anomalies (KO)'],
+                    datasets: [{ data: [totalOK, totalKO], backgroundColor: ['#10B981', '#EF4444'] }]
+                },
+                options: { responsive: true }
+            });
+        }
+    </script>
+</body>
+</html>
