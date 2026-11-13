@@ -1,0 +1,35 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-13T19:24:14.242Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-SUIVI-1794597853666-1-1",
+      "idMission": "MIS-ENC-SUIVI-1794597853666",
+      "typeControle": "Vérification",
+      "region": "OUEJDA",
+      "site": "OUEJDA CM",
+      "entite": "OUEJDA CM",
+      "controleur": "jabari",
+      "responsable": "",
+      "date": "2026-11-18",
+      "dateVerification": "2026-11-18",
+      "dateDebut": "2026-10-27",
+      "dateFin": "2026-11-25",
+      "processus": "Philatélie",
+      "risque": "Spoliation ou vol de timbres",
+      "controle": "Contrôle de la disponibilité du stock au niveau du réseau",
+      "pc": "La valeur des valeurs postales est-elle exacte ?",
+      "pop": 260,
+      "ech": 200,
+      "ok": 150,
+      "ko": 50,
+      "tc": 75,
+      "statut": "EN_COURS",
+      "constat": "zzzzzzzz-bon",
+      "recommandation": "bbbbbbbbbbbbbb",
+      "avisResponsable": "--"
+    }
+  ]
+}
