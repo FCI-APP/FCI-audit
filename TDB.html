@@ -76,13 +76,34 @@
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .validation-pill {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #92400E;
+            background-color: #FEF3C7;
+            border: 1px solid #FCD34D;
+            padding: 3px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .validation-pill.validated {
+            color: #065F46;
+            background-color: #D1FAE5;
+            border-color: #6EE7B7;
+        }
+
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-validate { background-color: #059669; color: #FFF; border-color: #047857; }
+        .btn-validate:hover { background-color: #047857; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
@@ -132,12 +153,17 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Tableau de Bord Synthétique (TDB)</h1>
+                <h1>
+                    <i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i>
+                    Feuille 6 : Tableau de Bord Synthétique (TDB)
+                    <span class="validation-pill" id="tdbValidationBadge"><i class="fa-solid fa-clock"></i> En attente de validation</span>
+                </h1>
                 <p>Analyse globale et visuelle des résultats de contrôles</p>
             </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
-                <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button type="button" class="btn btn-validate" id="btnValiderTDB" onclick="validerTableauDeBord()"><i class="fa-solid fa-circle-check"></i> Valider</button>
+                <button type="button" class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button type="button" class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
         </header>
 
@@ -194,7 +220,33 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => { chargerTableauDeBord(); });
+        let chartProcessusInstance = null;
+        let chartOkKoInstance = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerTableauDeBord();
+            restaurerBadgeValidationTDB();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                chargerTableauDeBord();
+            }
+        });
+
+        function restaurerBadgeValidationTDB() {
+            const db = FCIDatabase.getDB();
+            const badge = document.getElementById('tdbValidationBadge');
+            if (!badge) return;
+
+            if (db.tdbValidation && db.tdbValidation.validatedAt) {
+                badge.classList.add('validated');
+                badge.innerHTML = `<i class="fa-solid fa-circle-check"></i> Validé le ${db.tdbValidation.validatedAt}`;
+            } else {
+                badge.classList.remove('validated');
+                badge.innerHTML = `<i class="fa-solid fa-clock"></i> En attente de validation`;
+            }
+        }
 
         function chargerTableauDeBord() {
             const db = FCIDatabase.getDB();
@@ -245,20 +297,86 @@
                 });
             }
 
-            initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
+            initialiserGraphiques(tousLesConstats, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
+        }
+
+        async function validerTableauDeBord() {
+            const db = FCIDatabase.getDB();
+            const missions = db.missions || [];
+            const constatsControle = db.constatsControle || [];
+            const constatsEncaisses = db.constatsEncaisses || [];
+            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
+
+            if (missions.length === 0 && tousLesConstats.length === 0) {
+                alert("⚠️ Aucune donnée disponible dans la BDD à valider sur le Tableau de Bord.");
+                return;
+            }
+
+            const btn = document.getElementById('btnValiderTDB');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validation...';
+            }
+
+            try {
+                const now = new Date();
+                const dateFR = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} à ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                const syntheseValidation = {
+                    validatedAt: dateFR,
+                    timestamp: now.toISOString(),
+                    nbMissions: missions.length,
+                    nbConstatsControle: constatsControle.length,
+                    nbConstatsEncaisses: constatsEncaisses.length,
+                    tcMoyenControle: document.getElementById('kpiTcControle').textContent,
+                    tcMoyenEncaisses: document.getElementById('kpiTcEncaisses').textContent,
+                    totalAnomaliesKO: parseInt(document.getElementById('kpiTotalKO').textContent) || 0
+                };
+
+                db.tdbValidation = syntheseValidation;
+                if (typeof FCIDatabase.saveDB === 'function') {
+                    FCIDatabase.saveDB(db);
+                } else {
+                    localStorage.setItem('fci_database', JSON.stringify(db));
+                }
+
+                chargerTableauDeBord();
+                restaurerBadgeValidationTDB();
+
+                let ghResult = { success: true, localOnly: true };
+                if (typeof FCIDatabase.archiverSurGitHub === 'function') {
+                    ghResult = await FCIDatabase.archiverSurGitHub(
+                        { type: 'VALIDATION_TDB', synthese: syntheseValidation, constats: tousLesConstats },
+                        `TDB_VALIDATION_${now.toISOString().slice(0, 10)}`
+                    );
+                }
+
+                if (ghResult && ghResult.success && !ghResult.localOnly) {
+                    alert(`✅ Tableau de Bord validé et archivé dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
+                } else {
+                    alert(`✅ Tableau de Bord validé et enregistré avec succès (${dateFR}).`);
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
         }
 
         function viderBDD() {
             if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
                 FCIDatabase.viderBDD();
                 chargerTableauDeBord();
+                restaurerBadgeValidationTDB();
                 alert("La BDD a été réinitialisée.");
             }
         }
 
-        function initialiserGraphiques(constatsControle, totalOK, totalKO) {
+        function initialiserGraphiques(tousLesConstats, totalOK, totalKO) {
             const processusMap = {};
-            constatsControle.forEach(c => {
+            tousLesConstats.forEach(c => {
                 const proc = c.processus || 'Autres';
                 if (!processusMap[proc]) processusMap[proc] = { ok: 0, ech: 0 };
                 processusMap[proc].ok += parseInt(c.ok) || 0;
@@ -271,7 +389,10 @@
                 return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
             });
 
-            new Chart(document.getElementById('chartProcessus').getContext('2d'), {
+            if (chartProcessusInstance) chartProcessusInstance.destroy();
+            if (chartOkKoInstance) chartOkKoInstance.destroy();
+
+            chartProcessusInstance = new Chart(document.getElementById('chartProcessus').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels.length > 0 ? labels : ['Aucune donnée'],
@@ -280,7 +401,7 @@
                 options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
             });
 
-            new Chart(document.getElementById('chartOkKo').getContext('2d'), {
+            chartOkKoInstance = new Chart(document.getElementById('chartOkKo').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Conformes (OK)', 'Anomalies (KO)'],
