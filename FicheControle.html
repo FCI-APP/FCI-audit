@@ -44,19 +44,6 @@
         .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
 
-        .last-refresh-pill {
-            font-size: 0.73rem;
-            font-weight: 700;
-            color: #065F46;
-            background-color: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            padding: 3px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
         .saisie-line-card { background-color: var(--card-bg); border-radius: 8px; padding: 14px 18px; border: 1px solid var(--border-color); border-left: 4px solid var(--primary); margin-bottom: 14px; }
         .section-line-label { font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .single-row-7 { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.95fr; gap: 10px; align-items: end; }
@@ -151,10 +138,7 @@
     <main class="main-content">
         <div class="header-bar">
             <div class="header-title">
-                <h1>
-                    Fiche de Contrôle Terrain (FC)
-                    <span class="last-refresh-pill" id="lastRefreshBadgeFC"><i class="fa-solid fa-check-circle"></i> À jour</span>
-                </h1>
+                <h1>Fiche de Contrôle Terrain (FC)</h1>
                 <p>Saisie, évaluation, consultation et suivi sélectif par date des constats d'audit</p>
             </div>
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
@@ -276,16 +260,6 @@
         const LISTE_REGIONS = Object.keys(CENTRES_PAR_REGION);
         let missionData = null;
 
-        function actualiserBadgeHorodatageFC() {
-            const badge = document.getElementById('lastRefreshBadgeFC');
-            if (!badge) return;
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
-
         function lireDBSecurisee() {
             let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
@@ -360,16 +334,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             chargerDonneesMission();
             remplirFiltresBDD();
-            actualiserBadgeHorodatageFC();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
                 remplirFiltresBDD();
-                actualiserBadgeHorodatageFC();
             } else if (e.key === 'fci_fiche_controle_active') {
                 chargerDonneesMission();
-                actualiserBadgeHorodatageFC();
             }
         });
 
@@ -570,7 +541,6 @@
                 html += `</div>`;
             }
 
-            // Synthèse globale en bas de page (bleue)
             let badgeText = "---", badgeClass = "", descText = "";
             if (nbPointsEvalues === 0) {
                 badgeText = "NON ÉVALUÉ"; badgeClass = "avis-satisfaisante";
