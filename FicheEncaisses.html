@@ -42,14 +42,8 @@
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
         
         .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; background: var(--card-bg); padding: 20px 25px; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
-        .header-title-wrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 15px; }
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
-
-        /* Badge TC Moyen à côté du titre à droite */
-        .header-tc-badge { background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%); color: white; padding: 8px 16px; border-radius: 8px; border-left: 4px solid var(--accent-gold); display: flex; flex-direction: column; align-items: flex-end; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
-        .header-tc-badge .tc-label { font-size: 0.68rem; text-transform: uppercase; font-weight: 700; opacity: 0.85; }
-        .header-tc-badge .tc-value { font-size: 1.2rem; font-weight: 800; color: var(--accent-gold); }
 
         .header-actions-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; width: 100%; }
         .header-actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; width: 100%; }
@@ -61,7 +55,6 @@
         .single-row-saisie-fv { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.9fr; gap: 10px; align-items: end; }
 
         .modif-line-card { background-color: #FFFBEB; border-radius: 8px; padding: 14px 18px; border: 1px solid #FDE68A; border-left: 4px solid var(--accent-gold); margin-bottom: 14px; }
-        /* Ordre demandé : Date - Région - Site - Processus */
         .single-row-modif-fv { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1.2fr auto; gap: 10px; align-items: end; }
 
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 22px; }
@@ -71,12 +64,6 @@
         .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
         .form-group label { font-size: 0.74rem; font-weight: 700; color: var(--primary-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .form-control { padding: 8px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.84rem; outline: none; background-color: #FFF; font-weight: 600; }
-
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 22px; }
-        .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); }
-        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .kpi-info h3 { font-size: 1.25rem; color: var(--primary-blue); font-weight: 800; }
-        .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 600; }
 
         .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-top: 10px; }
         .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 6px; margin-top: 14px; }
@@ -88,7 +75,7 @@
         .constat-box { background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-color); padding: 18px; margin-bottom: 18px; }
         .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
 
-        /* Bloc Situation du Centre en bleu (dark-blue) */
+        /* Bloc Situation du Centre en bas (Bleu) */
         .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
         .summary-info { display: flex; align-items: center; gap: 15px; }
@@ -140,16 +127,9 @@
 
     <main class="main-content">
         <header class="page-header">
-            <div class="header-title-wrapper">
-                <div class="page-title">
-                    <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille de vérification des encaisses (FV)</h1>
-                    <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
-                </div>
-                <!-- TC Moyen intégré à droite du titre -->
-                <div class="header-tc-badge">
-                    <span class="tc-label"><i class="fa-solid fa-chart-pie"></i> TC Moyen Global</span>
-                    <span class="tc-value" id="headerTcValue">0.0 %</span>
-                </div>
+            <div class="page-title">
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille de vérification des encaisses (FV)</h1>
+                <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
             <div class="header-actions-wrapper">
                 <div class="header-actions-row">
@@ -306,8 +286,8 @@
                 "SERVICE OPERATION REGIONAL TANGER", "SERVICE SUPPORT REGIONAL TANGER"
             ],
             "LAAYOUNE": [
-                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT (En cours de création)", 
-                "BOUJDOUR AM (En cours de création)", "GUERGURATE AM (En cours de création)", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
+                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT", 
+                "BOUJDOUR AM", "GUERGURATE AM", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
             "FES": [
                 "FES AM", "FES CM", "FES CTD", "EL HOUCEIMA CLD", "SEFFROU CLD", "TAZA CLD", "TAZA CM", "GUERCIF CLD", 
@@ -506,7 +486,6 @@
             container.innerHTML = '';
             
             let totalTaux = 0, nbEvalues = 0;
-            let countCloture = 0, countNonCloture = 0, countEnCours = 0;
             let selectedCount = 0;
 
             addedPoints.forEach((point, pIndex) => {
@@ -517,9 +496,6 @@
                             totalTaux += c.rate;
                             nbEvalues++;
                         }
-                        if (c.statut === 'CLOTURE') countCloture++;
-                        else if (c.statut === 'NON_CLOTURE') countNonCloture++;
-                        else countEnCours++;
                     });
                 }
 
@@ -548,10 +524,8 @@
             document.getElementById('selectedCountDisplay').innerText = selectedCount;
 
             const tauxMoyen = nbEvalues > 0 ? (totalTaux / nbEvalues).toFixed(1) : "0.0";
-            document.getElementById('headerTcValue').innerText = tauxMoyen + " %";
             document.getElementById('summaryTcValue').innerText = tauxMoyen + " %";
 
-            // Mise à jour de la situation du centre selon 'Classemet centres_2.xlsx'
             const rateNum = parseFloat(tauxMoyen);
             const badgeAvis = document.getElementById('summaryBadgeAvis');
             const descText = document.getElementById('summaryDescText');
