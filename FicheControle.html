@@ -49,7 +49,7 @@
         .single-row-7 { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.95fr; gap: 10px; align-items: end; }
 
         .modif-line-card { background-color: #FFFBEB; border-radius: 8px; padding: 14px 18px; border: 1px solid #FDE68A; border-left: 4px solid var(--accent); margin-bottom: 20px; }
-        .single-row-modif { display: grid; grid-template-columns: 1fr 1.2fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
+        .single-row-modif { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1.2fr auto; gap: 10px; align-items: end; }
 
         .meta-item { display: flex; flex-direction: column; min-width: 0; }
         .meta-item span.label, .meta-item label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -112,7 +112,7 @@
                 <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
                 <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
                 <li class="active"><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Feuille de vérification des encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
                 <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a></li>
                 <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
             </ul>
@@ -140,6 +140,7 @@
 
         <div id="saisie-bar-container"></div>
 
+        <!-- Zone de modification : Ordre Date - Région - Site - Processus -->
         <div class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
@@ -147,6 +148,12 @@
                 <span id="searchStatus" style="margin-left:auto; color:var(--primary); font-weight:700; text-transform:none;"></span>
             </div>
             <div class="single-row-modif">
+                <div class="meta-item">
+                    <label for="filterBddDate">Date de contrôle</label>
+                    <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                        <option value="">-- Toutes les dates --</option>
+                    </select>
+                </div>
                 <div class="meta-item">
                     <label for="filterBddRegion">Région</label>
                     <select id="filterBddRegion" class="input-date-ctrl" onchange="onFilterRegionChange()">
@@ -167,12 +174,6 @@
                     <label for="filterBddSite">Site contrôlé</label>
                     <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange()">
                         <option value="">-- Tous les sites --</option>
-                    </select>
-                </div>
-                <div class="meta-item">
-                    <label for="filterBddDate">Date de contrôle</label>
-                    <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange()">
-                        <option value="">-- Toutes les dates --</option>
                     </select>
                 </div>
                 <div class="meta-item">
@@ -341,9 +342,9 @@
         }
 
         function reinitialiserFiltresBDD() {
+            document.getElementById('filterBddDate').value = '';
             document.getElementById('filterBddRegion').value = '';
             document.getElementById('filterBddSite').value = '';
-            document.getElementById('filterBddDate').value = '';
             document.getElementById('filterBddProcessus').value = '';
             onFilterRegionChange();
         }
@@ -354,24 +355,27 @@
             const badgeCount = document.getElementById('bddCountInfo');
             if (badgeCount) badgeCount.innerText = `${constats.length} constat(s) FC en BDD`;
 
+            const selDate = document.getElementById('filterBddDate');
             const selReg = document.getElementById('filterBddRegion');
             const selSite = document.getElementById('filterBddSite');
-            const selDate = document.getElementById('filterBddDate');
             const selProc = document.getElementById('filterBddProcessus');
-            if (!selReg || !selSite || !selDate || !selProc) return;
+            if (!selDate || !selReg || !selSite || !selProc) return;
 
-            const valReg = selReg.value, valSite = selSite.value, valDate = selDate.value, valProc = selProc.value;
+            const valDate = selDate.value, valReg = selReg.value, valSite = selSite.value, valProc = selProc.value;
 
+            // Filtrage combiné multi-critères dynamique
             const filtered = constats.filter(c => {
+                if (valDate && getConstatDateFR(c) !== valDate) return false;
                 if (valReg && getConstatRegion(c) !== valReg) return false;
                 if (valSite && getConstatSite(c) !== valSite) return false;
-                if (valDate && getConstatDateFR(c) !== valDate) return false;
                 if (valProc && getConstatProcessus(c) !== valProc) return false;
                 return true;
             });
 
-            const dates = [...new Set(filtered.map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
-            const procs = [...new Set(filtered.map(c => getConstatProcessus(c)).filter(Boolean))].sort();
+            const dates = [...new Set(constats.filter(c => (!valReg || getConstatRegion(c) === valReg) && (!valSite || getConstatSite(c) === valSite) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
+            const regs = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valSite || getConstatSite(c) === valSite) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatRegion(c)).filter(Boolean))].sort();
+            const sites = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valReg || getConstatRegion(c) === valReg) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatSite(c)).filter(Boolean))].sort();
+            const procs = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valReg || getConstatRegion(c) === valReg) && (!valSite || getConstatSite(c) === valSite)).map(c => getConstatProcessus(c)).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates (' + dates.length + ') --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus (' + procs.length + ') --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
@@ -610,17 +614,17 @@
         }
 
         function trouverFicheControleBDD() {
+            const fDate = document.getElementById('filterBddDate').value;
             const fReg = document.getElementById('filterBddRegion').value;
             const fSite = document.getElementById('filterBddSite').value;
-            const fDate = document.getElementById('filterBddDate').value;
             const fProc = document.getElementById('filterBddProcessus').value;
-            if (!fReg && !fSite && !fDate && !fProc) { alert("Sélectionnez au moins un critère."); return; }
+            if (!fDate && !fReg && !fSite && !fProc) { alert("Sélectionnez au moins un critère de filtre."); return; }
 
             const db = lireDBSecurisee();
             const constats = (db.constatsControle || []).filter(c => {
+                if (fDate && getConstatDateFR(c) !== fDate) return false;
                 if (fReg && getConstatRegion(c) !== fReg) return false;
                 if (fSite && getConstatSite(c) !== fSite) return false;
-                if (fDate && getConstatDateFR(c) !== fDate) return false;
                 if (fProc && getConstatProcessus(c) !== fProc) return false;
                 return true;
             });
