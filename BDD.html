@@ -180,6 +180,12 @@
             chargerBDDUnifiee();
         });
 
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                chargerBDDUnifiee();
+            }
+        });
+
         function lireDBSecurisee() {
             let db = { constatsControle: [], constatsEncaisses: [] };
             try {
