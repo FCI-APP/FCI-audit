@@ -40,9 +40,12 @@
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 25px 35px; width: calc(100% - var(--sidebar-width)); }
 
-        .header-bar { display: flex; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 18px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 18px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 18px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 12px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
         .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
+
+        /* Bloc Description sous l'en-tête */
+        .page-description-banner { background: #E0F2FE; border-left: 4px solid #0284C7; padding: 12px 18px; border-radius: 6px; margin-bottom: 20px; font-size: 0.85rem; color: #0369A1; line-height: 1.5; font-weight: 600; display: flex; align-items: center; gap: 10px; }
 
         .saisie-line-card { background-color: var(--card-bg); border-radius: 8px; padding: 14px 18px; border: 1px solid var(--border-color); border-left: 4px solid var(--primary); margin-bottom: 14px; }
         .section-line-label { font-size: 0.74rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -138,9 +141,14 @@
             </div>
         </div>
 
+        <!-- Description de la feuille FC -->
+        <div class="page-description-banner">
+            <i class="fa-solid fa-circle-info" style="font-size: 1.1rem;"></i>
+            <span><strong>Fiche de Contrôle (FC) :</strong> Espace central de saisie et d'évaluation des points de contrôle issus de la mission planifiée. Renseignez la population, l'échantillon, les résultats (OK/KO), ainsi que les constats et recommandations détaillés par point. Le Taux de Conformité (TC) moyen est calculé et actualisé en temps réel.</span>
+        </div>
+
         <div id="saisie-bar-container"></div>
 
-        <!-- Zone de modification : Ordre Date - Région - Site - Processus -->
         <div class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
@@ -362,15 +370,6 @@
             if (!selDate || !selReg || !selSite || !selProc) return;
 
             const valDate = selDate.value, valReg = selReg.value, valSite = selSite.value, valProc = selProc.value;
-
-            // Filtrage combiné multi-critères dynamique
-            const filtered = constats.filter(c => {
-                if (valDate && getConstatDateFR(c) !== valDate) return false;
-                if (valReg && getConstatRegion(c) !== valReg) return false;
-                if (valSite && getConstatSite(c) !== valSite) return false;
-                if (valProc && getConstatProcessus(c) !== valProc) return false;
-                return true;
-            });
 
             const dates = [...new Set(constats.filter(c => (!valReg || getConstatRegion(c) === valReg) && (!valSite || getConstatSite(c) === valSite) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
             const regs = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valSite || getConstatSite(c) === valSite) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatRegion(c)).filter(Boolean))].sort();
