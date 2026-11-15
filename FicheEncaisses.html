@@ -54,7 +54,7 @@
         .single-row-saisie-fv { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.9fr; gap: 10px; align-items: end; }
 
         .modif-line-card { background-color: #FFFBEB; border-radius: 8px; padding: 14px 18px; border: 1px solid #FDE68A; border-left: 4px solid var(--accent-gold); margin-bottom: 14px; }
-        .single-row-modif-fv { display: grid; grid-template-columns: 1fr 1fr 1.5fr 1.5fr auto; gap: 10px; align-items: end; }
+        .single-row-modif-fv { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1.2fr auto; gap: 10px; align-items: end; }
 
         .suivi-summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
         .suivi-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; }
@@ -156,13 +156,19 @@
             </div>
         </section>
 
-        <!-- Zone de modification avec l'ordre : Région -> Date -> Processus -> Site -->
+        <!-- Zone de modification : Ordre Date - Région - Site - Processus -->
         <section class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
                 <span id="searchEncaisseStatus" style="margin-left:auto; color:var(--primary-blue); font-weight:700; text-transform:none;"></span>
             </div>
             <div class="single-row-modif-fv">
+                <div class="form-group">
+                    <label>Date vérification</label>
+                    <select id="filterFvBddDate" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                        <option value="">-- Toutes les dates --</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Région</label>
                     <select id="filterFvRegion" class="form-control" onchange="onFilterFvRegionChange()">
@@ -180,21 +186,15 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Date vérification</label>
-                    <select id="filterFvBddDate" class="form-control" onchange="remplirFiltresEncaissesBDD()">
-                        <option value="">-- Toutes les dates --</option>
+                    <label>Site vérifié</label>
+                    <select id="filterFvBddSite" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                        <option value="">-- Tous les sites --</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Processus vérifié</label>
                     <select id="filterFvBddProcessus" class="form-control" onchange="remplirFiltresEncaissesBDD()">
                         <option value="">-- Tous les processus --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Site vérifié</label>
-                    <select id="filterFvBddSite" class="form-control" onchange="remplirFiltresEncaissesBDD()">
-                        <option value="">-- Tous les sites --</option>
                     </select>
                 </div>
                 <div>
@@ -356,8 +356,11 @@
             const encaisses = db.constatsEncaisses || [];
             const selSite = document.getElementById('filterFvBddSite');
             
-            const sites = [...new Set(encaisses.filter(e => !reg || (e.region || '').toUpperCase() === reg).map(e => e.site || e.entite).filter(Boolean))].sort();
-            selSite.innerHTML = '<option value="">-- Tous les sites --</option>' + sites.map(s => `<option value="${s}">${s}</option>`).join('');
+            const filteredByReg = encaisses.filter(e => !reg || (e.region || '').toUpperCase() === reg);
+            const sites = [...new Set(filteredByReg.map(e => e.site || e.entite).filter(Boolean))].sort();
+            
+            const currentSiteVal = selSite.value;
+            selSite.innerHTML = '<option value="">-- Tous les sites --</option>' + sites.map(s => `<option value="${s}" ${s === currentSiteVal ? 'selected' : ''}>${s}</option>`).join('');
             remplirFiltresEncaissesBDD();
         }
 
@@ -370,24 +373,25 @@
         function remplirFiltresEncaissesBDD() {
             const db = lireDBSecurisee();
             const encaisses = db.constatsEncaisses || [];
-            const selReg = document.getElementById('filterFvRegion').value;
             const selDate = document.getElementById('filterFvBddDate');
-            const selProc = document.getElementById('filterFvBddProcessus');
+            const selReg = document.getElementById('filterFvRegion');
             const selSite = document.getElementById('filterFvBddSite');
-            if (!selDate || !selProc || !selSite) return;
+            const selProc = document.getElementById('filterFvBddProcessus');
+            if (!selDate || !selReg || !selSite || !selProc) return;
 
-            const valReg = selReg, valDate = selDate.value, valProc = selProc.value, valSite = selSite.value;
+            const valDate = selDate.value, valReg = selReg.value, valSite = selSite.value, valProc = selProc.value;
 
+            // Filtrage combiné multi-critères dynamique
             const filtered = encaisses.filter(e => {
+                if (valDate && formatDateToISO(e.date || e.dateVerification) !== valDate) return false;
                 if (valReg && (e.region || '').toUpperCase() !== valReg) return false;
                 if (valSite && (e.site || e.entite) !== valSite) return false;
-                if (valDate && formatDateToISO(e.date || e.dateVerification) !== valDate) return false;
                 if (valProc && e.processus !== valProc) return false;
                 return true;
             });
 
-            const dates = [...new Set(filtered.map(e => formatDateToISO(e.date || e.dateVerification)).filter(Boolean))].sort().reverse();
-            const procs = [...new Set(filtered.map(e => e.processus).filter(Boolean))].sort();
+            const dates = [...new Set(encaisses.filter(e => (!valReg || (e.region || '').toUpperCase() === valReg) && (!valSite || (e.site || e.entite) === valSite) && (!valProc || e.processus === valProc)).map(e => formatDateToISO(e.date || e.dateVerification)).filter(Boolean))].sort().reverse();
+            const procs = [...new Set(encaisses.filter(e => (!valDate || formatDateToISO(e.date || e.dateVerification) !== valDate) && (!valReg || (e.region || '').toUpperCase() === valReg) && (!valSite || (e.site || e.entite) === valSite)).map(e => e.processus).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${formatDateToJJMMAAAA(d)}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
@@ -587,16 +591,18 @@
         }
 
         function trouverFicheEncaisseBDD() {
-            const fReg = document.getElementById('filterFvRegion').value;
             const fDate = document.getElementById('filterFvBddDate').value;
-            const fProc = document.getElementById('filterFvBddProcessus').value;
+            const fReg = document.getElementById('filterFvRegion').value;
             const fSite = document.getElementById('filterFvBddSite').value;
+            const fProc = document.getElementById('filterFvBddProcessus').value;
+            if (!fDate && !fReg && !fSite && !fProc) { alert("Sélectionnez au moins un critère de filtre."); return; }
+
             const db = lireDBSecurisee();
             const results = (db.constatsEncaisses || []).filter(e => {
-                if (fReg && (e.region || '').toUpperCase() !== fReg) return false;
                 if (fDate && formatDateToISO(e.date || e.dateVerification) !== fDate) return false;
-                if (fProc && e.processus !== fProc) return false;
+                if (fReg && (e.region || '').toUpperCase() !== fReg) return false;
                 if (fSite && (e.site || e.entite) !== fSite) return false;
+                if (fProc && e.processus !== fProc) return false;
                 return true;
             });
             if (!results.length) { alert("Aucun résultat."); return; }
