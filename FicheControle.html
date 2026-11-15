@@ -661,11 +661,10 @@
                 const meta = missionData.metadata || {};
                 const idMission = meta.idMission || ("MIS-" + Date.now());
                 meta.idMission = idMission;
-                const regionMission = meta.region || '';
-                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
 
                 const constatsBDD = construirePayloadConstatsFC(idMission, false);
 
+                // Appel au gestionnaire BDD & GitHub synchronisé
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
                     await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
                 } else {
@@ -674,7 +673,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                alert("✅ Fiche de Contrôle archivée avec succès dans la BDD locale et synchronisée !");
+                alert("✅ Fiche de Contrôle archivée et synchronisée avec succès dans la BDD et sur GitHub !");
                 viderFormulaireFC();
                 remplirFiltresBDD();
             } catch (e) {
@@ -733,19 +732,15 @@
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const db = lireDBSecurisee();
             const constatsMaj = construirePayloadConstatsFC(missionData.metadata.idMission || "MIS-" + Date.now(), false);
-            const existants = db.constatsControle || [];
-
-            constatsMaj.forEach(item => {
-                const idx = existants.findIndex(c => c.idConstat === item.idConstat);
-                item.idConstat = item.idConstat.includes('MODIF') ? item.idConstat : (item.idConstat + '-MODIF');
-                if (idx !== -1) existants[idx] = { ...existants[idx], ...item, _modifie: true };
-                else existants.push({ ...item, _modifie: true });
-            });
-            db.constatsControle = existants;
-            sauvegarderDBSecurisee(db);
-            alert("✅ Modifications enregistrées et taguées 'Modifié'.");
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                await FCIDatabase.enregistrerConstatsControle(constatsMaj, true);
+            } else {
+                const db = lireDBSecurisee();
+                db.constatsControle = [...(db.constatsControle || []), ...constatsMaj];
+                sauvegarderDBSecurisee(db);
+            }
+            alert("✅ Modifications enregistrées et synchronisées.");
             viderFormulaireFC();
         }
 
@@ -761,10 +756,14 @@
 
             const lotSuivi = construirePayloadConstatsFC("MIS-SUIVI-" + Date.now(), true, pointsModifies);
             lotSuivi.forEach(s => s._suivi = true);
-            const db = lireDBSecurisee();
-            db.constatsControle = [...(db.constatsControle || []), ...lotSuivi];
-            sauvegarderDBSecurisee(db);
-            alert(`✅ Suivi enregistré : ${lotSuivi.length} point(s) ajouté(s).`);
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                await FCIDatabase.enregistrerConstatsControle(lotSuivi, true);
+            } else {
+                const db = lireDBSecurisee();
+                db.constatsControle = [...(db.constatsControle || []), ...lotSuivi];
+                sauvegarderDBSecurisee(db);
+            }
+            alert(`✅ Suivi enregistré et synchronisé : ${lotSuivi.length} point(s).`);
             viderFormulaireFC();
         }
 
