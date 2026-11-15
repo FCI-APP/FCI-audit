@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
+    <title>FCI v1.0 - Feuille de vérification des encaisses</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -93,7 +93,6 @@
         .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
-        .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
 
         @media print {
             .sidebar, .header-actions-wrapper, .modif-line-card { display: none !important; }
@@ -113,7 +112,7 @@
                 <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li class="active"><a href="FicheEncaisses.html"><span>4. Fiche Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="FicheEncaisses.html"><span>4. Feuille de vérification des encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
                 <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
             </ul>
@@ -124,7 +123,7 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses (FV)</h1>
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille de vérification des encaisses (FV)</h1>
                 <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
             <div class="header-actions-wrapper">
@@ -157,17 +156,50 @@
             </div>
         </section>
 
+        <!-- Zone de modification avec l'ordre : Région -> Date -> Processus -> Site -->
         <section class="modif-line-card">
             <div class="section-line-label" style="color:#92400E;">
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
                 <span id="searchEncaisseStatus" style="margin-left:auto; color:var(--primary-blue); font-weight:700; text-transform:none;"></span>
             </div>
             <div class="single-row-modif-fv">
-                <div class="form-group"><label>Région</label><select id="filterFvRegion" class="form-control" onchange="onFilterFvRegionChange()"><option value="">-- Toutes les régions --</option><option value="MARRAKECH">MARRAKECH</option><option value="AGADIR">AGADIR</option><option value="CASA">CASA</option><option value="SETTAT">SETTAT</option><option value="RABAT">RABAT</option><option value="TANGER">TANGER</option><option value="LAAYOUNE">LAAYOUNE</option><option value="FES">FES</option><option value="MEKNES">MEKNES</option><option value="OUEJDA">OUEJDA</option></select></div>
-                <div class="form-group"><label>Date vérification</label><select id="filterFvBddDate" class="form-control" onchange="remplirFiltresEncaissesBDD()"><option value="">-- Toutes les dates --</option></select></div>
-                <div class="form-group"><label>Processus vérifié</label><select id="filterFvBddProcessus" class="form-control" onchange="remplirFiltresEncaissesBDD()"><option value="">-- Tous les processus --</option></select></div>
-                <div class="form-group"><label>Site vérifié</label><select id="filterFvBddSite" class="form-control" onchange="remplirFiltresEncaissesBDD()"><option value="">-- Tous les sites --</option></select></div>
-                <div><button type="button" class="btn btn-primary" onclick="trouverFicheEncaisseBDD()"><i class="fa-solid fa-search"></i> Charger</button></div>
+                <div class="form-group">
+                    <label>Région</label>
+                    <select id="filterFvRegion" class="form-control" onchange="onFilterFvRegionChange()">
+                        <option value="">-- Toutes les régions --</option>
+                        <option value="MARRAKECH">MARRAKECH</option>
+                        <option value="AGADIR">AGADIR</option>
+                        <option value="CASA">CASA</option>
+                        <option value="SETTAT">SETTAT</option>
+                        <option value="RABAT">RABAT</option>
+                        <option value="TANGER">TANGER</option>
+                        <option value="LAAYOUNE">LAAYOUNE</option>
+                        <option value="FES">FES</option>
+                        <option value="MEKNES">MEKNES</option>
+                        <option value="OUEJDA">OUEJDA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date vérification</label>
+                    <select id="filterFvBddDate" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                        <option value="">-- Toutes les dates --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Processus vérifié</label>
+                    <select id="filterFvBddProcessus" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                        <option value="">-- Tous les processus --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Site vérifié</label>
+                    <select id="filterFvBddSite" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                        <option value="">-- Tous les sites --</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="trouverFicheEncaisseBDD()"><i class="fa-solid fa-search"></i> Charger</button>
+                </div>
             </div>
         </section>
 
@@ -210,7 +242,7 @@
     <script>
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
-                "MARRAKECH CTD", "MARRAKECH SYBA CD", "AGENCE MESSAGERIE GUELIZ MARRAKECH", "ESSAOUIRA CCC", "SAFI CD", "SAFI CM", 
+                "MARRAKECH CTD", "MARRAKECH CM", "MARRAKECH SYBA CD", "AGENCE MESSAGERIE GUELIZ MARRAKECH", "ESSAOUIRA CCC", "SAFI CD", "SAFI CM", 
                 "EL KELAA DES SERAGHNAS CCC", "OUARZAZATE CCC", "TINEGIR CLD", "BENGUERIR CLD", "EL YOUSSOUFIA CLD", 
                 "SERVICE OPERATION REGIONAL MARRAKECH", "SERVICE SUPPORT REGIONAL MARRAKECH"
             ],
@@ -219,9 +251,9 @@
                 "TIZNIT CCC", "GUELMIM CCC", "TANTAN CLD", "SERVICE OPERATION REGIONAL AGADIR", "SERVICE SUPPORT REGIONAL AGADIR"
             ],
             "CASA": [
-                "PNC", "CNA", "CASA COMPLEXE MOHAMMED 5 CD", "CASA HAY HASSANI CD", "CASA HAY MESSALA CD", "CASA HAY MOHAMMADI CD", 
-                "CASA BONDANG CTD", "CASA EL AZZHAR CD", "CASA SIDI MOUMEN CD", "CASA SIDI OUTHMANE CD", "BOUSSKOURA CD", "AIN HARROUDA CLD", 
-                "TIT MELLILCLD", "AGENCE MESSAGERIE AVENUE DES FAR", "CPX", "CASA SOUKRATE AM", "AIN SEBAA PLAGE AM", "MOHAMMADIA CCC", 
+                "PNC", "CNA", "CASA COMPLEXE MOHAMMED 5 CD ", "CASA HAY HASSANI CD", "CASA HAY MESSALA CD", "CASA HAY MOHAMMADI CD", 
+                "CASA BONDANG CTD", "CASA EL AZZHAR CD", "CASA SIDI MOUMEN CD ", "CASA SIDI OUTHMANE CD", "BOUSSKOURA CD", "AIN HARROUDA CLD", 
+                "TIT MELLILCLD", "AGENCE MESSAGERIE AVENUE DES FAR ", "CPX", "CASA SOUKRATE AM", "AIN SEBAA PLAGE AM", "MOHAMMADIA CCC", 
                 "MOHAMMADIA AM", "BEN SLIMANE CLD", "BOUZNIKA CLD", "DAR BOUAZZA CLD", "AGENCE COURRIER CASA BONDANG", "CASA BONDANG CM", 
                 "SERVICE OPERATION REGIONAL CASA", "SERVICE SUPPORT REGIONAL CASA"
             ],
@@ -240,8 +272,8 @@
                 "SERVICE OPERATION REGIONAL TANGER", "SERVICE SUPPORT REGIONAL TANGER"
             ],
             "LAAYOUNE": [
-                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT", "BOUJDOUR AM", 
-                "GUERGURATE AM", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
+                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT (En cours de création)", 
+                "BOUJDOUR AM (En cours de création)", "GUERGURATE AM (En cours de création)", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
             "FES": [
                 "FES AM", "FES CM", "FES CTD", "EL HOUCEIMA CLD", "SEFFROU CLD", "TAZA CLD", "TAZA CM", "GUERCIF CLD", 
@@ -331,7 +363,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try { document.getElementById('dateVerification').value = new Date().toISOString().split('T')[0]; } catch(e){}
-            remplirFiltresEncaissesBDD();
+            onFilterFvRegionChange();
             chargerReferentielJSON();
         });
 
@@ -346,14 +378,19 @@
 
             const valReg = selReg, valDate = selDate.value, valProc = selProc.value, valSite = selSite.value;
 
-            const filtered = encaisses.filter(e => (!valReg || (e.region || '').toUpperCase() === valReg));
+            const filtered = encaisses.filter(e => {
+                if (valReg && (e.region || '').toUpperCase() !== valReg) return false;
+                if (valSite && (e.site || e.entite) !== valSite) return false;
+                if (valDate && formatDateToISO(e.date || e.dateVerification) !== valDate) return false;
+                if (valProc && e.processus !== valProc) return false;
+                return true;
+            });
+
             const dates = [...new Set(filtered.map(e => formatDateToISO(e.date || e.dateVerification)).filter(Boolean))].sort().reverse();
             const procs = [...new Set(filtered.map(e => e.processus).filter(Boolean))].sort();
-            const sites = [...new Set(filtered.map(e => e.site || e.entite).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${formatDateToJJMMAAAA(d)}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
-            selSite.innerHTML = '<option value="">-- Tous les sites --</option>' + sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
         }
 
         async function chargerReferentielJSON() {
@@ -544,17 +581,24 @@
                 const db = lireDBSecurisee();
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => (e.site || e.entite) !== fSite);
                 sauvegarderDBSecurisee(db);
-                remplirFiltresEncaissesBDD();
+                onFilterFvRegionChange();
                 alert("Supprimé.");
             }
         }
 
         function trouverFicheEncaisseBDD() {
+            const fReg = document.getElementById('filterFvRegion').value;
             const fDate = document.getElementById('filterFvBddDate').value;
             const fProc = document.getElementById('filterFvBddProcessus').value;
             const fSite = document.getElementById('filterFvBddSite').value;
             const db = lireDBSecurisee();
-            const results = (db.constatsEncaisses || []).filter(e => (!fDate || formatDateToISO(e.date) === fDate) && (!fProc || e.processus === fProc) && (!fSite || (e.site || e.entite) === fSite));
+            const results = (db.constatsEncaisses || []).filter(e => {
+                if (fReg && (e.region || '').toUpperCase() !== fReg) return false;
+                if (fDate && formatDateToISO(e.date || e.dateVerification) !== fDate) return false;
+                if (fProc && e.processus !== fProc) return false;
+                if (fSite && (e.site || e.entite) !== fSite) return false;
+                return true;
+            });
             if (!results.length) { alert("Aucun résultat."); return; }
             alert(`${results.length} constat(s) trouvé(s) en BDD.`);
         }
