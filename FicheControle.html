@@ -49,7 +49,7 @@
         .single-row-7 { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.95fr; gap: 10px; align-items: end; }
 
         .modif-line-card { background-color: #FFFBEB; border-radius: 8px; padding: 14px 18px; border: 1px solid #FDE68A; border-left: 4px solid var(--accent); margin-bottom: 20px; }
-        .single-row-modif { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr auto; gap: 12px; align-items: end; }
+        .single-row-modif { display: grid; grid-template-columns: 1fr 1.2fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
 
         .meta-item { display: flex; flex-direction: column; min-width: 0; }
         .meta-item span.label, .meta-item label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -93,19 +93,6 @@
         .field-group label { font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .field-group textarea { width: 100%; min-height: 75px; padding: 8px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.85rem; }
 
-        .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
-        .summary-info { display: flex; align-items: center; gap: 15px; }
-        .summary-info h3 { font-size: 1.25rem; font-weight: 800; color: #FFFFFF; }
-        .summary-info h3 span { color: var(--accent); font-size: 1.45rem; }
-
-        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; }
-        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
-        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
-        .avis-bonne { background-color: var(--info); color: #FFF; }
-        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
-
-        .center-description { background: rgba(255, 255, 255, 0.08); padding: 15px 18px; border-radius: 6px; border-left: 4px solid var(--accent); font-size: 0.9rem; line-height: 1.5; color: #F1F5F9; }
         .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
         @media print {
@@ -161,7 +148,29 @@
             </div>
             <div class="single-row-modif">
                 <div class="meta-item">
-                    <label for="filterBddDate">Date de contrôle (jj/mm/aaaa)</label>
+                    <label for="filterBddRegion">Région</label>
+                    <select id="filterBddRegion" class="input-date-ctrl" onchange="onFilterRegionChange()">
+                        <option value="">-- Toutes les régions --</option>
+                        <option value="MARRAKECH">MARRAKECH</option>
+                        <option value="AGADIR">AGADIR</option>
+                        <option value="CASA">CASA</option>
+                        <option value="SETTAT">SETTAT</option>
+                        <option value="RABAT">RABAT</option>
+                        <option value="TANGER">TANGER</option>
+                        <option value="LAAYOUNE">LAAYOUNE</option>
+                        <option value="FES">FES</option>
+                        <option value="MEKNES">MEKNES</option>
+                        <option value="OUEJDA">OUEJDA</option>
+                    </select>
+                </div>
+                <div class="meta-item">
+                    <label for="filterBddSite">Site contrôlé</label>
+                    <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                        <option value="">-- Tous les sites --</option>
+                    </select>
+                </div>
+                <div class="meta-item">
+                    <label for="filterBddDate">Date de contrôle</label>
                     <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange()">
                         <option value="">-- Toutes les dates --</option>
                     </select>
@@ -170,12 +179,6 @@
                     <label for="filterBddProcessus">Processus contrôlé</label>
                     <select id="filterBddProcessus" class="input-date-ctrl" onchange="onFilterBDDChange()">
                         <option value="">-- Tous les processus --</option>
-                    </select>
-                </div>
-                <div class="meta-item">
-                    <label for="filterBddSite">Site contrôlé</label>
-                    <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange()">
-                        <option value="">-- Tous les sites --</option>
                     </select>
                 </div>
                 <div style="display:flex; gap:6px;">
@@ -192,7 +195,7 @@
     <script>
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
-                "MARRAKECH CTD", "MARRAKECH SYBA CD", "AGENCE MESSAGERIE GUELIZ MARRAKECH", "ESSAOUIRA CCC", "SAFI CD", "SAFI CM", 
+                "MARRAKECH CTD", "MARRAKECH CM", "MARRAKECH SYBA CD", "AGENCE MESSAGERIE GUELIZ MARRAKECH", "ESSAOUIRA CCC", "SAFI CD", "SAFI CM", 
                 "EL KELAA DES SERAGHNAS CCC", "OUARZAZATE CCC", "TINEGIR CLD", "BENGUERIR CLD", "EL YOUSSOUFIA CLD", 
                 "SERVICE OPERATION REGIONAL MARRAKECH", "SERVICE SUPPORT REGIONAL MARRAKECH"
             ],
@@ -201,9 +204,9 @@
                 "TIZNIT CCC", "GUELMIM CCC", "TANTAN CLD", "SERVICE OPERATION REGIONAL AGADIR", "SERVICE SUPPORT REGIONAL AGADIR"
             ],
             "CASA": [
-                "PNC", "CNA", "CASA COMPLEXE MOHAMMED 5 CD", "CASA HAY HASSANI CD", "CASA HAY MESSALA CD", "CASA HAY MOHAMMADI CD", 
-                "CASA BONDANG CTD", "CASA EL AZZHAR CD", "CASA SIDI MOUMEN CD", "CASA SIDI OUTHMANE CD", "BOUSSKOURA CD", "AIN HARROUDA CLD", 
-                "TIT MELLILCLD", "AGENCE MESSAGERIE AVENUE DES FAR", "CPX", "CASA SOUKRATE AM", "AIN SEBAA PLAGE AM", "MOHAMMADIA CCC", 
+                "PNC", "CNA", "CASA COMPLEXE MOHAMMED 5 CD ", "CASA HAY HASSANI CD", "CASA HAY MESSALA CD", "CASA HAY MOHAMMADI CD", 
+                "CASA BONDANG CTD", "CASA EL AZZHAR CD", "CASA SIDI MOUMEN CD ", "CASA SIDI OUTHMANE CD", "BOUSSKOURA CD", "AIN HARROUDA CLD", 
+                "TIT MELLILCLD", "AGENCE MESSAGERIE AVENUE DES FAR ", "CPX", "CASA SOUKRATE AM", "AIN SEBAA PLAGE AM", "MOHAMMADIA CCC", 
                 "MOHAMMADIA AM", "BEN SLIMANE CLD", "BOUZNIKA CLD", "DAR BOUAZZA CLD", "AGENCE COURRIER CASA BONDANG", "CASA BONDANG CM", 
                 "SERVICE OPERATION REGIONAL CASA", "SERVICE SUPPORT REGIONAL CASA"
             ],
@@ -222,8 +225,8 @@
                 "SERVICE OPERATION REGIONAL TANGER", "SERVICE SUPPORT REGIONAL TANGER"
             ],
             "LAAYOUNE": [
-                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT", "BOUJDOUR AM", 
-                "GUERGURATE AM", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
+                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM", "LAAYOUNE AM PORT (En cours de création)", 
+                "BOUJDOUR AM (En cours de création)", "GUERGURATE AM (En cours de création)", "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
             "FES": [
                 "FES AM", "FES CM", "FES CTD", "EL HOUCEIMA CLD", "SEFFROU CLD", "TAZA CLD", "TAZA CM", "GUERCIF CLD", 
@@ -270,6 +273,7 @@
         function getConstatDateFR(c) { return c ? formatDateToFR(c.date || c.dateControle || c.date_controle || '') : ''; }
         function getConstatSite(c) { return c ? String(c.entite || c.site || c.centre || '').trim() : ''; }
         function getConstatProcessus(c) { return c ? String(c.processus || c.Processus || '').trim() : ''; }
+        function getConstatRegion(c) { return c ? String(c.region || '').trim().toUpperCase() : ''; }
         function getItemVal(item, keys) {
             for (let k of keys) { if (item && item[k] !== undefined) return item[k]; }
             return '';
@@ -322,11 +326,26 @@
             else if (e.key === 'fci_fiche_controle_active') chargerDonneesMission();
         });
 
+        function onFilterRegionChange() {
+            const regVal = document.getElementById('filterBddRegion').value;
+            const db = lireDBSecurisee();
+            const constats = db.constatsControle || [];
+            const selSite = document.getElementById('filterBddSite');
+
+            const filteredByReg = constats.filter(c => !regVal || getConstatRegion(c) === regVal);
+            const sites = [...new Set(filteredByReg.map(c => getConstatSite(c)).filter(Boolean))].sort();
+
+            const currentSiteVal = selSite.value;
+            selSite.innerHTML = '<option value="">-- Tous les sites (' + sites.length + ') --</option>' + sites.map(s => `<option value="${s}" ${s === currentSiteVal ? 'selected' : ''}>${s}</option>`).join('');
+            remplirFiltresBDD();
+        }
+
         function reinitialiserFiltresBDD() {
+            document.getElementById('filterBddRegion').value = '';
+            document.getElementById('filterBddSite').value = '';
             document.getElementById('filterBddDate').value = '';
             document.getElementById('filterBddProcessus').value = '';
-            document.getElementById('filterBddSite').value = '';
-            remplirFiltresBDD();
+            onFilterRegionChange();
         }
 
         function remplirFiltresBDD() {
@@ -335,20 +354,27 @@
             const badgeCount = document.getElementById('bddCountInfo');
             if (badgeCount) badgeCount.innerText = `${constats.length} constat(s) FC en BDD`;
 
+            const selReg = document.getElementById('filterBddRegion');
+            const selSite = document.getElementById('filterBddSite');
             const selDate = document.getElementById('filterBddDate');
             const selProc = document.getElementById('filterBddProcessus');
-            const selSite = document.getElementById('filterBddSite');
-            if (!selDate || !selProc || !selSite) return;
+            if (!selReg || !selSite || !selDate || !selProc) return;
 
-            const valDate = selDate.value, valProc = selProc.value, valSite = selSite.value;
+            const valReg = selReg.value, valSite = selSite.value, valDate = selDate.value, valProc = selProc.value;
 
-            const dates = [...new Set(constats.filter(c => (!valProc || getConstatProcessus(c) === valProc) && (!valSite || getConstatSite(c) === valSite)).map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
-            const procs = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valSite || getConstatSite(c) === valSite)).map(c => getConstatProcessus(c)).filter(Boolean))].sort();
-            const sites = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatSite(c)).filter(Boolean))].sort();
+            const filtered = constats.filter(c => {
+                if (valReg && getConstatRegion(c) !== valReg) return false;
+                if (valSite && getConstatSite(c) !== valSite) return false;
+                if (valDate && getConstatDateFR(c) !== valDate) return false;
+                if (valProc && getConstatProcessus(c) !== valProc) return false;
+                return true;
+            });
+
+            const dates = [...new Set(filtered.map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
+            const procs = [...new Set(filtered.map(c => getConstatProcessus(c)).filter(Boolean))].sort();
 
             selDate.innerHTML = '<option value="">-- Toutes les dates (' + dates.length + ') --</option>' + dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
             selProc.innerHTML = '<option value="">-- Tous les processus (' + procs.length + ') --</option>' + procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
-            selSite.innerHTML = '<option value="">-- Tous les sites (' + sites.length + ') --</option>' + sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
         }
 
         function onFilterBDDChange() { remplirFiltresBDD(); }
@@ -584,13 +610,20 @@
         }
 
         function trouverFicheControleBDD() {
+            const fReg = document.getElementById('filterBddRegion').value;
+            const fSite = document.getElementById('filterBddSite').value;
             const fDate = document.getElementById('filterBddDate').value;
             const fProc = document.getElementById('filterBddProcessus').value;
-            const fSite = document.getElementById('filterBddSite').value;
-            if (!fDate && !fProc && !fSite) { alert("Sélectionnez au moins un critère."); return; }
+            if (!fReg && !fSite && !fDate && !fProc) { alert("Sélectionnez au moins un critère."); return; }
 
             const db = lireDBSecurisee();
-            const constats = (db.constatsControle || []).filter(c => (!fDate || getConstatDateFR(c) === fDate) && (!fProc || getConstatProcessus(c) === fProc) && (!fSite || getConstatSite(c) === fSite));
+            const constats = (db.constatsControle || []).filter(c => {
+                if (fReg && getConstatRegion(c) !== fReg) return false;
+                if (fSite && getConstatSite(c) !== fSite) return false;
+                if (fDate && getConstatDateFR(c) !== fDate) return false;
+                if (fProc && getConstatProcessus(c) !== fProc) return false;
+                return true;
+            });
             if (!constats.length) { alert("Aucun constat correspondant."); return; }
 
             const sample = constats[0];
