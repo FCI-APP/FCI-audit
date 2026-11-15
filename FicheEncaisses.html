@@ -604,17 +604,21 @@
             const lot = construireLotConstatsFV(idMission);
             if (lot.length === 0) { alert("⚠️ Aucun point sélectionné pour l'archivage."); return; }
 
-            const db = lireDBSecurisee();
-            db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lot];
-            sauvegarderDBSecurisee(db);
+            try {
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                    await FCIDatabase.enregistrerLotEncaisses(lot, site, idMission, true);
+                } else {
+                    const db = lireDBSecurisee();
+                    db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lot];
+                    sauvegarderDBSecurisee(db);
+                }
 
-            // Synchronisation GitHub si disponible
-            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsEncaisses === 'function') {
-                await FCIDatabase.enregistrerConstatsEncaisses(lot, true);
+                alert("✅ Fiche Encaisses archivée avec succès dans la BDD locale et synchronisée !");
+                clearForm();
+            } catch (e) {
+                console.error("Erreur lors de l'archivage FV :", e);
+                alert("⚠️ Erreur technique lors de l'archivage FV. Consultez la console (F12).");
             }
-
-            alert("✅ Fiche Encaisses archivée dans la BDD locale et synchronisée !");
-            clearForm();
         }
 
         async function modifierFicheEncaisse() {
