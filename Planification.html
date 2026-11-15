@@ -54,19 +54,6 @@
         }
         .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-        .last-refresh-pill {
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: #065F46;
-            background-color: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            padding: 3px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
         .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
         .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
 
@@ -134,10 +121,7 @@
     <main class="main-content">
         <header class="top-header">
             <div>
-                <h1>
-                    Planification de la mission de contrôle
-                    <span class="last-refresh-pill" id="lastRefreshBadgePlanif"><i class="fa-solid fa-check-circle"></i> À jour</span>
-                </h1>
+                <h1>Planification de la mission de contrôle</h1>
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
             </div>
             <div>
@@ -241,6 +225,7 @@
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
                 "MARRAKECH CTD",
+                "MARRAKECH CM",
                 "MARRAKECH SYBA CD",
                 "AGENCE MESSAGERIE GUELIZ MARRAKECH",
                 "ESSAOUIRA CCC",
@@ -271,18 +256,18 @@
             "CASA": [
                 "PNC",
                 "CNA",
-                "CASA COMPLEXE MOHAMMED 5 CD",
+                "CASA COMPLEXE MOHAMMED 5 CD ",
                 "CASA HAY HASSANI CD",
                 "CASA HAY MESSALA CD",
                 "CASA HAY MOHAMMADI CD",
                 "CASA BONDANG CTD",
                 "CASA EL AZZHAR CD",
-                "CASA SIDI MOUMEN CD",
+                "CASA SIDI MOUMEN CD ",
                 "CASA SIDI OUTHMANE CD",
                 "BOUSSKOURA CD",
                 "AIN HARROUDA CLD",
                 "TIT MELLILCLD",
-                "AGENCE MESSAGERIE AVENUE DES FAR",
+                "AGENCE MESSAGERIE AVENUE DES FAR ",
                 "CPX",
                 "CASA SOUKRATE AM",
                 "AIN SEBAA PLAGE AM",
@@ -352,9 +337,9 @@
                 "ESSEMARA CLD",
                 "LAAYOUNE CCC",
                 "LAAYOUNE AM",
-                "LAAYOUNE AM PORT",
-                "BOUJDOUR AM",
-                "GUERGURATE AM",
+                "LAAYOUNE AM PORT (En cours de création)",
+                "BOUJDOUR AM (En cours de création)",
+                "GUERGURATE AM (En cours de création)",
                 "SERVICE OPERATION REGIONAL LAAYOUNE",
                 "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
@@ -399,16 +384,6 @@
         let checkedKeys = new Set();
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-        function actualiserBadgeHorodatagePlanif() {
-            const badge = document.getElementById('lastRefreshBadgePlanif');
-            if (!badge) return;
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
-
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -419,7 +394,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
             loadPlanificationData();
-            actualiserBadgeHorodatagePlanif();
             setTimeout(() => {
                 const ctrlInput = document.getElementById('audit-controleurs');
                 if (ctrlInput) ctrlInput.value = '';
@@ -429,7 +403,6 @@
         window.addEventListener('storage', (e) => {
             if (e.key === PLANIFICATION_PC_KEY) {
                 loadPlanificationData();
-                actualiserBadgeHorodatagePlanif();
             }
         });
 
@@ -636,7 +609,6 @@
         function saveAndRefresh() {
             localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
             renderPlanification();
-            actualiserBadgeHorodatagePlanif();
         }
 
         function exportToExcel() {
