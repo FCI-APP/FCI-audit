@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Feuille de vérification des encaisses</title>
+    <title>FCI v1.0 - Feuille de vérification des encaisses (FV)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -40,12 +40,19 @@
         .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 
         .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
-        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; background: var(--card-bg); padding: 20px 25px; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; background: var(--card-bg); padding: 20px 25px; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+        .header-title-wrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 15px; }
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .header-actions-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-        .header-actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; }
+        /* Badge TC Moyen à côté du titre à droite */
+        .header-tc-badge { background: linear-gradient(135deg, var(--primary-blue) 0%, var(--dark-blue) 100%); color: white; padding: 8px 16px; border-radius: 8px; border-left: 4px solid var(--accent-gold); display: flex; flex-direction: column; align-items: flex-end; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+        .header-tc-badge .tc-label { font-size: 0.68rem; text-transform: uppercase; font-weight: 700; opacity: 0.85; }
+        .header-tc-badge .tc-value { font-size: 1.2rem; font-weight: 800; color: var(--accent-gold); }
+
+        .header-actions-wrapper { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; width: 100%; }
+        .header-actions-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; width: 100%; }
         .bdd-badge-total { background-color: #DEF7EC; color: #03543F; font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 6px; }
         .bdd-badge-error { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
 
@@ -54,12 +61,8 @@
         .single-row-saisie-fv { display: grid; grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.9fr; gap: 10px; align-items: end; }
 
         .modif-line-card { background-color: #FFFBEB; border-radius: 8px; padding: 14px 18px; border: 1px solid #FDE68A; border-left: 4px solid var(--accent-gold); margin-bottom: 14px; }
+        /* Ordre demandé : Date - Région - Site - Processus */
         .single-row-modif-fv { display: grid; grid-template-columns: 1fr 1fr 1.2fr 1.2fr auto; gap: 10px; align-items: end; }
-
-        .suivi-summary-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
-        .suivi-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 13px 16px; display: flex; align-items: center; justify-content: space-between; }
-        .suivi-box .s-label { font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-        .suivi-box .s-val { font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); }
 
         .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 22px; }
         .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
@@ -84,6 +87,21 @@
         .pc-card-body { padding: 20px; }
         .constat-box { background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-color); padding: 18px; margin-bottom: 18px; }
         .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+
+        /* Bloc Situation du Centre en bleu (dark-blue) */
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
+        .summary-info { display: flex; align-items: center; gap: 15px; }
+        .summary-info h3 { font-size: 1.25rem; font-weight: 800; color: #FFFFFF; }
+        .summary-info h3 span { color: var(--accent-gold); font-size: 1.45rem; }
+
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
+
+        .center-description { background: rgba(255, 255, 255, 0.08); padding: 15px 18px; border-radius: 6px; border-left: 4px solid var(--accent-gold); font-size: 0.9rem; line-height: 1.5; color: #F1F5F9; }
 
         .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
@@ -122,17 +140,22 @@
 
     <main class="main-content">
         <header class="page-header">
-            <div class="page-title">
-                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille de vérification des encaisses (FV)</h1>
-                <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
+            <div class="header-title-wrapper">
+                <div class="page-title">
+                    <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille de vérification des encaisses (FV)</h1>
+                    <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
+                </div>
+                <!-- TC Moyen intégré à droite du titre -->
+                <div class="header-tc-badge">
+                    <span class="tc-label"><i class="fa-solid fa-chart-pie"></i> TC Moyen Global</span>
+                    <span class="tc-value" id="headerTcValue">0.0 %</span>
+                </div>
             </div>
             <div class="header-actions-wrapper">
                 <div class="header-actions-row">
                     <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
                     <button type="button" class="btn btn-refresh" onclick="window.location.reload()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
-                </div>
-                <div class="header-actions-row">
                     <button type="button" class="btn btn-primary" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
                     <button type="button" class="btn btn-warning" onclick="modifierFicheEncaisse()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
                     <button type="button" class="btn btn-suivi" onclick="suiviFicheEncaisse()"><i class="fa-solid fa-code-branch"></i> Suivi</button>
@@ -203,13 +226,6 @@
             </div>
         </section>
 
-        <div class="suivi-summary-strip">
-            <div class="suivi-box" style="border-left: 4px solid var(--primary-blue);"><span class="s-label">Taux moyen</span><span class="s-val" id="suivi-taux-moyen">0.0 %</span></div>
-            <div class="suivi-box" style="border-left: 4px solid var(--warning);"><span class="s-label">En cours</span><span class="s-val" id="suivi-count-encours" style="color: #D97706;">0</span></div>
-            <div class="suivi-box" style="border-left: 4px solid var(--success);"><span class="s-label">Clôturés</span><span class="s-val" id="suivi-count-cloture" style="color: var(--success);">0</span></div>
-            <div class="suivi-box" style="border-left: 4px solid var(--danger);"><span class="s-label">Non clôturés</span><span class="s-val" id="suivi-count-noncloture" style="color: var(--danger);">0</span></div>
-        </div>
-
         <section class="card">
             <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</h2>
             <div class="selection-box">
@@ -236,6 +252,24 @@
         </div>
 
         <div id="pointsEvaluationsContainer"></div>
+
+        <!-- Bloc Synthèse et Évaluation de la Situation du Centre en bas (Bleu) -->
+        <section class="summary-card" id="summaryCardBlock">
+            <div class="summary-top">
+                <div class="summary-info">
+                    <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent-gold);"></i>
+                    <div>
+                        <h3>TAUX MOYEN DU CENTRE : <span id="summaryTcValue">0.0 %</span></h3>
+                        <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Synthèse globale calculée sur les points évalués de la vérification.</p>
+                    </div>
+                </div>
+                <div><span class="badge-avis-global avis-satisfaisante" id="summaryBadgeAvis">NON ÉVALUÉ</span></div>
+            </div>
+            <div class="center-description">
+                <strong style="display: block; color: var(--accent-gold); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description &amp; Situation du Centre (Classement officiel) :</strong>
+                <p id="summaryDescText">Aucun point de contrôle n'a encore été évalué pour déterminer la situation du centre.</p>
+            </div>
+        </section>
     </main>
 
     <script src="fci-db-manager.js"></script>
@@ -289,7 +323,7 @@
             ]
         };
 
-        let rawJsonData = [], addedPoints = [], currentMissionId = "", loadedEncaisseIds = [];
+        let rawJsonData = [], addedPoints = [];
 
         function lireDBSecurisee() {
             try {
@@ -381,15 +415,6 @@
 
             const valDate = selDate.value, valReg = selReg.value, valSite = selSite.value, valProc = selProc.value;
 
-            // Filtrage combiné multi-critères dynamique
-            const filtered = encaisses.filter(e => {
-                if (valDate && formatDateToISO(e.date || e.dateVerification) !== valDate) return false;
-                if (valReg && (e.region || '').toUpperCase() !== valReg) return false;
-                if (valSite && (e.site || e.entite) !== valSite) return false;
-                if (valProc && e.processus !== valProc) return false;
-                return true;
-            });
-
             const dates = [...new Set(encaisses.filter(e => (!valReg || (e.region || '').toUpperCase() === valReg) && (!valSite || (e.site || e.entite) === valSite) && (!valProc || e.processus === valProc)).map(e => formatDateToISO(e.date || e.dateVerification)).filter(Boolean))].sort().reverse();
             const procs = [...new Set(encaisses.filter(e => (!valDate || formatDateToISO(e.date || e.dateVerification) !== valDate) && (!valReg || (e.region || '').toUpperCase() === valReg) && (!valSite || (e.site || e.entite) === valSite)).map(e => e.processus).filter(Boolean))].sort();
 
@@ -469,7 +494,7 @@
                 processus: getItemVal(item, ['Processus']), risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
                 controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
                 pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
-                constats: [{ dateVerification: dateFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }]
+                constats: [{ dateVerification: dateFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 0, constatText: '', recoText: '', avisText: '' }]
             });
             renderPoints();
             document.getElementById('selectProcessus').value = '';
@@ -479,7 +504,25 @@
         function renderPoints() {
             const container = document.getElementById('pointsEvaluationsContainer');
             container.innerHTML = '';
+            
+            let totalTaux = 0, nbEvalues = 0;
+            let countCloture = 0, countNonCloture = 0, countEnCours = 0;
+            let selectedCount = 0;
+
             addedPoints.forEach((point, pIndex) => {
+                if (point.selected) {
+                    selectedCount++;
+                    point.constats.forEach(c => {
+                        if (c.echantillon > 0) {
+                            totalTaux += c.rate;
+                            nbEvalues++;
+                        }
+                        if (c.statut === 'CLOTURE') countCloture++;
+                        else if (c.statut === 'NON_CLOTURE') countNonCloture++;
+                        else countEnCours++;
+                    });
+                }
+
                 const card = document.createElement('div');
                 card.className = 'pc-card';
                 let constatsHTML = '';
@@ -492,16 +535,52 @@
                                 <div class="form-group"><label>Ech</label><input type="number" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
                                 <div class="form-group"><label>OK</label><input type="number" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
                                 <div class="form-group"><label>KO</label><input type="number" class="form-control" value="${c.ko}" readonly></div>
-                                <div class="form-group"><label>Statut</label><select class="form-control" onchange="addedPoints[${pIndex}].constats[${cIndex}].statut = this.value"><option value="EN_COURS">En cours</option><option value="CLOTURE">Clôturé</option><option value="NON_CLOTURE">Non clôturé</option></select></div>
+                                <div class="form-group"><label>Statut</label><select class="form-control" onchange="addedPoints[${pIndex}].constats[${cIndex}].statut = this.value; renderPoints();"><option value="EN_COURS" ${c.statut==='EN_COURS'?'selected':''}>En cours</option><option value="CLOTURE" ${c.statut==='CLOTURE'?'selected':''}>Clôturé</option><option value="NON_CLOTURE" ${c.statut==='NON_CLOTURE'?'selected':''}>Non clôturé</option></select></div>
                             </div>
                             <div class="form-group"><label>Constat</label><textarea class="form-control" rows="2" onchange="addedPoints[${pIndex}].constats[${cIndex}].constatText = this.value">${c.constatText}</textarea></div>
                             <div class="form-group" style="margin-top:8px;"><label>Recommandation</label><textarea class="form-control" rows="2" onchange="addedPoints[${pIndex}].constats[${cIndex}].recoText = this.value">${c.recoText}</textarea></div>
                         </div>`;
                 });
-                card.innerHTML = `<div class="pc-card-header"><span>${point.processus} &gt; ${point.risque}</span><button class="btn btn-danger" onclick="addedPoints.splice(${pIndex},1); renderPoints();">Supprimer</button></div><div class="pc-card-body">${constatsHTML}</div>`;
+                card.innerHTML = `<div class="pc-card-header"><span><input type="checkbox" ${point.selected ? 'checked' : ''} onchange="addedPoints[${pIndex}].selected = this.checked; renderPoints();"> ${point.processus} &gt; ${point.risque}</span><button class="btn btn-danger" onclick="addedPoints.splice(${pIndex},1); renderPoints();">Supprimer</button></div><div class="pc-card-body">${constatsHTML}</div>`;
                 container.appendChild(card);
             });
-            document.getElementById('selectedCountDisplay').innerText = addedPoints.filter(p => p.selected).length;
+
+            document.getElementById('selectedCountDisplay').innerText = selectedCount;
+
+            const tauxMoyen = nbEvalues > 0 ? (totalTaux / nbEvalues).toFixed(1) : "0.0";
+            document.getElementById('headerTcValue').innerText = tauxMoyen + " %";
+            document.getElementById('summaryTcValue').innerText = tauxMoyen + " %";
+
+            // Mise à jour de la situation du centre selon 'Classemet centres_2.xlsx'
+            const rateNum = parseFloat(tauxMoyen);
+            const badgeAvis = document.getElementById('summaryBadgeAvis');
+            const descText = document.getElementById('summaryDescText');
+
+            if (nbEvalues === 0) {
+                badgeAvis.className = "badge-avis-global avis-satisfaisante";
+                badgeAvis.innerText = "NON ÉVALUÉ";
+                descText.innerHTML = "Aucun point de contrôle n'a encore été évalué pour déterminer la situation du centre.";
+            } else if (rateNum >= 95) {
+                badgeAvis.className = "badge-avis-global avis-tres-bonne";
+                badgeAvis.innerText = "EXCELLENT";
+                descText.innerHTML = "<strong>Niveau Excellent [95 % à 100 %] :</strong> Maîtrise parfaite et strict respect des dispositifs de contrôle permanent.";
+            } else if (rateNum >= 85) {
+                badgeAvis.className = "badge-avis-global avis-bonne";
+                badgeAvis.innerText = "SATISFAISANT";
+                descText.innerHTML = "<strong>Niveau Satisfaisant [85 % à moins de 95 %] :</strong> Bon niveau global de conformité, ajustements mineurs à poursuivre.";
+            } else if (rateNum >= 70) {
+                badgeAvis.className = "badge-avis-global avis-satisfaisante";
+                badgeAvis.innerText = "À AMÉLIORER";
+                descText.innerHTML = "<strong>Niveau À améliorer [70 % à moins de 85 %] :</strong> Présence d'écarts nécessitant des actions correctives ciblées.";
+            } else if (rateNum >= 50) {
+                badgeAvis.className = "badge-avis-global avis-non-satisfaisante";
+                badgeAvis.innerText = "INSUFFISANT";
+                descText.innerHTML = "<strong>Niveau Insuffisant [50 % à moins de 70 %] :</strong> Défaillances significatives dans l'application des procédures. Plan d'action requis.";
+            } else {
+                badgeAvis.className = "badge-avis-global avis-non-satisfaisante";
+                badgeAvis.innerText = "CRITIQUE";
+                descText.innerHTML = "<strong>Niveau Critique [Moins de 50 %] :</strong> Dysfonctionnements majeurs et non-conformités critiques nécessitant une intervention urgente.";
+            }
         }
 
         function updateConstatNumbers(pIndex, cIndex, field, value) {
@@ -512,6 +591,9 @@
                 if (c.ok > c.echantillon) c.ok = c.echantillon;
                 c.ko = Math.max(0, c.echantillon - c.ok);
                 c.rate = (c.ok / c.echantillon) * 100;
+            } else {
+                c.ko = 0;
+                c.rate = 0;
             }
             renderPoints();
         }
