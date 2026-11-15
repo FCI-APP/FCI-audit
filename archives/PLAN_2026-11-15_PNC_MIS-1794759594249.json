@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-15T16:19:54.809Z",
+  "donnees": {
+    "idMission": "MIS-1794759594249",
+    "region": "CASA",
+    "typeControle": "Systématique",
+    "date": "2026-11-15",
+    "dateDebut": "2026-10-01",
+    "dateFin": "2026-10-31",
+    "entite": "PNC",
+    "controleur": "ABDOU",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Traitement",
+        "Intitulé du risque": "Echec /Retard de l'opération de dépôt des envois au niveau (SI)",
+        "Intitulé Contrôle": "Contrôle du fichier d'intégration en masse",
+        "Points de contrôle": "1/ Le FIM est-il bien renseigné par le client ?"
+      },
+      {
+        "Processus": "Traitement",
+        "Intitulé du risque": "Echec /Retard de l'opération de dépôt des envois au niveau (SI)",
+        "Intitulé Contrôle": "Contrôle du fichier d'intégration en masse",
+        "Points de contrôle": "2/ Un rapprochement entre les envois physique et le FIM est-il réalisé ?"
+      }
+    ]
+  }
+}
