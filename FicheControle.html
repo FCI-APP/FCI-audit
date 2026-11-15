@@ -93,7 +93,6 @@
         .field-group label { font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .field-group textarea { width: 100%; min-height: 75px; padding: 8px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.85rem; }
 
-        /* Bloc Situation du Centre en bas (Bleu) */
         .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
         .summary-info { display: flex; align-items: center; gap: 15px; }
@@ -107,7 +106,6 @@
         .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
         .center-description { background: rgba(255, 255, 255, 0.08); padding: 15px 18px; border-radius: 6px; border-left: 4px solid var(--accent); font-size: 0.9rem; line-height: 1.5; color: #F1F5F9; }
-
         .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
         @media print {
@@ -676,7 +674,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                alert("✅ Fiche de Contrôle archivée avec succès dans la BDD locale !");
+                alert("✅ Fiche de Contrôle archivée avec succès dans la BDD locale et synchronisée !");
                 viderFormulaireFC();
                 remplirFiltresBDD();
             } catch (e) {
