@@ -613,7 +613,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                alert("✅ Fiche Encaisses archivée avec succès dans la BDD locale et synchronisée !");
+                alert("✅ Fiche Encaisses archivée et synchronisée avec succès dans la BDD et sur GitHub !");
                 clearForm();
             } catch (e) {
                 console.error("Erreur lors de l'archivage FV :", e);
@@ -624,12 +624,16 @@
         async function modifierFicheEncaisse() {
             const site = document.getElementById('nomSite').value;
             if (!site) { alert("Veuillez sélectionner un site."); return; }
-            const db = lireDBSecurisee();
             const lotMaj = construireLotConstatsFV("MIS-ENC-MODIF-" + Date.now());
             lotMaj.forEach(item => item._modifie = true);
-            db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotMaj];
-            sauvegarderDBSecurisee(db);
-            alert("✅ Modifications enregistrées et taguées.");
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                await FCIDatabase.enregistrerLotEncaisses(lotMaj, site, "MIS-ENC-MODIF-" + Date.now(), true);
+            } else {
+                const db = lireDBSecurisee();
+                db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotMaj];
+                sauvegarderDBSecurisee(db);
+            }
+            alert("✅ Modifications enregistrées et synchronisées.");
             clearForm();
         }
 
@@ -638,10 +642,14 @@
             if (!site) { alert("Veuillez sélectionner un site."); return; }
             const lotSuivi = construireLotConstatsFV("MIS-ENC-SUIVI-" + Date.now());
             lotSuivi.forEach(item => item._suivi = true);
-            const db = lireDBSecurisee();
-            db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotSuivi];
-            sauvegarderDBSecurisee(db);
-            alert("✅ Suivi enregistré.");
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                await FCIDatabase.enregistrerLotEncaisses(lotSuivi, site, "MIS-ENC-SUIVI-" + Date.now(), true);
+            } else {
+                const db = lireDBSecurisee();
+                db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotSuivi];
+                sauvegarderDBSecurisee(db);
+            }
+            alert("✅ Suivi enregistré et synchronisé.");
             clearForm();
         }
 
