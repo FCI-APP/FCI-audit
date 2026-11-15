@@ -142,7 +142,7 @@
                 <p>Saisie, évaluation, consultation et suivi sélectif par date des constats d'audit</p>
             </div>
             <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
-                <button type="button" class="btn btn-refresh" id="btnActualiserFC" onclick="window.location.reload()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button type="button" class="btn btn-refresh" onclick="window.location.reload()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button type="button" class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
                 <button type="button" class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
                 <button type="button" class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
@@ -651,16 +651,43 @@
         async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
-            const meta = missionData.metadata;
-            const idMission = meta.idMission || ("MIS-" + Date.now());
-            meta.idMission = idMission;
-            const constats = construirePayloadConstatsFC(idMission, false);
 
-            const db = lireDBSecurisee();
-            db.constatsControle = [...(db.constatsControle || []), ...constats];
-            sauvegarderDBSecurisee(db);
-            alert("✅ Fiche de Contrôle archivée avec succès dans la BDD locale !");
-            viderFormulaireFC();
+            const btn = document.getElementById('btnArchiverFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
+            }
+
+            try {
+                const meta = missionData.metadata || {};
+                const idMission = meta.idMission || ("MIS-" + Date.now());
+                meta.idMission = idMission;
+                const regionMission = meta.region || '';
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+
+                const constatsBDD = construirePayloadConstatsFC(idMission, false);
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                    await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
+                } else {
+                    const db = lireDBSecurisee();
+                    db.constatsControle = [...(db.constatsControle || []), ...constatsBDD];
+                    sauvegarderDBSecurisee(db);
+                }
+
+                alert("✅ Fiche de Contrôle archivée avec succès dans la BDD locale !");
+                viderFormulaireFC();
+                remplirFiltresBDD();
+            } catch (e) {
+                console.error("Erreur lors de l'archivage :", e);
+                alert("⚠️ Erreur technique lors de l'archivage. Consultez la console (F12).");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
         }
 
         function trouverFicheControleBDD() {
@@ -701,8 +728,13 @@
         }
 
         async function modifierFicheControle() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune fiche de contrôle n'est actuellement chargée pour modification.");
+                return;
+            }
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
+
             const db = lireDBSecurisee();
             const constatsMaj = construirePayloadConstatsFC(missionData.metadata.idMission || "MIS-" + Date.now(), false);
             const existants = db.constatsControle || [];
@@ -720,6 +752,10 @@
         }
 
         async function suiviFicheControle() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune fiche de contrôle n'est actuellement chargée pour créer un suivi.");
+                return;
+            }
             const pointsModifies = missionData.pointsControle.filter(p => p._initialDate && formatDateToISO(p._initialDate) !== formatDateToISO(p._bddDateControle));
             if (!pointsModifies.length) { alert("⚠️ Modifiez d'abord la date d'un point pour créer un suivi."); return; }
             const val = validerChampsObligatoires(pointsModifies);
