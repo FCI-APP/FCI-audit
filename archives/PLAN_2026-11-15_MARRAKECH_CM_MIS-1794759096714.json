@@ -1,0 +1,24 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-15T16:11:37.317Z",
+  "donnees": {
+    "idMission": "MIS-1794759096714",
+    "region": "MARRAKECH",
+    "typeControle": "Thématique",
+    "date": "2026-11-15",
+    "dateDebut": "2026-10-01",
+    "dateFin": "2026-10-31",
+    "entite": "MARRAKECH CM",
+    "controleur": "chemaa",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Traitement",
+        "Intitulé du risque": "Retard / traitement non exhaustif des envois (reste traitement)",
+        "Intitulé Contrôle": "Couvert par les contrôle suivants du même référentiel: Traitement Tri erroné des envois (fausse direction)",
+        "Points de contrôle": "1/ Couvert par les contrôles de tri et d'acheminement du même référentiel"
+      }
+    ]
+  }
+}
