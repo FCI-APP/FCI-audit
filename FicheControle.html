@@ -97,7 +97,7 @@
             border-left: 4px solid var(--accent);
             margin-bottom: 20px;
         }
-        /* Ordre demandé : Date - Région - Site - Processus */
+        /* Ordre : Date - Région - Site - Processus */
         .single-row-modif {
             display: grid;
             grid-template-columns: 1fr 1fr 1.2fr 1.2fr auto;
@@ -205,20 +205,20 @@
         .field-group label { font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
         .field-group textarea { width: 100%; min-height: 75px; padding: 8px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.85rem; }
 
-        /* Bloc Situation du Centre en bas avec niveaux de couleur */
-        .summary-card { background: #FFFFFF; color: var(--text-dark); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; gap: 15px; margin-top: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); border-left: 6px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.04); }
-        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
+        /* Bloc Situation du Centre en bleu (primary-dark) comme précédemment */
+        .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
         .summary-info { display: flex; align-items: center; gap: 15px; }
-        .summary-info h3 { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-        .summary-info h3 span { color: var(--primary); font-size: 1.35rem; }
+        .summary-info h3 { font-size: 1.25rem; font-weight: 800; color: #FFFFFF; }
+        .summary-info h3 span { color: var(--accent); font-size: 1.45rem; }
 
-        .badge-avis-global { font-size: 0.95rem; font-weight: 800; padding: 6px 14px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .avis-non-satisfaisante { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .avis-satisfaisante { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-        .avis-bonne { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
-        .avis-tres-bonne { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
-        .center-description { background: #F8FAFC; padding: 14px 18px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.9rem; line-height: 1.5; color: var(--text-dark); }
+        .center-description { background: rgba(255, 255, 255, 0.08); padding: 15px 18px; border-radius: 6px; border-left: 4px solid var(--accent); font-size: 0.9rem; line-height: 1.5; color: #F1F5F9; }
 
         .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
@@ -552,15 +552,6 @@
             const valSite = selSite.value;
             const valProc = selProc.value;
 
-            // Filtrage multi-critères combiné
-            const filtered = constats.filter(c => {
-                if (valDate && getConstatDateFR(c) !== valDate) return false;
-                if (valReg && getConstatRegion(c) !== valReg) return false;
-                if (valSite && getConstatSite(c) !== valSite) return false;
-                if (valProc && getConstatProcessus(c) !== valProc) return false;
-                return true;
-            });
-
             const dates = [...new Set(constats.filter(c => (!valReg || getConstatRegion(c) === valReg) && (!valSite || getConstatSite(c) === valSite) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatDateFR(c)).filter(Boolean))].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
             const sites = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valReg || getConstatRegion(c) === valReg) && (!valProc || getConstatProcessus(c) === valProc)).map(c => getConstatSite(c)).filter(Boolean))].sort();
             const procs = [...new Set(constats.filter(c => (!valDate || getConstatDateFR(c) === valDate) && (!valReg || getConstatRegion(c) === valReg) && (!valSite || getConstatSite(c) === valSite)).map(c => getConstatProcessus(c)).filter(Boolean))].sort();
@@ -821,43 +812,42 @@
                 html += `</div>`;
             }
 
+            // Évaluation selon les seuils officiels de 'Classemet centres.xlsx'
             let badgeText = "---", badgeClass = "", descText = "";
-            let cardBorderColor = "var(--primary)";
             if (nbPointsEvalues === 0) {
                 badgeText = "NON ÉVALUÉ"; badgeClass = "avis-satisfaisante";
                 descText = "Aucun point de contrôle n'a encore été échantillonné pour calculer la synthèse du centre.";
-            } else if (globalRate < 60) {
-                badgeText = "Gestion non satisfaisante / Critique"; badgeClass = "avis-non-satisfaisante";
-                cardBorderColor = "#EF4444";
-                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures et contrôles. Un plan d'action immédiat est requis.";
-            } else if (globalRate < 80) {
-                badgeText = "Gestion satisfaisante / Fragile"; badgeClass = "avis-satisfaisante";
-                cardBorderColor = "#F59E0B";
-                descText = "<strong>Niveau de risque modéré :</strong> Exigences opérationnelles respectées dans l'ensemble, mais des écarts résiduels subsistent.";
-            } else if (globalRate < 95) {
-                badgeText = "Bonne gestion"; badgeClass = "avis-bonne";
-                cardBorderColor = "#3B82F6";
-                descText = "<strong>Niveau de risque maîtrisé :</strong> Conformité globale élevée, ajustements mineurs à poursuivre.";
+            } else if (globalRate >= 95) {
+                badgeText = "EXCELLENT"; badgeClass = "avis-tres-bonne";
+                descText = "<strong>Niveau Excellent [95 % à 100 %] :</strong> Maîtrise parfaite et strict respect des dispositifs de contrôle permanent.";
+            } else if (globalRate >= 85) {
+                badgeText = "SATISFAISANT"; badgeClass = "avis-bonne";
+                descText = "<strong>Niveau Satisfaisant [85 % à moins de 95 %] :</strong> Bon niveau global de conformité, ajustements mineurs à poursuivre.";
+            } else if (globalRate >= 70) {
+                badgeText = "À AMÉLIORER"; badgeClass = "avis-satisfaisante";
+                descText = "<strong>Niveau À améliorer [70 % à moins de 85 %] :</strong> Présence d'écarts nécessitant des actions correctives ciblées.";
+            } else if (globalRate >= 50) {
+                badgeText = "INSUFFISANT"; badgeClass = "avis-non-satisfaisante";
+                descText = "<strong>Niveau Insuffisant [50 % à moins de 70 %] :</strong> Défaillances significatives dans l'application des procédures. Plan d'action requis.";
             } else {
-                badgeText = "Très bonne gestion"; badgeClass = "avis-tres-bonne";
-                cardBorderColor = "#10B981";
-                descText = "<strong>Niveau de maîtrise fort :</strong> Excellence opérationnelle et strict respect des dispositifs de contrôle permanent.";
+                badgeText = "CRITIQUE"; badgeClass = "avis-non-satisfaisante";
+                descText = "<strong>Niveau Critique [Moins de 50 %] :</strong> Dysfonctionnements majeurs et non-conformités critiques nécessitant une intervention urgente.";
             }
 
             html += `
-                <section class="summary-card" style="border-left-color: ${cardBorderColor};">
+                <section class="summary-card">
                     <div class="summary-top">
                         <div class="summary-info">
-                            <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--primary);"></i>
+                            <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent);"></i>
                             <div>
                                 <h3>TAUX MOYEN DU CENTRE : <span>${tauxConformiteMoyen} %</span></h3>
-                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Synthèse globale calculée sur les points évalués de la mission.</p>
+                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Synthèse globale calculée sur les points évalués de la mission.</p>
                             </div>
                         </div>
                         <div><span class="badge-avis-global ${badgeClass}">${badgeText}</span></div>
                     </div>
                     <div class="center-description">
-                        <strong style="display: block; color: var(--primary); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description & Situation du Centre :</strong>
+                        <strong style="display: block; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description & Situation du Centre (Classement des Centres) :</strong>
                         <p>${descText}</p>
                     </div>
                 </section>
