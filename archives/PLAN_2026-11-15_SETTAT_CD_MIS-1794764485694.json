@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-15T17:41:26.510Z",
+  "donnees": {
+    "idMission": "MIS-1794764485694",
+    "region": "SETTAT",
+    "typeControle": "Thématique",
+    "date": "2026-11-15",
+    "dateDebut": "2026-09-30",
+    "dateFin": "2026-11-10",
+    "entite": "SETTAT CD",
+    "controleur": "SOUFIANE",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Comptabilité et Consolidation",
+        "Intitulé du risque": "Erreurs dans le traitement des corrections comptables",
+        "Intitulé Contrôle": "Contrôle du traitement des corrections comptables",
+        "Points de contrôle": "1/ Les corrections comptables sont-elles validées par le chef de service de production comptable ou chef de division comptable selon les seuils ?"
+      },
+      {
+        "Processus": "Comptabilité et Consolidation",
+        "Intitulé du risque": "Erreurs dans le traitement des corrections comptables",
+        "Intitulé Contrôle": "Contrôle du traitement des corrections comptables",
+        "Points de contrôle": "2/ Les opérations et des écritures comptables sont-elles exhaustives lors de l'analyse des comptes en fin d'exercice comptable ?"
+      }
+    ]
+  }
+}
