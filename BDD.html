@@ -113,10 +113,6 @@
 
         <div class="filters-card">
             <div class="filter-group">
-                <label>Recherche texte</label>
-                <input type="text" id="filterSearch" class="form-control" placeholder="Mots-clés..." oninput="filtrerEtAfficherBDD()">
-            </div>
-            <div class="filter-group">
                 <label>Date</label>
                 <select id="filterDate" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Toutes --</option></select>
             </div>
@@ -141,7 +137,7 @@
                 <select id="filterStatut" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Tous --</option></select>
             </div>
             <div>
-                <button class="btn btn-outline" onclick="reinitialiserFiltresBDD()"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+                <button class="btn btn-outline" onclick="reinitialiserFiltresBDD()" title="Réinitialiser les filtres"><i class="fa-solid fa-filter-circle-xmark"></i></button>
             </div>
         </div>
 
@@ -241,7 +237,6 @@
         }
 
         function reinitialiserFiltresBDD() {
-            document.getElementById('filterSearch').value = '';
             document.getElementById('filterDate').value = '';
             document.getElementById('filterRegion').value = '';
             document.getElementById('filterSite').value = '';
@@ -252,7 +247,6 @@
         }
 
         function filtrerEtAfficherBDD() {
-            const txt = (document.getElementById('filterSearch').value || '').toLowerCase();
             const fDate = document.getElementById('filterDate').value;
             const fRegion = document.getElementById('filterRegion').value;
             const fSite = document.getElementById('filterSite').value;
@@ -267,7 +261,6 @@
                 const procVal = item.processus || '';
                 const typeVal = item.typeControle || (item.idEncaisse ? 'Vérification' : 'Thématique');
                 const statutVal = item.statut || 'EN_COURS';
-                const ctrlVal = (item.controleur || '').toLowerCase();
 
                 if (fDate && dateVal !== fDate) return false;
                 if (fRegion && regVal !== fRegion) return false;
@@ -276,9 +269,6 @@
                 if (fType && typeVal !== fType) return false;
                 if (fStatut && statutVal !== fStatut) return false;
 
-                if (txt && !siteVal.toLowerCase().includes(txt) && !procVal.toLowerCase().includes(txt) && !ctrlVal.includes(txt) && !(item.constat || '').toLowerCase().includes(txt)) {
-                    return false;
-                }
                 return true;
             });
 
