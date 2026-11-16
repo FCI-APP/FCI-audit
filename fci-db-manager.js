@@ -28,7 +28,6 @@ const FCIDatabase = {
             };
             localStorage.setItem(this.KEY, JSON.stringify(schema));
         } else {
-            // Sécuriser la structure si une des tables manque
             try {
                 const parsed = JSON.parse(raw);
                 let modified = false;
@@ -53,7 +52,6 @@ const FCIDatabase = {
     saveDB(db) {
         db.derniereMiseAJour = new Date().toISOString();
         localStorage.setItem(this.KEY, JSON.stringify(db));
-        // Déclencher un événement global pour notifier BDD.html et TDB.html en temps réel
         window.dispatchEvent(new CustomEvent('fci-db-updated', { detail: db }));
     },
 
@@ -146,7 +144,6 @@ const FCIDatabase = {
 
         constatsArray.forEach((c, idx) => {
             if (!c) return;
-            // Garantir un idConstat unique pour éviter tout écrasement (undefined === undefined)
             if (!c.idConstat) {
                 c.idConstat = this.genererIdUnique(`FC-${idx}`);
             }
@@ -173,7 +170,6 @@ const FCIDatabase = {
         const db = this.getDB();
         if (!dataEncaisse) return Promise.resolve({ success: false });
 
-        // Garantir un idEncaisse unique pour éviter tout écrasement
         if (!dataEncaisse.idEncaisse) {
             dataEncaisse.idEncaisse = this.genererIdUnique('FV');
         }
@@ -218,6 +214,37 @@ const FCIDatabase = {
         return Promise.resolve({ success: true, localOnly: true });
     },
 
+    modifierEnregistrementBDD(id, table, nouveauxChamps) {
+        const db = this.getDB();
+        if (table === 'constatsControle') {
+            const idx = db.constatsControle.findIndex(c => c.idConstat === id);
+            if (idx >= 0) {
+                db.constatsControle[idx] = { ...db.constatsControle[idx], ...nouveauxChamps };
+                this.saveDB(db);
+                return true;
+            }
+        } else if (table === 'constatsEncaisses') {
+            const idx = db.constatsEncaisses.findIndex(e => e.idEncaisse === id);
+            if (idx >= 0) {
+                db.constatsEncaisses[idx] = { ...db.constatsEncaisses[idx], ...nouveauxChamps };
+                this.saveDB(db);
+                return true;
+            }
+        }
+        return false;
+    },
+
+    supprimerEnregistrementBDD(id, table) {
+        const db = this.getDB();
+        if (table === 'constatsControle') {
+            db.constatsControle = db.constatsControle.filter(c => c.idConstat !== id);
+        } else if (table === 'constatsEncaisses') {
+            db.constatsEncaisses = db.constatsEncaisses.filter(e => e.idEncaisse !== id);
+        }
+        this.saveDB(db);
+        return true;
+    },
+
     // =========================================================================
     // MOTEUR API REST GITHUB (CRÉATION / MISE À JOUR / LECTURE DES ARCHIVES)
     // =========================================================================
@@ -232,7 +259,7 @@ const FCIDatabase = {
             return { success: true, localOnly: true, reason: 'NO_TOKEN' };
         }
 
-        const dateJour = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const dateJour = new Date().toISOString().slice(0, 10);
         const nomFichier = `${typeFiche}_${dateJour}_${this.nettoyerNomFichier(entite)}_${this.nettoyerNomFichier(identifiant)}.json`;
         const cheminGitHub = `${FCI_GITHUB_CONFIG.archiveFolder}/${nomFichier}`;
         const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${cheminGitHub}`;
@@ -245,7 +272,6 @@ const FCIDatabase = {
         };
 
         try {
-            // 1. Récupération du SHA si le fichier existe déjà (mise à jour sans erreur HTTP 422)
             let existingSha = null;
             const checkResponse = await fetch(`${apiUrl}?ref=${FCI_GITHUB_CONFIG.branch}&t=${Date.now()}`, {
                 method: 'GET',
@@ -256,7 +282,6 @@ const FCIDatabase = {
                 existingSha = fileInfo.sha;
             }
 
-            // 2. Préparation de l'enveloppe JSON
             const enveloppeArchive = {
                 application: "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
                 organisme: "Barid Al-Maghrib - Direction Contrôle Générale",
@@ -277,7 +302,6 @@ const FCIDatabase = {
                 bodyPayload.sha = existingSha;
             }
 
-            // 3. Envoi via PUT sur l'API REST GitHub
             const putResponse = await fetch(apiUrl, {
                 method: 'PUT',
                 headers,
@@ -333,7 +357,6 @@ const FCIDatabase = {
         let nbRestaures = 0;
         for (const f of fichiers) {
             try {
-                // Utiliser download_url si disponible (plus rapide) ou l'API contents
                 let archive = null;
                 if (f.download_url) {
                     const rawRes = await fetch(`${f.download_url}?t=${Date.now()}`);
@@ -350,7 +373,6 @@ const FCIDatabase = {
 
                 if (!archive) continue;
 
-                // Détection souple du type (via enveloppe ou via le préfixe du nom de fichier)
                 const donnees = archive.donnees || archive;
                 const type = archive.typeArchive || (
                     f.name.startsWith('PLAN_') ? 'PLAN' :
@@ -358,7 +380,6 @@ const FCIDatabase = {
                     f.name.startsWith('FV_') ? 'FV' : ''
                 );
 
-                // Réinjection dans localStorage sans re-déclencher un push GitHub (syncGitHub = false)
                 if (type === 'PLAN') {
                     this.enregistrerMission(donnees, false);
                     nbRestaures++;
