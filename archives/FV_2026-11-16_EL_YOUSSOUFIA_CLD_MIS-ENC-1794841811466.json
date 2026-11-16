@@ -1,0 +1,39 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-16T15:10:12.406Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794841811466-1-1",
+      "idMission": "MIS-ENC-1794841811466",
+      "typeControle": "Vérification",
+      "region": "MARRAKECH",
+      "site": "EL YOUSSOUFIA CLD",
+      "entite": "EL YOUSSOUFIA CLD",
+      "controleur": "NAKHILI",
+      "responsable": "",
+      "date": "2026-11-23",
+      "dateVerification": "2026-11-23",
+      "dateDebut": "2026-09-01",
+      "dateFin": "2026-09-30",
+      "processus": "Philatélie",
+      "risque": "Spoliation ou vol de timbres",
+      "controle": "Contrôle de la disponibilité du stock au niveau du réseau",
+      "pc": "La valeur des valeurs postales est-elle exacte ?",
+      "pop": 3300,
+      "ech": 2800,
+      "ok": 2750,
+      "ko": 50,
+      "tc": 98.21428571428571,
+      "statut": "EN_COURS",
+      "constat": "FORT",
+      "recommandation": "CONTINUE",
+      "avisResponsable": "--",
+      "isModifie": false,
+      "modifie": false,
+      "isSuivi": false,
+      "suivi": false
+    }
+  ]
+}
