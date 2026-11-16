@@ -1,350 +1,271 @@
 /**
- * FCI v1.0 © 2026 - 2027 - Gestionnaire de la Base de Données Centralisée (BDD)
- * Organisme : Barid Al-Maghrib (Direction Contrôle Générale — Division Contrôle Permanent)
- * Dépôt GitHub : FCI-APP/FCI-audit (branche main)
- * Clé localStorage : 'fci_database'
+ * FCI-DB-MANAGER.JS
+ * Gestionnaire unifié de persistance locale (BDD) et synchronisation GitHub (FCI-APP/FCI-audit)
+ * Barid Al-Maghrib - Direction Contrôle Générale / Division Contrôle Permanent
  */
 
-const FCI_GITHUB_CONFIG = {
+const FCI_CONFIG = {
     owner: 'FCI-APP',
     repo: 'FCI-audit',
     branch: 'main',
     archiveFolder: 'archives',
-    tokenKey: 'fci_github_pat'
+    masterFile: 'archives/bdd_master.json',
+    storageKey: 'fci_bdd_records',
+    tokenKey: 'fci_github_token'
 };
 
-const FCIDatabase = {
-    KEY: 'fci_database',
-
-    init() {
-        if (!localStorage.getItem(this.KEY)) {
-            const schema = {
-                version: '1.0',
-                derniereMiseAJour: new Date().toISOString(),
-                missions: [],         // Table A (Planification)
-                constatsControle: [], // Table B (Fiche de Contrôle FC)
-                constatsEncaisses: [] // Table C (Fiche des Encaisses FV)
-            };
-            localStorage.setItem(this.KEY, JSON.stringify(schema));
-        }
+const FCIDBManager = {
+    // Récupérer le token GitHub enregistré
+    getToken() {
+        return localStorage.getItem(FCI_CONFIG.tokenKey) || '';
     },
 
-    getDB() {
-        this.init();
-        return JSON.parse(localStorage.getItem(this.KEY));
-    },
-
-    saveDB(db) {
-        db.derniereMiseAJour = new Date().toISOString();
-        localStorage.setItem(this.KEY, JSON.stringify(db));
-    },
-
-    // =========================================================================
-    // GESTION DU TOKEN GITHUB & UTILITAIRES UTF-8 / BASE64
-    // =========================================================================
-
-    getGitHubToken() {
-        return localStorage.getItem(FCI_GITHUB_CONFIG.tokenKey) || '';
-    },
-
-    setGitHubToken(token) {
+    // Définir le token GitHub
+    setToken(token) {
         if (token && token.trim() !== '') {
-            localStorage.setItem(FCI_GITHUB_CONFIG.tokenKey, token.trim());
+            localStorage.setItem(FCI_CONFIG.tokenKey, token.trim());
+        }
+    },
+
+    // Lire tous les enregistrements de la BDD locale
+    getAllRecords() {
+        try {
+            const raw = localStorage.getItem(FCI_CONFIG.storageKey);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            console.error("Erreur lecture BDD locale:", e);
+            return [];
+        }
+    },
+
+    // Sauvegarder tout le tableau en local
+    saveAllRecords(records) {
+        try {
+            localStorage.setItem(FCI_CONFIG.storageKey, JSON.stringify(records));
             return true;
+        } catch (e) {
+            console.error("Erreur sauvegarde BDD locale:", e);
+            alert("Attention : Espace de stockage local saturé. Pensez à exporter ou purger d'anciennes archives.");
+            return false;
         }
-        return false;
     },
 
-    configurerGitHubToken() {
-        const actuel = this.getGitHubToken();
-        const saisie = prompt(
-            "Configuration Archivage GitHub (FCI-APP/FCI-audit)\n" +
-            "Veuillez coller votre Fine-grained Personal Access Token (droits Contents: Read & Write) :",
-            actuel
-        );
-        if (saisie !== null && saisie.trim() !== '') {
-            this.setGitHubToken(saisie.trim());
-            return this.getGitHubToken();
+    /**
+     * Fonction principale appelée par les boutons "Archiver" de FC et FV
+     * 1. Stocke immédiatement dans la BDD locale (BDD.html)
+     * 2. Archive le fichier individuel + met à jour bdd_master.json sur GitHub
+     */
+    async archiveRecord(recordData) {
+        if (!recordData.uid) {
+            recordData.uid = 'REC-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         }
-        return actuel;
-    },
+        recordData.archivedAt = new Date().toISOString();
 
-    encodeBase64UTF8(str) {
-        const bytes = new TextEncoder().encode(str);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return btoa(binary);
-    },
-
-    decodeBase64UTF8(base64) {
-        const binary = atob(base64.replace(/\s/g, ''));
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return new TextDecoder().decode(bytes);
-    },
-
-    nettoyerNomFichier(texte) {
-        return String(texte || 'SansRef')
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-zA-Z0-9_-]/g, '_');
-    },
-
-    // =========================================================================
-    // MÉTHODES MÉTIER (SAUVEGARDE LOCALE + ARCHIVAGE AUTOMATIQUE GITHUB)
-    // =========================================================================
-
-    enregistrerMission(dataMission, syncGitHub = true) {
-        const db = this.getDB();
-        const index = db.missions.findIndex(m => m.idMission === dataMission.idMission);
-        if (index >= 0) {
-            db.missions[index] = dataMission;
+        // ÉTAPE 1 : Stockage immédiat dans la BDD locale (Prioritaire)
+        const records = this.getAllRecords();
+        const existingIndex = records.findIndex(r => r.uid === recordData.uid);
+        
+        if (existingIndex !== -1) {
+            records[existingIndex] = recordData;
         } else {
-            db.missions.push(dataMission);
+            records.unshift(recordData); // Ajoute en haut de la liste
         }
-        this.saveDB(db);
+        
+        const localSaved = this.saveAllRecords(records);
 
-        if (syncGitHub) {
-            const entite = dataMission.entite || dataMission.agence || 'Mission';
-            const id = dataMission.idMission || Date.now();
-            return this.archiverSurGitHub('PLAN', entite, id, dataMission);
-        }
-        return Promise.resolve({ success: true, localOnly: true });
-    },
-
-    enregistrerConstatsControle(constatsArray, syncGitHub = true) {
-        const db = this.getDB();
-        constatsArray.forEach(c => {
-            const index = db.constatsControle.findIndex(existing => existing.idConstat === c.idConstat);
-            if (index >= 0) {
-                db.constatsControle[index] = c;
-            } else {
-                db.constatsControle.push(c);
-            }
-        });
-        this.saveDB(db);
-
-        if (syncGitHub && constatsArray.length > 0) {
-            const premier = constatsArray[0];
-            const entite = premier.entite || premier.agence || 'Controle';
-            const idMission = premier.idMission || premier.idConstat || Date.now();
-            return this.archiverSurGitHub('FC', entite, idMission, constatsArray);
-        }
-        return Promise.resolve({ success: true, localOnly: true });
-    },
-
-    enregistrerConstatEncaisse(dataEncaisse, syncGitHub = true) {
-        const db = this.getDB();
-        const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
-        if (index >= 0) {
-            db.constatsEncaisses[index] = dataEncaisse;
-        } else {
-            db.constatsEncaisses.push(dataEncaisse);
-        }
-        this.saveDB(db);
-
-        if (syncGitHub) {
-            const entite = dataEncaisse.site || dataEncaisse.entite || dataEncaisse.bureau || 'Encaisse';
-            const id = dataEncaisse.idEncaisse || dataEncaisse.idMission || Date.now();
-            return this.archiverSurGitHub('FV', entite, id, dataEncaisse);
-        }
-        return Promise.resolve({ success: true, localOnly: true });
-    },
-
-    enregistrerLotEncaisses(listeEncaisses, site, idMission, syncGitHub = true) {
-        const db = this.getDB();
-        listeEncaisses.forEach(dataEncaisse => {
-            const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
-            if (index >= 0) {
-                db.constatsEncaisses[index] = dataEncaisse;
-            } else {
-                db.constatsEncaisses.push(dataEncaisse);
-            }
-        });
-        this.saveDB(db);
-
-        if (syncGitHub && listeEncaisses.length > 0) {
-            return this.archiverSurGitHub('FV', site || 'Encaisse', idMission || Date.now(), listeEncaisses);
-        }
-        return Promise.resolve({ success: true, localOnly: true });
-    },
-
-    // =========================================================================
-    // MOTEUR API REST GITHUB (CRÉATION / MISE À JOUR / LECTURE DES ARCHIVES)
-    // =========================================================================
-
-    async archiverSurGitHub(typeFiche, entite, identifiant, donnees) {
-        let token = this.getGitHubToken();
+        // ÉTAPE 2 : Synchronisation GitHub (Non bloquante pour la BDD locale)
+        const token = this.getToken();
         if (!token) {
-            token = this.configurerGitHubToken();
+            return {
+                success: localSaved,
+                githubSynced: false,
+                message: "Données enregistrées dans la feuille BDD locale (Token GitHub non configuré)."
+            };
         }
-        if (!token) {
-            console.warn("[FCI GitHub] Archivage distant ignoré (aucun token configuré). Données enregistrées en local.");
-            return { success: false, reason: 'NO_TOKEN' };
-        }
-
-        const dateJour = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-        const nomFichier = `${typeFiche}_${dateJour}_${this.nettoyerNomFichier(entite)}_${this.nettoyerNomFichier(identifiant)}.json`;
-        const cheminGitHub = `${FCI_GITHUB_CONFIG.archiveFolder}/${nomFichier}`;
-        const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${cheminGitHub}`;
-
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-            'Content-Type': 'application/json'
-        };
 
         try {
-            // 1. Récupération du SHA si le fichier existe déjà (mise à jour sans erreur HTTP 422)
-            let existingSha = null;
-            const checkResponse = await fetch(`${apiUrl}?ref=${FCI_GITHUB_CONFIG.branch}`, {
-                method: 'GET',
-                headers
-            });
-            if (checkResponse.ok) {
-                const fileInfo = await checkResponse.json();
-                existingSha = fileInfo.sha;
-            }
+            // A. Créer le fichier d'archive individuel dans /archives/
+            const safeMission = (recordData.missionId || 'SANS_ID').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const safeType = (recordData.sourceType || 'CTRL').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${FCI_CONFIG.archiveFolder}/${safeType}_${safeMission}_${Date.now()}.json`;
 
-            // 2. Préparation de l'enveloppe JSON
-            const enveloppeArchive = {
-                application: "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
-                organisme: "Barid Al-Maghrib - Direction Contrôle Générale",
-                typeArchive: typeFiche,
-                dateArchivage: new Date().toISOString(),
-                donnees: donnees
+            await this.uploadFileToGitHub(
+                fileName,
+                JSON.stringify(recordData, null, 2),
+                `Archive ${safeType} - Mission ${recordData.missionId} (${recordData.site})`,
+                token
+            );
+
+            // B. Mettre à jour le fichier maître consolidé sur GitHub
+            await this.syncMasterFileToGitHub(records, token);
+
+            return {
+                success: true,
+                githubSynced: true,
+                message: "Données archivées avec succès dans la feuille BDD et synchronisées sur GitHub !"
             };
-
-            const contenuBase64 = this.encodeBase64UTF8(JSON.stringify(enveloppeArchive, null, 2));
-
-            const bodyPayload = {
-                message: `[FCI Auto-Archive] ${typeFiche} - ${entite} (${identifiant})`,
-                content: contenuBase64,
-                branch: FCI_GITHUB_CONFIG.branch
+        } catch (err) {
+            console.warn("Erreur sync GitHub (données bien présentes dans BDD locale):", err);
+            return {
+                success: localSaved,
+                githubSynced: false,
+                message: "Données enregistrées dans la feuille BDD locale. (Synchronisation GitHub en attente : " + err.message + ")"
             };
-
-            if (existingSha) {
-                bodyPayload.sha = existingSha;
-            }
-
-            // 3. Envoi via PUT sur l'API REST GitHub
-            const putResponse = await fetch(apiUrl, {
-                method: 'PUT',
-                headers,
-                body: JSON.stringify(bodyPayload)
-            });
-
-            if (!putResponse.ok) {
-                const err = await putResponse.json();
-                throw new Error(`HTTP ${putResponse.status} : ${err.message}`);
-            }
-
-            const result = await putResponse.json();
-            console.info(`[FCI GitHub] Fichier archivé avec succès : ${cheminGitHub}`);
-            return { success: true, path: cheminGitHub, url: result.content.html_url };
-
-        } catch (error) {
-            console.error("[FCI GitHub] Erreur lors de l'archivage :", error);
-            return { success: false, error: error.message };
         }
     },
 
-    async listerArchivesGitHub() {
-        const token = this.getGitHubToken();
-        if (!token) return [];
+    // Mettre à jour un enregistrement modifié depuis BDD.html
+    async updateRecord(uid, updatedFields) {
+        const records = this.getAllRecords();
+        const idx = records.findIndex(r => r.uid === uid);
+        if (idx === -1) return false;
 
-        const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${FCI_GITHUB_CONFIG.archiveFolder}?ref=${FCI_GITHUB_CONFIG.branch}`;
-        const res = await fetch(apiUrl, {
+        records[idx] = { ...records[idx], ...updatedFields, updatedAt: new Date().toISOString() };
+        this.saveAllRecords(records);
+
+        const token = this.getToken();
+        if (token) {
+            try {
+                await this.syncMasterFileToGitHub(records, token);
+            } catch (e) {
+                console.warn("Sync GitHub après modification échouée:", e);
+            }
+        }
+        return true;
+    },
+
+    // Supprimer un enregistrement depuis BDD.html
+    async deleteRecord(uid) {
+        let records = this.getAllRecords();
+        records = records.filter(r => r.uid !== uid);
+        this.saveAllRecords(records);
+
+        const token = this.getToken();
+        if (token) {
+            try {
+                await this.syncMasterFileToGitHub(records, token);
+            } catch (e) {
+                console.warn("Sync GitHub après suppression échouée:", e);
+            }
+        }
+        return true;
+    },
+
+    // Récupérer et fusionner les archives depuis GitHub vers la BDD locale
+    async pullFromGitHub() {
+        const token = this.getToken();
+        const headers = { 'Accept': 'application/vnd.github.v3+json' };
+        if (token) headers['Authorization'] = `token ${token}`;
+
+        try {
+            const url = `https://api.github.com/repos/${FCI_CONFIG.owner}/${FCI_CONFIG.repo}/contents/${FCI_CONFIG.archiveFolder}?ref=${FCI_CONFIG.branch}&t=${Date.now()}`;
+            const response = await fetch(url, { headers });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const files = await response.json();
+            if (!Array.isArray(files)) return this.getAllRecords();
+
+            const localRecords = this.getAllRecords();
+            const recordMap = new Map(localRecords.map(r => [r.uid, r]));
+
+            // Lire le fichier master s'il existe
+            const masterEntry = files.find(f => f.path === FCI_CONFIG.masterFile);
+            if (masterEntry && masterEntry.download_url) {
+                const mRes = await fetch(masterEntry.download_url + `?t=${Date.now()}`);
+                if (mRes.ok) {
+                    const masterData = await mRes.json();
+                    if (Array.isArray(masterData)) {
+                        masterData.forEach(item => {
+                            if (item.uid && !recordMap.has(item.uid)) {
+                                recordMap.set(item.uid, item);
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Lire les fichiers individuels JSON du dossier archives/
+            const jsonFiles = files.filter(f => f.name.endsWith('.json') && f.path !== FCI_CONFIG.masterFile);
+            for (const file of jsonFiles) {
+                if (file.download_url) {
+                    try {
+                        const fRes = await fetch(file.download_url + `?t=${Date.now()}`);
+                        if (fRes.ok) {
+                            const item = await fRes.json();
+                            const key = item.uid || file.sha;
+                            item.uid = key;
+                            if (!recordMap.has(key)) {
+                                recordMap.set(key, item);
+                            }
+                        }
+                    } catch (e) { /* Ignorer fichier illisible */ }
+                }
+            }
+
+            const merged = Array.from(recordMap.values()).sort((a, b) => {
+                return new Date(b.archivedAt || b.date || 0) - new Date(a.archivedAt || a.date || 0);
+            });
+
+            this.saveAllRecords(merged);
+            return merged;
+        } catch (error) {
+            console.error("Erreur récupération GitHub:", error);
+            return this.getAllRecords();
+        }
+    },
+
+    // Utilitaire d'encodage Base64 compatible UTF-8 (accents français/arabes)
+    utf8ToBase64(str) {
+        return btoa(unescape(encodeURIComponent(str)));
+    },
+
+    // Upload ou mise à jour d'un fichier sur GitHub
+    async uploadFileToGitHub(path, contentStr, commitMessage, token) {
+        const apiUrl = `https://api.github.com/repos/${FCI_CONFIG.owner}/${FCI_CONFIG.repo}/contents/${path}`;
+        let sha = null;
+
+        // Vérifier si le fichier existe déjà pour obtenir son SHA
+        const checkRes = await fetch(`${apiUrl}?ref=${FCI_CONFIG.branch}`, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github+json'
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
         });
-
-        if (!res.ok) return [];
-        const fichiers = await res.json();
-        return Array.isArray(fichiers) ? fichiers.filter(f => f.name.endsWith('.json')) : [];
-    },
-
-    async restaurerDepuisGitHub() {
-        let token = this.getGitHubToken();
-        if (!token) {
-            token = this.configurerGitHubToken();
-        }
-        if (!token) return { success: false, message: "Token GitHub requis pour la restauration." };
-
-        const fichiers = await this.listerArchivesGitHub();
-        if (fichiers.length === 0) {
-            return { success: true, count: 0, message: "Aucune archive JSON trouvée dans le dossier archives/." };
+        if (checkRes.ok) {
+            const existing = await checkRes.json();
+            sha = existing.sha;
         }
 
-        let nbRestaures = 0;
-        for (const f of fichiers) {
-            const res = await fetch(f.url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/vnd.github+json'
-                }
-            });
-            if (!res.ok) continue;
-            const fileData = await res.json();
-            const archive = JSON.parse(this.decodeBase64UTF8(fileData.content));
-
-            if (!archive || !archive.donnees) continue;
-
-            // Réinjection dans localStorage sans re-déclencher un push GitHub (syncGitHub = false)
-            if (archive.typeArchive === 'PLAN') {
-                this.enregistrerMission(archive.donnees, false);
-                nbRestaures++;
-            } else if (archive.typeArchive === 'FC' && Array.isArray(archive.donnees)) {
-                this.enregistrerConstatsControle(archive.donnees, false);
-                nbRestaures++;
-            } else if (archive.typeArchive === 'FV') {
-                if (Array.isArray(archive.donnees)) {
-                    this.enregistrerLotEncaisses(archive.donnees, '', '', false);
-                } else {
-                    this.enregistrerConstatEncaisse(archive.donnees, false);
-                }
-                nbRestaures++;
-            }
-        }
-
-        return {
-            success: true,
-            count: nbRestaures,
-            message: `${nbRestaures} archive(s) synchronisée(s) depuis GitHub vers la BDD locale.`
+        const body = {
+            message: commitMessage,
+            content: this.utf8ToBase64(contentStr),
+            branch: FCI_CONFIG.branch
         };
+        if (sha) body.sha = sha;
+
+        const putRes = await fetch(apiUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!putRes.ok) {
+            const errData = await putRes.json().catch(() => ({}));
+            throw new Error(errData.message || `Erreur GitHub ${putRes.status}`);
+        }
+        return await putRes.json();
     },
 
-    // =========================================================================
-    // OUTILS DE MAINTENANCE BDD LOCALE
-    // =========================================================================
-
-    viderBDD() {
-        const emptySchema = {
-            version: '1.0',
-            derniereMiseAJour: new Date().toISOString(),
-            missions: [],
-            constatsControle: [],
-            constatsEncaisses: []
-        };
-        localStorage.setItem(this.KEY, JSON.stringify(emptySchema));
-    },
-
-    exporterBDD() {
-        const db = this.getDB();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `FCI_BDD_${new Date().toISOString().slice(0,10)}.json`);
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
+    async syncMasterFileToGitHub(records, token) {
+        return await this.uploadFileToGitHub(
+            FCI_CONFIG.masterFile,
+            JSON.stringify(records, null, 2),
+            `Mise à jour BDD consolidée (${records.length} enregistrements)`,
+            token
+        );
     }
 };
-
-FCIDatabase.init();
