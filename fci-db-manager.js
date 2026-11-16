@@ -17,8 +17,7 @@ const FCIDatabase = {
     KEY: 'fci_database',
 
     init() {
-        const raw = localStorage.getItem(this.KEY);
-        if (!raw) {
+        if (!localStorage.getItem(this.KEY)) {
             const schema = {
                 version: '1.0',
                 derniereMiseAJour: new Date().toISOString(),
@@ -27,32 +26,38 @@ const FCIDatabase = {
                 constatsEncaisses: [] // Table C (Fiche des Encaisses FV)
             };
             localStorage.setItem(this.KEY, JSON.stringify(schema));
-        } else {
-            try {
-                const parsed = JSON.parse(raw);
-                let modified = false;
-                if (!Array.isArray(parsed.missions)) { parsed.missions = []; modified = true; }
-                if (!Array.isArray(parsed.constatsControle)) { parsed.constatsControle = []; modified = true; }
-                if (!Array.isArray(parsed.constatsEncaisses)) { parsed.constatsEncaisses = []; modified = true; }
-                if (modified) {
-                    localStorage.setItem(this.KEY, JSON.stringify(parsed));
-                }
-            } catch (e) {
-                console.error("[FCI BDD] Erreur parsing localStorage, réinitialisation:", e);
-                this.viderBDD();
-            }
         }
     },
 
     getDB() {
         this.init();
-        return JSON.parse(localStorage.getItem(this.KEY));
+        try {
+            const parsed = JSON.parse(localStorage.getItem(this.KEY));
+            if (!parsed || typeof parsed !== 'object') throw new Error('Format BDD invalide');
+            if (!Array.isArray(parsed.missions)) parsed.missions = [];
+            if (!Array.isArray(parsed.constatsControle)) parsed.constatsControle = [];
+            if (!Array.isArray(parsed.constatsEncaisses)) parsed.constatsEncaisses = [];
+            return parsed;
+        } catch (e) {
+            return {
+                version: '1.0',
+                derniereMiseAJour: new Date().toISOString(),
+                missions: [],
+                constatsControle: [],
+                constatsEncaisses: []
+            };
+        }
     },
 
     saveDB(db) {
         db.derniereMiseAJour = new Date().toISOString();
-        localStorage.setItem(this.KEY, JSON.stringify(db));
-        window.dispatchEvent(new CustomEvent('fci-db-updated', { detail: db }));
+        try {
+            localStorage.setItem(this.KEY, JSON.stringify(db));
+        } catch (e) {
+            console.error("[FCI BDD] Erreur d'écriture localStorage :", e);
+            alert("⚠️ Espace de stockage local saturé. Veuillez exporter la BDD ou synchroniser vos archives sur GitHub.");
+            throw e;
+        }
     },
 
     // =========================================================================
@@ -109,52 +114,38 @@ const FCIDatabase = {
             .replace(/[^a-zA-Z0-9_-]/g, '_');
     },
 
-    genererIdUnique(prefixe) {
-        return `${prefixe}-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    },
-
     // =========================================================================
-    // MÉTHODES MÉTIER (SAUVEGARDE LOCALE PRIORITAIRE + ARCHIVAGE GITHUB)
+    // MÉTHODES MÉTIER (SAUVEGARDE LOCALE + ARCHIVAGE AUTOMATIQUE GITHUB)
     // =========================================================================
 
     enregistrerMission(dataMission, syncGitHub = true) {
         const db = this.getDB();
-        if (!dataMission.idMission) {
-            dataMission.idMission = this.genererIdUnique('MIS');
-        }
-        const index = db.missions.findIndex(m => m.idMission && m.idMission === dataMission.idMission);
+        const index = db.missions.findIndex(m => m.idMission === dataMission.idMission);
         if (index >= 0) {
-            db.missions[index] = { ...db.missions[index], ...dataMission };
+            db.missions[index] = dataMission;
         } else {
             db.missions.push(dataMission);
         }
         this.saveDB(db);
 
         if (syncGitHub) {
-            const entite = dataMission.entite || dataMission.site || dataMission.agence || 'Mission';
-            const id = dataMission.idMission;
+            const entite = dataMission.entite || dataMission.agence || 'Mission';
+            const id = dataMission.idMission || Date.now();
             return this.archiverSurGitHub('PLAN', entite, id, dataMission);
         }
         return Promise.resolve({ success: true, localOnly: true });
     },
 
-    enregistrerConstatsControle(constatsInput, syncGitHub = true) {
+    enregistrerConstatsControle(constatsArray, syncGitHub = true) {
         const db = this.getDB();
-        const constatsArray = Array.isArray(constatsInput) ? constatsInput : [constatsInput];
-
-        constatsArray.forEach((c, idx) => {
-            if (!c) return;
-            if (!c.idConstat) {
-                c.idConstat = this.genererIdUnique(`FC-${idx}`);
-            }
-            const index = db.constatsControle.findIndex(existing => existing.idConstat && existing.idConstat === c.idConstat);
+        constatsArray.forEach(c => {
+            const index = db.constatsControle.findIndex(existing => existing.idConstat === c.idConstat);
             if (index >= 0) {
-                db.constatsControle[index] = { ...db.constatsControle[index], ...c };
+                db.constatsControle[index] = c;
             } else {
                 db.constatsControle.push(c);
             }
         });
-
         this.saveDB(db);
 
         if (syncGitHub && constatsArray.length > 0) {
@@ -168,15 +159,9 @@ const FCIDatabase = {
 
     enregistrerConstatEncaisse(dataEncaisse, syncGitHub = true) {
         const db = this.getDB();
-        if (!dataEncaisse) return Promise.resolve({ success: false });
-
-        if (!dataEncaisse.idEncaisse) {
-            dataEncaisse.idEncaisse = this.genererIdUnique('FV');
-        }
-
-        const index = db.constatsEncaisses.findIndex(e => e.idEncaisse && e.idEncaisse === dataEncaisse.idEncaisse);
+        const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
         if (index >= 0) {
-            db.constatsEncaisses[index] = { ...db.constatsEncaisses[index], ...dataEncaisse };
+            db.constatsEncaisses[index] = dataEncaisse;
         } else {
             db.constatsEncaisses.push(dataEncaisse);
         }
@@ -184,7 +169,7 @@ const FCIDatabase = {
 
         if (syncGitHub) {
             const entite = dataEncaisse.site || dataEncaisse.entite || dataEncaisse.bureau || 'Encaisse';
-            const id = dataEncaisse.idMission || dataEncaisse.idEncaisse;
+            const id = dataEncaisse.idEncaisse || dataEncaisse.idMission || Date.now();
             return this.archiverSurGitHub('FV', entite, id, dataEncaisse);
         }
         return Promise.resolve({ success: true, localOnly: true });
@@ -192,57 +177,23 @@ const FCIDatabase = {
 
     enregistrerLotEncaisses(listeEncaisses, site, idMission, syncGitHub = true) {
         const db = this.getDB();
-        const lot = Array.isArray(listeEncaisses) ? listeEncaisses : [listeEncaisses];
-
-        lot.forEach((dataEncaisse, idx) => {
-            if (!dataEncaisse) return;
-            if (!dataEncaisse.idEncaisse) {
-                dataEncaisse.idEncaisse = this.genererIdUnique(`FV-${idx}`);
-            }
-            const index = db.constatsEncaisses.findIndex(e => e.idEncaisse && e.idEncaisse === dataEncaisse.idEncaisse);
+        listeEncaisses.forEach(dataEncaisse => {
+            const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
             if (index >= 0) {
-                db.constatsEncaisses[index] = { ...db.constatsEncaisses[index], ...dataEncaisse };
+                db.constatsEncaisses[index] = dataEncaisse;
             } else {
                 db.constatsEncaisses.push(dataEncaisse);
             }
         });
         this.saveDB(db);
 
-        if (syncGitHub && lot.length > 0) {
-            return this.archiverSurGitHub('FV', site || 'Encaisse', idMission || Date.now(), lot);
+        if (syncGitHub && listeEncaisses.length > 0) {
+            const premier = listeEncaisses[0];
+            const siteCible = site || premier.site || premier.entite || 'Encaisse';
+            const missionCible = idMission || premier.idMission || Date.now();
+            return this.archiverSurGitHub('FV', siteCible, missionCible, listeEncaisses);
         }
         return Promise.resolve({ success: true, localOnly: true });
-    },
-
-    modifierEnregistrementBDD(id, table, nouveauxChamps) {
-        const db = this.getDB();
-        if (table === 'constatsControle') {
-            const idx = db.constatsControle.findIndex(c => c.idConstat === id);
-            if (idx >= 0) {
-                db.constatsControle[idx] = { ...db.constatsControle[idx], ...nouveauxChamps };
-                this.saveDB(db);
-                return true;
-            }
-        } else if (table === 'constatsEncaisses') {
-            const idx = db.constatsEncaisses.findIndex(e => e.idEncaisse === id);
-            if (idx >= 0) {
-                db.constatsEncaisses[idx] = { ...db.constatsEncaisses[idx], ...nouveauxChamps };
-                this.saveDB(db);
-                return true;
-            }
-        }
-        return false;
-    },
-
-    supprimerEnregistrementBDD(id, table) {
-        const db = this.getDB();
-        if (table === 'constatsControle') {
-            db.constatsControle = db.constatsControle.filter(c => c.idConstat !== id);
-        } else if (table === 'constatsEncaisses') {
-            db.constatsEncaisses = db.constatsEncaisses.filter(e => e.idEncaisse !== id);
-        }
-        this.saveDB(db);
-        return true;
     },
 
     // =========================================================================
@@ -250,16 +201,33 @@ const FCIDatabase = {
     // =========================================================================
 
     async archiverSurGitHub(typeFiche, entite, identifiant, donnees) {
+        // Normalisation si un objet legacy est passé en premier paramètre
+        if (typeFiche && typeof typeFiche === 'object') {
+            const legacyObj = typeFiche;
+            const prefix = String(entite || legacyObj.type || '');
+            if (prefix.includes('FC') || legacyObj.type === 'MODIFICATION_FC') {
+                typeFiche = 'FC';
+                donnees = legacyObj.constats || legacyObj;
+                identifiant = legacyObj.idMission || Date.now();
+                entite = (Array.isArray(donnees) && donnees[0]?.entite) || prefix.replace(/^FC_MODIF_/, '') || 'Controle';
+            } else if (prefix.includes('FV') || legacyObj.type === 'MODIFICATION_FV') {
+                typeFiche = 'FV';
+                donnees = legacyObj.constats || legacyObj;
+                identifiant = legacyObj.idMission || Date.now();
+                entite = legacyObj.site || (Array.isArray(donnees) && donnees[0]?.site) || prefix.replace(/^FV_MODIF_/, '') || 'Encaisse';
+            }
+        }
+
         let token = this.getGitHubToken();
         if (!token) {
             token = this.configurerGitHubToken();
         }
         if (!token) {
-            console.warn("[FCI GitHub] Archivage distant ignoré (aucun token configuré). Données enregistrées dans la BDD locale.");
-            return { success: true, localOnly: true, reason: 'NO_TOKEN' };
+            console.warn("[FCI GitHub] Archivage distant ignoré (aucun token configuré). Données enregistrées en local.");
+            return { success: false, reason: 'NO_TOKEN' };
         }
 
-        const dateJour = new Date().toISOString().slice(0, 10);
+        const dateJour = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
         const nomFichier = `${typeFiche}_${dateJour}_${this.nettoyerNomFichier(entite)}_${this.nettoyerNomFichier(identifiant)}.json`;
         const cheminGitHub = `${FCI_GITHUB_CONFIG.archiveFolder}/${nomFichier}`;
         const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${cheminGitHub}`;
@@ -272,8 +240,9 @@ const FCIDatabase = {
         };
 
         try {
+            // 1. Récupération du SHA si le fichier existe déjà (mise à jour sans erreur HTTP 422)
             let existingSha = null;
-            const checkResponse = await fetch(`${apiUrl}?ref=${FCI_GITHUB_CONFIG.branch}&t=${Date.now()}`, {
+            const checkResponse = await fetch(`${apiUrl}?ref=${FCI_GITHUB_CONFIG.branch}`, {
                 method: 'GET',
                 headers
             });
@@ -282,6 +251,7 @@ const FCIDatabase = {
                 existingSha = fileInfo.sha;
             }
 
+            // 2. Préparation de l'enveloppe JSON
             const enveloppeArchive = {
                 application: "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
                 organisme: "Barid Al-Maghrib - Direction Contrôle Générale",
@@ -302,6 +272,7 @@ const FCIDatabase = {
                 bodyPayload.sha = existingSha;
             }
 
+            // 3. Envoi via PUT sur l'API REST GitHub
             const putResponse = await fetch(apiUrl, {
                 method: 'PUT',
                 headers,
@@ -318,36 +289,36 @@ const FCIDatabase = {
             return { success: true, path: cheminGitHub, url: result.content.html_url };
 
         } catch (error) {
-            console.error("[FCI GitHub] Erreur lors de l'archivage (données conservées en local) :", error);
-            return { success: true, localOnly: true, githubError: error.message };
+            console.error("[FCI GitHub] Erreur lors de l'archivage :", error);
+            return { success: false, error: error.message };
         }
     },
 
     async listerArchivesGitHub() {
         const token = this.getGitHubToken();
-        const headers = { 'Accept': 'application/vnd.github+json' };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return [];
 
-        const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${FCI_GITHUB_CONFIG.archiveFolder}?ref=${FCI_GITHUB_CONFIG.branch}&t=${Date.now()}`;
-        const res = await fetch(apiUrl, { headers });
+        const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${FCI_GITHUB_CONFIG.archiveFolder}?ref=${FCI_GITHUB_CONFIG.branch}`;
+        const res = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github+json'
+            }
+        });
 
         if (!res.ok) return [];
         const fichiers = await res.json();
-        return Array.isArray(fichiers) ? fichiers.filter(f => f.name.endsWith('.json')) : [];
+        return Array.isArray(fichiers)
+            ? fichiers.filter(f => f.name.endsWith('.json')).sort((a, b) => a.name.localeCompare(b.name))
+            : [];
     },
 
-    async restaurerDepuisGitHub(silencieux = false) {
+    async restaurerDepuisGitHub() {
         let token = this.getGitHubToken();
-        if (!token && !silencieux) {
+        if (!token) {
             token = this.configurerGitHubToken();
         }
-
-        const headers = { 'Accept': 'application/vnd.github+json' };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (!token) return { success: false, message: "Token GitHub requis pour la restauration." };
 
         const fichiers = await this.listerArchivesGitHub();
         if (fichiers.length === 0) {
@@ -356,46 +327,42 @@ const FCIDatabase = {
 
         let nbRestaures = 0;
         for (const f of fichiers) {
-            try {
-                let archive = null;
-                if (f.download_url) {
-                    const rawRes = await fetch(`${f.download_url}?t=${Date.now()}`);
-                    if (rawRes.ok) {
-                        archive = await rawRes.json();
-                    }
+            const res = await fetch(f.url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github+json'
                 }
-                if (!archive) {
-                    const res = await fetch(f.url, { headers });
-                    if (!res.ok) continue;
-                    const fileData = await res.json();
-                    archive = JSON.parse(this.decodeBase64UTF8(fileData.content));
+            });
+            if (!res.ok) continue;
+            const fileData = await res.json();
+
+            let texteJson = '';
+            if (fileData.content) {
+                texteJson = this.decodeBase64UTF8(fileData.content);
+            } else if (fileData.download_url) {
+                const rawRes = await fetch(fileData.download_url);
+                if (!rawRes.ok) continue;
+                texteJson = await rawRes.text();
+            }
+            if (!texteJson) continue;
+
+            const archive = JSON.parse(texteJson);
+            if (!archive || !archive.donnees) continue;
+
+            // Réinjection dans localStorage sans re-déclencher un push GitHub (syncGitHub = false)
+            if (archive.typeArchive === 'PLAN') {
+                this.enregistrerMission(archive.donnees, false);
+                nbRestaures++;
+            } else if (archive.typeArchive === 'FC' && Array.isArray(archive.donnees)) {
+                this.enregistrerConstatsControle(archive.donnees, false);
+                nbRestaures++;
+            } else if (archive.typeArchive === 'FV') {
+                if (Array.isArray(archive.donnees)) {
+                    this.enregistrerLotEncaisses(archive.donnees, '', '', false);
+                } else {
+                    this.enregistrerConstatEncaisse(archive.donnees, false);
                 }
-
-                if (!archive) continue;
-
-                const donnees = archive.donnees || archive;
-                const type = archive.typeArchive || (
-                    f.name.startsWith('PLAN_') ? 'PLAN' :
-                    f.name.startsWith('FC_') ? 'FC' :
-                    f.name.startsWith('FV_') ? 'FV' : ''
-                );
-
-                if (type === 'PLAN') {
-                    this.enregistrerMission(donnees, false);
-                    nbRestaures++;
-                } else if (type === 'FC') {
-                    this.enregistrerConstatsControle(donnees, false);
-                    nbRestaures++;
-                } else if (type === 'FV') {
-                    if (Array.isArray(donnees)) {
-                        this.enregistrerLotEncaisses(donnees, '', '', false);
-                    } else {
-                        this.enregistrerConstatEncaisse(donnees, false);
-                    }
-                    nbRestaures++;
-                }
-            } catch (err) {
-                console.warn(`[FCI GitHub] Fichier ignoré (${f.name}):`, err);
+                nbRestaures++;
             }
         }
 
