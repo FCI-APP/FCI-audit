@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-16T15:03:08.392Z",
+  "donnees": {
+    "idMission": "MIS-1794841387379",
+    "region": "LAAYOUNE",
+    "typeControle": "Systématique",
+    "date": "2026-11-16",
+    "dateDebut": "2026-10-01",
+    "dateFin": "2026-10-31",
+    "entite": "DAKHLA AM",
+    "controleur": "BIKOURANE",
+    "pointsSelectionnes": [
+      {
+        "Processus": "First & Last Mile",
+        "Intitulé du risque": "Inadéquation de la capacité d'exploitation de BAM aux offres F&LM BAM",
+        "Intitulé Contrôle": "Contrôle de l'adéquation des nouvelles offres à la capacité d'exploitation",
+        "Points de contrôle": "1/ Une étude de faisabilité et d'impact opérationnel est-elle réalisée pour la validation de chaque nouvelle offre ?"
+      },
+      {
+        "Processus": "First & Last Mile",
+        "Intitulé du risque": "Inadéquation de la capacité d'exploitation de BAM aux offres F&LM BAM",
+        "Intitulé Contrôle": "Contrôle de l'adéquation des nouvelles offres à la capacité d'exploitation",
+        "Points de contrôle": "2/ Une planification des demandes d'acquisition des ressources logistiques et de déploiement des RH en fonction des objectifs et prévisions commerciales& marketing est-elle réalisée ?"
+      }
+    ]
+  }
+}
