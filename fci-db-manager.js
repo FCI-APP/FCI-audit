@@ -61,7 +61,7 @@ const FCIDatabase = {
     },
 
     // =========================================================================
-    // GESTION DU TOKEN GITHUB & UTILITAIRES UTF-8 / BASE64
+    // GESTION DU TOKEN GITHUB & UTILITAIRES UTF-8 / BASE64 / ARBORESCENCE
     // =========================================================================
 
     getGitHubToken() {
@@ -114,18 +114,59 @@ const FCIDatabase = {
             .replace(/[^a-zA-Z0-9_-]/g, '_');
     },
 
+    extraireSousDossierAnneeMois(donnees) {
+        let dateRef = '';
+        const cible = Array.isArray(donnees) ? donnees[0] : donnees;
+        if (cible && typeof cible === 'object') {
+            dateRef = cible.date || cible.dateControle || cible.dateVerification || cible.dateDebut || '';
+        }
+
+        let str = String(dateRef || '').trim();
+        if (str.includes('T')) str = str.split('T')[0];
+
+        // Format jj/mm/aaaa
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+            const [, m, y] = str.split('/');
+            return `${y}/${m.padStart(2, '0')}`;
+        }
+        // Format aaaa-mm-jj
+        if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(str)) {
+            const [y, m] = str.split('-');
+            return `${y}/${m.padStart(2, '0')}`;
+        }
+
+        // Par défaut : année et mois courants
+        const now = new Date();
+        return `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`;
+    },
+
+    fusionnerItemDansTable(liste, nouvelItem, champId) {
+        const index = liste.findIndex(existing => existing[champId] === nouvelItem[champId]);
+        if (index < 0) {
+            liste.push(nouvelItem);
+            return;
+        }
+
+        const existant = liste[index];
+        const dateModifExistante = existant.dateModification || '';
+        const dateModifNouvelle = nouvelItem.dateModification || '';
+
+        if (dateModifNouvelle && dateModifNouvelle >= dateModifExistante) {
+            liste[index] = { ...existant, ...nouvelItem };
+        } else if (nouvelItem.isModifie && !existant.isModifie) {
+            liste[index] = { ...existant, ...nouvelItem };
+        } else if (!existant.dateModification && !dateModifNouvelle) {
+            liste[index] = { ...existant, ...nouvelItem };
+        }
+    },
+
     // =========================================================================
     // MÉTHODES MÉTIER (SAUVEGARDE LOCALE + ARCHIVAGE AUTOMATIQUE GITHUB)
     // =========================================================================
 
     enregistrerMission(dataMission, syncGitHub = true) {
         const db = this.getDB();
-        const index = db.missions.findIndex(m => m.idMission === dataMission.idMission);
-        if (index >= 0) {
-            db.missions[index] = dataMission;
-        } else {
-            db.missions.push(dataMission);
-        }
+        this.fusionnerItemDansTable(db.missions, dataMission, 'idMission');
         this.saveDB(db);
 
         if (syncGitHub) {
@@ -139,12 +180,7 @@ const FCIDatabase = {
     enregistrerConstatsControle(constatsArray, syncGitHub = true) {
         const db = this.getDB();
         constatsArray.forEach(c => {
-            const index = db.constatsControle.findIndex(existing => existing.idConstat === c.idConstat);
-            if (index >= 0) {
-                db.constatsControle[index] = c;
-            } else {
-                db.constatsControle.push(c);
-            }
+            this.fusionnerItemDansTable(db.constatsControle, c, 'idConstat');
         });
         this.saveDB(db);
 
@@ -159,12 +195,7 @@ const FCIDatabase = {
 
     enregistrerConstatEncaisse(dataEncaisse, syncGitHub = true) {
         const db = this.getDB();
-        const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
-        if (index >= 0) {
-            db.constatsEncaisses[index] = dataEncaisse;
-        } else {
-            db.constatsEncaisses.push(dataEncaisse);
-        }
+        this.fusionnerItemDansTable(db.constatsEncaisses, dataEncaisse, 'idEncaisse');
         this.saveDB(db);
 
         if (syncGitHub) {
@@ -178,12 +209,7 @@ const FCIDatabase = {
     enregistrerLotEncaisses(listeEncaisses, site, idMission, syncGitHub = true) {
         const db = this.getDB();
         listeEncaisses.forEach(dataEncaisse => {
-            const index = db.constatsEncaisses.findIndex(e => e.idEncaisse === dataEncaisse.idEncaisse);
-            if (index >= 0) {
-                db.constatsEncaisses[index] = dataEncaisse;
-            } else {
-                db.constatsEncaisses.push(dataEncaisse);
-            }
+            this.fusionnerItemDansTable(db.constatsEncaisses, dataEncaisse, 'idEncaisse');
         });
         this.saveDB(db);
 
@@ -197,7 +223,7 @@ const FCIDatabase = {
     },
 
     // =========================================================================
-    // MOTEUR API REST GITHUB (CRÉATION / MISE À JOUR / LECTURE DES ARCHIVES)
+    // MOTEUR API REST GITHUB (CRÉATION / MISE À JOUR / LECTURE RÉCURSIVE)
     // =========================================================================
 
     async archiverSurGitHub(typeFiche, entite, identifiant, donnees) {
@@ -227,9 +253,11 @@ const FCIDatabase = {
             return { success: false, reason: 'NO_TOKEN' };
         }
 
+        // Sous-dossier mensuel automatique : archives/AAAA/MM/
+        const sousDossierMensuel = this.extraireSousDossierAnneeMois(donnees);
         const dateJour = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
         const nomFichier = `${typeFiche}_${dateJour}_${this.nettoyerNomFichier(entite)}_${this.nettoyerNomFichier(identifiant)}.json`;
-        const cheminGitHub = `${FCI_GITHUB_CONFIG.archiveFolder}/${nomFichier}`;
+        const cheminGitHub = `${FCI_GITHUB_CONFIG.archiveFolder}/${sousDossierMensuel}/${nomFichier}`;
         const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${cheminGitHub}`;
 
         const headers = {
@@ -272,7 +300,7 @@ const FCIDatabase = {
                 bodyPayload.sha = existingSha;
             }
 
-            // 3. Envoi via PUT sur l'API REST GitHub
+            // 3. Envoi via PUT sur l'API REST GitHub (crée automatiquement archives/AAAA/MM/)
             const putResponse = await fetch(apiUrl, {
                 method: 'PUT',
                 headers,
@@ -298,14 +326,36 @@ const FCIDatabase = {
         const token = this.getGitHubToken();
         if (!token) return [];
 
-        const apiUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${FCI_GITHUB_CONFIG.archiveFolder}?ref=${FCI_GITHUB_CONFIG.branch}`;
-        const res = await fetch(apiUrl, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github+json'
-            }
-        });
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28'
+        };
 
+        // Lecture récursive via Git Trees API : parcourt archives/ + tous les sous-dossiers archives/AAAA/MM/
+        const treeUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/git/trees/${FCI_GITHUB_CONFIG.branch}?recursive=1`;
+        const treeRes = await fetch(treeUrl, { headers });
+
+        if (treeRes.ok) {
+            const treeData = await treeRes.json();
+            const prefixeDossier = `${FCI_GITHUB_CONFIG.archiveFolder}/`;
+            return (treeData.tree || [])
+                .filter(item =>
+                    item.type === 'blob' &&
+                    item.path.startsWith(prefixeDossier) &&
+                    item.path.endsWith('.json')
+                )
+                .map(item => ({
+                    name: item.path.split('/').pop(),
+                    path: item.path,
+                    url: `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${item.path}?ref=${FCI_GITHUB_CONFIG.branch}`
+                }))
+                .sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        // Fallback sur la racine archives/ si l'arbre Git n'est pas disponible
+        const fallbackUrl = `https://api.github.com/repos/${FCI_GITHUB_CONFIG.owner}/${FCI_GITHUB_CONFIG.repo}/contents/${FCI_GITHUB_CONFIG.archiveFolder}?ref=${FCI_GITHUB_CONFIG.branch}`;
+        const res = await fetch(fallbackUrl, { headers });
         if (!res.ok) return [];
         const fichiers = await res.json();
         return Array.isArray(fichiers)
@@ -369,7 +419,7 @@ const FCIDatabase = {
         return {
             success: true,
             count: nbRestaures,
-            message: `${nbRestaures} archive(s) synchronisée(s) depuis GitHub vers la BDD locale.`
+            message: `${nbRestaures} archive(s) synchronisée(s) depuis GitHub (tous mois confondus) vers la BDD locale.`
         };
     },
 
@@ -393,7 +443,7 @@ const FCIDatabase = {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `FCI_BDD_${new Date().toISOString().slice(0,10)}.json`);
+        downloadAnchor.setAttribute("download", `FCI_BDD_${new Date().toISOString().slice(0, 10)}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
