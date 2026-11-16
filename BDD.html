@@ -193,6 +193,7 @@
     <div class="modal-content">
         <h3 style="margin-top:0; color:var(--bam-blue);"><i class="fas fa-edit"></i> Modifier l'Enregistrement</h3>
         <input type="hidden" id="editUid">
+        <input type="hidden" id="editTable">
         <div class="modal-grid">
             <div>
                 <label>Date</label>
@@ -266,12 +267,44 @@
     let currentTypeFilter = 'ALL';
     let allRecords = [];
 
+    function chargerEnregistrementsDepuisFCIDatabase() {
+        const db = FCIDatabase.getDB();
+        const listeFC = (db.constatsControle || []).map(c => ({
+            ...c,
+            _uid: c.idConstat,
+            _table: 'constatsControle',
+            missionId: c.idMission || c.missionId || '-',
+            site: c.site || c.entite || c.agence || '-',
+            typeControle: c.typeControle || 'Thématique'
+        }));
+
+        const listeFV = (db.constatsEncaisses || []).map(e => ({
+            ...e,
+            _uid: e.idEncaisse,
+            _table: 'constatsEncaisses',
+            missionId: e.idMission || e.missionId || '-',
+            site: e.site || e.entite || e.bureau || '-',
+            typeControle: e.typeControle || 'Vérification',
+            processus: e.processus || 'Gestion des Encaisses',
+            sousProcessus: e.sousProcessus || e.caisse || '-',
+            pointControle: e.pointControle || `Vérification Caisse (Écart: ${e.ecart ?? 0} DH)`,
+            statut: e.statut || (Math.abs(parseFloat(e.ecart) || 0) < 0.01 ? 'Conforme' : 'Non Conforme'),
+            note: e.note !== undefined ? e.note : (Math.abs(parseFloat(e.ecart) || 0) < 0.01 ? 100 : 0),
+            constat: e.constat || `Écart: ${e.ecart ?? 0} DH`
+        }));
+
+        allRecords = [...listeFC, ...listeFV];
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
-        // Chargement immédiat depuis le stockage local
-        allRecords = FCIDBManager.getAllRecords();
+        chargerEnregistrementsDepuisFCIDatabase();
         afficherTableauBDD();
-        // Puis synchronisation silencieuse depuis GitHub pour récupérer d'éventuelles archives distantes
         await actualiserBDD(true);
+    });
+
+    window.addEventListener('fci-db-updated', () => {
+        chargerEnregistrementsDepuisFCIDatabase();
+        afficherTableauBDD();
     });
 
     async function actualiserBDD(silent = false) {
@@ -280,7 +313,8 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Synchronisation...';
         }
-        allRecords = await FCIDBManager.pullFromGitHub();
+        await FCIDatabase.restaurerDepuisGitHub(silent);
+        chargerEnregistrementsDepuisFCIDatabase();
         afficherTableauBDD();
         if (!silent) {
             btn.disabled = false;
@@ -335,8 +369,8 @@
                     <td><strong>${note} %</strong></td>
                     <td>${r.constat || '-'}</td>
                     <td style="white-space:nowrap;">
-                        <button class="btn btn-warning" style="padding:4px 8px;" onclick="ouvrirModal('${r.uid}')" title="Modifier"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-danger" style="padding:4px 8px;" onclick="supprimerLigneBDD('${r.uid}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+                        <button class="btn btn-warning" style="padding:4px 8px;" onclick="ouvrirModal('${r._uid}', '${r._table}')" title="Modifier"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger" style="padding:4px 8px;" onclick="supprimerLigneBDD('${r._uid}', '${r._table}')" title="Supprimer"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;
@@ -358,11 +392,12 @@
         }
     }
 
-    function ouvrirModal(uid) {
-        const rec = allRecords.find(r => r.uid === uid);
+    function ouvrirModal(uid, table) {
+        const rec = allRecords.find(r => r._uid === uid && r._table === table);
         if (!rec) return;
 
-        document.getElementById('editUid').value = rec.uid;
+        document.getElementById('editUid').value = rec._uid;
+        document.getElementById('editTable').value = rec._table;
         document.getElementById('editDate').value = rec.date || '';
         document.getElementById('editRegion').value = rec.region || 'MARRAKECH';
         majSitesModal(rec.site);
@@ -378,11 +413,13 @@
         document.getElementById('editModal').style.display = 'none';
     }
 
-    async function enregistrerModification() {
+    function enregistrerModification() {
         const uid = document.getElementById('editUid').value;
+        const table = document.getElementById('editTable').value;
         const updated = {
             date: document.getElementById('editDate').value,
             region: document.getElementById('editRegion').value,
+            entite: document.getElementById('editSite').value,
             site: document.getElementById('editSite').value,
             processus: document.getElementById('editProcessus').value,
             statut: document.getElementById('editStatut').value,
@@ -390,16 +427,16 @@
             constat: document.getElementById('editConstat').value
         };
 
-        await FCIDBManager.updateRecord(uid, updated);
-        allRecords = FCIDBManager.getAllRecords();
+        FCIDatabase.modifierEnregistrementBDD(uid, table, updated);
+        chargerEnregistrementsDepuisFCIDatabase();
         afficherTableauBDD();
         fermerModal();
     }
 
-    async function supprimerLigneBDD(uid) {
+    function supprimerLigneBDD(uid, table) {
         if (!confirm("Confirmer la suppression définitive de cet enregistrement de la BDD ?")) return;
-        await FCIDBManager.deleteRecord(uid);
-        allRecords = FCIDBManager.getAllRecords();
+        FCIDatabase.supprimerEnregistrementBDD(uid, table);
+        chargerEnregistrementsDepuisFCIDatabase();
         afficherTableauBDD();
     }
 
