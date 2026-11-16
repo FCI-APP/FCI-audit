@@ -2,7 +2,7 @@
   "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
   "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
   "typeArchive": "FC",
-  "dateArchivage": "2026-11-16T15:57:34.849Z",
+  "dateArchivage": "2026-11-16T15:59:11.091Z",
   "donnees": [
     {
       "idConstat": "CST-SUIVI-1794843756815-1",
@@ -18,7 +18,7 @@
       "risque": "Dispositions contractuelles peu protectrices des intérêts de BAM",
       "controle": "Contrôle de la formalisation des contrats",
       "pc": "2/ Les contrats à clauses spécifiques sont -t-ils soumis à la DAJ pour validation ?",
-      "pop": 5300,
+      "pop": 14000,
       "ech": 4000,
       "ok": 3900,
       "ko": 100,
