@@ -1,0 +1,31 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-16T11:21:34.145Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794828093097-0-0",
+      "idMission": "MIS-ENC-1794828093097",
+      "region": "MARRAKECH",
+      "site": "MARRAKECH CM",
+      "entite": "MARRAKECH CM",
+      "controleur": "baba",
+      "date": "2026-11-16",
+      "dateVerification": "2026-11-16",
+      "processus": "Trésorerie et Financement",
+      "risque": "Détournement des encaissements et des recettes au niveau du réseau",
+      "controle": "Contrôle de l'arrêté journalier des centres / agences",
+      "pc": "Les fonds disponibles sont-ils exacts ou présentent-ils un écart ?",
+      "pop": 100,
+      "ech": 80,
+      "ok": 70,
+      "ko": 10,
+      "tc": 87.5,
+      "statut": "EN_COURS",
+      "constat": "aaaaaaaaaaaa",
+      "recommandation": "bbbbbbbbbbbbbb",
+      "avisResponsable": "--"
+    }
+  ]
+}
