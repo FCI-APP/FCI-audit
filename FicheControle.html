@@ -1091,7 +1091,6 @@
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
 
                 const constatsBDD = construirePayloadConstatsFC(idMission, 'ARCHIVE');
-                let ghResult = { success: true, localOnly: true };
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
                     await FCIDatabase.enregistrerMission({
@@ -1108,21 +1107,11 @@
                 }
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    ghResult = await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
+                    await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
                 } else {
                     const db = lireDBSecurisee();
                     db.constatsControle = [...db.constatsControle, ...constatsBDD];
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche de Contrôle (${typeControleMission} - ${regionMission} / ${meta.entite} du ${dateCtrl}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
-                } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
-                    alert("✅ Fiche de Contrôle archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
-                } else if (ghResult && ghResult.localOnly) {
-                    alert("✅ Fiche de Contrôle archivée dans la BDD locale.");
-                } else {
-                    alert(`⚠️ Fiche archivée dans la BDD locale, mais échec de l'envoi GitHub :\n${ghResult?.error || 'Erreur réseau'}`);
                 }
 
                 viderFormulaireFC();
@@ -1284,17 +1273,9 @@
 
                 sauvegarderDBSecurisee(db);
 
-                let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    ghResult = await FCIDatabase.enregistrerConstatsControle(constatsMisAJour, true);
-                    // Garantir qu'aucun doublon n'est ajouté dans la BDD locale après l'envoi GitHub
+                    await FCIDatabase.enregistrerConstatsControle(constatsMisAJour, true);
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Modification appliquée sur la même ligne dans la BDD (avec symbole stylo orange) et archivée sur GitHub :\n${ghResult.path}`);
-                } else {
-                    alert(`✅ Modification appliquée directement sur la même ligne dans la BDD (symbole stylo orange intégré sous Type de contrôle).`);
                 }
 
                 viderFormulaireFC();
@@ -1361,16 +1342,9 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    ghResult = await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
+                    await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD et archivées sur GitHub :\n${ghResult.path}`);
-                } else {
-                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD.`);
                 }
 
                 viderFormulaireFC();
@@ -1389,29 +1363,22 @@
                 return;
             }
 
-            const meta = missionData.metadata || {};
-            const libelleCible = `${meta.entite || 'Site'} - ${meta.dateControle || ''}`;
+            const db = lireDBSecurisee();
+            const idsPointsCharges = missionData.pointsControle
+                .map(p => p._bddIdConstat)
+                .filter(Boolean);
+            const idsToDelete = new Set([...(missionData._loadedConstatIds || []), ...idsPointsCharges]);
 
-            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer les ${missionData.pointsControle.length} ligne(s) FC correspondante(s) de [${libelleCible}] de la BDD ?`)) {
-                const db = lireDBSecurisee();
-                const idsPointsCharges = missionData.pointsControle
-                    .map(p => p._bddIdConstat)
-                    .filter(Boolean);
-                const idsToDelete = new Set([...(missionData._loadedConstatIds || []), ...idsPointsCharges]);
-
-                if (idsToDelete.size > 0) {
-                    db.constatsControle = (db.constatsControle || []).filter(c => !idsToDelete.has(c.idConstat));
-                } else if (meta.idMission) {
-                    db.missions = (db.missions || []).filter(m => m.idMission !== meta.idMission);
-                    db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== meta.idMission);
-                }
-
-                sauvegarderDBSecurisee(db);
-
-                alert(`✅ Les lignes correspondantes de [${libelleCible}] ont été supprimées de la BDD.`);
-                viderFormulaireFC();
-                remplirFiltresBDD();
+            if (idsToDelete.size > 0) {
+                db.constatsControle = (db.constatsControle || []).filter(c => !idsToDelete.has(c.idConstat));
+            } else if (missionData.metadata && missionData.metadata.idMission) {
+                db.missions = (db.missions || []).filter(m => m.idMission !== missionData.metadata.idMission);
+                db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== missionData.metadata.idMission);
             }
+
+            sauvegarderDBSecurisee(db);
+            viderFormulaireFC();
+            remplirFiltresBDD();
         }
 
         function sauvegarderLocalement() { localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData)); }
