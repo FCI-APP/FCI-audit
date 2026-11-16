@@ -2,7 +2,7 @@
   "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
   "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
   "typeArchive": "FV",
-  "dateArchivage": "2026-11-16T15:19:40.796Z",
+  "dateArchivage": "2026-11-16T15:21:28.565Z",
   "donnees": [
     {
       "idEncaisse": "ENC-MIS-ENC-1794841811466-1-1",
@@ -13,8 +13,8 @@
       "entite": "EL YOUSSOUFIA CLD",
       "controleur": "NAKHILI",
       "responsable": "",
-      "date": "2027-01-01",
-      "dateVerification": "2027-01-01",
+      "date": "2027-01-15",
+      "dateVerification": "2027-01-15",
       "dateDebut": "2026-09-01",
       "dateFin": "2026-09-30",
       "processus": "Philatélie",
