@@ -2,7 +2,7 @@
   "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
   "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
   "typeArchive": "FC",
-  "dateArchivage": "2026-11-16T15:38:16.624Z",
+  "dateArchivage": "2026-11-16T16:01:09.668Z",
   "donnees": [
     {
       "idConstat": "CST-MIS-1794843337303-1",
@@ -18,7 +18,7 @@
       "risque": "Dispositions contractuelles peu protectrices des intérêts de BAM",
       "controle": "Contrôle de la formalisation des contrats",
       "pc": "1/ Existe t-il des contrats types validés par la DAJ?",
-      "pop": 700,
+      "pop": 9000,
       "ech": 550,
       "ok": 540,
       "ko": 10,
@@ -27,8 +27,8 @@
       "recommandation": "baba",
       "avisResponsable": "",
       "statut": "CLOTURE",
-      "isModifie": false,
-      "modifie": false,
+      "isModifie": true,
+      "modifie": true,
       "isSuivi": false,
       "suivi": false
     },
@@ -55,8 +55,8 @@
       "recommandation": "ok",
       "avisResponsable": "",
       "statut": "NON_CLOTURE",
-      "isModifie": false,
-      "modifie": false,
+      "isModifie": true,
+      "modifie": true,
       "isSuivi": false,
       "suivi": false
     }
