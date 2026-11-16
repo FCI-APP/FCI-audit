@@ -51,7 +51,7 @@
             padding: 8px 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 0.9rem;
         }
 
-        /* Cartes KPI Encaisses (Actives et colorées) */
+        /* Cartes KPI Encaisses */
         .kpi-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 15px;
         }
@@ -266,13 +266,14 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archivage en cours...';
 
-        const record = {
-            uid: `FV-${missionId}-${Date.now()}`,
-            sourceType: 'FV',
-            missionId: missionId,
+        const dataEncaisse = {
+            idEncaisse: `FV-${missionId}-${Date.now()}`,
+            idMission: missionId,
             date: date,
             region: region,
+            entite: site,
             site: site,
+            caisse: caisse,
             typeControle: 'Vérification',
             processus: 'Gestion des Encaisses',
             sousProcessus: caisse,
@@ -280,17 +281,22 @@
             statut: estConforme ? 'Conforme' : 'Non Conforme',
             note: estConforme ? 100 : 0,
             constat: `Écart: ${ecart.toFixed(2)} DH${obs ? ' — ' + obs : ''}`,
-            auditeur: auditeur,
-            detailsEncaisse: { theorique, physique, ecart, caisse }
+            soldeTheorique: theorique,
+            encaissePhysique: physique,
+            ecart: ecart,
+            auditeur: auditeur
         };
 
-        const res = await FCIDBManager.archiveRecord(record);
+        const res = await FCIDatabase.enregistrerConstatEncaisse(dataEncaisse, true);
 
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-archive"></i> Archiver vers BDD';
 
         if (res && res.success) {
-            alert("✅ " + res.message + "\nLa vérification d'encaisse est enregistrée dans la feuille BDD.");
+            const msgGitHub = res.localOnly
+                ? "La vérification d'encaisse est stockée dans la feuille BDD locale (Synchronisation GitHub en attente)."
+                : "La vérification d'encaisse est stockée dans la feuille BDD et archivée sur GitHub !";
+            alert("✅ " + msgGitHub);
         } else {
             alert("⚠️ Erreur lors de l'archivage.");
         }
