@@ -63,30 +63,21 @@
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn { padding: 9px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-primary:hover { background-color: var(--dark-blue); }
         .btn-refresh { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
         .btn-refresh:hover { background-color: #BFDBFE; }
         .btn-success { background-color: var(--success); color: #FFF; }
         .btn-success:hover { background-color: #059669; }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-accent:hover { background-color: #d99b00; }
+        .btn-outline { background-color: #FFFFFF; color: var(--primary-blue); border: 1px solid #CBD5E1; }
+        .btn-outline:hover { background-color: #F1F5F9; }
         .btn-neutral { background-color: #F1F5F9; color: var(--primary-blue); border: 1px solid #CBD5E1; }
         .btn-neutral:hover { background-color: #E2E8F0; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
         .btn-danger:hover { background-color: #FCA5A5; }
-
-        .last-refresh-pill {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #065F46;
-            background-color: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            padding: 4px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
 
         .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 30px; }
         .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
@@ -100,40 +91,65 @@
         }
 
         .multi-filter-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
+            display: grid;
+            grid-template-columns: repeat(6, minmax(160px, 1fr)) auto;
+            gap: 10px;
+            align-items: end;
             background: #F8FAFC;
-            padding: 10px 14px;
+            padding: 12px 14px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            width: 100%;
         }
         .filter-select-group {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 0;
         }
         .filter-select-group label {
-            font-size: 0.76rem;
+            font-size: 0.72rem;
             font-weight: 800;
             text-transform: uppercase;
-            color: var(--primary-blue);
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .filter-dropdown {
-            padding: 7px 12px;
+            padding: 7px 10px;
             border-radius: 6px;
-            font-size: 0.82rem;
+            font-size: 0.8rem;
             font-weight: 800;
             border: 1px solid #CBD5E1;
             outline: none;
             cursor: pointer;
             background-color: #FFFFFF;
             color: var(--text-dark);
-            min-width: 210px;
+            width: 100%;
             transition: all 0.2s;
         }
+
+        /* Couleurs distinctes par filtre */
+        .filter-date-theme label { color: #1E40AF; }
+        .filter-date-theme .filter-dropdown { background-color: #EFF6FF; color: #1E3A8A; border-color: #93C5FD; }
+
+        .filter-region-theme label { color: #6D28D9; }
+        .filter-region-theme .filter-dropdown { background-color: #F5F3FF; color: #5B21B6; border-color: #C4B5FD; }
+
+        .filter-site-theme label { color: #0F766E; }
+        .filter-site-theme .filter-dropdown { background-color: #F0FDFA; color: #115E59; border-color: #5EEAD4; }
+
+        .filter-processus-theme label { color: #B45309; }
+        .filter-processus-theme .filter-dropdown { background-color: #FFFBEB; color: #92400E; border-color: #FCD34D; }
+
+        .filter-statut-theme label { color: #BE123C; }
+        .filter-statut-theme .filter-dropdown { background-color: #FFF1F2; color: #9F1239; border-color: #FDA4AF; }
+
+        .filter-type-theme label { color: #047857; }
+        .filter-type-theme .filter-dropdown { background-color: #ECFDF5; color: #065F46; border-color: #6EE7B7; }
 
         .select-statut-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; }
         .select-statut-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; }
@@ -222,6 +238,17 @@
         .statut-encours { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
         .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
         .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
+
+        @media (max-width: 1360px) {
+            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        }
+
+        @media print {
+            .sidebar, .header-actions-bdd, .multi-filter-bar { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
+            .table-responsive-wrapper { overflow: visible !important; border: none !important; }
+            table.bdd-table { min-width: 100% !important; font-size: 0.7rem !important; }
+        }
     </style>
 </head>
 <body>
@@ -252,11 +279,13 @@
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
                 <p>Table unifiée des constats d'audit (initiaux et suivis) et synchronisation avec les archives GitHub</p>
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
                 <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
                 <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
                 <button type="button" class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button type="button" class="btn btn-accent" onclick="exporterExcelBDD()"><i class="fa-solid fa-file-excel"></i> Télécharger fichier Excel</button>
+                <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
                 <button type="button" class="btn btn-primary" onclick="exporterBDDAction()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
         </header>
@@ -265,33 +294,56 @@
             <div class="table-header-bar">
                 <h3>
                     <i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))
-                    <span class="last-refresh-pill" id="lastRefreshBadge"><i class="fa-solid fa-check-circle"></i> À jour</span>
                 </h3>
 
                 <div class="multi-filter-bar">
-                    <div class="filter-select-group">
-                        <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut constat :</label>
+                    <div class="filter-select-group filter-date-theme">
+                        <label for="selectFiltreDate"><i class="fa-regular fa-calendar-days"></i> Date de contrôle</label>
+                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Toutes les dates --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-region-theme">
+                        <label for="selectFiltreRegion"><i class="fa-solid fa-map-location-dot"></i> Région</label>
+                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Toutes les régions --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-site-theme">
+                        <label for="selectFiltreSite"><i class="fa-solid fa-building"></i> Site</label>
+                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les sites --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-processus-theme">
+                        <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
+                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les processus --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-statut-theme">
+                        <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut</label>
                         <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">Tous les statuts (0)</option>
-                            <option value="EN_COURS" style="background-color:#FEF3C7; color:#92400E;">🟡 En cours (0)</option>
-                            <option value="CLOTURE" style="background-color:#D1FAE5; color:#065F46;">🟢 Clôturé (0)</option>
-                            <option value="NON_CLOTURE" style="background-color:#FEE2E2; color:#991B1B;">🔴 Non clôturé (0)</option>
+                            <option value="TOUS">-- Tous les statuts --</option>
                         </select>
                     </div>
 
-                    <div class="filter-select-group">
-                        <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle :</label>
+                    <div class="filter-select-group filter-type-theme">
+                        <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle</label>
                         <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">Tous les types (0)</option>
-                            <option value="Thématique" style="background-color:#DBEAFE; color:#1E40AF;">🔵 Thématique (0)</option>
-                            <option value="Systématique" style="background-color:#FEF3C7; color:#92400E;">🟠 Systématique (0)</option>
-                            <option value="Vérification" style="background-color:#D1FAE5; color:#065F46;">🟢 Vérification (0)</option>
+                            <option value="TOUS">-- Tous les types --</option>
                         </select>
                     </div>
 
-                    <button type="button" class="btn btn-neutral" style="padding:7px 12px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
-                        <i class="fa-solid fa-rotate-left"></i> Réinitialiser
-                    </button>
+                    <div>
+                        <button type="button" class="btn btn-neutral" style="padding:7px 12px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
+                            <i class="fa-solid fa-rotate-left"></i> Réinitialiser
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -324,8 +376,30 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
+        let filtreDateActif = 'TOUS';
+        let filtreRegionActif = 'TOUS';
+        let filtreSiteActif = 'TOUS';
+        let filtreProcessusActif = 'TOUS';
         let filtreStatutActif = 'TOUS';
         let filtreTypeActif = 'TOUS';
+        let dernieresLignesAffichees = [];
+
+        const PALETTE_DYNAMIQUE = [
+            { bg: '#DBEAFE', text: '#1E40AF' },
+            { bg: '#F3E8FF', text: '#6B21A8' },
+            { bg: '#CCFBF1', text: '#115E59' },
+            { bg: '#FEF3C7', text: '#92400E' },
+            { bg: '#FCE7F3', text: '#9D174D' },
+            { bg: '#E0E7FF', text: '#3730A3' },
+            { bg: '#DCFCE7', text: '#166534' },
+            { bg: '#FFEDD5', text: '#9A3412' },
+            { bg: '#E0F2FE', text: '#075985' },
+            { bg: '#FAE8FF', text: '#86198F' }
+        ];
+
+        function getCouleurOptionIndex(index) {
+            return PALETTE_DYNAMIQUE[index % PALETTE_DYNAMIQUE.length];
+        }
 
         function lireBDDLocaleSecurisee() {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
@@ -367,25 +441,13 @@
             return '9999-12-31';
         }
 
-        function actualiserBadgeHorodatage() {
-            const badge = document.getElementById('lastRefreshBadge');
-            if (!badge) return;
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             chargerBDDEnVisuel();
-            actualiserBadgeHorodatage();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
                 chargerBDDEnVisuel();
-                actualiserBadgeHorodatage();
             }
         });
 
@@ -439,6 +501,10 @@
         }
 
         function appliquerMultiFiltre() {
+            filtreDateActif = document.getElementById('selectFiltreDate').value;
+            filtreRegionActif = document.getElementById('selectFiltreRegion').value;
+            filtreSiteActif = document.getElementById('selectFiltreSite').value;
+            filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
             filtreStatutActif = document.getElementById('selectFiltreStatut').value;
             filtreTypeActif = document.getElementById('selectFiltreType').value;
             mettreAJourStylesSelectsFiltres();
@@ -446,39 +512,137 @@
         }
 
         function reinitialiserFiltresBDD() {
+            filtreDateActif = 'TOUS';
+            filtreRegionActif = 'TOUS';
+            filtreSiteActif = 'TOUS';
+            filtreProcessusActif = 'TOUS';
             filtreStatutActif = 'TOUS';
             filtreTypeActif = 'TOUS';
+            document.getElementById('selectFiltreDate').value = 'TOUS';
+            document.getElementById('selectFiltreRegion').value = 'TOUS';
+            document.getElementById('selectFiltreSite').value = 'TOUS';
+            document.getElementById('selectFiltreProcessus').value = 'TOUS';
             document.getElementById('selectFiltreStatut').value = 'TOUS';
             document.getElementById('selectFiltreType').value = 'TOUS';
             mettreAJourStylesSelectsFiltres();
             chargerBDDEnVisuel();
         }
 
+        function peuplerSelectDynamique(selectEl, valeursUniques, valeurActive, libelleTous, formatterLabelFn = null) {
+            if (!selectEl) return;
+            const liste = [...valeursUniques];
+            if (valeurActive !== 'TOUS' && !liste.includes(valeurActive)) {
+                liste.unshift(valeurActive);
+            }
+
+            let html = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">${libelleTous} (${valeursUniques.length})</option>`;
+            liste.forEach((val, idx) => {
+                const c = getCouleurOptionIndex(idx);
+                const label = formatterLabelFn ? formatterLabelFn(val) : val;
+                const selected = val === valeurActive ? 'selected' : '';
+                html += `<option value="${val}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${label}</option>`;
+            });
+            selectEl.innerHTML = html;
+        }
+
         function mettreAJourCompteursOptions(lignesUnifiees) {
+            const selDate = document.getElementById('selectFiltreDate');
+            const selRegion = document.getElementById('selectFiltreRegion');
+            const selSite = document.getElementById('selectFiltreSite');
+            const selProcessus = document.getElementById('selectFiltreProcessus');
             const selStatut = document.getElementById('selectFiltreStatut');
             const selType = document.getElementById('selectFiltreType');
 
-            const cEnCours = lignesUnifiees.filter(l => l.statutInfo.code === 'EN_COURS').length;
-            const cCloture = lignesUnifiees.filter(l => l.statutInfo.code === 'CLOTURE').length;
-            const cNonCloture = lignesUnifiees.filter(l => l.statutInfo.code === 'NON_CLOTURE').length;
+            // 1. Dates de contrôle présentes dans la BDD
+            const datesMap = new Map();
+            lignesUnifiees.forEach(l => {
+                if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
+                    datesMap.set(l.dateCtrlVerif, l.dateISO);
+                }
+            });
+            const datesTriees = [...datesMap.entries()]
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .map(entry => entry[0]);
+            peuplerSelectDynamique(
+                selDate,
+                datesTriees,
+                filtreDateActif,
+                'Toutes les dates',
+                (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
+            );
 
-            if (selStatut && selStatut.options.length >= 4) {
-                selStatut.options[0].text = `Tous les statuts (${lignesUnifiees.length})`;
-                selStatut.options[1].text = `🟡 En cours (${cEnCours})`;
-                selStatut.options[2].text = `🟢 Clôturé (${cCloture})`;
-                selStatut.options[3].text = `🔴 Non clôturé (${cNonCloture})`;
-            }
+            // 2. Régions présentes dans la BDD
+            const regionsTriees = [...new Set(
+                lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selRegion,
+                regionsTriees,
+                filtreRegionActif,
+                'Toutes les régions',
+                (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
+            );
 
-            const cThem = lignesUnifiees.filter(l => l.typeInfo.label === 'Thématique').length;
-            const cSyst = lignesUnifiees.filter(l => l.typeInfo.label === 'Systématique').length;
-            const cVerif = lignesUnifiees.filter(l => l.typeInfo.label === 'Vérification').length;
+            // 3. Sites présents dans la BDD (filtrés par région si une région est choisie)
+            const sourceSites = filtreRegionActif === 'TOUS'
+                ? lignesUnifiees
+                : lignesUnifiees.filter(l => l.region === filtreRegionActif);
+            const sitesTries = [...new Set(
+                sourceSites.map(l => l.entite).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selSite,
+                sitesTries,
+                filtreSiteActif,
+                'Tous les sites',
+                (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
+            );
 
-            if (selType && selType.options.length >= 4) {
-                selType.options[0].text = `Tous les types (${lignesUnifiees.length})`;
-                selType.options[1].text = `🔵 Thématique (${cThem})`;
-                selType.options[2].text = `🟠 Systématique (${cSyst})`;
-                selType.options[3].text = `🟢 Vérification (${cVerif})`;
-            }
+            // 4. Processus présents dans la BDD
+            const processusTries = [...new Set(
+                lignesUnifiees.map(l => l.processus).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selProcessus,
+                processusTries,
+                filtreProcessusActif,
+                'Tous les processus',
+                (p) => `⚙️ ${p} (${lignesUnifiees.filter(l => l.processus === p).length})`
+            );
+
+            // 5. Statuts présents dans la BDD avec leurs couleurs propres
+            const STATUTS_CONFIG = [
+                { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
+                { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
+                { code: 'NON_CLOTURE', label: '🔴 Non clôturé', bg: '#FEE2E2', color: '#991B1B' }
+            ];
+            const statutsPresents = STATUTS_CONFIG.filter(st =>
+                lignesUnifiees.some(l => l.statutInfo.code === st.code) || filtreStatutActif === st.code
+            );
+            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${lignesUnifiees.length})</option>`;
+            statutsPresents.forEach(st => {
+                const nb = lignesUnifiees.filter(l => l.statutInfo.code === st.code).length;
+                const sel = filtreStatutActif === st.code ? 'selected' : '';
+                htmlStatut += `<option value="${st.code}" ${sel} style="background-color:${st.bg}; color:${st.color}; font-weight:700;">${st.label} (${nb})</option>`;
+            });
+            selStatut.innerHTML = htmlStatut;
+
+            // 6. Types de contrôle présents dans la BDD avec leurs couleurs propres
+            const TYPES_CONFIG = [
+                { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
+                { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
+                { val: 'Vérification', label: '🟢 Vérification', bg: '#D1FAE5', color: '#065F46' }
+            ];
+            const typesPresents = TYPES_CONFIG.filter(tp =>
+                lignesUnifiees.some(l => l.typeInfo.label === tp.val) || filtreTypeActif === tp.val
+            );
+            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${lignesUnifiees.length})</option>`;
+            typesPresents.forEach(tp => {
+                const nb = lignesUnifiees.filter(l => l.typeInfo.label === tp.val).length;
+                const sel = filtreTypeActif === tp.val ? 'selected' : '';
+                htmlType += `<option value="${tp.val}" ${sel} style="background-color:${tp.bg}; color:${tp.color}; font-weight:700;">${tp.label} (${nb})</option>`;
+            });
+            selType.innerHTML = htmlType;
         }
 
         function chargerBDDEnVisuel() {
@@ -569,15 +733,28 @@
             mettreAJourCompteursOptions(lignesUnifiees);
 
             const lignesAffichees = lignesUnifiees.filter(l => {
+                const matchDate = (filtreDateActif === 'TOUS') || (l.dateCtrlVerif === filtreDateActif);
+                const matchRegion = (filtreRegionActif === 'TOUS') || (l.region === filtreRegionActif);
+                const matchSite = (filtreSiteActif === 'TOUS') || (l.entite === filtreSiteActif);
+                const matchProcessus = (filtreProcessusActif === 'TOUS') || (l.processus === filtreProcessusActif);
                 const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
                 const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
-                return matchStatut && matchType;
+                return matchDate && matchRegion && matchSite && matchProcessus && matchStatut && matchType;
             });
 
+            dernieresLignesAffichees = lignesAffichees;
             totalBadge.innerText = lignesAffichees.length;
 
             if (lignesAffichees.length === 0) {
-                const msgVide = (filtreStatutActif === 'TOUS' && filtreTypeActif === 'TOUS')
+                const aucunFiltre = (
+                    filtreDateActif === 'TOUS' &&
+                    filtreRegionActif === 'TOUS' &&
+                    filtreSiteActif === 'TOUS' &&
+                    filtreProcessusActif === 'TOUS' &&
+                    filtreStatutActif === 'TOUS' &&
+                    filtreTypeActif === 'TOUS'
+                );
+                const msgVide = aucunFiltre
                     ? 'Aucun constat enregistré dans la BDD.'
                     : 'Aucun constat ne correspond aux critères sélectionnés.';
                 tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
@@ -613,6 +790,36 @@
             });
         }
 
+        function exporterExcelBDD() {
+            if (!dernieresLignesAffichees || dernieresLignesAffichees.length === 0) {
+                alert("Aucune donnée à exporter dans la table actuelle.");
+                return;
+            }
+
+            const lignesExcel = dernieresLignesAffichees.map(l => ({
+                "Date contrôle / vérif.": l.dateCtrlVerif,
+                "Région": l.region,
+                "Centre / Entité": l.entite,
+                "Processus": l.processus,
+                "Risque": l.risque,
+                "Contrôle": l.controle,
+                "PC": l.pc,
+                "Pop": l.pop,
+                "Ech": l.ech,
+                "OK": l.ok,
+                "KO": l.ko,
+                "TC (%)": Number(l.tc.toFixed(1)),
+                "Constat": l.constat,
+                "Statut constat": l.statutInfo.label,
+                "Type de contrôle": l.isSuivi ? `${l.typeInfo.label} (Suivi)` : l.typeInfo.label
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(lignesExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BDD_Constats");
+            XLSX.writeFile(wb, `FCI_BDD_Constats_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
         function configurerTokenDepuisBDD() {
             if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
             const token = FCIDatabase.configurerGitHubToken();
@@ -631,7 +838,6 @@
             try {
                 const resultat = await FCIDatabase.restaurerDepuisGitHub();
                 reinitialiserFiltresBDD();
-                actualiserBadgeHorodatage();
                 alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
             } catch (err) {
                 alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
@@ -646,7 +852,6 @@
                 if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
                 else localStorage.removeItem('fci_database');
                 reinitialiserFiltresBDD();
-                actualiserBadgeHorodatage();
                 alert("La BDD locale a été vidée.");
             }
         }
