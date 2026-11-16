@@ -221,9 +221,10 @@
 
     function chargerMissionsPlanifiees() {
         try {
-            const plans = JSON.parse(localStorage.getItem('fci_planification') || '[]');
+            const db = FCIDatabase.getDB();
+            const plans = db.missions || [];
             const dl = document.getElementById('missionsList');
-            dl.innerHTML = plans.map(p => `<option value="${p.id || p.missionId}">${p.site || ''} - ${p.region || ''}</option>`).join('');
+            dl.innerHTML = plans.map(p => `<option value="${p.idMission}">${p.site || p.entite || ''} - ${p.region || ''}</option>`).join('');
         } catch (e) {}
     }
 
@@ -300,43 +301,35 @@
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archivage en cours...';
 
-        let lastResult = null;
-        for (let i = 0; i < rows.length; i++) {
-            const tr = rows[i];
-            const processus = tr.querySelector('.fc-proc').value.trim() || 'Contrôle Général';
-            const sousProcessus = tr.querySelector('.fc-subproc').value.trim() || '-';
-            const pointControle = tr.querySelector('.fc-point').value.trim() || `Point de contrôle #${i + 1}`;
-            const statut = tr.querySelector('.fc-statut').value;
-            const note = parseFloat(tr.querySelector('.fc-note').value) || 0;
-            const constat = tr.querySelector('.fc-constat').value.trim() || 'RAS';
+        const constatsArray = rows.map((tr, i) => ({
+            idConstat: `FC-${missionId}-${Date.now()}-${i}`,
+            idMission: missionId,
+            date: date,
+            region: region,
+            entite: site,
+            site: site,
+            typeControle: typeControle,
+            processus: tr.querySelector('.fc-proc').value.trim() || 'Contrôle Général',
+            sousProcessus: tr.querySelector('.fc-subproc').value.trim() || '-',
+            pointControle: tr.querySelector('.fc-point').value.trim() || `Point de contrôle #${i + 1}`,
+            statut: tr.querySelector('.fc-statut').value,
+            note: parseFloat(tr.querySelector('.fc-note').value) || 0,
+            constat: tr.querySelector('.fc-constat').value.trim() || 'RAS',
+            auditeur: auditeur
+        }));
 
-            const record = {
-                uid: `FC-${missionId}-${Date.now()}-${i}`,
-                sourceType: 'FC',
-                missionId: missionId,
-                date: date,
-                region: region,
-                site: site,
-                typeControle: typeControle,
-                processus: processus,
-                sousProcessus: sousProcessus,
-                pointControle: pointControle,
-                statut: statut,
-                note: note,
-                constat: constat,
-                auditeur: auditeur
-            };
-
-            lastResult = await FCIDBManager.archiveRecord(record);
-        }
+        const result = await FCIDatabase.enregistrerConstatsControle(constatsArray, true);
 
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-archive"></i> Archiver vers BDD';
 
-        if (lastResult && lastResult.success) {
-            alert("✅ " + lastResult.message + "\nLes données sont désormais disponibles dans la feuille BDD.");
+        if (result && result.success) {
+            const msgGitHub = result.localOnly
+                ? "Données stockées dans la feuille BDD locale (Synchronisation GitHub en attente)."
+                : "Données stockées dans la feuille BDD et archivées sur GitHub !";
+            alert("✅ " + msgGitHub);
         } else {
-            alert("⚠️ Erreur lors de l'archivage local.");
+            alert("⚠️ Erreur lors de l'archivage.");
         }
     }
 </script>
