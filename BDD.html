@@ -132,7 +132,6 @@
             transition: all 0.2s;
         }
 
-        /* Couleurs distinctes par filtre */
         .filter-date-theme label { color: #1E40AF; }
         .filter-date-theme .filter-dropdown { background-color: #EFF6FF; color: #1E3A8A; border-color: #93C5FD; }
 
@@ -199,7 +198,7 @@
         .col-constat { width: 290px; min-width: 290px; background-color: rgba(248, 250, 252, 0.45); }
         .col-num { width: 62px; min-width: 62px; text-align: center !important; white-space: nowrap; }
         .col-tc { width: 78px; min-width: 78px; text-align: center !important; white-space: nowrap; }
-        .col-badge { width: 145px; min-width: 145px; text-align: center !important; white-space: nowrap; }
+        .col-badge { width: 150px; min-width: 150px; text-align: center !important; white-space: nowrap; }
 
         tr.row-thematique { background-color: #FFFFFF; }
         tr.row-thematique:hover { background-color: #EFF6FF; }
@@ -218,17 +217,36 @@
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 
-        .badge-suivi-tag {
-            display: inline-block;
-            margin-top: 4px;
-            padding: 2px 7px;
+        /* Symbole Modifier (Stylo orange) sous Type de contrôle */
+        .badge-modifie-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            padding: 2px 8px;
             border-radius: 10px;
             font-size: 0.66rem;
             font-weight: 800;
             text-transform: uppercase;
-            background-color: #E0E7FF;
-            color: #3730A3;
-            border: 1px solid #A5B4FC;
+            background-color: #FFEDD5;
+            color: #C2410C;
+            border: 1px solid #FB923C;
+        }
+
+        /* Symbole Suivi (Bleu) sous Type de contrôle */
+        .badge-suivi-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #DBEAFE;
+            color: #1D4ED8;
+            border: 1px solid #60A5FA;
         }
 
         .badge-statut-constat {
@@ -277,7 +295,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Table unifiée des constats d'audit (initiaux et suivis) et synchronisation avec les archives GitHub</p>
+                <p>Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
             </div>
             <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
                 <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
@@ -473,10 +491,15 @@
             return { code: 'EN_COURS', label: 'En cours', badgeClass: 'statut-encours' };
         }
 
-        function estLigneSuivi(idEnregistrement, idMission) {
+        function estLigneSuivi(item, idEnregistrement, idMission) {
+            if (item && (item.isSuivi === true || item.suivi === true)) return true;
             const id1 = String(idEnregistrement || '').toUpperCase();
             const id2 = String(idMission || '').toUpperCase();
             return id1.includes('SUIVI') || id2.includes('SUIVI');
+        }
+
+        function estLigneModifiee(item) {
+            return Boolean(item && (item.isModifie === true || item.modifie === true));
         }
 
         function mettreAJourStylesSelectsFiltres() {
@@ -547,7 +570,6 @@
             const selStatut = document.getElementById('selectFiltreStatut');
             const selType = document.getElementById('selectFiltreType');
 
-            // 1. Dates de contrôle présentes dans la BDD
             const datesMap = new Map();
             lignesUnifiees.forEach(l => {
                 if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
@@ -565,7 +587,6 @@
                 (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
             );
 
-            // 2. Régions présentes dans la BDD
             const regionsTriees = [...new Set(
                 lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -577,7 +598,6 @@
                 (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
             );
 
-            // 3. Sites présents dans la BDD (filtrés par région si une région est choisie)
             const sourceSites = filtreRegionActif === 'TOUS'
                 ? lignesUnifiees
                 : lignesUnifiees.filter(l => l.region === filtreRegionActif);
@@ -592,7 +612,6 @@
                 (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
             );
 
-            // 4. Processus présents dans la BDD
             const processusTries = [...new Set(
                 lignesUnifiees.map(l => l.processus).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -604,7 +623,6 @@
                 (p) => `⚙️ ${p} (${lignesUnifiees.filter(l => l.processus === p).length})`
             );
 
-            // 5. Statuts présents dans la BDD avec leurs couleurs propres
             const STATUTS_CONFIG = [
                 { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
                 { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
@@ -621,7 +639,6 @@
             });
             selStatut.innerHTML = htmlStatut;
 
-            // 6. Types de contrôle présents dans la BDD avec leurs couleurs propres
             const TYPES_CONFIG = [
                 { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
                 { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
@@ -668,7 +685,8 @@
                 const missionAssociee = mapMissions[c.idMission] || {};
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
-                const isSuivi = estLigneSuivi(c.idConstat, c.idMission);
+                const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
+                const isModifie = estLigneModifiee(c);
                 lignesUnifiees.push({
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
@@ -686,7 +704,8 @@
                     constat: c.constat || '--',
                     statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FC'),
-                    isSuivi: isSuivi
+                    isSuivi: isSuivi,
+                    isModifie: isModifie
                 });
             });
 
@@ -694,7 +713,8 @@
                 const missionAssociee = mapMissions[e.idMission] || {};
                 const typeBrut = e.typeControle || 'Vérification';
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
-                const isSuivi = estLigneSuivi(e.idEncaisse, e.idMission);
+                const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
+                const isModifie = estLigneModifiee(e);
                 lignesUnifiees.push({
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
@@ -712,7 +732,8 @@
                     constat: e.constat || '--',
                     statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FV'),
-                    isSuivi: isSuivi
+                    isSuivi: isSuivi,
+                    isModifie: isModifie
                 });
             });
 
@@ -756,8 +777,11 @@
             }
 
             lignesAffichees.forEach(ligne => {
+                const modifieTagHtml = ligne.isModifie
+                    ? `<br><span class="badge-modifie-tag" title="Ligne modifiée"><i class="fa-solid fa-pen"></i> Modifié</span>`
+                    : '';
                 const suiviTagHtml = ligne.isSuivi
-                    ? `<br><span class="badge-suivi-tag"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
+                    ? `<br><span class="badge-suivi-tag" title="Ligne issue d'un suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
                     : '';
 
                 tbody.innerHTML += `
@@ -778,6 +802,7 @@
                         <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
                         <td class="col-badge">
                             <span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span>
+                            ${modifieTagHtml}
                             ${suiviTagHtml}
                         </td>
                     </tr>`;
@@ -790,23 +815,29 @@
                 return;
             }
 
-            const lignesExcel = dernieresLignesAffichees.map(l => ({
-                "Date contrôle / vérif.": l.dateCtrlVerif,
-                "Région": l.region,
-                "Centre / Entité": l.entite,
-                "Processus": l.processus,
-                "Risque": l.risque,
-                "Contrôle": l.controle,
-                "PC": l.pc,
-                "Pop": l.pop,
-                "Ech": l.ech,
-                "OK": l.ok,
-                "KO": l.ko,
-                "TC (%)": Number(l.tc.toFixed(1)),
-                "Constat": l.constat,
-                "Statut constat": l.statutInfo.label,
-                "Type de contrôle": l.isSuivi ? `${l.typeInfo.label} (Suivi)` : l.typeInfo.label
-            }));
+            const lignesExcel = dernieresLignesAffichees.map(l => {
+                const tags = [];
+                if (l.isModifie) tags.push('Modifié');
+                if (l.isSuivi) tags.push('Suivi');
+                const suffixeType = tags.length > 0 ? ` (${tags.join(' - ')})` : '';
+                return {
+                    "Date contrôle / vérif.": l.dateCtrlVerif,
+                    "Région": l.region,
+                    "Centre / Entité": l.entite,
+                    "Processus": l.processus,
+                    "Risque": l.risque,
+                    "Contrôle": l.controle,
+                    "PC": l.pc,
+                    "Pop": l.pop,
+                    "Ech": l.ech,
+                    "OK": l.ok,
+                    "KO": l.ko,
+                    "TC (%)": Number(l.tc.toFixed(1)),
+                    "Constat": l.constat,
+                    "Statut constat": l.statutInfo.label,
+                    "Type de contrôle": `${l.typeInfo.label}${suffixeType}`
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(lignesExcel);
             const wb = XLSX.utils.book_new();
