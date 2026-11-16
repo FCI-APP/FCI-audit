@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-16T13:08:39.029Z",
+  "donnees": {
+    "idMission": "MIS-1794834518083",
+    "region": "MARRAKECH",
+    "typeControle": "Thématique",
+    "date": "2026-11-16",
+    "dateDebut": "2026-11-16",
+    "dateFin": "2026-11-16",
+    "entite": "MARRAKECH CM",
+    "controleur": "safouh",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Contrôle Permanent",
+        "Intitulé du risque": "Insuffisance des actions de suivi et de reporting (à l'international)",
+        "Intitulé Contrôle": "Contrôle des actions de suivi et de reporting",
+        "Points de contrôle": "1/ Est-ce que les informations de suivi des engagements des parties pernantes de la coopération sont remontées à temps ?"
+      },
+      {
+        "Processus": "Contrôle Permanent",
+        "Intitulé du risque": "Insuffisance des actions de suivi et de reporting (à l'international)",
+        "Intitulé Contrôle": "Contrôle des actions de suivi et de reporting",
+        "Points de contrôle": "2/ Est-ce que les réunions de suivi avec les métiers sont réalisées ?"
+      }
+    ]
+  }
+}
