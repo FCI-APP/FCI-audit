@@ -1,0 +1,39 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-16T15:40:57.635Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794843656766-1-1",
+      "idMission": "MIS-ENC-1794843656766",
+      "typeControle": "Vérification",
+      "region": "SETTAT",
+      "site": "EL JADIDA CM",
+      "entite": "EL JADIDA CM",
+      "controleur": "tallal",
+      "responsable": "",
+      "date": "2026-11-10",
+      "dateVerification": "2026-11-10",
+      "dateDebut": "2026-10-12",
+      "dateFin": "2026-10-30",
+      "processus": "Gestion de la Sûreté",
+      "risque": "Rupture de stock ou surstockage du consommable",
+      "controle": "Contrôle des niveaux de stockage / sur stockage des consommables",
+      "pc": "Les quantités d'emballages sont-elles exactes ?",
+      "pop": 3000,
+      "ech": 2200,
+      "ok": 100,
+      "ko": 2100,
+      "tc": 4.545454545454546,
+      "statut": "EN_COURS",
+      "constat": "faux",
+      "recommandation": "of",
+      "avisResponsable": "--",
+      "isModifie": false,
+      "modifie": false,
+      "isSuivi": false,
+      "suivi": false
+    }
+  ]
+}
