@@ -2,7 +2,7 @@
   "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
   "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
   "typeArchive": "FV",
-  "dateArchivage": "2026-11-16T15:54:56.795Z",
+  "dateArchivage": "2026-11-16T15:56:00.610Z",
   "donnees": [
     {
       "idEncaisse": "ENC-SUIVI-1794844495852-2-1",
@@ -21,7 +21,7 @@
       "risque": "Rupture de stock ou surstockage du consommable",
       "controle": "Contrôle des niveaux de stockage / sur stockage des consommables",
       "pc": "Les quantités d'emballages sont-elles exactes ?",
-      "pop": 10000,
+      "pop": 6000,
       "ech": 2200,
       "ok": 100,
       "ko": 2100,
@@ -30,8 +30,8 @@
       "constat": "risque",
       "recommandation": "of",
       "avisResponsable": "--",
-      "isModifie": false,
-      "modifie": false,
+      "isModifie": true,
+      "modifie": true,
       "isSuivi": true,
       "suivi": true
     }
