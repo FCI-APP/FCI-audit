@@ -231,7 +231,8 @@
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
         .btn-outline { background-color: transparent; border-color: var(--border-color); color: var(--text-dark); }
-        .btn-warning { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
+        .btn-warning { background-color: #FFEDD5; color: #C2410C; border-color: #FB923C; }
+        .btn-warning:hover { background-color: #FED7AA; }
         .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
         .btn-suivi:hover { background-color: #BFDBFE; }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
@@ -287,9 +288,9 @@
                     <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
                     <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
-                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour les lignes existantes dans la BDD puis vide la fiche"><i class="fa-solid fa-pen-to-square"></i> Modifier</button>
-                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Copie uniquement les points dont la date a été modifiée en nouvelles lignes de suivi, sans dupliquer les points inchangés"><i class="fa-solid fa-code-branch"></i> Suivi</button>
-                    <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour la même ligne dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
+                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi avec le symbole suivi bleu"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                    <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()" title="Supprime la ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
                 </div>
@@ -1032,6 +1033,20 @@
             return 'statut-select-EN_COURS';
         }
 
+        function getSnapshotConstat(c) {
+            return JSON.stringify({
+                date: formatDateToISO(c.dateVerification),
+                statut: c.statut || 'EN_COURS',
+                pop: Number(c.population) || 0,
+                ech: Number(c.echantillon) || 0,
+                ok: Number(c.ok) || 0,
+                ko: Number(c.ko) || 0,
+                constat: String(c.constatText || '').trim(),
+                reco: String(c.recoText || '').trim(),
+                avis: String(c.avisText || '').trim()
+            });
+        }
+
         function renderPoints() {
             const container = document.getElementById('pointsEvaluationsContainer');
             container.innerHTML = '';
@@ -1049,10 +1064,10 @@
                     const dateConstatFR = formatDateToJJMMAAAA(c.dateVerification) || datePointFR;
                     const dateConstatISO = formatDateToISO(dateConstatFR);
 
-                    const isDateModifieeSuivi = Boolean(c._initialDate && formatDateToISO(c._initialDate) !== dateConstatISO);
-                    const badgeSuiviStatus = isDateModifieeSuivi
-                        ? `<span class="date-modified-pill"><i class="fa-solid fa-code-branch"></i> Date modifiée (Suivi prêt : ${formatDateToJJMMAAAA(c._initialDate)} → ${dateConstatFR})</span>`
-                        : (c._initialDate ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Date initiale : ${formatDateToJJMMAAAA(c._initialDate)} — inchangée)</span>` : '');
+                    const estModifieDepuisChargement = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+                    const badgeEtatLigne = estModifieDepuisChargement
+                        ? `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`
+                        : (c._bddIdEncaisse ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>` : '');
 
                     constatsHTML += `
                         <div class="constat-box">
@@ -1073,7 +1088,7 @@
                                 <span class="imported-chip">KO : <strong style="color:var(--danger);">${c.ko}</strong></span>
                                 <span class="imported-chip">TC : <strong>${c.rate.toFixed(1)} %</strong></span>
                                 <span class="imported-chip">Statut : <strong>${libelleStatutFV(statutVal)}</strong></span>
-                                ${badgeSuiviStatus}
+                                ${badgeEtatLigne}
                             </div>
 
                             <div class="metrics-statut-row">
@@ -1170,7 +1185,11 @@
             renderPoints();
         }
 
-        function updateConstatText(pIndex, cIndex, field, value) { addedPoints[pIndex].constats[cIndex][field] = value; }
+        function updateConstatText(pIndex, cIndex, field, value) {
+            addedPoints[pIndex].constats[cIndex][field] = value;
+            renderPoints();
+        }
+
         function addConstatToPoint(pIndex) {
             const dateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
             addedPoints[pIndex].constats.push({ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
@@ -1274,7 +1293,7 @@
             return true;
         }
 
-        function construireLotConstatsFV(idMission, nouveauModeSuivi = false) {
+        function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
             const region = document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
@@ -1290,11 +1309,17 @@
             activePoints.forEach((p, pIdx) => {
                 p.constats.forEach((c, cIdx) => {
                     const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
-                    if (nouveauModeSuivi && c._initialDate && formatDateToISO(c._initialDate) === dateConstatISO) {
+                    const estModifie = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+
+                    if (mode === 'SUIVI' && c._initialSnapshot && !estModifie) {
                         return;
                     }
+
+                    const estSuivi = (mode === 'SUIVI') || Boolean(c._isSuivi);
+                    const estMarqueModifie = (mode === 'MODIFIER') ? true : Boolean(c._isModifie);
+
                     lot.push({
-                        idEncaisse: nouveauModeSuivi
+                        idEncaisse: mode === 'SUIVI'
                             ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
                             : (c._bddIdEncaisse || `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`),
                         idMission: idMission,
@@ -1320,7 +1345,11 @@
                         statut: c.statut || 'EN_COURS',
                         constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
                         recommandation: c.recoText || '--',
-                        avisResponsable: c.avisText || '--'
+                        avisResponsable: c.avisText || '--',
+                        isModifie: estMarqueModifie,
+                        modifie: estMarqueModifie,
+                        isSuivi: estSuivi,
+                        suivi: estSuivi
                     });
                 });
             });
@@ -1354,7 +1383,7 @@
 
             try {
                 const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
-                const lotConstatsFV = construireLotConstatsFV(idMission, false);
+                const lotConstatsFV = construireLotConstatsFV(idMission, 'ARCHIVE');
 
                 let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
@@ -1438,6 +1467,23 @@
 
             addedPoints = constatsFV.map((c, idx) => {
                 const dLigne = formatDateToJJMMAAAA(c.date || c.dateVerification) || dateVerifJJMMAAAA;
+                const constatObj = {
+                    _bddIdEncaisse: c.idEncaisse,
+                    _initialDate: dLigne,
+                    _isModifie: Boolean(c.isModifie || c.modifie),
+                    _isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idEncaisse || '').toUpperCase().includes('SUIVI')),
+                    dateVerification: dLigne,
+                    statut: c.statut || 'EN_COURS',
+                    population: c.pop,
+                    echantillon: c.ech,
+                    ok: c.ok,
+                    ko: c.ko,
+                    rate: parseFloat(c.tc) || 0,
+                    constatText: c.constat || '',
+                    recoText: c.recommandation || '',
+                    avisText: c.avisResponsable || ''
+                };
+                constatObj._initialSnapshot = getSnapshotConstat(constatObj);
                 return {
                     id: Date.now() + idx,
                     selected: true,
@@ -1446,20 +1492,7 @@
                     risque: c.risque,
                     controle: c.controle,
                     pointDeControle: c.pc,
-                    constats: [{
-                        _bddIdEncaisse: c.idEncaisse,
-                        _initialDate: dLigne,
-                        dateVerification: dLigne,
-                        statut: c.statut || 'EN_COURS',
-                        population: c.pop,
-                        echantillon: c.ech,
-                        ok: c.ok,
-                        ko: c.ko,
-                        rate: parseFloat(c.tc) || 0,
-                        constatText: c.constat || '',
-                        recoText: c.recommandation || '',
-                        avisText: c.avisResponsable || ''
-                    }]
+                    constats: [constatObj]
                 };
             });
 
@@ -1468,7 +1501,7 @@
 
         async function modifierFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée à modifier.");
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à modifier.");
                 return;
             }
 
@@ -1490,7 +1523,7 @@
             try {
                 const db = lireDBSecurisee();
                 const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
-                const lotMisAJour = construireLotConstatsFV(idMission, false);
+                const lotMisAJour = construireLotConstatsFV(idMission, 'MODIFIER');
                 const listeExistante = db.constatsEncaisses || [];
 
                 lotMisAJour.forEach(itemMaj => {
@@ -1499,9 +1532,20 @@
                         (e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle)
                     );
                     if (idxExistant !== -1) {
-                        listeExistante[idxExistant] = { ...listeExistante[idxExistant], ...itemMaj };
+                        listeExistante[idxExistant] = {
+                            ...listeExistante[idxExistant],
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        };
                     } else {
-                        listeExistante.push(itemMaj);
+                        listeExistante.push({
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        });
                     }
                 });
 
@@ -1511,12 +1555,14 @@
                 let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     ghResult = await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
+                    // Garantir qu'aucun doublon n'est ajouté dans la BDD locale après l'envoi GitHub
+                    sauvegarderDBSecurisee(db);
                 }
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Modification enregistrée sur les lignes existantes dans la BDD et archivée sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ Modification appliquée sur la même ligne dans la BDD (avec symbole stylo orange) et archivée sur GitHub :\n${ghResult.path}`);
                 } else {
-                    alert(`✅ Modification enregistrée directement sur les lignes existantes dans la BDD locale (aucune ligne supprimée ni dupliquée).`);
+                    alert(`✅ Modification appliquée directement sur la même ligne dans la BDD (symbole stylo orange intégré sous Type de contrôle).`);
                 }
 
                 clearForm();
@@ -1529,7 +1575,7 @@
 
         async function suiviFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée pour créer un suivi.");
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD pour créer un suivi.");
                 return;
             }
 
@@ -1544,10 +1590,10 @@
             }
 
             const idMissionSuivi = "MIS-ENC-SUIVI-" + Date.now();
-            const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, true);
+            const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, 'SUIVI');
 
             if (nouvellesLignesSuivi.length === 0) {
-                alert("⚠️ Aucune date n'a été modifiée.\nPour enregistrer un suivi, modifiez d'abord la date du ou des points suivis (les points dont la date reste inchangée ne seront pas recopiés).");
+                alert("⚠️ Aucune modification détectée.\nEffectuez d'abord vos modifications (date, statut, constat, chiffres...) avant de cliquer sur Suivi : la ligne initiale sera conservée intacte et une nouvelle ligne de suivi sera ajoutée dans la BDD.");
                 return;
             }
 
@@ -1557,22 +1603,20 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
 
             try {
-                const totalConstatsActifs = addedPoints.filter(p => p.selected).reduce((acc, p) => acc + p.constats.length, 0);
-                const nbIgnores = Math.max(0, totalConstatsActifs - nouvellesLignesSuivi.length);
+                const db = lireDBSecurisee();
+                db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
+                sauvegarderDBSecurisee(db);
 
                 let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     ghResult = await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
-                } else {
-                    const db = lireDBSecurisee();
-                    db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
                     sauvegarderDBSecurisee(db);
                 }
 
                 if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)) et archivé(s) sur GitHub :\n${ghResult.path}`);
+                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD et archivées sur GitHub :\n${ghResult.path}`);
                 } else {
-                    alert(`✅ Suivi enregistré : ${nouvellesLignesSuivi.length} point(s) avec date modifiée ajouté(s) en suivi (${nbIgnores} point(s) non modifié(s) ignoré(s)).`);
+                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD.`);
                 }
 
                 clearForm();
@@ -1585,24 +1629,28 @@
 
         function supprimerFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée à supprimer.");
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à supprimer.");
                 return;
             }
 
             const site = document.getElementById('nomSite').value || 'Site';
             const dateVerifJJMMAAAA = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
 
-            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer les enregistrements FV de [${site} - ${dateVerifJJMMAAAA}] de la BDD locale ?`)) {
+            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer les ${addedPoints.length} ligne(s) FV correspondante(s) de [${site} - ${dateVerifJJMMAAAA}] de la BDD ?`)) {
                 const db = lireDBSecurisee();
-                if (Array.isArray(loadedEncaisseIds) && loadedEncaisseIds.length > 0) {
-                    const idsSet = new Set(loadedEncaisseIds);
-                    db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsSet.has(e.idEncaisse));
+                const idsPointsCharges = addedPoints
+                    .flatMap(p => p.constats.map(c => c._bddIdEncaisse))
+                    .filter(Boolean);
+                const idsToDelete = new Set([...(loadedEncaisseIds || []), ...idsPointsCharges]);
+
+                if (idsToDelete.size > 0) {
+                    db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
                 } else if (currentMissionId) {
                     db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
                 }
                 sauvegarderDBSecurisee(db);
 
-                alert(`La Fiche de Vérification [${site} - ${dateVerifJJMMAAAA}] a été supprimée de la BDD locale.`);
+                alert(`✅ Les lignes correspondantes de [${site} - ${dateVerifJJMMAAAA}] ont été supprimées de la BDD.`);
                 clearForm();
                 remplirFiltresEncaissesBDD();
             }
