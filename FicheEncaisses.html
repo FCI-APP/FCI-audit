@@ -1363,7 +1363,6 @@
             const region = document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
-            const typeControle = document.getElementById('typeControle').value || "Vérification";
 
             if (!region || !site || !controleur) {
                 alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
@@ -1385,23 +1384,12 @@
                 const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
                 const lotConstatsFV = construireLotConstatsFV(idMission, 'ARCHIVE');
 
-                let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    ghResult = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
+                    await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
                 } else {
                     const db = lireDBSecurisee();
                     db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotConstatsFV];
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ La Fiche des Encaisses (${typeControle}) a été archivée dans la BDD locale ET sur GitHub :\n${ghResult.path}`);
-                } else if (ghResult && ghResult.reason === 'NO_TOKEN') {
-                    alert("✅ Fiche archivée dans la BDD locale (archivage GitHub ignoré : aucun token configuré).");
-                } else if (ghResult && ghResult.localOnly) {
-                    alert("✅ Fiche archivée dans la BDD locale.");
-                } else {
-                    alert(`⚠️ Fiche archivée dans la BDD locale, mais échec de l'envoi GitHub :\n${ghResult?.error || 'Erreur réseau'}`);
                 }
 
                 clearForm();
@@ -1552,17 +1540,9 @@
                 db.constatsEncaisses = listeExistante;
                 sauvegarderDBSecurisee(db);
 
-                let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    ghResult = await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
-                    // Garantir qu'aucun doublon n'est ajouté dans la BDD locale après l'envoi GitHub
+                    await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Modification appliquée sur la même ligne dans la BDD (avec symbole stylo orange) et archivée sur GitHub :\n${ghResult.path}`);
-                } else {
-                    alert(`✅ Modification appliquée directement sur la même ligne dans la BDD (symbole stylo orange intégré sous Type de contrôle).`);
                 }
 
                 clearForm();
@@ -1607,16 +1587,9 @@
                 db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
                 sauvegarderDBSecurisee(db);
 
-                let ghResult = { success: true, localOnly: true };
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    ghResult = await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
+                    await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
                     sauvegarderDBSecurisee(db);
-                }
-
-                if (ghResult && ghResult.success && !ghResult.localOnly) {
-                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD et archivées sur GitHub :\n${ghResult.path}`);
-                } else {
-                    alert(`✅ Suivi enregistré : la ligne initiale a été conservée sans modification et ${nouvellesLignesSuivi.length} nouvelle(s) ligne(s) de suivi (symbole suivi bleu) ont été ajoutées dans la BDD.`);
                 }
 
                 clearForm();
@@ -1633,27 +1606,21 @@
                 return;
             }
 
-            const site = document.getElementById('nomSite').value || 'Site';
-            const dateVerifJJMMAAAA = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+            const db = lireDBSecurisee();
+            const idsPointsCharges = addedPoints
+                .flatMap(p => p.constats.map(c => c._bddIdEncaisse))
+                .filter(Boolean);
+            const idsToDelete = new Set([...(loadedEncaisseIds || []), ...idsPointsCharges]);
 
-            if (confirm(`⚠️ Êtes-vous sûr de vouloir supprimer les ${addedPoints.length} ligne(s) FV correspondante(s) de [${site} - ${dateVerifJJMMAAAA}] de la BDD ?`)) {
-                const db = lireDBSecurisee();
-                const idsPointsCharges = addedPoints
-                    .flatMap(p => p.constats.map(c => c._bddIdEncaisse))
-                    .filter(Boolean);
-                const idsToDelete = new Set([...(loadedEncaisseIds || []), ...idsPointsCharges]);
-
-                if (idsToDelete.size > 0) {
-                    db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
-                } else if (currentMissionId) {
-                    db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
-                }
-                sauvegarderDBSecurisee(db);
-
-                alert(`✅ Les lignes correspondantes de [${site} - ${dateVerifJJMMAAAA}] ont été supprimées de la BDD.`);
-                clearForm();
-                remplirFiltresEncaissesBDD();
+            if (idsToDelete.size > 0) {
+                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
+            } else if (currentMissionId) {
+                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
             }
+            sauvegarderDBSecurisee(db);
+
+            clearForm();
+            remplirFiltresEncaissesBDD();
         }
 
         function exportToExcel() {
