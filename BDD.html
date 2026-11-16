@@ -92,7 +92,7 @@
 
         .multi-filter-bar {
             display: grid;
-            grid-template-columns: repeat(6, minmax(160px, 1fr)) auto;
+            grid-template-columns: repeat(6, minmax(160px, 1fr));
             gap: 10px;
             align-items: end;
             background: #F8FAFC;
@@ -337,12 +337,6 @@
                         <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
                             <option value="TOUS">-- Tous les types --</option>
                         </select>
-                    </div>
-
-                    <div>
-                        <button type="button" class="btn btn-neutral" style="padding:7px 12px; font-size:0.78rem;" onclick="reinitialiserFiltresBDD()">
-                            <i class="fa-solid fa-rotate-left"></i> Réinitialiser
-                        </button>
                     </div>
                 </div>
             </div>
