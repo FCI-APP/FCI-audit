@@ -5,340 +5,430 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Base de Données Unifiée (BDD)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="fci-db-manager.js"></script>
     <style>
         :root {
-            --primary: #003366;
-            --primary-dark: #002244;
-            --accent: #EAAA00;
-            --bg-light: #F4F6F9;
-            --card-bg: #FFFFFF;
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --border-color: #E2E8F0;
-            --success: #10B981;
-            --danger: #EF4444;
-            --warning: #F59E0B;
-            --info: #3B82F6;
-            --sidebar-width: 260px;
+            --bam-blue: #003366;
+            --bam-gold: #D4AF37;
+            --bam-light: #f4f6f9;
+            --border-color: #dce1e7;
+            --success: #198754;
+            --danger: #dc3545;
+            --warning: #fd7e14;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; background-color: var(--bam-light); color: #2c3e50; }
+
+        .navbar {
+            background: var(--bam-blue); color: white; padding: 12px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .navbar-brand { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .navbar-brand span { color: var(--bam-gold); }
+        .nav-links { display: flex; gap: 8px; flex-wrap: wrap; }
+        .nav-links a {
+            color: white; text-decoration: none; padding: 7px 14px; border-radius: 5px; font-size: 0.88rem;
+        }
+        .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.18); border-bottom: 2px solid var(--bam-gold); }
+
+        .container { max-width: 1460px; margin: 20px auto; padding: 0 20px; }
+        .card {
+            background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--border-color);
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+            border-bottom: 2px solid var(--bam-light); padding-bottom: 12px; margin-bottom: 16px;
+        }
+        .card-header h2 { margin: 0; font-size: 1.15rem; color: var(--bam-blue); }
+
+        .toolbar {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px;
+        }
+        .filter-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .filter-btn {
+            padding: 7px 14px; border: 1px solid var(--bam-blue); background: white; color: var(--bam-blue);
+            border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+        }
+        .filter-btn.active, .filter-btn:hover { background: var(--bam-blue); color: white; }
+
+        select.region-filter {
+            padding: 7px 12px; border-radius: 5px; border: 1px solid #ced4da; font-size: 0.88rem; font-weight: 600;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; }
-
-        .sidebar { width: var(--sidebar-width); background-color: var(--primary); color: white; display: flex; flex-direction: column; justify-content: space-between; position: fixed; height: 100vh; z-index: 100; }
-        .sidebar-header { padding: 20px 15px; background-color: var(--primary-dark); text-align: center; border-bottom: 2px solid var(--accent); }
-        .sidebar-header h2 { font-size: 0.85rem; line-height: 1.4; font-weight: 800; color: #FFFFFF; text-transform: uppercase; }
-        .sidebar-nav { list-style: none; padding: 15px 0; flex-grow: 1; }
-        .sidebar-nav li a { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 0.88rem; border-left: 4px solid transparent; transition: 0.2s; }
-        .sidebar-nav li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
-        .badge-status { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .badge-active { background-color: var(--accent); color: var(--primary-dark); }
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; color: rgba(255, 255, 255, 0.6); border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(0,0,0,0.2); }
-
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 25px 35px; width: calc(100% - var(--sidebar-width)); }
-
-        .header-bar { display: flex; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 18px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 18px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
-        .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
-
-        .filters-card { background: var(--card-bg); border-radius: 8px; padding: 18px; border: 1px solid var(--border-color); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: flex-end; }
-        .filter-group { display: flex; flex-direction: column; gap: 5px; }
-        .filter-group label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--primary); }
-        .form-control { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.82rem; outline: none; background-color: #FFF; font-weight: 600; color: var(--primary); }
-
-        .table-container { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
-        .table-responsive { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.78rem; }
-        th { background-color: var(--primary); color: #FFFFFF; padding: 11px 12px; font-weight: 700; white-space: nowrap; }
-        td { padding: 9px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-dark); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        tr:hover { background-color: #F8FAFC; }
-
-        .btn { padding: 7px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; white-space: nowrap; }
-        .btn-primary { background-color: var(--primary); color: white; }
-        .btn-accent { background-color: var(--accent); color: var(--primary-dark); }
-        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .btn-outline { background-color: white; border: 1px solid var(--border-color); color: var(--text-dark); }
-        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
-
-        .badge-type { padding: 2px 7px; border-radius: 4px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
-        .type-thematique { background: #E0F2FE; color: #0369A1; }
-        .type-verification { background: #FEF3C7; color: #92400E; }
-        .type-systematique { background: #F3E8FF; color: #6B21A8; }
-
-        .badge-modif { display: inline-flex; align-items: center; gap: 4px; background: #FEF3C7; color: #92400E; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; border: 1px solid #FCD34D; }
-        .badge-suivi { display: inline-flex; align-items: center; gap: 4px; background: #DBEAFE; color: #1E40AF; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; border: 1px solid #93C5FD; }
-
-        @media print {
-            .sidebar, .filters-card, .header-bar button { display: none !important; }
-            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .table-container { border: none; box-shadow: none; }
+        .btn {
+            padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer;
+            font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px;
         }
+        .btn-primary { background: var(--bam-blue); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--bam-gold); color: #1a1a1a; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+        th {
+            background: var(--bam-blue); color: white; padding: 10px 8px; text-align: left;
+            border: 1px solid #002244; white-space: nowrap;
+        }
+        td { padding: 8px; border: 1px solid var(--border-color); vertical-align: middle; }
+        tr:nth-child(even) { background-color: #fafbfc; }
+        tfoot td {
+            font-weight: 700; background: #eef3f8; padding: 10px 8px; border-top: 2px solid var(--bam-blue);
+        }
+
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: white; display: inline-block; }
+        .bg-conforme { background: var(--success); }
+        .bg-partiel { background: var(--warning); }
+        .bg-nonconforme { background: var(--danger); }
+        .bg-type { background: #495057; }
+
+        /* Modal Modification */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content {
+            background: white; padding: 24px; border-radius: 8px; width: 100%; max-width: 540px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.25);
+        }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .modal-grid .full { grid-column: span 2; }
+        .modal-grid label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px; }
+        .modal-grid input, .modal-grid select { width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; }
+
+        .footer { text-align: center; padding: 18px; font-size: 0.82rem; color: #6c757d; }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
-            </div>
-            <ul class="sidebar-nav">
-                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li class="active"><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Actif</span></a></li>
-                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
-            </ul>
-        </div>
-        <div class="sidebar-footer">Fiche de contrôle intelligente (FCI)<br>v1.0 © 2026 - 2027</div>
-    </aside>
+<nav class="navbar">
+    <div class="navbar-brand">
+        <i class="fas fa-shield-alt"></i> Barid Al-Maghrib | <span>FCI v1.0</span>
+    </div>
+    <div class="nav-links">
+        <a href="index.html"><i class="fas fa-book"></i> Référentiel</a>
+        <a href="Planification.html"><i class="fas fa-calendar-alt"></i> Planification</a>
+        <a href="FicheControle.html"><i class="fas fa-clipboard-check"></i> Fiche Contrôle (FC)</a>
+        <a href="FicheEncaisses.html"><i class="fas fa-coins"></i> Vérif. Encaisses (FV)</a>
+        <a href="BDD.html" class="active"><i class="fas fa-database"></i> BDD</a>
+        <a href="TDB.html"><i class="fas fa-chart-line"></i> Tableau de Bord</a>
+    </div>
+</nav>
 
-    <main class="main-content">
-        <div class="header-bar">
-            <div class="header-title">
-                <h1>Base de Données Unifiée (BDD)</h1>
-                <p>Consultez, filtrez et suivez l'ensemble des constats de contrôle et d'encaisses centralisés</p>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                <button class="btn btn-refresh" onclick="window.location.reload()"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button class="btn btn-accent" onclick="exporterExcelBDD()"><i class="fa-solid fa-file-excel"></i> Export Excel global</button>
-                <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
-                <button class="btn btn-danger" onclick="viderBDDLocale()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-database"></i> Base de Données Consolidée des Contrôles (FC & FV)</h2>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-primary" id="btnRefreshBDD" onclick="actualiserBDD()">
+                    <i class="fas fa-sync-alt"></i> Actualiser (Local & GitHub)
+                </button>
+                <button class="btn btn-success" onclick="exporterExcelBDD()">
+                    <i class="fas fa-file-excel"></i> Exporter Excel
+                </button>
             </div>
         </div>
 
-        <div class="filters-card">
+        <div class="toolbar">
             <div class="filter-group">
+                <span style="font-size:0.85rem; font-weight:600; color:#555;">Type :</span>
+                <button class="filter-btn active" onclick="filtrerParType('ALL', this)">Tous</button>
+                <button class="filter-btn" onclick="filtrerParType('Thématique', this)">Thématique</button>
+                <button class="filter-btn" onclick="filtrerParType('Systématique', this)">Systématique</button>
+                <button class="filter-btn" onclick="filtrerParType('Vérification', this)">Vérification</button>
+            </div>
+
+            <div class="filter-group">
+                <span style="font-size:0.85rem; font-weight:600; color:#555;">Région :</span>
+                <select id="filterRegionBDD" class="region-filter" onchange="afficherTableauBDD()">
+                    <option value="ALL">Toutes les régions (10)</option>
+                    <option value="MARRAKECH">MARRAKECH</option>
+                    <option value="AGADIR">AGADIR</option>
+                    <option value="CASA">CASA</option>
+                    <option value="SETTAT">SETTAT</option>
+                    <option value="RABAT">RABAT</option>
+                    <option value="TANGER">TANGER</option>
+                    <option value="FES">FES</option>
+                    <option value="MEKNES">MEKNES</option>
+                    <option value="OUEJDA">OUEJDA</option>
+                    <option value="LAAYOUNE">LAAYOUNE</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table id="tableBDD">
+                <thead>
+                    <tr>
+                        <th>ID Mission</th>
+                        <th>Date</th>
+                        <th>Région</th>
+                        <th>Centre / Site</th>
+                        <th>Type Contrôle</th>
+                        <th>Processus</th>
+                        <th>Sous-Processus</th>
+                        <th>Point de Contrôle</th>
+                        <th>Statut</th>
+                        <th>Note (%)</th>
+                        <th>Constats / Écarts</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyBDD"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="9" style="text-align:right;">Score Moyen des Contrôles Affichés :</td>
+                        <td id="bddMoyenneCell" colspan="3" style="font-size:0.95rem;">—</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modification (Champs ordonnés : Date, Région, Site, Processus, Statut, Note, Constat) -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:var(--bam-blue);"><i class="fas fa-edit"></i> Modifier l'Enregistrement</h3>
+        <input type="hidden" id="editUid">
+        <div class="modal-grid">
+            <div>
                 <label>Date</label>
-                <select id="filterDate" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Toutes --</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Région</label>
-                <select id="filterRegion" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Toutes --</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Centre / Site</label>
-                <select id="filterSite" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Tous --</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Processus</label>
-                <select id="filterProcessus" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Tous --</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Type de contrôle</label>
-                <select id="filterType" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Tous --</option></select>
-            </div>
-            <div class="filter-group">
-                <label>Statut</label>
-                <select id="filterStatut" class="form-control" onchange="filtrerEtAfficherBDD()"><option value="">-- Tous --</option></select>
+                <input type="date" id="editDate">
             </div>
             <div>
-                <button class="btn btn-outline" onclick="reinitialiserFiltresBDD()" title="Réinitialiser les filtres"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+                <label>Région</label>
+                <select id="editRegion" onchange="majSitesModal()">
+                    <option value="MARRAKECH">MARRAKECH</option>
+                    <option value="AGADIR">AGADIR</option>
+                    <option value="CASA">CASA</option>
+                    <option value="SETTAT">SETTAT</option>
+                    <option value="RABAT">RABAT</option>
+                    <option value="TANGER">TANGER</option>
+                    <option value="FES">FES</option>
+                    <option value="MEKNES">MEKNES</option>
+                    <option value="OUEJDA">OUEJDA</option>
+                    <option value="LAAYOUNE">LAAYOUNE</option>
+                </select>
+            </div>
+            <div>
+                <label>Centre / Site</label>
+                <select id="editSite"></select>
+            </div>
+            <div>
+                <label>Processus</label>
+                <input type="text" id="editProcessus">
+            </div>
+            <div>
+                <label>Statut</label>
+                <select id="editStatut">
+                    <option value="Conforme">Conforme</option>
+                    <option value="Partiellement Conforme">Partiellement Conforme</option>
+                    <option value="Non Conforme">Non Conforme</option>
+                </select>
+            </div>
+            <div>
+                <label>Note (%)</label>
+                <input type="number" id="editNote" min="0" max="100">
+            </div>
+            <div class="full">
+                <label>Constats / Écarts</label>
+                <input type="text" id="editConstat">
             </div>
         </div>
-
-        <div class="table-container">
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Région</th>
-                            <th>Site / Centre</th>
-                            <th>Processus</th>
-                            <th>Risque</th>
-                            <th>Contrôle</th>
-                            <th>PC</th>
-                            <th>Constat</th>
-                            <th>POP</th>
-                            <th>ECH</th>
-                            <th>OK</th>
-                            <th>KO</th>
-                            <th>TC</th>
-                            <th>Statut</th>
-                            <th>Nom contrôleur</th>
-                            <th>Type contrôle</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bddTableBody">
-                        <tr><td colspan="16" style="text-align: center; padding: 30px;">Chargement des données...</td></tr>
-                    </tbody>
-                </table>
-            </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button class="btn" style="background:#ccc;" onclick="fermerModal()">Annuler</button>
+            <button class="btn btn-success" onclick="enregistrerModification()">Enregistrer</button>
         </div>
-    </main>
+    </div>
+</div>
 
-    <script src="fci-db-manager.js"></script>
-    <script>
-        let donneesGlobalesBDD = [];
+<div class="footer">
+    Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027 — Barid Al-Maghrib | Direction Contrôle Générale — Division Contrôle Permanent
+</div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            chargerBDDUnifiee();
+<script>
+    const REGIONS_CENTRES = {
+        "MARRAKECH": ["MARRAKECH PRINCIPAL", "MARRAKECH GUELIZ", "MARRAKECH MENARA", "SAFI RP", "EL KELAA DES SRAGHNA", "ESSAOUIRA RP", "BENGUERIR"],
+        "AGADIR": ["AGADIR PRINCIPAL", "AGADIR INEZGANE", "TAROUDANT RP", "TIZNIT RP", "GUELMIM RP", "TAN-TAN RP"],
+        "CASA": ["CASA PRINCIPAL", "CASA ANFA", "CASA AIN SEBAA", "CASA HAY HASSANI", "MOHAMMEDIA RP", "EL JADIDA RP"],
+        "SETTAT": ["SETTAT PRINCIPAL", "BERRECHID RP", "KHOURIBGA RP", "BENI MELLAL RP", "FQUIH BEN SALAH"],
+        "RABAT": ["RABAT PRINCIPAL", "RABAT AGDAL", "SALE RP", "TEMARA RP", "KENITRA RP", "KHEMISSET RP"],
+        "TANGER": ["TANGER PRINCIPAL", "TANGER MEDINA", "TETOUAN RP", "LARACHE RP", "AL HOCEIMA RP", "CHEFCHAOUEN"],
+        "FES": ["FES PRINCIPAL", "FES SAISS", "TAZA RP", "SEFROU RP", "BOULEMANE"],
+        "MEKNES": ["MEKNES PRINCIPAL", "MEKNES HAMRIA", "IFRANE RP", "KHENIFRA RP", "ERRACHIDIA RP", "MIDELT"],
+        "OUEJDA": ["OUJDA PRINCIPAL", "NADOR RP", "BERKANE RP", "TAOURIRT RP", "GUERCIF RP", "FIGUIG"],
+        "LAAYOUNE": ["LAAYOUNE PRINCIPAL", "DAKHLA RP", "SMARA RP", "BOUJDOUR RP"]
+    };
+
+    let currentTypeFilter = 'ALL';
+    let allRecords = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Chargement immédiat depuis le stockage local
+        allRecords = FCIDBManager.getAllRecords();
+        afficherTableauBDD();
+        // Puis synchronisation silencieuse depuis GitHub pour récupérer d'éventuelles archives distantes
+        await actualiserBDD(true);
+    });
+
+    async function actualiserBDD(silent = false) {
+        const btn = document.getElementById('btnRefreshBDD');
+        if (!silent) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Synchronisation...';
+        }
+        allRecords = await FCIDBManager.pullFromGitHub();
+        afficherTableauBDD();
+        if (!silent) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Actualiser (Local & GitHub)';
+        }
+    }
+
+    function filtrerParType(type, btn) {
+        currentTypeFilter = type;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        afficherTableauBDD();
+    }
+
+    function getFilteredRecords() {
+        const regionVal = document.getElementById('filterRegionBDD').value;
+        return allRecords.filter(r => {
+            const matchType = (currentTypeFilter === 'ALL') || (r.typeControle === currentTypeFilter);
+            const matchRegion = (regionVal === 'ALL') || (r.region === regionVal);
+            return matchType && matchRegion;
         });
+    }
 
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'fci_database') {
-                chargerBDDUnifiee();
-            }
-        });
+    function afficherTableauBDD() {
+        const tbody = document.getElementById('tbodyBDD');
+        const filtered = getFilteredRecords();
 
-        function lireDBSecurisee() {
-            let db = { constatsControle: [], constatsEncaisses: [] };
-            try {
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                    db = FCIDatabase.getDB();
-                } else {
-                    const raw = localStorage.getItem('fci_database');
-                    if (raw) db = JSON.parse(raw);
-                }
-            } catch(e) {}
-            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
-            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
-            return db;
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:20px; color:#6c757d;">Aucun enregistrement trouvé pour ces critères. Archivez une fiche depuis FC ou FV pour alimenter la BDD.</td></tr>`;
+            document.getElementById('bddMoyenneCell').textContent = '—';
+            document.getElementById('bddMoyenneCell').style.color = '#2c3e50';
+            return;
         }
 
-        function formatDateFR(val) {
-            if (!val) return '';
-            let str = String(val).trim();
-            if (str.includes('T')) str = str.split('T')[0];
-            if (str.includes('-')) {
-                const parts = str.split('-');
-                if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
-            }
-            return str;
+        let sommeNotes = 0;
+        tbody.innerHTML = filtered.map(r => {
+            const note = parseFloat(r.note) || 0;
+            sommeNotes += note;
+            const badgeClass = r.statut === 'Conforme' ? 'bg-conforme' : (r.statut === 'Partiellement Conforme' ? 'bg-partiel' : 'bg-nonconforme');
+
+            return `
+                <tr>
+                    <td><strong>${r.missionId || '-'}</strong></td>
+                    <td>${r.date || '-'}</td>
+                    <td>${r.region || '-'}</td>
+                    <td>${r.site || '-'}</td>
+                    <td><span class="badge bg-type">${r.typeControle || '-'}</span></td>
+                    <td>${r.processus || '-'}</td>
+                    <td>${r.sousProcessus || '-'}</td>
+                    <td>${r.pointControle || '-'}</td>
+                    <td><span class="badge ${badgeClass}">${r.statut || '-'}</span></td>
+                    <td><strong>${note} %</strong></td>
+                    <td>${r.constat || '-'}</td>
+                    <td style="white-space:nowrap;">
+                        <button class="btn btn-warning" style="padding:4px 8px;" onclick="ouvrirModal('${r.uid}')" title="Modifier"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-danger" style="padding:4px 8px;" onclick="supprimerLigneBDD('${r.uid}')" title="Supprimer"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        const moyenne = sommeNotes / filtered.length;
+        const moyCell = document.getElementById('bddMoyenneCell');
+        moyCell.textContent = `${moyenne.toFixed(1)} % (${filtered.length} contrôle${filtered.length > 1 ? 's' : ''})`;
+        moyCell.style.color = moyenne >= 80 ? '#198754' : (moyenne >= 50 ? '#fd7e14' : '#dc3545');
+    }
+
+    function majSitesModal(selectedSite = null) {
+        const reg = document.getElementById('editRegion').value;
+        const siteSelect = document.getElementById('editSite');
+        const list = REGIONS_CENTRES[reg] || [];
+        siteSelect.innerHTML = list.map(s => `<option value="${s}">${s}</option>`).join('');
+        if (selectedSite && list.includes(selectedSite)) {
+            siteSelect.value = selectedSite;
         }
+    }
 
-        function chargerBDDUnifiee() {
-            const db = lireDBSecurisee();
-            donneesGlobalesBDD = [...db.constatsControle, ...db.constatsEncaisses];
-            remplirListesDeroulantesFiltres();
-            filtrerEtAfficherBDD();
+    function ouvrirModal(uid) {
+        const rec = allRecords.find(r => r.uid === uid);
+        if (!rec) return;
+
+        document.getElementById('editUid').value = rec.uid;
+        document.getElementById('editDate').value = rec.date || '';
+        document.getElementById('editRegion').value = rec.region || 'MARRAKECH';
+        majSitesModal(rec.site);
+        document.getElementById('editProcessus').value = rec.processus || '';
+        document.getElementById('editStatut').value = rec.statut || 'Conforme';
+        document.getElementById('editNote').value = rec.note ?? 100;
+        document.getElementById('editConstat').value = rec.constat || '';
+
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function fermerModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    async function enregistrerModification() {
+        const uid = document.getElementById('editUid').value;
+        const updated = {
+            date: document.getElementById('editDate').value,
+            region: document.getElementById('editRegion').value,
+            site: document.getElementById('editSite').value,
+            processus: document.getElementById('editProcessus').value,
+            statut: document.getElementById('editStatut').value,
+            note: parseFloat(document.getElementById('editNote').value) || 0,
+            constat: document.getElementById('editConstat').value
+        };
+
+        await FCIDBManager.updateRecord(uid, updated);
+        allRecords = FCIDBManager.getAllRecords();
+        afficherTableauBDD();
+        fermerModal();
+    }
+
+    async function supprimerLigneBDD(uid) {
+        if (!confirm("Confirmer la suppression définitive de cet enregistrement de la BDD ?")) return;
+        await FCIDBManager.deleteRecord(uid);
+        allRecords = FCIDBManager.getAllRecords();
+        afficherTableauBDD();
+    }
+
+    function exporterExcelBDD() {
+        const filtered = getFilteredRecords();
+        if (!filtered.length) {
+            alert("Aucune donnée à exporter.");
+            return;
         }
+        const rows = filtered.map(r => ({
+            "ID Mission": r.missionId,
+            "Date": r.date,
+            "Région": r.region,
+            "Centre / Site": r.site,
+            "Type de Contrôle": r.typeControle,
+            "Processus": r.processus,
+            "Sous-Processus": r.sousProcessus,
+            "Point de Contrôle": r.pointControle,
+            "Statut": r.statut,
+            "Note (%)": r.note,
+            "Constats / Écarts": r.constat,
+            "Auditeur": r.auditeur || ''
+        }));
 
-        function remplirListesDeroulantesFiltres() {
-            const dates = [...new Set(donneesGlobalesBDD.map(item => formatDateFR(item.date || item.dateControle || item.dateVerification)).filter(Boolean))].sort();
-            const regions = [...new Set(donneesGlobalesBDD.map(item => item.region).filter(Boolean))].sort();
-            const sites = [...new Set(donneesGlobalesBDD.map(item => item.site || item.entite).filter(Boolean))].sort();
-            const processus = [...new Set(donneesGlobalesBDD.map(item => item.processus).filter(Boolean))].sort();
-            const types = [...new Set(donneesGlobalesBDD.map(item => item.typeControle || (item.idEncaisse ? 'Vérification' : 'Thématique')).filter(Boolean))].sort();
-            const statuts = [...new Set(donneesGlobalesBDD.map(item => item.statut || 'EN_COURS').filter(Boolean))].sort();
-
-            remplirSelect('filterDate', dates);
-            remplirSelect('filterRegion', regions);
-            remplirSelect('filterSite', sites);
-            remplirSelect('filterProcessus', processus);
-            remplirSelect('filterType', types);
-            remplirSelect('filterStatut', statuts);
-        }
-
-        function remplirSelect(id, valeurs) {
-            const sel = document.getElementById(id);
-            if (!sel) return;
-            const currentVal = sel.value;
-            sel.innerHTML = `<option value="">-- Tous --</option>` + valeurs.map(v => `<option value="${v}" ${v === currentVal ? 'selected' : ''}>${v}</option>`).join('');
-        }
-
-        function reinitialiserFiltresBDD() {
-            document.getElementById('filterDate').value = '';
-            document.getElementById('filterRegion').value = '';
-            document.getElementById('filterSite').value = '';
-            document.getElementById('filterProcessus').value = '';
-            document.getElementById('filterType').value = '';
-            document.getElementById('filterStatut').value = '';
-            filtrerEtAfficherBDD();
-        }
-
-        function filtrerEtAfficherBDD() {
-            const fDate = document.getElementById('filterDate').value;
-            const fRegion = document.getElementById('filterRegion').value;
-            const fSite = document.getElementById('filterSite').value;
-            const fProcessus = document.getElementById('filterProcessus').value;
-            const fType = document.getElementById('filterType').value;
-            const fStatut = document.getElementById('filterStatut').value;
-
-            const filtered = donneesGlobalesBDD.filter(item => {
-                const dateVal = formatDateFR(item.date || item.dateControle || item.dateVerification);
-                const regVal = item.region || '';
-                const siteVal = item.site || item.entite || '';
-                const procVal = item.processus || '';
-                const typeVal = item.typeControle || (item.idEncaisse ? 'Vérification' : 'Thématique');
-                const statutVal = item.statut || 'EN_COURS';
-
-                if (fDate && dateVal !== fDate) return false;
-                if (fRegion && regVal !== fRegion) return false;
-                if (fSite && siteVal !== fSite) return false;
-                if (fProcessus && procVal !== fProcessus) return false;
-                if (fType && typeVal !== fType) return false;
-                if (fStatut && statutVal !== fStatut) return false;
-
-                return true;
-            });
-
-            const tbody = document.getElementById('bddTableBody');
-            if (!filtered.length) {
-                tbody.innerHTML = `<tr><td colspan="16" style="text-align: center; padding: 30px; color: var(--text-muted);">Aucun enregistrement trouvé dans la base de données.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(item => {
-                const typeVal = item.typeControle || (item.idEncaisse ? 'Vérification' : 'Thématique');
-                let badgeTypeClass = 'type-thematique';
-                if (typeVal === 'Vérification') badgeTypeClass = 'type-verification';
-                else if (typeVal === 'Systématique') badgeTypeClass = 'type-systematique';
-
-                const tcVal = parseFloat(item.tc || item.tauxConformite || 0).toFixed(1);
-                const dateFR = formatDateFR(item.date || item.dateControle || item.dateVerification);
-
-                let badgeSuiviModif = '';
-                const idCst = item.idConstat || item.idEncaisse || '';
-                if (idCst.includes('MODIF') || idCst.includes('SUIVI') || item._modifie || item._suivi) {
-                    if (idCst.includes('SUIVI') || item._suivi) {
-                        badgeSuiviModif = ` <span class="badge-suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`;
-                    } else {
-                        badgeSuiviModif = ` <span class="badge-modif"><i class="fa-solid fa-pen-to-square"></i> Modifié</span>`;
-                    }
-                }
-
-                return `
-                    <tr>
-                        <td><strong>${dateFR || '--'}</strong></td>
-                        <td>${item.region || '--'}</td>
-                        <td>${item.site || item.entite || '--'}</td>
-                        <td>${item.processus || '--'}</td>
-                        <td title="${item.risque || ''}">${item.risque || '--'}</td>
-                        <td title="${item.controle || ''}">${item.controle || '--'}</td>
-                        <td title="${item.pc || ''}">${item.pc || '--'}</td>
-                        <td title="${item.constat || ''}">${item.constat || '--'}</td>
-                        <td>${item.pop || item.population || 0}</td>
-                        <td>${item.ech || item.echantillon || 0}</td>
-                        <td style="color:var(--success); font-weight:700;">${item.ok || item.nombreOk || 0}</td>
-                        <td style="color:var(--danger); font-weight:700;">${item.ko || item.nombreKo || 0}</td>
-                        <td><strong>${tcVal} %</strong></td>
-                        <td>${statutVal}</td>
-                        <td>${item.controleur || '--'}${badgeSuiviModif}</td>
-                        <td><span class="badge-type ${badgeTypeClass}">${typeVal}</span></td>
-                    </tr>`;
-            }).join('');
-        }
-
-        function exporterExcelBDD() {
-            if (!donneesGlobalesBDD.length) { alert("Aucune donnée à exporter."); return; }
-            XLSX.writeFile(XLSX.utils.json_to_sheet(donneesGlobalesBDD), "FCI_BaseDeDonnees_Globale.xlsx");
-        }
-
-        function viderBDDLocale() {
-            if (confirm("⚠️ Êtes-vous sûr de vouloir vider entièrement la base de données locale ?")) {
-                localStorage.removeItem('fci_database');
-                donneesGlobalesBDD = [];
-                remplirListesDeroulantesFiltres();
-                filtrerEtAfficherBDD();
-                alert("Base de données vidée.");
-            }
-        }
-    </script>
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "BDD_FCI");
+        XLSX.writeFile(wb, `FCI_BDD_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    }
+</script>
 </body>
 </html>
