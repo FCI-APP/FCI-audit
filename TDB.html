@@ -25,12 +25,14 @@
             --success: #10B981;
             --danger: #EF4444;
             --warning: #F59E0B;
+            --info: #2563EB;
             --sidebar-width: 250px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
+        /* SIDEBAR */
         .sidebar {
             width: var(--sidebar-width);
             background-color: var(--primary-blue);
@@ -72,21 +74,22 @@
             font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
         }
 
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+        /* MAIN CONTENT */
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 26px; max-width: calc(100vw - var(--sidebar-width)); }
 
         .page-header {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
+            margin-bottom: 18px; background: var(--card-bg); padding: 18px 24px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
             flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .page-title h1 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.84rem; color: var(--text-muted); margin-top: 4px; }
 
-        .header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
+        .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-primary:hover { background-color: var(--dark-blue); }
         .btn-excel { background-color: #10B981; color: #FFFFFF; }
@@ -95,39 +98,287 @@
         .btn-pdf:hover { background-color: #334155; }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
         .btn-refresh:hover { background-color: #BAE6FD; }
+        .btn-outline { background-color: #FFFFFF; color: var(--primary-blue); border-color: #CBD5E1; }
+        .btn-outline:hover { background-color: #F1F5F9; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
         .btn-danger:hover { background-color: #FECACA; }
 
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .kpi-card { background: var(--card-bg); padding: 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); border-left: 4px solid var(--primary-blue); }
+        /* BARRE DE PILOTAGE MULTI-NIVEAUX */
+        .pilotage-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .niveau-tabs-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-bottom: 14px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .niveau-tabs {
+            display: inline-flex;
+            background: #EFF3F8;
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+            border: 1px solid #CBD5E1;
+        }
+
+        .niveau-tab {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.83rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--text-muted);
+            background: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+        }
+
+        .niveau-tab:hover { color: var(--primary-blue); background: rgba(255,255,255,0.6); }
+        .niveau-tab.active {
+            background: var(--primary-blue);
+            color: #FFFFFF;
+            box-shadow: 0 2px 5px rgba(0, 51, 102, 0.25);
+        }
+        .niveau-tab.active i { color: var(--accent-gold); }
+
+        .scope-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFFBEB;
+            border: 1px solid #FCD34D;
+            color: #92400E;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-select {
+            padding: 7px 10px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 1px solid #CBD5E1;
+            background: #F8FAFC;
+            color: var(--text-dark);
+            cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
+        .filter-select:disabled { opacity: 0.55; cursor: not-allowed; background: #E2E8F0; }
+
+        /* KPI CARDS */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; margin-bottom: 20px; }
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 16px 18px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-blue);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
         .kpi-card.success { border-left-color: var(--success); }
         .kpi-card.warning { border-left-color: var(--warning); }
         .kpi-card.danger { border-left-color: var(--danger); }
-        
-        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .kpi-info h3 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; }
-        .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; }
+        .kpi-card.info { border-left-color: var(--info); }
 
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .chart-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
-        .chart-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; margin-bottom: 15px; }
+        .kpi-icon {
+            width: 44px; height: 44px; border-radius: 8px;
+            background: rgba(0, 51, 102, 0.08); color: var(--primary-blue);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem; flex-shrink: 0;
+        }
+        .kpi-info { min-width: 0; }
+        .kpi-info p { font-size: 0.72rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+        .kpi-info h3 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; margin: 2px 0; }
+        .kpi-sub { font-size: 0.73rem; font-weight: 600; color: var(--text-muted); display: block; }
 
-        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; padding: 20px; }
-        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        /* BENCHMARK 3 NIVEAUX & SYNTHESE DECISIONNELLE */
+        .decision-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.4fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .panel-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .panel-card h3 {
+            font-size: 0.95rem;
+            color: var(--primary-blue);
+            font-weight: 800;
+            border-bottom: 2px solid #F1F5F9;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .benchmark-bars { display: flex; flex-direction: column; gap: 12px; }
+        .bench-item { display: flex; flex-direction: column; gap: 5px; }
+        .bench-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; }
+        .bench-track { width: 100%; height: 11px; background: #E2E8F0; border-radius: 6px; overflow: hidden; }
+        .bench-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+
+        .alert-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .alert-item {
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 0.81rem;
+            line-height: 1.4;
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            border-left: 4px solid;
+        }
+        .alert-critical { background: #FEF2F2; color: #991B1B; border-color: #EF4444; }
+        .alert-warning { background: #FFFBEB; color: #92400E; border-color: #F59E0B; }
+        .alert-ok { background: #ECFDF5; color: #065F46; border-color: #10B981; }
+
+        .synthese-box {
+            margin-top: 12px;
+            padding: 11px 14px;
+            background: #F8FAFC;
+            border: 1px dashed #94A3B8;
+            border-radius: 6px;
+            font-size: 0.81rem;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        /* CHARTS GRID */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .chart-card h3 {
+            font-size: 0.94rem;
+            color: var(--primary-blue);
+            font-weight: 800;
+            border-bottom: 2px solid #F1F5F9;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-canvas-wrap { position: relative; height: 265px; width: 100%; }
+
+        /* TABLES ANALYTIQUES */
+        .analytics-tables-grid {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr;
+            gap: 18px;
+            margin-bottom: 22px;
+        }
+
+        .table-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-bottom: 22px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .table-card h3 {
+            font-size: 0.95rem;
+            color: var(--primary-blue);
+            font-weight: 800;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
+        th, td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.71rem; letter-spacing: 0.3px; white-space: nowrap; }
         tr:nth-child(even) { background-color: #F8FAFC; }
+        tr:hover { background-color: #EFF6FF; }
+
+        .num-center { text-align: center !important; }
+        .pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+        .pill-critique { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .pill-eleve { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
+        .pill-modere { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .pill-faible { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+        .pill-them { background: #DBEAFE; color: #1E40AF; }
+        .pill-syst { background: #FEF3C7; color: #92400E; }
+        .pill-verif { background: #D1FAE5; color: #065F46; }
+
+        @media (max-width: 1180px) {
+            .decision-grid, .charts-grid, .analytics-tables-grid { grid-template-columns: 1fr; }
+        }
 
         @media print {
-            @page { size: A4 landscape; margin: 12mm; }
+            @page { size: A4 landscape; margin: 10mm; }
             body { background-color: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .sidebar, .no-print { display: none !important; }
             .main-content { margin-left: 0 !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; }
-            .page-header, .kpi-card, .chart-card, .table-card { box-shadow: none !important; break-inside: avoid; }
-            .charts-grid { grid-template-columns: 1fr 1fr !important; gap: 15px !important; }
-            table { font-size: 0.75rem; }
-            th, td { padding: 6px 8px; }
+            .page-header, .pilotage-panel, .kpi-card, .panel-card, .chart-card, .table-card { box-shadow: none !important; break-inside: avoid; }
+            .charts-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
+            .chart-canvas-wrap { height: 210px !important; }
+            table { font-size: 0.72rem; }
+            th, td { padding: 5px 7px; }
         }
     </style>
 </head>
@@ -157,10 +408,10 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Analyse & Pilotage</h1>
-                <p>Analyse globale et visuelle des résultats de contrôles</p>
+                <p>Pilotage décisionnel multi-niveaux (National, Régional, Centre / Site) — Barid Al-Maghrib</p>
             </div>
             <div class="header-actions no-print">
-                <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport au format Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
+                <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport analytique complet en Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
                 <button class="btn btn-pdf" onclick="imprimerPDF()" title="Imprimer ou enregistrer en PDF"><i class="fa-solid fa-file-pdf"></i> Imprimer PDF</button>
                 <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
@@ -168,116 +419,1151 @@
             </div>
         </header>
 
-        <div class="kpi-row">
+        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES -->
+        <section class="pilotage-panel">
+            <div class="niveau-tabs-bar">
+                <div class="niveau-tabs no-print" role="tablist">
+                    <button type="button" class="niveau-tab active" id="tabNational" onclick="changerNiveau('NATIONAL')">
+                        <i class="fa-solid fa-globe"></i> Niveau National
+                    </button>
+                    <button type="button" class="niveau-tab" id="tabRegional" onclick="changerNiveau('REGIONAL')">
+                        <i class="fa-solid fa-map-location-dot"></i> Niveau Régional
+                    </button>
+                    <button type="button" class="niveau-tab" id="tabCentre" onclick="changerNiveau('CENTRE')">
+                        <i class="fa-solid fa-building"></i> Niveau Centre / Site
+                    </button>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span class="scope-indicator" id="scopeIndicator">
+                        <i class="fa-solid fa-layer-group"></i> Périmètre : Réseau National (Toutes régions)
+                    </span>
+                    <button type="button" class="btn btn-outline no-print" onclick="reinitialiserFiltresTDB()" title="Réinitialiser tous les filtres">
+                        <i class="fa-solid fa-filter-circle-xmark"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+
+            <div class="filters-grid no-print">
+                <div class="filter-group">
+                    <label for="filtreRegion"><i class="fa-solid fa-map-pin"></i> Région Postale</label>
+                    <select id="filtreRegion" class="filter-select" onchange="onChangeRegion()">
+                        <option value="TOUS">-- Toutes les régions --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreCentre"><i class="fa-solid fa-building-flag"></i> Centre / Site</label>
+                    <select id="filtreCentre" class="filter-select" onchange="actualiserAnalyse()">
+                        <option value="TOUS">-- Tous les centres --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtrePeriode"><i class="fa-regular fa-calendar"></i> Période (Mois)</label>
+                    <select id="filtrePeriode" class="filter-select" onchange="actualiserAnalyse()">
+                        <option value="TOUS">-- Toutes les périodes --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreType"><i class="fa-solid fa-tags"></i> Type de Contrôle</label>
+                    <select id="filtreType" class="filter-select" onchange="actualiserAnalyse()">
+                        <option value="TOUS">-- Tous les types --</option>
+                        <option value="Thématique">Thématique</option>
+                        <option value="Systématique">Systématique</option>
+                        <option value="Vérification">Vérification</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
+                    <select id="filtreProcessus" class="filter-select" onchange="actualiserAnalyse()">
+                        <option value="TOUS">-- Tous les processus --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreStatut"><i class="fa-solid fa-circle-dot"></i> Statut Constat</label>
+                    <select id="filtreStatut" class="filter-select" onchange="actualiserAnalyse()">
+                        <option value="TOUS">-- Tous les statuts --</option>
+                        <option value="EN_COURS">En cours</option>
+                        <option value="CLOTURE">Clôturé</option>
+                        <option value="NON_CLOTURE">Non clôturé</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- INDICATEURS CLES DE PERFORMANCE (KPIs) -->
+        <section class="kpi-row">
             <div class="kpi-card">
                 <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
-                <div class="kpi-info"><h3 id="kpiMissions">0</h3><p>Missions Enregistrées</p></div>
+                <div class="kpi-info">
+                    <p id="lblKpiVolume">Périmètre Contrôlé</p>
+                    <h3 id="kpiVolume">0</h3>
+                    <span class="kpi-sub" id="subKpiVolume">0 mission(s) · 0 site(s)</span>
+                </div>
             </div>
+
             <div class="kpi-card success">
-                <div class="kpi-icon" style="color: var(--success);"><i class="fa-solid fa-square-check"></i></div>
-                <div class="kpi-info"><h3 id="kpiTcControle">0.0 %</h3><p>TC Moyen Fiches Contrôle</p></div>
+                <div class="kpi-icon" style="color: var(--success); background: rgba(16,185,129,0.1);"><i class="fa-solid fa-shield-check"></i></div>
+                <div class="kpi-info">
+                    <p>Taux Conformité Pondéré</p>
+                    <h3 id="kpiTcGlobal">0.0 %</h3>
+                    <span class="kpi-sub" id="subKpiTcGlobal">FC: 0.0% · Encaisses: 0.0%</span>
+                </div>
             </div>
-            <div class="kpi-card warning">
-                <div class="kpi-icon" style="color: var(--warning);"><i class="fa-solid fa-vault"></i></div>
-                <div class="kpi-info"><h3 id="kpiTcEncaisses">0.0 %</h3><p>TC Moyen Encaisses</p></div>
+
+            <div class="kpi-card info">
+                <div class="kpi-icon" style="color: var(--info); background: rgba(37,99,235,0.1);"><i class="fa-solid fa-check-double"></i></div>
+                <div class="kpi-info">
+                    <p>Taux de Clôture Constats</p>
+                    <h3 id="kpiTauxCloture">0.0 %</h3>
+                    <span class="kpi-sub" id="subKpiCloture">0 clôturé(s) / 0 constat(s)</span>
+                </div>
             </div>
+
             <div class="kpi-card danger">
-                <div class="kpi-icon" style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="kpi-info"><h3 id="kpiTotalKO">0</h3><p>Total Anomalies (KO)</p></div>
+                <div class="kpi-icon" style="color: var(--danger); background: rgba(239,68,68,0.1);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="kpi-info">
+                    <p>Anomalies (KO) & En Retard</p>
+                    <h3 id="kpiTotalKO">0</h3>
+                    <span class="kpi-sub" id="subKpiKO">0 non clôturé(s) · 0 suivi(s)</span>
+                </div>
             </div>
-        </div>
 
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h3>Taux de Conformité (TC %) par Processus</h3>
-                <canvas id="chartProcessus"></canvas>
+            <div class="kpi-card warning">
+                <div class="kpi-icon" style="color: var(--warning); background: rgba(245,158,11,0.12);"><i class="fa-solid fa-gauge-high"></i></div>
+                <div class="kpi-info">
+                    <p id="lblKpiCouverture">Taux de Couverture</p>
+                    <h3 id="kpiCouverture">0.0 %</h3>
+                    <span class="kpi-sub" id="subKpiCouverture">Contrôlés / Planifiés</span>
+                </div>
             </div>
-            <div class="chart-card">
-                <h3>Répartition Globale (OK vs KO)</h3>
-                <canvas id="chartOkKo"></canvas>
-            </div>
-        </div>
+        </section>
 
-        <div class="table-card">
-            <h3><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats et Points de Contrôle</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 12%;">Processus</th>
-                        <th style="width: 15%;">Risque</th>
-                        <th style="width: 15%;">Contrôle</th>
-                        <th style="width: 20%;">Point de Contrôle (PC)</th>
-                        <th style="width: 6%;">Ech</th>
-                        <th style="width: 5%;">OK</th>
-                        <th style="width: 5%;">KO</th>
-                        <th style="width: 7%;">TC (%)</th>
-                        <th style="width: 15%;">Constat / Remarques</th>
-                    </tr>
-                </thead>
-                <tbody id="tdbTableBody"></tbody>
-            </table>
-        </div>
+        <!-- COMPARATIF A 3 NIVEAUX + DETECTION AUTOMATIQUE & SYNTHESE DECISIONNELLE -->
+        <section class="decision-grid">
+            <div class="panel-card">
+                <h3>
+                    <span><i class="fa-solid fa-scale-balanced" style="color:var(--accent-gold);"></i> Comparaison Comparative (3 Niveaux)</span>
+                    <span id="badgeRang" class="pill pill-modere" style="display:none;">Rang : --</span>
+                </h3>
+                <div class="benchmark-bars" id="benchmarkContainer">
+                    <div class="bench-item">
+                        <div class="bench-header">
+                            <span id="benchLabel1">Périmètre Sélectionné</span>
+                            <span id="benchVal1" style="color:var(--primary-blue);">0.0 %</span>
+                        </div>
+                        <div class="bench-track"><div class="bench-fill" id="benchBar1" style="width:0%; background:var(--primary-blue);"></div></div>
+                    </div>
+                    <div class="bench-item">
+                        <div class="bench-header">
+                            <span id="benchLabel2">Moyenne Régionale (Pondérée)</span>
+                            <span id="benchVal2" style="color:#0369A1;">0.0 %</span>
+                        </div>
+                        <div class="bench-track"><div class="bench-fill" id="benchBar2" style="width:0%; background:#0284C7;"></div></div>
+                    </div>
+                    <div class="bench-item">
+                        <div class="bench-header">
+                            <span>Moyenne Nationale Réseau (Pondérée)</span>
+                            <span id="benchVal3" style="color:#059669;">0.0 %</span>
+                        </div>
+                        <div class="bench-track"><div class="bench-fill" id="benchBar3" style="width:0%; background:#10B981;"></div></div>
+                    </div>
+                </div>
+                <div class="synthese-box" id="syntheseDecisionnelleBox">
+                    Chargement de la synthèse décisionnelle...
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <h3>
+                    <span><i class="fa-solid fa-bell" style="color:var(--danger);"></i> Détection Automatique des Situations Préoccupantes</span>
+                    <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Seuil d'alerte : TC &lt; 75%</span>
+                </h3>
+                <ul class="alert-list" id="alertesAutomatiquesList"></ul>
+            </div>
+        </section>
+
+        <!-- GRAPHIQUES INTERACTIFS -->
+        <section class="charts-grid">
+            <div class="chart-card">
+                <h3 id="titreChartComparatif"><i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)</h3>
+                <div class="chart-canvas-wrap"><canvas id="chartComparatif"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+                <h3><i class="fa-solid fa-diagram-project"></i> Taux de Conformité (%) par Processus (Points Faibles)</h3>
+                <div class="chart-canvas-wrap"><canvas id="chartProcessus"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+                <h3><i class="fa-solid fa-chart-pie"></i> Répartition des Statuts Finaux & Conformité (OK / KO)</h3>
+                <div class="chart-canvas-wrap"><canvas id="chartStatuts"></canvas></div>
+            </div>
+
+            <div class="chart-card">
+                <h3><i class="fa-solid fa-chart-line"></i> Évolution Chronologique (Taux de Conformité % & Anomalies KO)</h3>
+                <div class="chart-canvas-wrap"><canvas id="chartEvolution"></canvas></div>
+            </div>
+        </section>
+
+        <!-- TABLEAUX CROISES : CLASSEMENT ENTITES & ANALYSE PAR TYPE DE CONTROLE / RISQUE -->
+        <section class="analytics-tables-grid">
+            <div class="table-card" style="margin-bottom:0;">
+                <h3 id="titreTableClassement">
+                    <span><i class="fa-solid fa-ranking-star"></i> Classement & Performance des Régions</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreClassement">Trié par TC pondéré</span>
+                </h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="num-center">Rang</th>
+                                <th id="colEntiteClassement">Région</th>
+                                <th class="num-center">Sites</th>
+                                <th class="num-center">Constats</th>
+                                <th class="num-center">Ech</th>
+                                <th class="num-center">KO</th>
+                                <th class="num-center">TC (%)</th>
+                                <th class="num-center">Clôture</th>
+                                <th class="num-center">Niveau Risque</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyClassement"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-card" style="margin-bottom:0;">
+                <h3>
+                    <span><i class="fa-solid fa-layer-group"></i> Analyse par Type de Contrôle & Criticité</span>
+                </h3>
+                <div class="table-scroll" style="margin-bottom:14px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type de Contrôle</th>
+                                <th class="num-center">Lignes</th>
+                                <th class="num-center">Ech</th>
+                                <th class="num-center">OK</th>
+                                <th class="num-center">KO</th>
+                                <th class="num-center">TC (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyTypeControle"></tbody>
+                    </table>
+                </div>
+
+                <h3 style="margin-top:8px;">
+                    <span><i class="fa-solid fa-repeat"></i> Top Processus / Risques Récurrents</span>
+                </h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Processus</th>
+                                <th class="num-center">Constats</th>
+                                <th class="num-center">Total KO</th>
+                                <th class="num-center">TC (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyProcessusSensibles"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABLEAU DETAILLE DES CONSTATS FILTRES -->
+        <section class="table-card">
+            <h3>
+                <span><i class="fa-solid fa-list-check"></i> Synthèse Détaillée des Constats Filtrés (<span id="countConstatsTable">0</span> ligne(s))</span>
+            </h3>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Région</th>
+                            <th>Centre / Site</th>
+                            <th>Processus</th>
+                            <th>Risque</th>
+                            <th>Point de Contrôle (PC)</th>
+                            <th class="num-center">Ech</th>
+                            <th class="num-center">OK</th>
+                            <th class="num-center">KO</th>
+                            <th class="num-center">TC (%)</th>
+                            <th>Statut</th>
+                            <th>Type</th>
+                            <th>Constat / Remarques</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tdbTableBody"></tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
     <script src="fci-db-manager.js"></script>
     <script>
-        let chartProcessusInstance = null;
-        let chartOkKoInstance = null;
+        const REGIONS_BARID = [
+            'MARRAKECH', 'AGADIR', 'CASA', 'SETTAT', 'RABAT',
+            'TANGER', 'FES', 'MEKNES', 'OUJEDA', 'LAAYOUNE'
+        ];
+        const SEUIL_ALERTE_TC = 75.0;
 
-        document.addEventListener('DOMContentLoaded', () => { 
-            chargerTableauDeBord(); 
+        let niveauActif = 'NATIONAL'; // 'NATIONAL' | 'REGIONAL' | 'CENTRE'
+        let toutesLesDonnees = [];
+        let toutesLesMissions = [];
+        let dernieresDonneesFiltrees = [];
+        let dernierClassement = [];
+        let derniersTypes = [];
+        let derniersProcessus = [];
+
+        let chartComparatifInst = null;
+        let chartProcessusInst = null;
+        let chartStatutsInst = null;
+        let chartEvolutionInst = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerEtPreparerDonnees();
         });
 
-        function chargerTableauDeBord() {
-            const db = FCIDatabase.getDB();
-            const missions = db.missions || [];
-            const constatsControle = db.constatsControle || [];
-            const constatsEncaisses = db.constatsEncaisses || [];
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                chargerEtPreparerDonnees();
+            }
+        });
 
-            document.getElementById('kpiMissions').textContent = missions.length;
+        function lireDB() {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
+                return FCIDatabase.getDB();
+            }
+            try {
+                const raw = localStorage.getItem('fci_database');
+                return raw ? JSON.parse(raw) : { missions: [], constatsControle: [], constatsEncaisses: [] };
+            } catch (e) {
+                return { missions: [], constatsControle: [], constatsEncaisses: [] };
+            }
+        }
 
-            let totalEchControle = 0, totalOkControle = 0, totalKoControle = 0;
-            constatsControle.forEach(c => {
-                totalEchControle += parseInt(c.ech) || 0;
-                totalOkControle += parseInt(c.ok) || 0;
-                totalKoControle += parseInt(c.ko) || 0;
+        function normaliserDateISO(val) {
+            if (!val) return '';
+            let s = String(val).trim();
+            if (s.includes('T')) s = s.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+                const [d, m, y] = s.split('/');
+                return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            }
+            return '';
+        }
+
+        function formaterDateFR(iso) {
+            if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '--';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function normaliserType(val, source) {
+            const v = String(val || '').trim().toLowerCase();
+            if (v.includes('syst')) return 'Systématique';
+            if (v.includes('vérif') || v.includes('verif')) return 'Vérification';
+            if (v.includes('thém') || v.includes('them')) return 'Thématique';
+            return source === 'FV' ? 'Vérification' : 'Thématique';
+        }
+
+        function normaliserStatut(val) {
+            const v = String(val || '').trim().toUpperCase();
+            if (v === 'CLOTURE' || v === 'CLÔTURÉ' || v === 'CLOTURÉ') return 'CLOTURE';
+            if (v === 'NON_CLOTURE' || v === 'NON CLÔTURÉ' || v === 'NON CLOTURE') return 'NON_CLOTURE';
+            return 'EN_COURS';
+        }
+
+        function libelleStatut(code) {
+            if (code === 'CLOTURE') return 'Clôturé';
+            if (code === 'NON_CLOTURE') return 'Non clôturé';
+            return 'En cours';
+        }
+
+        function calculerTCPondere(liste) {
+            let sumOk = 0, sumEch = 0;
+            liste.forEach(item => {
+                sumOk += item.ok;
+                sumEch += item.ech;
+            });
+            if (sumEch > 0) return (sumOk / sumEch) * 100;
+            if (liste.length > 0) {
+                const avg = liste.reduce((acc, i) => acc + i.tc, 0) / liste.length;
+                return avg;
+            }
+            return 0;
+        }
+
+        function qualifierRisque(tc, ko) {
+            if (tc < 60 || ko >= 10) return { label: 'Critique', cls: 'pill-critique' };
+            if (tc < 80 || ko >= 5) return { label: 'Élevé', cls: 'pill-eleve' };
+            if (tc < 95) return { label: 'Modéré', cls: 'pill-modere' };
+            return { label: 'Faible', cls: 'pill-faible' };
+        }
+
+        function chargerEtPreparerDonnees() {
+            const db = lireDB();
+            toutesLesMissions = db.missions || [];
+
+            const mapMissions = {};
+            toutesLesMissions.forEach(m => {
+                if (m.idMission) mapMissions[m.idMission] = m;
             });
 
-            let totalEchEncaisse = 0, totalOkEncaisse = 0, totalKoEncaisse = 0;
-            constatsEncaisses.forEach(e => {
-                totalEchEncaisse += parseInt(e.ech) || 0;
-                totalOkEncaisse += parseInt(e.ok) || 0;
-                totalKoEncaisse += parseInt(e.ko) || 0;
+            const unifies = [];
+
+            (db.constatsControle || []).forEach(c => {
+                const m = mapMissions[c.idMission] || {};
+                const iso = normaliserDateISO(c.date || c.dateControle || m.date || m.dateControle);
+                const ech = parseInt(c.ech) || 0;
+                const ok = parseInt(c.ok) || 0;
+                const ko = parseInt(c.ko) || 0;
+                const tc = c.tc !== undefined ? parseFloat(c.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
+                unifies.push({
+                    source: 'FC',
+                    idMission: c.idMission || '',
+                    dateISO: iso,
+                    dateFR: formaterDateFR(iso),
+                    periode: iso ? iso.slice(0, 7) : 'Non daté',
+                    region: String(c.region || m.region || 'NON DÉFINIE').trim().toUpperCase(),
+                    site: String(c.entite || c.site || m.entite || 'Site non précisé').trim(),
+                    processus: String(c.processus || 'Autres').trim(),
+                    risque: String(c.risque || 'N/A').trim(),
+                    controle: String(c.controle || 'N/A').trim(),
+                    pc: String(c.pc || 'N/A').trim(),
+                    pop: parseInt(c.pop) || 0,
+                    ech, ok, ko,
+                    tc: isNaN(tc) ? 0 : tc,
+                    constat: String(c.constat || '--').trim(),
+                    statut: normaliserStatut(c.statut || c.statutConstat),
+                    typeControle: normaliserType(c.typeControle || m.typeControle, 'FC'),
+                    isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idConstat || '').toUpperCase().includes('SUIVI')),
+                    isModifie: Boolean(c.isModifie || c.modifie)
+                });
             });
 
-            document.getElementById('kpiTcControle').textContent = (totalEchControle > 0 ? ((totalOkControle / totalEchControle) * 100).toFixed(1) : '0.0') + ' %';
-            document.getElementById('kpiTcEncaisses').textContent = (totalEchEncaisse > 0 ? ((totalOkEncaisse / totalEchEncaisse) * 100).toFixed(1) : '0.0') + ' %';
-            document.getElementById('kpiTotalKO').textContent = totalKoControle + totalKoEncaisse;
+            (db.constatsEncaisses || []).forEach(e => {
+                const m = mapMissions[e.idMission] || {};
+                const iso = normaliserDateISO(e.date || e.dateVerification || m.date);
+                const ech = parseInt(e.ech) || 0;
+                const ok = parseInt(e.ok) || 0;
+                const ko = parseInt(e.ko) || 0;
+                const tc = e.tc !== undefined ? parseFloat(e.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
+                unifies.push({
+                    source: 'FV',
+                    idMission: e.idMission || '',
+                    dateISO: iso,
+                    dateFR: formaterDateFR(iso),
+                    periode: iso ? iso.slice(0, 7) : 'Non daté',
+                    region: String(e.region || m.region || 'NON DÉFINIE').trim().toUpperCase(),
+                    site: String(e.entite || e.site || e.agence || m.entite || 'Site non précisé').trim(),
+                    processus: String(e.processus || 'Vérification Encaisses').trim(),
+                    risque: String(e.risque || 'N/A').trim(),
+                    controle: String(e.controle || 'N/A').trim(),
+                    pc: String(e.pc || 'N/A').trim(),
+                    pop: parseInt(e.pop) || 0,
+                    ech, ok, ko,
+                    tc: isNaN(tc) ? 0 : tc,
+                    constat: String(e.constat || '--').trim(),
+                    statut: normaliserStatut(e.statut || e.statutConstat),
+                    typeControle: normaliserType(e.typeControle, 'FV'),
+                    isSuivi: Boolean(e.isSuivi || e.suivi || String(e.idEncaisse || '').toUpperCase().includes('SUIVI')),
+                    isModifie: Boolean(e.isModifie || e.modifie)
+                });
+            });
 
-            const tbody = document.getElementById('tdbTableBody');
-            tbody.innerHTML = '';
-            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
+            toutesLesDonnees = unifies;
+            peuplerFiltresInitiaux();
+            appliquerEtatNiveau();
+            actualiserAnalyse();
+        }
 
-            if (tousLesConstats.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">Aucun constat enregistré dans la BDD.</td></tr>';
+        function peuplerFiltresInitiaux() {
+            const selReg = document.getElementById('filtreRegion');
+            const valReg = selReg.value;
+            const regionsPresentes = new Set([...REGIONS_BARID, ...toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE')]);
+            selReg.innerHTML = '<option value="TOUS">-- Toutes les régions --</option>';
+            [...regionsPresentes].sort().forEach(r => {
+                selReg.innerHTML += `<option value="${r}">${r}</option>`;
+            });
+            if ([...regionsPresentes].includes(valReg)) selReg.value = valReg;
+
+            peuplerSelectCentres();
+
+            const selPer = document.getElementById('filtrePeriode');
+            const valPer = selPer.value;
+            const periodes = [...new Set(toutesLesDonnees.map(d => d.periode).filter(p => p && p !== 'Non daté'))].sort().reverse();
+            selPer.innerHTML = '<option value="TOUS">-- Toutes les périodes --</option>';
+            periodes.forEach(p => {
+                selPer.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+            if (periodes.includes(valPer)) selPer.value = valPer;
+
+            const selProc = document.getElementById('filtreProcessus');
+            const valProc = selProc.value;
+            const procs = [...new Set(toutesLesDonnees.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            selProc.innerHTML = '<option value="TOUS">-- Tous les processus --</option>';
+            procs.forEach(p => {
+                selProc.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+            if (procs.includes(valProc)) selProc.value = valProc;
+        }
+
+        function peuplerSelectCentres() {
+            const reg = document.getElementById('filtreRegion').value;
+            const selCentre = document.getElementById('filtreCentre');
+            const valCentre = selCentre.value;
+            const source = reg === 'TOUS' ? toutesLesDonnees : toutesLesDonnees.filter(d => d.region === reg);
+            const sites = [...new Set(source.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            selCentre.innerHTML = '<option value="TOUS">-- Tous les centres --</option>';
+            sites.forEach(s => {
+                selCentre.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+            if (sites.includes(valCentre)) selCentre.value = valCentre;
+        }
+
+        function changerNiveau(nouveauNiveau) {
+            niveauActif = nouveauNiveau;
+            const selReg = document.getElementById('filtreRegion');
+            const selCentre = document.getElementById('filtreCentre');
+
+            if (niveauActif === 'NATIONAL') {
+                selReg.value = 'TOUS';
+                peuplerSelectCentres();
+                selCentre.value = 'TOUS';
+            } else if (niveauActif === 'REGIONAL') {
+                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
+                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region))][0];
+                    selReg.value = premiereRegAvecData || selReg.options[1].value;
+                }
+                peuplerSelectCentres();
+                selCentre.value = 'TOUS';
+            } else if (niveauActif === 'CENTRE') {
+                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
+                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region))][0];
+                    selReg.value = premiereRegAvecData || selReg.options[1].value;
+                }
+                peuplerSelectCentres();
+                if (selCentre.value === 'TOUS' && selCentre.options.length > 1) {
+                    selCentre.value = selCentre.options[1].value;
+                }
+            }
+
+            appliquerEtatNiveau();
+            actualiserAnalyse();
+        }
+
+        function appliquerEtatNiveau() {
+            document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
+            document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
+            document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
+        }
+
+        function onChangeRegion() {
+            peuplerSelectCentres();
+            const reg = document.getElementById('filtreRegion').value;
+            if (reg !== 'TOUS' && niveauActif === 'NATIONAL') {
+                niveauActif = 'REGIONAL';
+                appliquerEtatNiveau();
+            } else if (reg === 'TOUS' && niveauActif !== 'NATIONAL') {
+                niveauActif = 'NATIONAL';
+                appliquerEtatNiveau();
+            }
+            actualiserAnalyse();
+        }
+
+        function reinitialiserFiltresTDB() {
+            niveauActif = 'NATIONAL';
+            document.getElementById('filtreRegion').value = 'TOUS';
+            peuplerSelectCentres();
+            document.getElementById('filtreCentre').value = 'TOUS';
+            document.getElementById('filtrePeriode').value = 'TOUS';
+            document.getElementById('filtreType').value = 'TOUS';
+            document.getElementById('filtreProcessus').value = 'TOUS';
+            document.getElementById('filtreStatut').value = 'TOUS';
+            appliquerEtatNiveau();
+            actualiserAnalyse();
+        }
+
+        function actualiserAnalyse() {
+            const reg = document.getElementById('filtreRegion').value;
+            const centre = document.getElementById('filtreCentre').value;
+            const periode = document.getElementById('filtrePeriode').value;
+            const typeCtrl = document.getElementById('filtreType').value;
+            const proc = document.getElementById('filtreProcessus').value;
+            const statut = document.getElementById('filtreStatut').value;
+
+            // Ajustement automatique du niveau selon sélection précise
+            if (centre !== 'TOUS' && niveauActif !== 'CENTRE') {
+                niveauActif = 'CENTRE';
+                appliquerEtatNiveau();
+            } else if (centre === 'TOUS' && reg !== 'TOUS' && niveauActif === 'CENTRE') {
+                niveauActif = 'REGIONAL';
+                appliquerEtatNiveau();
+            }
+
+            // Mise à jour du bandeau de périmètre
+            const scopeEl = document.getElementById('scopeIndicator');
+            if (niveauActif === 'NATIONAL') {
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre : Réseau National (${reg === 'TOUS' ? '10 Régions' : reg})`;
+            } else if (niveauActif === 'REGIONAL') {
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes Régions' : reg}`;
             } else {
-                tousLesConstats.forEach(c => {
-                    tbody.innerHTML += `
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${centre === 'TOUS' ? 'Tous les centres' : centre} (${reg})`;
+            }
+
+            // Filtrage des données
+            const donneesFiltrees = toutesLesDonnees.filter(d => {
+                if (reg !== 'TOUS' && d.region !== reg) return false;
+                if (centre !== 'TOUS' && d.site !== centre) return false;
+                if (periode !== 'TOUS' && d.periode !== periode) return false;
+                if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
+                if (proc !== 'TOUS' && d.processus !== proc) return false;
+                if (statut !== 'TOUS' && d.statut !== statut) return false;
+                return true;
+            });
+
+            dernieresDonneesFiltrees = donneesFiltrees;
+
+            calculerEtAfficherKPIs(donneesFiltrees, reg, centre, periode);
+            calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, periode, typeCtrl, proc, statut);
+            genererAlertesAutomatiques(donneesFiltrees);
+            construireClassementEtTables(donneesFiltrees);
+            afficherTableDetaillee(donneesFiltrees);
+            construireGraphiques(donneesFiltrees, reg);
+        }
+
+        function calculerEtAfficherKPIs(donnees, reg, centre, periode) {
+            const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
+            const regionsUniques = new Set(donnees.map(d => d.region).filter(Boolean));
+            const missionsFiltrees = toutesLesMissions.filter(m => {
+                if (reg !== 'TOUS' && String(m.region || '').toUpperCase() !== reg) return false;
+                if (centre !== 'TOUS' && String(m.entite || '') !== centre) return false;
+                if (periode !== 'TOUS' && normaliserDateISO(m.date).slice(0, 7) !== periode) return false;
+                return true;
+            });
+
+            document.getElementById('kpiVolume').textContent = donnees.length;
+            document.getElementById('subKpiVolume').textContent =
+                `${missionsFiltrees.length} mission(s) · ${sitesUniques.size} site(s) · ${regionsUniques.size} région(s)`;
+
+            const tcGlobal = calculerTCPondere(donnees);
+            const tcFC = calculerTCPondere(donnees.filter(d => d.source === 'FC'));
+            const tcFV = calculerTCPondere(donnees.filter(d => d.source === 'FV'));
+
+            document.getElementById('kpiTcGlobal').textContent = tcGlobal.toFixed(1) + ' %';
+            document.getElementById('subKpiTcGlobal').textContent = `FC : ${tcFC.toFixed(1)}% · Encaisses : ${tcFV.toFixed(1)}%`;
+
+            const nbClotures = donnees.filter(d => d.statut === 'CLOTURE').length;
+            const nbNonClotures = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
+            const tauxCloture = donnees.length > 0 ? (nbClotures / donnees.length) * 100 : 0;
+
+            document.getElementById('kpiTauxCloture').textContent = tauxCloture.toFixed(1) + ' %';
+            document.getElementById('subKpiCloture').textContent = `${nbClotures} clôturé(s) / ${donnees.length} constat(s)`;
+
+            const totalKO = donnees.reduce((acc, d) => acc + d.ko, 0);
+            const nbSuivis = donnees.filter(d => d.isSuivi).length;
+            document.getElementById('kpiTotalKO').textContent = totalKO;
+            document.getElementById('subKpiKO').textContent = `${nbNonClotures} non clôturé(s) · ${nbSuivis} suivi(s)`;
+
+            // Couverture : Sites contrôlés / Sites ou missions planifiées
+            const sitesPlanifies = new Set(missionsFiltrees.map(m => m.entite).filter(Boolean));
+            let tauxCouverture = 0;
+            let subCouv = '';
+            if (sitesPlanifies.size > 0) {
+                tauxCouverture = Math.min(100, (sitesUniques.size / sitesPlanifies.size) * 100);
+                subCouv = `${sitesUniques.size} site(s) contrôlé(s) / ${sitesPlanifies.size} planifié(s)`;
+            } else if (niveauActif === 'NATIONAL') {
+                tauxCouverture = (regionsUniques.size / REGIONS_BARID.length) * 100;
+                subCouv = `${regionsUniques.size} région(s) couverte(s) / ${REGIONS_BARID.length}`;
+            } else {
+                tauxCouverture = donnees.length > 0 ? 100 : 0;
+                subCouv = `${sitesUniques.size} site(s) audité(s)`;
+            }
+            document.getElementById('kpiCouverture').textContent = tauxCouverture.toFixed(1) + ' %';
+            document.getElementById('subKpiCouverture').textContent = subCouv;
+        }
+
+        function calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, periode, typeCtrl, proc, statut) {
+            // Base de comparaison (mêmes filtres transverses hors géographie)
+            const baseTransverse = toutesLesDonnees.filter(d => {
+                if (periode !== 'TOUS' && d.periode !== periode) return false;
+                if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
+                if (proc !== 'TOUS' && d.processus !== proc) return false;
+                if (statut !== 'TOUS' && d.statut !== statut) return false;
+                return true;
+            });
+
+            const tcSelection = calculerTCPondere(donneesFiltrees);
+            const baseRegion = reg !== 'TOUS' ? baseTransverse.filter(d => d.region === reg) : baseTransverse;
+            const tcRegion = calculerTCPondere(baseRegion);
+            const tcNational = calculerTCPondere(baseTransverse);
+
+            const lbl1 = centre !== 'TOUS' ? `Centre : ${centre}` : (reg !== 'TOUS' ? `Région : ${reg}` : 'Sélection Actuelle');
+            const lbl2 = reg !== 'TOUS' ? `Moyenne Régionale (${reg})` : 'Moyenne Régionale Globale';
+
+            document.getElementById('benchLabel1').textContent = lbl1;
+            document.getElementById('benchVal1').textContent = tcSelection.toFixed(1) + ' %';
+            document.getElementById('benchBar1').style.width = Math.min(100, tcSelection) + '%';
+
+            document.getElementById('benchLabel2').textContent = lbl2;
+            document.getElementById('benchVal2').textContent = tcRegion.toFixed(1) + ' %';
+            document.getElementById('benchBar2').style.width = Math.min(100, tcRegion) + '%';
+
+            document.getElementById('benchVal3').textContent = tcNational.toFixed(1) + ' %';
+            document.getElementById('benchBar3').style.width = Math.min(100, tcNational) + '%';
+
+            // Calcul du rang automatique
+            const badgeRang = document.getElementById('badgeRang');
+            if (centre !== 'TOUS') {
+                const mapSites = {};
+                baseTransverse.forEach(d => {
+                    if (!mapSites[d.site]) mapSites[d.site] = [];
+                    mapSites[d.site].push(d);
+                });
+                const classementSites = Object.entries(mapSites)
+                    .map(([s, items]) => ({ site: s, tc: calculerTCPondere(items) }))
+                    .sort((a, b) => b.tc - a.tc);
+                const idx = classementSites.findIndex(x => x.site === centre);
+                if (idx !== -1) {
+                    badgeRang.style.display = 'inline-block';
+                    badgeRang.textContent = `Rang National : ${idx + 1}e / ${classementSites.length}`;
+                } else {
+                    badgeRang.style.display = 'none';
+                }
+            } else if (reg !== 'TOUS') {
+                const mapRegs = {};
+                baseTransverse.forEach(d => {
+                    if (!mapRegs[d.region]) mapRegs[d.region] = [];
+                    mapRegs[d.region].push(d);
+                });
+                const classementRegs = Object.entries(mapRegs)
+                    .map(([r, items]) => ({ region: r, tc: calculerTCPondere(items) }))
+                    .sort((a, b) => b.tc - a.tc);
+                const idx = classementRegs.findIndex(x => x.region === reg);
+                if (idx !== -1) {
+                    badgeRang.style.display = 'inline-block';
+                    badgeRang.textContent = `Rang Régional : ${idx + 1}e / ${classementRegs.length}`;
+                } else {
+                    badgeRang.style.display = 'none';
+                }
+            } else {
+                badgeRang.style.display = 'none';
+            }
+
+            // Synthèse décisionnelle automatique
+            const box = document.getElementById('syntheseDecisionnelleBox');
+            if (donneesFiltrees.length === 0) {
+                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée disponible pour les filtres sélectionnés.`;
+                return;
+            }
+
+            const ecartNat = tcSelection - tcNational;
+            const signeEcart = ecartNat >= 0 ? `+${ecartNat.toFixed(1)}` : ecartNat.toFixed(1);
+            const totalKO = donneesFiltrees.reduce((a, b) => a + b.ko, 0);
+            const nonClot = donneesFiltrees.filter(d => d.statut === 'NON_CLOTURE').length;
+
+            // Processus le plus critique
+            const procMap = {};
+            donneesFiltrees.forEach(d => {
+                if (!procMap[d.processus]) procMap[d.processus] = [];
+                procMap[d.processus].push(d);
+            });
+            const pireProc = Object.entries(procMap)
+                .map(([p, list]) => ({ p, tc: calculerTCPondere(list), ko: list.reduce((a, b) => a + b.ko, 0) }))
+                .sort((a, b) => a.tc - b.tc)[0];
+
+            box.innerHTML = `
+                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle Automatique :</strong><br>
+                Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
+                (soit <strong>${signeEcart} pts</strong> par rapport à la moyenne nationale de ${tcNational.toFixed(1)}%).
+                On dénombre <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} constat(s) non clôturé(s)</strong>.
+                ${pireProc ? `Le processus le plus sensible est <strong>« ${pireProc.p} »</strong> (TC : ${pireProc.tc.toFixed(1)}%, ${pireProc.ko} KO).` : ''}
+            `;
+        }
+
+        function genererAlertesAutomatiques(donnees) {
+            const ul = document.getElementById('alertesAutomatiquesList');
+            ul.innerHTML = '';
+
+            if (donnees.length === 0) {
+                ul.innerHTML = `<li class="alert-item alert-warning"><i class="fa-solid fa-circle-info"></i> Aucun constat enregistré pour évaluer les seuils d'alerte.</li>`;
+                return;
+            }
+
+            const alertes = [];
+
+            // 1. Centres sous le seuil critique (< 75%)
+            const mapSites = {};
+            donnees.forEach(d => {
+                if (!mapSites[d.site]) mapSites[d.site] = { region: d.region, items: [] };
+                mapSites[d.site].items.push(d);
+            });
+
+            const sitesSensibles = Object.entries(mapSites)
+                .map(([site, obj]) => ({
+                    site,
+                    region: obj.region,
+                    tc: calculerTCPondere(obj.items),
+                    ko: obj.items.reduce((a, b) => a + b.ko, 0)
+                }))
+                .filter(s => s.tc < SEUIL_ALERTE_TC)
+                .sort((a, b) => a.tc - b.tc);
+
+            if (sitesSensibles.length > 0) {
+                const top3 = sitesSensibles.slice(0, 3).map(s => `<b>${s.site}</b> (${s.region} : ${s.tc.toFixed(1)}%)`).join(', ');
+                alertes.push({
+                    type: 'alert-critical',
+                    icon: 'fa-building-circle-exclamation',
+                    text: `<b>${sitesSensibles.length} centre(s) sous le seuil de ${SEUIL_ALERTE_TC}% :</b> ${top3}.`
+                });
+            }
+
+            // 2. Constats Non Clôturés
+            const nonClotures = donnees.filter(d => d.statut === 'NON_CLOTURE');
+            if (nonClotures.length > 0) {
+                alertes.push({
+                    type: 'alert-critical',
+                    icon: 'fa-clock-rotate-left',
+                    text: `<b>${nonClotures.length} constat(s) au statut « Non clôturé »</b> nécessitent une action corrective prioritaire.`
+                });
+            }
+
+            // 3. Processus concentrant le plus de KO
+            const procKO = {};
+            donnees.forEach(d => {
+                if (d.ko > 0) procKO[d.processus] = (procKO[d.processus] || 0) + d.ko;
+            });
+            const topProc = Object.entries(procKO).sort((a, b) => b[1] - a[1])[0];
+            if (topProc) {
+                alertes.push({
+                    type: 'alert-warning',
+                    icon: 'fa-triangle-exclamation',
+                    text: `<b>Concentration des anomalies :</b> le processus « ${topProc[0]} » cumule <b>${topProc[1]} KO</b> sur la période.`
+                });
+            }
+
+            // 4. Constats En cours nécessitant un suivi
+            const enCours = donnees.filter(d => d.statut === 'EN_COURS');
+            if (enCours.length > 0) {
+                alertes.push({
+                    type: 'alert-warning',
+                    icon: 'fa-hourglass-half',
+                    text: `<b>${enCours.length} constat(s) « En cours »</b> en attente de validation ou de mission de suivi.`
+                });
+            }
+
+            if (alertes.length === 0) {
+                alertes.push({
+                    type: 'alert-ok',
+                    icon: 'fa-circle-check',
+                    text: `<b>Situation maîtrisée :</b> Aucun centre sous le seuil de ${SEUIL_ALERTE_TC}% et aucune anomalie critique en souffrance.`
+                });
+            }
+
+            alertes.slice(0, 4).forEach(al => {
+                ul.innerHTML += `<li class="alert-item ${al.type}"><i class="fa-solid ${al.icon}" style="margin-top:2px;"></i><span>${al.text}</span></li>`;
+            });
+        }
+
+        function construireClassementEtTables(donnees) {
+            // 1. Classement Régions (si National) ou Centres (si Régional / Centre)
+            const parRegion = (niveauActif === 'NATIONAL');
+            document.getElementById('titreTableClassement').innerHTML = parRegion
+                ? `<span><i class="fa-solid fa-ranking-star"></i> Classement & Performance des Régions</span><span style="font-size:0.75rem; color:var(--text-muted);">Du plus performant au plus sensible</span>`
+                : `<span><i class="fa-solid fa-ranking-star"></i> Classement & Performance des Centres / Sites</span><span style="font-size:0.75rem; color:var(--text-muted);">Du plus performant au plus sensible</span>`;
+            document.getElementById('colEntiteClassement').textContent = parRegion ? 'Région Postale' : 'Centre / Site';
+
+            const groupes = {};
+            donnees.forEach(d => {
+                const cle = parRegion ? d.region : `${d.site} (${d.region})`;
+                if (!groupes[cle]) groupes[cle] = { label: parRegion ? d.region : d.site, sub: d.region, items: [], sites: new Set() };
+                groupes[cle].items.push(d);
+                groupes[cle].sites.add(d.site);
+            });
+
+            const classement = Object.values(groupes).map(g => {
+                const ech = g.items.reduce((a, b) => a + b.ech, 0);
+                const ok = g.items.reduce((a, b) => a + b.ok, 0);
+                const ko = g.items.reduce((a, b) => a + b.ko, 0);
+                const tc = calculerTCPondere(g.items);
+                const clot = g.items.filter(x => x.statut === 'CLOTURE').length;
+                const tauxClot = g.items.length > 0 ? (clot / g.items.length) * 100 : 0;
+                return {
+                    label: g.label,
+                    sub: g.sub,
+                    nbSites: g.sites.size,
+                    nbConstats: g.items.length,
+                    ech, ok, ko, tc, tauxClot,
+                    risque: qualifierRisque(tc, ko)
+                };
+            }).sort((a, b) => b.tc - a.tc || a.ko - b.ko);
+
+            dernierClassement = classement;
+            const tbodyCl = document.getElementById('tbodyClassement');
+            tbodyCl.innerHTML = '';
+            if (classement.length === 0) {
+                tbodyCl.innerHTML = `<tr><td colspan="9" class="num-center" style="padding:18px; color:var(--text-muted);">Aucune donnée à classer.</td></tr>`;
+            } else {
+                classement.forEach((row, i) => {
+                    tbodyCl.innerHTML += `
                         <tr>
-                            <td><b>${c.processus || 'N/A'}</b></td>
-                            <td>${c.risque || 'N/A'}</td>
-                            <td>${c.controle || 'N/A'}</td>
-                            <td>${c.pc || 'N/A'}</td>
-                            <td>${c.ech || 0}</td>
-                            <td><span style="color:var(--success);font-weight:bold;">${c.ok || 0}</span></td>
-                            <td><span style="color:var(--danger);font-weight:bold;">${c.ko || 0}</span></td>
-                            <td><b>${(c.tc !== undefined ? parseFloat(c.tc).toFixed(1) : '0.0')}%</b></td>
-                            <td>${c.constat || '--'}</td>
+                            <td class="num-center"><b>#${i + 1}</b></td>
+                            <td><b>${row.label}</b>${!parRegion ? `<br><span style="font-size:0.72rem; color:var(--text-muted);">${row.sub}</span>` : ''}</td>
+                            <td class="num-center">${row.nbSites}</td>
+                            <td class="num-center">${row.nbConstats}</td>
+                            <td class="num-center">${row.ech}</td>
+                            <td class="num-center"><span style="color:var(--danger); font-weight:700;">${row.ko}</span></td>
+                            <td class="num-center"><b>${row.tc.toFixed(1)}%</b></td>
+                            <td class="num-center">${row.tauxClot.toFixed(0)}%</td>
+                            <td class="num-center"><span class="pill ${row.risque.cls}">${row.risque.label}</span></td>
                         </tr>`;
                 });
             }
 
-            initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
+            // 2. Analyse par Type de Contrôle
+            const typesOrder = ['Thématique', 'Systématique', 'Vérification'];
+            const typesData = typesOrder.map(t => {
+                const items = donnees.filter(d => d.typeControle === t);
+                return {
+                    type: t,
+                    nb: items.length,
+                    ech: items.reduce((a, b) => a + b.ech, 0),
+                    ok: items.reduce((a, b) => a + b.ok, 0),
+                    ko: items.reduce((a, b) => a + b.ko, 0),
+                    tc: calculerTCPondere(items)
+                };
+            });
+            derniersTypes = typesData;
+
+            const tbodyType = document.getElementById('tbodyTypeControle');
+            tbodyType.innerHTML = '';
+            typesData.forEach(t => {
+                const pillCls = t.type === 'Thématique' ? 'pill-them' : (t.type === 'Systématique' ? 'pill-syst' : 'pill-verif');
+                tbodyType.innerHTML += `
+                    <tr>
+                        <td><span class="pill ${pillCls}">${t.type}</span></td>
+                        <td class="num-center">${t.nb}</td>
+                        <td class="num-center">${t.ech}</td>
+                        <td class="num-center" style="color:var(--success); font-weight:700;">${t.ok}</td>
+                        <td class="num-center" style="color:var(--danger); font-weight:700;">${t.ko}</td>
+                        <td class="num-center"><b>${t.tc.toFixed(1)}%</b></td>
+                    </tr>`;
+            });
+
+            // 3. Top Processus Sensibles / Récurrents
+            const mapProc = {};
+            donnees.forEach(d => {
+                if (!mapProc[d.processus]) mapProc[d.processus] = [];
+                mapProc[d.processus].push(d);
+            });
+            const procList = Object.entries(mapProc).map(([proc, items]) => ({
+                processus: proc,
+                nb: items.length,
+                ko: items.reduce((a, b) => a + b.ko, 0),
+                tc: calculerTCPondere(items)
+            })).sort((a, b) => a.tc - b.tc || b.ko - a.ko);
+            derniersProcessus = procList;
+
+            const tbodyProc = document.getElementById('tbodyProcessusSensibles');
+            tbodyProc.innerHTML = '';
+            if (procList.length === 0) {
+                tbodyProc.innerHTML = `<tr><td colspan="4" class="num-center" style="color:var(--text-muted);">Aucun processus.</td></tr>`;
+            } else {
+                procList.slice(0, 6).forEach(p => {
+                    tbodyProc.innerHTML += `
+                        <tr>
+                            <td><b>${p.processus}</b></td>
+                            <td class="num-center">${p.nb}</td>
+                            <td class="num-center" style="color:var(--danger); font-weight:700;">${p.ko}</td>
+                            <td class="num-center"><b>${p.tc.toFixed(1)}%</b></td>
+                        </tr>`;
+                });
+            }
+        }
+
+        function afficherTableDetaillee(donnees) {
+            const tbody = document.getElementById('tdbTableBody');
+            document.getElementById('countConstatsTable').textContent = donnees.length;
+            tbody.innerHTML = '';
+
+            if (donnees.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat ne correspond aux critères sélectionnés.</td></tr>';
+                return;
+            }
+
+            const tries = [...donnees].sort((a, b) => b.dateISO.localeCompare(a.dateISO));
+            tries.forEach(c => {
+                const stCls = c.statut === 'CLOTURE' ? 'pill-faible' : (c.statut === 'NON_CLOTURE' ? 'pill-critique' : 'pill-modere');
+                const tpCls = c.typeControle === 'Thématique' ? 'pill-them' : (c.typeControle === 'Systématique' ? 'pill-syst' : 'pill-verif');
+                const tags = `${c.isModifie ? ' <span class="pill pill-eleve">Modifié</span>' : ''}${c.isSuivi ? ' <span class="pill pill-them">Suivi</span>' : ''}`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${c.dateFR}</td>
+                        <td><b>${c.region}</b></td>
+                        <td>${c.site}</td>
+                        <td><b>${c.processus}</b></td>
+                        <td>${c.risque}</td>
+                        <td>${c.pc}</td>
+                        <td class="num-center">${c.ech}</td>
+                        <td class="num-center" style="color:var(--success); font-weight:700;">${c.ok}</td>
+                        <td class="num-center" style="color:var(--danger); font-weight:700;">${c.ko}</td>
+                        <td class="num-center"><b>${c.tc.toFixed(1)}%</b></td>
+                        <td><span class="pill ${stCls}">${libelleStatut(c.statut)}</span></td>
+                        <td><span class="pill ${tpCls}">${c.typeControle}</span>${tags}</td>
+                        <td>${c.constat}</td>
+                    </tr>`;
+            });
+        }
+
+        function construireGraphiques(donnees, reg) {
+            if (chartComparatifInst) chartComparatifInst.destroy();
+            if (chartProcessusInst) chartProcessusInst.destroy();
+            if (chartStatutsInst) chartStatutsInst.destroy();
+            if (chartEvolutionInst) chartEvolutionInst.destroy();
+
+            // Graphique 1 : Comparatif Régions (National) ou Centres (Régional/Centre)
+            const parRegion = (niveauActif === 'NATIONAL');
+            document.getElementById('titreChartComparatif').innerHTML = parRegion
+                ? `<i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)`
+                : `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres / Sites (${reg === 'TOUS' ? 'Réseau' : reg}) (%)`;
+
+            const mapComp = {};
+            donnees.forEach(d => {
+                const k = parRegion ? d.region : d.site;
+                if (!mapComp[k]) mapComp[k] = [];
+                mapComp[k].push(d);
+            });
+            const entriesComp = Object.entries(mapComp)
+                .map(([k, list]) => ({ label: k, tc: parseFloat(calculerTCPondere(list).toFixed(1)) }))
+                .sort((a, b) => b.tc - a.tc);
+
+            chartComparatifInst = new Chart(document.getElementById('chartComparatif').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: entriesComp.length > 0 ? entriesComp.map(e => e.label) : ['Aucune donnée'],
+                    datasets: [{
+                        label: 'Taux de Conformité (%)',
+                        data: entriesComp.length > 0 ? entriesComp.map(e => e.tc) : [0],
+                        backgroundColor: entriesComp.map(e => e.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#003366'),
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Graphique 2 : Taux de Conformité par Processus
+            const mapProc = {};
+            donnees.forEach(d => {
+                if (!mapProc[d.processus]) mapProc[d.processus] = [];
+                mapProc[d.processus].push(d);
+            });
+            const entriesProc = Object.entries(mapProc)
+                .map(([p, list]) => ({ label: p, tc: parseFloat(calculerTCPondere(list).toFixed(1)) }))
+                .sort((a, b) => a.tc - b.tc);
+
+            chartProcessusInst = new Chart(document.getElementById('chartProcessus').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: entriesProc.length > 0 ? entriesProc.map(e => e.label) : ['Aucune donnée'],
+                    datasets: [{
+                        label: 'TC (%)',
+                        data: entriesProc.length > 0 ? entriesProc.map(e => e.tc) : [0],
+                        backgroundColor: entriesProc.map(e => e.tc < SEUIL_ALERTE_TC ? '#F59E0B' : '#0284C7'),
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Graphique 3 : Répartition des Statuts Finaux
+            const nbEnCours = donnees.filter(d => d.statut === 'EN_COURS').length;
+            const nbCloture = donnees.filter(d => d.statut === 'CLOTURE').length;
+            const nbNonCloture = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
+
+            chartStatutsInst = new Chart(document.getElementById('chartStatuts').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Clôturé', 'En cours', 'Non clôturé'],
+                    datasets: [{
+                        data: [nbCloture, nbEnCours, nbNonCloture],
+                        backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Graphique 4 : Évolution Chronologique (TC % et KO par Période)
+            const mapEvo = {};
+            donnees.forEach(d => {
+                const per = d.periode !== 'Non daté' ? d.periode : 'Sans date';
+                if (!mapEvo[per]) mapEvo[per] = [];
+                mapEvo[per].push(d);
+            });
+            const periodesTriees = Object.keys(mapEvo).sort();
+            const tcSeries = periodesTriees.map(p => parseFloat(calculerTCPondere(mapEvo[p]).toFixed(1)));
+            const koSeries = periodesTriees.map(p => mapEvo[p].reduce((a, b) => a + b.ko, 0));
+
+            chartEvolutionInst = new Chart(document.getElementById('chartEvolution').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: periodesTriees.length > 0 ? periodesTriees : ['Aucune période'],
+                    datasets: [
+                        {
+                            label: 'Taux de Conformité (%)',
+                            data: tcSeries.length > 0 ? tcSeries : [0],
+                            borderColor: '#003366',
+                            backgroundColor: 'rgba(0, 51, 102, 0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Anomalies (KO)',
+                            data: koSeries.length > 0 ? koSeries : [0],
+                            borderColor: '#EF4444',
+                            backgroundColor: '#EF4444',
+                            borderDash: [5, 4],
+                            tension: 0.25,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', position: 'left', beginAtZero: true, max: 100, title: { display: true, text: 'TC (%)' } },
+                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Nb KO' } }
+                    },
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
         }
 
         function exporterExcelTDB() {
@@ -286,55 +1572,76 @@
                 return;
             }
 
-            const db = FCIDatabase.getDB();
-            const constatsControle = (db.constatsControle || []).map(c => ({ ...c, _source: 'Fiche de Contrôle (FC)' }));
-            const constatsEncaisses = (db.constatsEncaisses || []).map(e => ({ ...e, _source: 'Vérification Encaisses (FV)' }));
-            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
-
             const wb = XLSX.utils.book_new();
 
-            // Onglet 1 : Synthèse des KPIs
+            // Onglet 1 : Synthèse & KPIs
             const kpiRows = [
-                { "Indicateur": "Missions Enregistrées", "Valeur": document.getElementById('kpiMissions').textContent },
-                { "Indicateur": "TC Moyen Fiches Contrôle", "Valeur": document.getElementById('kpiTcControle').textContent },
-                { "Indicateur": "TC Moyen Encaisses", "Valeur": document.getElementById('kpiTcEncaisses').textContent },
-                { "Indicateur": "Total Anomalies (KO)", "Valeur": document.getElementById('kpiTotalKO').textContent }
+                { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
+                { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
+                { "Indicateur": "Volume Constats Filtrés", "Valeur": document.getElementById('kpiVolume').textContent },
+                { "Indicateur": "Taux de Conformité Pondéré (%)", "Valeur": document.getElementById('kpiTcGlobal').textContent },
+                { "Indicateur": "Détail TC (FC / Encaisses)", "Valeur": document.getElementById('subKpiTcGlobal').textContent },
+                { "Indicateur": "Taux de Clôture des Constats", "Valeur": document.getElementById('kpiTauxCloture').textContent },
+                { "Indicateur": "Total Anomalies (KO)", "Valeur": document.getElementById('kpiTotalKO').textContent },
+                { "Indicateur": "Taux de Couverture", "Valeur": document.getElementById('kpiCouverture').textContent }
             ];
             const wsKPI = XLSX.utils.json_to_sheet(kpiRows);
-            wsKPI['!cols'] = [{ wch: 30 }, { wch: 18 }];
-            XLSX.utils.book_append_sheet(wb, wsKPI, "Indicateurs Clés");
+            wsKPI['!cols'] = [{ wch: 34 }, { wch: 42 }];
+            XLSX.utils.book_append_sheet(wb, wsKPI, "1_Synthese_KPIs");
 
-            // Onglet 2 : Synthèse Détaillée des Constats
-            const dataRows = tousLesConstats.map(c => ({
-                "Source": c._source,
-                "Date": c.date || '',
-                "Région": c.region || '',
-                "Entité / Site": c.entite || c.site || '',
-                "Type de Contrôle": c.typeControle || '',
-                "Processus": c.processus || 'N/A',
-                "Risque": c.risque || 'N/A',
-                "Contrôle": c.controle || 'N/A',
-                "Point de Contrôle (PC)": c.pc || 'N/A',
-                "Pop": parseInt(c.pop) || 0,
-                "Ech": parseInt(c.ech) || 0,
-                "OK": parseInt(c.ok) || 0,
-                "KO": parseInt(c.ko) || 0,
-                "TC (%)": c.tc !== undefined ? parseFloat(parseFloat(c.tc).toFixed(1)) : 0,
-                "Statut": c.statut || '',
-                "Constat / Remarques": c.constat || ''
+            // Onglet 2 : Classement Régions / Centres
+            const rowsClassement = dernierClassement.map((r, i) => ({
+                "Rang": i + 1,
+                "Entité (Région / Centre)": r.label,
+                "Région": r.sub,
+                "Sites": r.nbSites,
+                "Constats": r.nbConstats,
+                "Échantillon (Ech)": r.ech,
+                "Conformes (OK)": r.ok,
+                "Anomalies (KO)": r.ko,
+                "TC Pondéré (%)": Number(r.tc.toFixed(1)),
+                "Taux Clôture (%)": Number(r.tauxClot.toFixed(1)),
+                "Niveau Risque": r.risque.label
             }));
+            const wsClass = XLSX.utils.json_to_sheet(rowsClassement.length > 0 ? rowsClassement : [{ "Info": "Aucune donnée" }]);
+            XLSX.utils.book_append_sheet(wb, wsClass, "2_Classement_Entites");
 
-            const wsConstats = XLSX.utils.json_to_sheet(dataRows.length > 0 ? dataRows : [{ "Information": "Aucun constat enregistré dans la BDD." }]);
-            wsConstats['!cols'] = [
-                { wch: 24 }, { wch: 12 }, { wch: 15 }, { wch: 22 }, { wch: 18 },
-                { wch: 22 }, { wch: 25 }, { wch: 25 }, { wch: 32 },
-                { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 },
-                { wch: 14 }, { wch: 35 }
-            ];
-            XLSX.utils.book_append_sheet(wb, wsConstats, "Analyse & Pilotage");
+            // Onglet 3 : Analyse Processus & Types
+            const rowsProc = derniersProcessus.map(p => ({
+                "Processus": p.processus,
+                "Nombre Constats": p.nb,
+                "Total Anomalies (KO)": p.ko,
+                "Taux Conformité (%)": Number(p.tc.toFixed(1))
+            }));
+            const wsProc = XLSX.utils.json_to_sheet(rowsProc.length > 0 ? rowsProc : [{ "Info": "Aucune donnée" }]);
+            XLSX.utils.book_append_sheet(wb, wsProc, "3_Analyse_Processus");
+
+            // Onglet 4 : Détail des Constats Filtrés
+            const rowsDetail = dernieresDonneesFiltrees.map(c => ({
+                "Date": c.dateFR,
+                "Source": c.source,
+                "Région": c.region,
+                "Centre / Site": c.site,
+                "Type de Contrôle": c.typeControle,
+                "Processus": c.processus,
+                "Risque": c.risque,
+                "Contrôle": c.controle,
+                "Point de Contrôle (PC)": c.pc,
+                "Pop": c.pop,
+                "Ech": c.ech,
+                "OK": c.ok,
+                "KO": c.ko,
+                "TC (%)": Number(c.tc.toFixed(1)),
+                "Statut": libelleStatut(c.statut),
+                "Suivi": c.isSuivi ? "Oui" : "Non",
+                "Modifié": c.isModifie ? "Oui" : "Non",
+                "Constat / Remarques": c.constat
+            }));
+            const wsDetail = XLSX.utils.json_to_sheet(rowsDetail.length > 0 ? rowsDetail : [{ "Info": "Aucun constat" }]);
+            XLSX.utils.book_append_sheet(wb, wsDetail, "4_Detail_Constats");
 
             const dateStr = new Date().toISOString().slice(0, 10);
-            XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${dateStr}.xlsx`);
+            XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${niveauActif}_${dateStr}.xlsx`);
         }
 
         function imprimerPDF() {
@@ -344,46 +1651,9 @@
         function viderBDD() {
             if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
                 FCIDatabase.viderBDD();
-                chargerTableauDeBord();
+                chargerEtPreparerDonnees();
                 alert("La BDD a été réinitialisée.");
             }
-        }
-
-        function initialiserGraphiques(constatsControle, totalOK, totalKO) {
-            if (chartProcessusInstance) chartProcessusInstance.destroy();
-            if (chartOkKoInstance) chartOkKoInstance.destroy();
-
-            const processusMap = {};
-            constatsControle.forEach(c => {
-                const proc = c.processus || 'Autres';
-                if (!processusMap[proc]) processusMap[proc] = { ok: 0, ech: 0 };
-                processusMap[proc].ok += parseInt(c.ok) || 0;
-                processusMap[proc].ech += parseInt(c.ech) || 0;
-            });
-
-            const labels = Object.keys(processusMap);
-            const values = labels.map(p => {
-                const item = processusMap[p];
-                return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
-            });
-
-            chartProcessusInstance = new Chart(document.getElementById('chartProcessus').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: labels.length > 0 ? labels : ['Aucune donnée'],
-                    datasets: [{ label: 'Taux de Conformité (%)', data: values.length > 0 ? values : [0], backgroundColor: '#003366' }]
-                },
-                options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
-            });
-
-            chartOkKoInstance = new Chart(document.getElementById('chartOkKo').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Conformes (OK)', 'Anomalies (KO)'],
-                    datasets: [{ data: [totalOK, totalKO], backgroundColor: ['#10B981', '#EF4444'] }]
-                },
-                options: { responsive: true }
-            });
         }
     </script>
 </body>
