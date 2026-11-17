@@ -200,7 +200,7 @@
             outline: none;
         }
         .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
-        .filter-select:disabled { opacity: 0.55; cursor: not-allowed; background: #E2E8F0; }
+        .filter-select.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
 
         /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; margin-bottom: 20px; }
@@ -454,7 +454,7 @@
 
                 <div class="filter-group">
                     <label for="filtreCentre"><i class="fa-solid fa-building-flag"></i> Centre / Site</label>
-                    <select id="filtreCentre" class="filter-select" onchange="actualiserAnalyse()">
+                    <select id="filtreCentre" class="filter-select" onchange="onChangeCentre()">
                         <option value="TOUS">-- Tous les centres --</option>
                     </select>
                 </div>
@@ -796,8 +796,7 @@
             });
             if (sumEch > 0) return (sumOk / sumEch) * 100;
             if (liste.length > 0) {
-                const avg = liste.reduce((acc, i) => acc + i.tc, 0) / liste.length;
-                return avg;
+                return liste.reduce((acc, i) => acc + i.tc, 0) / liste.length;
             }
             return 0;
         }
@@ -941,14 +940,14 @@
                 selCentre.value = 'TOUS';
             } else if (niveauActif === 'REGIONAL') {
                 if (selReg.value === 'TOUS' && selReg.options.length > 1) {
-                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region))][0];
+                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE'))][0];
                     selReg.value = premiereRegAvecData || selReg.options[1].value;
                 }
                 peuplerSelectCentres();
                 selCentre.value = 'TOUS';
             } else if (niveauActif === 'CENTRE') {
                 if (selReg.value === 'TOUS' && selReg.options.length > 1) {
-                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region))][0];
+                    const premiereRegAvecData = [...new Set(toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE'))][0];
                     selReg.value = premiereRegAvecData || selReg.options[1].value;
                 }
                 peuplerSelectCentres();
@@ -965,6 +964,9 @@
             document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
             document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
             document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
+
+            document.getElementById('filtreRegion').classList.toggle('highlight-focus', niveauActif === 'REGIONAL');
+            document.getElementById('filtreCentre').classList.toggle('highlight-focus', niveauActif === 'CENTRE');
         }
 
         function onChangeRegion() {
@@ -972,9 +974,27 @@
             const reg = document.getElementById('filtreRegion').value;
             if (reg !== 'TOUS' && niveauActif === 'NATIONAL') {
                 niveauActif = 'REGIONAL';
-                appliquerEtatNiveau();
-            } else if (reg === 'TOUS' && niveauActif !== 'NATIONAL') {
+            } else if (reg === 'TOUS' && niveauActif === 'REGIONAL') {
                 niveauActif = 'NATIONAL';
+            }
+            if (niveauActif === 'CENTRE') {
+                const selCentre = document.getElementById('filtreCentre');
+                if (selCentre.options.length > 1) {
+                    selCentre.value = selCentre.options[1].value;
+                }
+            }
+            appliquerEtatNiveau();
+            actualiserAnalyse();
+        }
+
+        function onChangeCentre() {
+            const centre = document.getElementById('filtreCentre').value;
+            if (centre !== 'TOUS' && niveauActif !== 'CENTRE') {
+                niveauActif = 'CENTRE';
+                const match = toutesLesDonnees.find(d => d.site === centre);
+                if (match && match.region && document.getElementById('filtreRegion').value === 'TOUS') {
+                    document.getElementById('filtreRegion').value = match.region;
+                }
                 appliquerEtatNiveau();
             }
             actualiserAnalyse();
@@ -1001,23 +1021,15 @@
             const proc = document.getElementById('filtreProcessus').value;
             const statut = document.getElementById('filtreStatut').value;
 
-            // Ajustement automatique du niveau selon sélection précise
-            if (centre !== 'TOUS' && niveauActif !== 'CENTRE') {
-                niveauActif = 'CENTRE';
-                appliquerEtatNiveau();
-            } else if (centre === 'TOUS' && reg !== 'TOUS' && niveauActif === 'CENTRE') {
-                niveauActif = 'REGIONAL';
-                appliquerEtatNiveau();
-            }
-
-            // Mise à jour du bandeau de périmètre
+            // Mise à jour du bandeau de périmètre selon l'onglet actif
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre : Réseau National (${reg === 'TOUS' ? '10 Régions' : reg})`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : ${reg === 'TOUS' ? 'Réseau complet (10 Régions)' : reg}`;
             } else if (niveauActif === 'REGIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes Régions' : reg}`;
             } else {
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${centre === 'TOUS' ? 'Tous les centres' : centre} (${reg})`;
+                const nomCentre = centre === 'TOUS' ? 'Sélectionner un centre / site' : centre;
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''}`;
             }
 
             // Filtrage des données
@@ -1093,7 +1105,6 @@
         }
 
         function calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, periode, typeCtrl, proc, statut) {
-            // Base de comparaison (mêmes filtres transverses hors géographie)
             const baseTransverse = toutesLesDonnees.filter(d => {
                 if (periode !== 'TOUS' && d.periode !== periode) return false;
                 if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
@@ -1121,7 +1132,6 @@
             document.getElementById('benchVal3').textContent = tcNational.toFixed(1) + ' %';
             document.getElementById('benchBar3').style.width = Math.min(100, tcNational) + '%';
 
-            // Calcul du rang automatique
             const badgeRang = document.getElementById('badgeRang');
             if (centre !== 'TOUS') {
                 const mapSites = {};
@@ -1159,7 +1169,6 @@
                 badgeRang.style.display = 'none';
             }
 
-            // Synthèse décisionnelle automatique
             const box = document.getElementById('syntheseDecisionnelleBox');
             if (donneesFiltrees.length === 0) {
                 box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée disponible pour les filtres sélectionnés.`;
@@ -1171,7 +1180,6 @@
             const totalKO = donneesFiltrees.reduce((a, b) => a + b.ko, 0);
             const nonClot = donneesFiltrees.filter(d => d.statut === 'NON_CLOTURE').length;
 
-            // Processus le plus critique
             const procMap = {};
             donneesFiltrees.forEach(d => {
                 if (!procMap[d.processus]) procMap[d.processus] = [];
@@ -1201,7 +1209,6 @@
 
             const alertes = [];
 
-            // 1. Centres sous le seuil critique (< 75%)
             const mapSites = {};
             donnees.forEach(d => {
                 if (!mapSites[d.site]) mapSites[d.site] = { region: d.region, items: [] };
@@ -1227,7 +1234,6 @@
                 });
             }
 
-            // 2. Constats Non Clôturés
             const nonClotures = donnees.filter(d => d.statut === 'NON_CLOTURE');
             if (nonClotures.length > 0) {
                 alertes.push({
@@ -1237,7 +1243,6 @@
                 });
             }
 
-            // 3. Processus concentrant le plus de KO
             const procKO = {};
             donnees.forEach(d => {
                 if (d.ko > 0) procKO[d.processus] = (procKO[d.processus] || 0) + d.ko;
@@ -1251,7 +1256,6 @@
                 });
             }
 
-            // 4. Constats En cours nécessitant un suivi
             const enCours = donnees.filter(d => d.statut === 'EN_COURS');
             if (enCours.length > 0) {
                 alertes.push({
@@ -1275,7 +1279,6 @@
         }
 
         function construireClassementEtTables(donnees) {
-            // 1. Classement Régions (si National) ou Centres (si Régional / Centre)
             const parRegion = (niveauActif === 'NATIONAL');
             document.getElementById('titreTableClassement').innerHTML = parRegion
                 ? `<span><i class="fa-solid fa-ranking-star"></i> Classement & Performance des Régions</span><span style="font-size:0.75rem; color:var(--text-muted);">Du plus performant au plus sensible</span>`
@@ -1329,7 +1332,6 @@
                 });
             }
 
-            // 2. Analyse par Type de Contrôle
             const typesOrder = ['Thématique', 'Systématique', 'Vérification'];
             const typesData = typesOrder.map(t => {
                 const items = donnees.filter(d => d.typeControle === t);
@@ -1359,7 +1361,6 @@
                     </tr>`;
             });
 
-            // 3. Top Processus Sensibles / Récurrents
             const mapProc = {};
             donnees.forEach(d => {
                 if (!mapProc[d.processus]) mapProc[d.processus] = [];
@@ -1431,7 +1432,6 @@
             if (chartStatutsInst) chartStatutsInst.destroy();
             if (chartEvolutionInst) chartEvolutionInst.destroy();
 
-            // Graphique 1 : Comparatif Régions (National) ou Centres (Régional/Centre)
             const parRegion = (niveauActif === 'NATIONAL');
             document.getElementById('titreChartComparatif').innerHTML = parRegion
                 ? `<i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)`
@@ -1466,7 +1466,6 @@
                 }
             });
 
-            // Graphique 2 : Taux de Conformité par Processus
             const mapProc = {};
             donnees.forEach(d => {
                 if (!mapProc[d.processus]) mapProc[d.processus] = [];
@@ -1496,7 +1495,6 @@
                 }
             });
 
-            // Graphique 3 : Répartition des Statuts Finaux
             const nbEnCours = donnees.filter(d => d.statut === 'EN_COURS').length;
             const nbCloture = donnees.filter(d => d.statut === 'CLOTURE').length;
             const nbNonCloture = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
@@ -1518,7 +1516,6 @@
                 }
             });
 
-            // Graphique 4 : Évolution Chronologique (TC % et KO par Période)
             const mapEvo = {};
             donnees.forEach(d => {
                 const per = d.periode !== 'Non daté' ? d.periode : 'Sans date';
@@ -1574,7 +1571,6 @@
 
             const wb = XLSX.utils.book_new();
 
-            // Onglet 1 : Synthèse & KPIs
             const kpiRows = [
                 { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
                 { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
@@ -1589,7 +1585,6 @@
             wsKPI['!cols'] = [{ wch: 34 }, { wch: 42 }];
             XLSX.utils.book_append_sheet(wb, wsKPI, "1_Synthese_KPIs");
 
-            // Onglet 2 : Classement Régions / Centres
             const rowsClassement = dernierClassement.map((r, i) => ({
                 "Rang": i + 1,
                 "Entité (Région / Centre)": r.label,
@@ -1606,7 +1601,6 @@
             const wsClass = XLSX.utils.json_to_sheet(rowsClassement.length > 0 ? rowsClassement : [{ "Info": "Aucune donnée" }]);
             XLSX.utils.book_append_sheet(wb, wsClass, "2_Classement_Entites");
 
-            // Onglet 3 : Analyse Processus & Types
             const rowsProc = derniersProcessus.map(p => ({
                 "Processus": p.processus,
                 "Nombre Constats": p.nb,
@@ -1616,7 +1610,6 @@
             const wsProc = XLSX.utils.json_to_sheet(rowsProc.length > 0 ? rowsProc : [{ "Info": "Aucune donnée" }]);
             XLSX.utils.book_append_sheet(wb, wsProc, "3_Analyse_Processus");
 
-            // Onglet 4 : Détail des Constats Filtrés
             const rowsDetail = dernieresDonneesFiltrees.map(c => ({
                 "Date": c.dateFR,
                 "Source": c.source,
