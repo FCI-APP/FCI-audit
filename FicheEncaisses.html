@@ -289,8 +289,8 @@
                     <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
                     <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
-                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour la même ligne dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
-                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi avec le symbole suivi bleu"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour uniquement le(s) point(s) de contrôle modifié(s) dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
+                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi uniquement pour le(s) PC modifié(s)"><i class="fa-solid fa-code-branch"></i> Suivi</button>
                     <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()" title="Supprime la ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
@@ -853,7 +853,6 @@
             let valSite = selSite.value;
             let valProc = selProc.value;
 
-            // 1. Dates disponibles (filtrées par Région/Site/Processus seulement s'ils sont choisis)
             const dates = [...new Set(
                 encaisses
                     .filter(c =>
@@ -869,7 +868,6 @@
                 valDate = '';
             }
 
-            // 2. Régions correspondant à la Date choisie (et aux autres filtres actifs)
             const regions = [...new Set(
                 encaisses
                     .filter(c =>
@@ -885,7 +883,6 @@
                 valReg = '';
             }
 
-            // 3. Sites correspondant à la Date et à la Région choisies
             const sites = [...new Set(
                 encaisses
                     .filter(c =>
@@ -901,7 +898,6 @@
                 valSite = '';
             }
 
-            // 4. Processus correspondant à la Date, Région et Site choisis
             const procs = [...new Set(
                 encaisses
                     .filter(c =>
@@ -948,16 +944,13 @@
 
         function onFilterFvBDDChange(source = '') {
             if (source === 'DATE') {
-                // Réinitialise les filtres aval pour afficher toutes les régions, sites et processus de cette date
                 document.getElementById('filterFvBddRegion').value = '';
                 document.getElementById('filterFvBddSite').value = '';
                 document.getElementById('filterFvBddProcessus').value = '';
             } else if (source === 'REGION') {
-                // Réinitialise site et processus pour afficher tous les sites et processus de cette région (et date si choisie)
                 document.getElementById('filterFvBddSite').value = '';
                 document.getElementById('filterFvBddProcessus').value = '';
             } else if (source === 'SITE') {
-                // Réinitialise processus pour afficher tous les processus de ce site
                 document.getElementById('filterFvBddProcessus').value = '';
             }
             remplirFiltresEncaissesBDD();
@@ -1381,12 +1374,14 @@
                     const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
                     const estModifie = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
 
-                    if (mode === 'SUIVI' && c._initialSnapshot && !estModifie) {
+                    if ((mode === 'MODIFIER' || mode === 'SUIVI') && c._initialSnapshot && !estModifie) {
                         return;
                     }
 
-                    const estSuivi = (mode === 'SUIVI') || Boolean(c._isSuivi);
-                    const estMarqueModifie = (mode === 'MODIFIER') ? true : Boolean(c._isModifie);
+                    const estSuivi = (mode === 'SUIVI') ? true : Boolean(c._isSuivi);
+                    const estMarqueModifie = (mode === 'MODIFIER')
+                        ? true
+                        : (mode === 'SUIVI' ? false : Boolean(c._isModifie));
 
                     lot.push({
                         idEncaisse: mode === 'SUIVI'
@@ -1573,6 +1568,14 @@
                 return;
             }
 
+            const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
+            const lotMisAJour = construireLotConstatsFV(idMission, 'MODIFIER');
+
+            if (lotMisAJour.length === 0) {
+                alert("⚠️ Aucune modification détectée sur les points de contrôle.\nModifiez d'abord le(s) point(s) de contrôle concerné(s) (date, statut, constat, chiffres...) avant de cliquer sur Modifier.");
+                return;
+            }
+
             const btn = document.getElementById('btnModifierFV');
             const texteOriginal = btn.innerHTML;
             btn.disabled = true;
@@ -1580,8 +1583,6 @@
 
             try {
                 const db = lireDBSecurisee();
-                const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
-                const lotMisAJour = construireLotConstatsFV(idMission, 'MODIFIER');
                 const listeExistante = db.constatsEncaisses || [];
 
                 lotMisAJour.forEach(itemMaj => {
