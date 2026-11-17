@@ -408,7 +408,7 @@
         <header class="page-header">
             <div class="page-title">
                 <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Analyse & Pilotage</h1>
-                <p>Pilotage décisionnel multi-niveaux (National, Régional, Centre / Site) — Barid Al-Maghrib</p>
+                <p>Pilotage décisionnel multi-niveaux (Centre / Site, Régional, National) — Barid Al-Maghrib</p>
             </div>
             <div class="header-actions no-print">
                 <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport analytique complet en Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
@@ -419,18 +419,18 @@
             </div>
         </header>
 
-        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES -->
+        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES (CENTRE - REGION - NATIONAL) -->
         <section class="pilotage-panel">
             <div class="niveau-tabs-bar">
                 <div class="niveau-tabs no-print" role="tablist">
-                    <button type="button" class="niveau-tab active" id="tabNational" onclick="changerNiveau('NATIONAL')">
-                        <i class="fa-solid fa-globe"></i> Niveau National
+                    <button type="button" class="niveau-tab" id="tabCentre" onclick="changerNiveau('CENTRE')">
+                        <i class="fa-solid fa-building"></i> Niveau Centre / Site
                     </button>
                     <button type="button" class="niveau-tab" id="tabRegional" onclick="changerNiveau('REGIONAL')">
                         <i class="fa-solid fa-map-location-dot"></i> Niveau Régional
                     </button>
-                    <button type="button" class="niveau-tab" id="tabCentre" onclick="changerNiveau('CENTRE')">
-                        <i class="fa-solid fa-building"></i> Niveau Centre / Site
+                    <button type="button" class="niveau-tab active" id="tabNational" onclick="changerNiveau('NATIONAL')">
+                        <i class="fa-solid fa-globe"></i> Niveau National
                     </button>
                 </div>
 
@@ -714,7 +714,7 @@
         ];
         const SEUIL_ALERTE_TC = 75.0;
 
-        let niveauActif = 'NATIONAL'; // 'NATIONAL' | 'REGIONAL' | 'CENTRE'
+        let niveauActif = 'NATIONAL'; // 'CENTRE' | 'REGIONAL' | 'NATIONAL'
         let toutesLesDonnees = [];
         let toutesLesMissions = [];
         let dernieresDonneesFiltrees = [];
@@ -961,9 +961,9 @@
         }
 
         function appliquerEtatNiveau() {
-            document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
-            document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
             document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
+            document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
+            document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
 
             document.getElementById('filtreRegion').classList.toggle('highlight-focus', niveauActif === 'REGIONAL');
             document.getElementById('filtreCentre').classList.toggle('highlight-focus', niveauActif === 'CENTRE');
@@ -1021,7 +1021,6 @@
             const proc = document.getElementById('filtreProcessus').value;
             const statut = document.getElementById('filtreStatut').value;
 
-            // Mise à jour du bandeau de périmètre selon l'onglet actif
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : ${reg === 'TOUS' ? 'Réseau complet (10 Régions)' : reg}`;
@@ -1032,7 +1031,6 @@
                 scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''}`;
             }
 
-            // Filtrage des données
             const donneesFiltrees = toutesLesDonnees.filter(d => {
                 if (reg !== 'TOUS' && d.region !== reg) return false;
                 if (centre !== 'TOUS' && d.site !== centre) return false;
@@ -1086,7 +1084,6 @@
             document.getElementById('kpiTotalKO').textContent = totalKO;
             document.getElementById('subKpiKO').textContent = `${nbNonClotures} non clôturé(s) · ${nbSuivis} suivi(s)`;
 
-            // Couverture : Sites contrôlés / Sites ou missions planifiées
             const sitesPlanifies = new Set(missionsFiltrees.map(m => m.entite).filter(Boolean));
             let tauxCouverture = 0;
             let subCouv = '';
