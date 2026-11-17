@@ -142,8 +142,9 @@
         }
         .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
         .form-group label { font-size: 0.74rem; font-weight: 700; color: var(--primary-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .form-control { padding: 8px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.84rem; outline: none; background-color: #FFF; font-weight: 600; }
+        .form-control { padding: 8px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.84rem; outline: none; background-color: #FFF; font-weight: 600; transition: border-color 0.2s, background-color 0.2s; }
         .form-control:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .form-control.filter-active { border: 2px solid var(--accent-gold); background-color: #FFFDF5; color: var(--primary-blue); font-weight: 700; }
 
         .date-bdd-pill {
             display: inline-flex;
@@ -367,25 +368,25 @@
             <div class="single-row-modif-fv">
                 <div class="form-group">
                     <label for="filterFvBddDate">Date de contrôle (jj/mm/aaaa)</label>
-                    <select id="filterFvBddDate" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                    <select id="filterFvBddDate" class="form-control" onchange="onFilterFvBDDChange('DATE')">
                         <option value="">-- Toutes les dates --</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="filterFvBddRegion">Région</label>
-                    <select id="filterFvBddRegion" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                    <select id="filterFvBddRegion" class="form-control" onchange="onFilterFvBDDChange('REGION')">
                         <option value="">-- Toutes les régions --</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="filterFvBddSite">Site vérifié</label>
-                    <select id="filterFvBddSite" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                    <select id="filterFvBddSite" class="form-control" onchange="onFilterFvBDDChange('SITE')">
                         <option value="">-- Tous les sites --</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="filterFvBddProcessus">Processus vérifié</label>
-                    <select id="filterFvBddProcessus" class="form-control" onchange="remplirFiltresEncaissesBDD()">
+                    <select id="filterFvBddProcessus" class="form-control" onchange="onFilterFvBDDChange('PROCESSUS')">
                         <option value="">-- Tous les processus --</option>
                     </select>
                 </div>
@@ -631,15 +632,25 @@
         let loadedEncaisseIds = [];
 
         function lireDBSecurisee() {
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                    return FCIDatabase.getDB();
+                    const loaded = FCIDatabase.getDB();
+                    if (loaded && typeof loaded === 'object') db = loaded;
+                } else {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
                 }
-                const raw = localStorage.getItem('fci_database');
-                return raw ? JSON.parse(raw) : { missions: [], constatsControle: [], constatsEncaisses: [] };
             } catch (e) {
-                return { missions: [], constatsControle: [], constatsEncaisses: [] };
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                } catch (err) {}
             }
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            return db;
         }
 
         function sauvegarderDBSecurisee(db) {
@@ -695,9 +706,10 @@
             return '🟡 En cours';
         }
 
-        function getEncaisseDateFR(c) {
+        function getEncaisseDateFR(c, mapMissions = {}) {
             if (!c) return '';
-            return formatDateToJJMMAAAA(c.date || c.dateVerification || c.date_controle || '');
+            const m = mapMissions[c.idMission] || {};
+            return formatDateToJJMMAAAA(c.date || c.dateVerification || c.date_controle || m.date || m.dateVerification || '');
         }
 
         function getEncaisseRegion(c, mapMissions = {}) {
@@ -706,9 +718,10 @@
             return normaliserRegion(c.region || m.region || '');
         }
 
-        function getEncaisseSite(c) {
+        function getEncaisseSite(c, mapMissions = {}) {
             if (!c) return '';
-            return String(c.site || c.entite || c.centre || '').trim();
+            const m = mapMissions[c.idMission] || {};
+            return String(c.site || c.entite || c.centre || m.entite || m.site || '').trim();
         }
 
         function getEncaisseProcessus(c) {
@@ -812,6 +825,10 @@
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresEncaissesBDD();
+            if (!addedPoints || addedPoints.length === 0) {
+                const statusEl = document.getElementById('searchEncaisseStatus');
+                if (statusEl) statusEl.innerText = '';
+            }
         }
 
         function remplirFiltresEncaissesBDD() {
@@ -831,66 +848,119 @@
             const selProc = document.getElementById('filterFvBddProcessus');
             if (!selDate || !selReg || !selSite || !selProc) return;
 
-            const valDate = selDate.value;
-            const valReg = selReg.value;
-            const valSite = selSite.value;
-            const valProc = selProc.value;
+            let valDate = selDate.value;
+            let valReg = selReg.value;
+            let valSite = selSite.value;
+            let valProc = selProc.value;
 
+            // 1. Dates disponibles (filtrées par Région/Site/Processus seulement s'ils sont choisis)
             const dates = [...new Set(
                 encaisses
                     .filter(c =>
                         (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
-                        (!valSite || getEncaisseSite(c) === valSite) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
                         (!valProc || getEncaisseProcessus(c) === valProc)
                     )
-                    .map(c => getEncaisseDateFR(c))
+                    .map(c => getEncaisseDateFR(c, mapMissions))
                     .filter(Boolean)
             )].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
 
+            if (valDate && !dates.includes(valDate)) {
+                valDate = '';
+            }
+
+            // 2. Régions correspondant à la Date choisie (et aux autres filtres actifs)
             const regions = [...new Set(
                 encaisses
                     .filter(c =>
-                        (!valDate || getEncaisseDateFR(c) === valDate) &&
-                        (!valSite || getEncaisseSite(c) === valSite) &&
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
                         (!valProc || getEncaisseProcessus(c) === valProc)
                     )
                     .map(c => getEncaisseRegion(c, mapMissions))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
+            if (valReg && !regions.includes(valReg)) {
+                valReg = '';
+            }
+
+            // 3. Sites correspondant à la Date et à la Région choisies
             const sites = [...new Set(
                 encaisses
                     .filter(c =>
-                        (!valDate || getEncaisseDateFR(c) === valDate) &&
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
                         (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
                         (!valProc || getEncaisseProcessus(c) === valProc)
                     )
-                    .map(c => getEncaisseSite(c))
+                    .map(c => getEncaisseSite(c, mapMissions))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
+            if (valSite && !sites.includes(valSite)) {
+                valSite = '';
+            }
+
+            // 4. Processus correspondant à la Date, Région et Site choisis
             const procs = [...new Set(
                 encaisses
                     .filter(c =>
-                        (!valDate || getEncaisseDateFR(c) === valDate) &&
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
                         (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
-                        (!valSite || getEncaisseSite(c) === valSite)
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite)
                     )
                     .map(c => getEncaisseProcessus(c))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            selDate.innerHTML = '<option value="">-- Toutes les dates (' + dates.length + ') --</option>' +
+            if (valProc && !procs.includes(valProc)) {
+                valProc = '';
+            }
+
+            selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            selReg.innerHTML = '<option value="">-- Toutes les régions (' + regions.length + ') --</option>' +
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
                 regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
 
-            selSite.innerHTML = '<option value="">-- Tous les sites (' + sites.length + ') --</option>' +
+            selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
 
-            selProc.innerHTML = '<option value="">-- Tous les processus (' + procs.length + ') --</option>' +
+            selProc.innerHTML = `<option value="">-- Tous les processus (${procs.length}) --</option>` +
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
+
+            selDate.classList.toggle('filter-active', Boolean(valDate));
+            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selSite.classList.toggle('filter-active', Boolean(valSite));
+            selProc.classList.toggle('filter-active', Boolean(valProc));
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
+                const nbCorrespondants = encaisses.filter(c =>
+                    (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                    (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
+                    (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                    (!valProc || getEncaisseProcessus(c) === valProc)
+                ).length;
+                statusEl.innerText = `${nbCorrespondants} constat(s) correspondant(s) en BDD`;
+            }
+        }
+
+        function onFilterFvBDDChange(source = '') {
+            if (source === 'DATE') {
+                // Réinitialise les filtres aval pour afficher toutes les régions, sites et processus de cette date
+                document.getElementById('filterFvBddRegion').value = '';
+                document.getElementById('filterFvBddSite').value = '';
+                document.getElementById('filterFvBddProcessus').value = '';
+            } else if (source === 'REGION') {
+                // Réinitialise site et processus pour afficher tous les sites et processus de cette région (et date si choisie)
+                document.getElementById('filterFvBddSite').value = '';
+                document.getElementById('filterFvBddProcessus').value = '';
+            } else if (source === 'SITE') {
+                // Réinitialise processus pour afficher tous les processus de ce site
+                document.getElementById('filterFvBddProcessus').value = '';
+            }
+            remplirFiltresEncaissesBDD();
         }
 
         function resetDateField() {
@@ -1416,9 +1486,9 @@
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
             const constatsFV = (db.constatsEncaisses || []).filter(c =>
-                (!fDateFR || getEncaisseDateFR(c) === fDateFR) &&
+                (!fDateFR || getEncaisseDateFR(c, mapMissions) === fDateFR) &&
                 (!fReg || getEncaisseRegion(c, mapMissions) === fReg) &&
-                (!fSite || getEncaisseSite(c) === fSite) &&
+                (!fSite || getEncaisseSite(c, mapMissions) === fSite) &&
                 (!fProc || getEncaisseProcessus(c) === fProc)
             );
 
@@ -1432,7 +1502,7 @@
             loadedEncaisseIds = constatsFV.map(c => c.idEncaisse).filter(Boolean);
 
             const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification);
-            const dateVerifJJMMAAAA = formatDateToJJMMAAAA(sample.date || sample.dateVerification);
+            const dateVerifJJMMAAAA = getEncaisseDateFR(sample, mapMissions);
 
             document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date initiale : ${dateVerifJJMMAAAA}`;
 
@@ -1441,7 +1511,7 @@
             if (sample.dateDebut) document.getElementById('periodeDebut').value = formatDateToISO(sample.dateDebut);
             if (sample.dateFin) document.getElementById('periodeFin').value = formatDateToISO(sample.dateFin);
 
-            const siteVal = sample.site || sample.entite || '';
+            const siteVal = getEncaisseSite(sample, mapMissions);
             let regVal = normaliserRegion(sample.region || trouverRegionDuSite(siteVal));
             document.getElementById('regionSite').value = regVal;
             onRegionEncaisseChange(siteVal);
@@ -1454,7 +1524,7 @@
             respInput.value = sample.responsable || '';
 
             addedPoints = constatsFV.map((c, idx) => {
-                const dLigne = formatDateToJJMMAAAA(c.date || c.dateVerification) || dateVerifJJMMAAAA;
+                const dLigne = getEncaisseDateFR(c, mapMissions) || dateVerifJJMMAAAA;
                 const constatObj = {
                     _bddIdEncaisse: c.idEncaisse,
                     _initialDate: dLigne,
@@ -1476,7 +1546,7 @@
                     id: Date.now() + idx,
                     selected: true,
                     dateVerification: dLigne,
-                    processus: c.processus,
+                    processus: getEncaisseProcessus(c),
                     risque: c.risque,
                     controle: c.controle,
                     pointDeControle: c.pc,
