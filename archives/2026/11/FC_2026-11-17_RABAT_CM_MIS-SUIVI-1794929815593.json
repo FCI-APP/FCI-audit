@@ -1,0 +1,36 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FC",
+  "dateArchivage": "2026-11-17T15:36:56.547Z",
+  "donnees": [
+    {
+      "idConstat": "CST-SUIVI-1794929815593-1",
+      "idMission": "MIS-SUIVI-1794929815593",
+      "region": "RABAT",
+      "typeControle": "Systématique",
+      "entite": "RABAT CM",
+      "site": "RABAT CM",
+      "controleur": "meliani",
+      "date": "23/11/2026",
+      "dateControle": "23/11/2026",
+      "processus": "Exploitation E-sign",
+      "risque": "Perte des données client de la certification e-sign sur le système",
+      "controle": "Contrôle de la traçabilité des données",
+      "pc": "2/ Une sauvegarde périodique est-elle réalisée systématiquement ?",
+      "pop": 890,
+      "ech": 750,
+      "ok": 700,
+      "ko": 50,
+      "tc": 93.33,
+      "constat": "sava",
+      "recommandation": "réaliser la sauvegarde",
+      "avisResponsable": "vu",
+      "statut": "EN_COURS",
+      "isModifie": true,
+      "modifie": true,
+      "isSuivi": true,
+      "suivi": true
+    }
+  ]
+}
