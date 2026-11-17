@@ -87,8 +87,9 @@
 
         .meta-item { display: flex; flex-direction: column; min-width: 0; }
         .meta-item span.label, .meta-item label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .input-date-ctrl { width: 100%; padding: 7px 9px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.82rem; color: var(--primary); font-weight: 700; outline: none; background-color: #FFF; }
+        .input-date-ctrl { width: 100%; padding: 7px 9px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.82rem; color: var(--primary); font-weight: 700; outline: none; background-color: #FFF; transition: border-color 0.2s, background-color 0.2s; }
         .input-date-ctrl:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .input-date-ctrl.filter-active { border: 2px solid var(--accent); background-color: #FFFDF5; }
 
         .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; white-space: nowrap; }
         .btn-primary { background-color: var(--primary); color: white; }
@@ -263,25 +264,25 @@
             <div class="single-row-modif">
                 <div class="meta-item">
                     <label for="filterBddDate">Date de contrôle (jj/mm/aaaa)</label>
-                    <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                    <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange('DATE')">
                         <option value="">-- Toutes les dates --</option>
                     </select>
                 </div>
                 <div class="meta-item">
                     <label for="filterBddRegion">Région</label>
-                    <select id="filterBddRegion" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                    <select id="filterBddRegion" class="input-date-ctrl" onchange="onFilterBDDChange('REGION')">
                         <option value="">-- Toutes les régions --</option>
                     </select>
                 </div>
                 <div class="meta-item">
                     <label for="filterBddSite">Site contrôlé</label>
-                    <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                    <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange('SITE')">
                         <option value="">-- Tous les sites --</option>
                     </select>
                 </div>
                 <div class="meta-item">
                     <label for="filterBddProcessus">Processus contrôlé</label>
-                    <select id="filterBddProcessus" class="input-date-ctrl" onchange="onFilterBDDChange()">
+                    <select id="filterBddProcessus" class="input-date-ctrl" onchange="onFilterBDDChange('PROCESSUS')">
                         <option value="">-- Tous les processus --</option>
                     </select>
                 </div>
@@ -493,9 +494,10 @@
             return reg;
         }
 
-        function getConstatDateFR(c) {
+        function getConstatDateFR(c, mapMissions = {}) {
             if (!c) return '';
-            return formatDateToFR(c.date || c.dateControle || c.date_controle || '');
+            const m = mapMissions[c.idMission] || {};
+            return formatDateToFR(c.date || c.dateControle || c.date_controle || m.date || m.dateControle || '');
         }
 
         function getConstatRegion(c, mapMissions = {}) {
@@ -504,9 +506,10 @@
             return normaliserRegion(c.region || m.region || '');
         }
 
-        function getConstatSite(c) {
+        function getConstatSite(c, mapMissions = {}) {
             if (!c) return '';
-            return String(c.entite || c.site || c.centre || '').trim();
+            const m = mapMissions[c.idMission] || {};
+            return String(c.entite || c.site || c.centre || m.entite || '').trim();
         }
 
         function getConstatProcessus(c) {
@@ -596,6 +599,9 @@
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresBDD();
+            if (!missionData) {
+                document.getElementById('searchStatus').innerText = '';
+            }
         }
 
         function remplirFiltresBDD() {
@@ -615,69 +621,118 @@
             const selProc = document.getElementById('filterBddProcessus');
             if (!selDate || !selReg || !selSite || !selProc) return;
 
-            const valDate = selDate.value;
-            const valReg = selReg.value;
-            const valSite = selSite.value;
-            const valProc = selProc.value;
+            let valDate = selDate.value;
+            let valReg = selReg.value;
+            let valSite = selSite.value;
+            let valProc = selProc.value;
 
+            // 1. Dates disponibles (filtrées par Région/Site/Processus seulement s'ils sont choisis)
             const dates = [...new Set(
                 constats
                     .filter(c =>
                         (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
-                        (!valSite || getConstatSite(c) === valSite) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
                         (!valProc || getConstatProcessus(c) === valProc)
                     )
-                    .map(c => getConstatDateFR(c))
+                    .map(c => getConstatDateFR(c, mapMissions))
                     .filter(Boolean)
             )].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
 
+            if (valDate && !dates.includes(valDate)) {
+                valDate = '';
+            }
+
+            // 2. Régions correspondant à la Date choisie (et aux autres filtres actifs)
             const regions = [...new Set(
                 constats
                     .filter(c =>
-                        (!valDate || getConstatDateFR(c) === valDate) &&
-                        (!valSite || getConstatSite(c) === valSite) &&
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
                         (!valProc || getConstatProcessus(c) === valProc)
                     )
                     .map(c => getConstatRegion(c, mapMissions))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
+            if (valReg && !regions.includes(valReg)) {
+                valReg = '';
+            }
+
+            // 3. Sites correspondant à la Date et à la Région choisies
             const sites = [...new Set(
                 constats
                     .filter(c =>
-                        (!valDate || getConstatDateFR(c) === valDate) &&
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
                         (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
                         (!valProc || getConstatProcessus(c) === valProc)
                     )
-                    .map(c => getConstatSite(c))
+                    .map(c => getConstatSite(c, mapMissions))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
+            if (valSite && !sites.includes(valSite)) {
+                valSite = '';
+            }
+
+            // 4. Processus correspondant à la Date, Région et Site choisis
             const procs = [...new Set(
                 constats
                     .filter(c =>
-                        (!valDate || getConstatDateFR(c) === valDate) &&
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
                         (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
-                        (!valSite || getConstatSite(c) === valSite)
+                        (!valSite || getConstatSite(c, mapMissions) === valSite)
                     )
                     .map(c => getConstatProcessus(c))
                     .filter(Boolean)
-            )].sort();
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            selDate.innerHTML = '<option value="">-- Toutes les dates (' + dates.length + ') --</option>' +
+            if (valProc && !procs.includes(valProc)) {
+                valProc = '';
+            }
+
+            selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            selReg.innerHTML = '<option value="">-- Toutes les régions (' + regions.length + ') --</option>' +
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
                 regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
 
-            selSite.innerHTML = '<option value="">-- Tous les sites (' + sites.length + ') --</option>' +
+            selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
 
-            selProc.innerHTML = '<option value="">-- Tous les processus (' + procs.length + ') --</option>' +
+            selProc.innerHTML = `<option value="">-- Tous les processus (${procs.length}) --</option>` +
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
+
+            selDate.classList.toggle('filter-active', Boolean(valDate));
+            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selSite.classList.toggle('filter-active', Boolean(valSite));
+            selProc.classList.toggle('filter-active', Boolean(valProc));
+
+            const statusEl = document.getElementById('searchStatus');
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
+                const nbCorrespondants = constats.filter(c =>
+                    (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                    (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
+                    (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                    (!valProc || getConstatProcessus(c) === valProc)
+                ).length;
+                statusEl.innerText = `${nbCorrespondants} constat(s) correspondant(s) en BDD`;
+            }
         }
 
-        function onFilterBDDChange() {
+        function onFilterBDDChange(source = '') {
+            if (source === 'DATE') {
+                // Réinitialise les filtres aval pour afficher toutes les régions, sites et processus de cette date
+                document.getElementById('filterBddRegion').value = '';
+                document.getElementById('filterBddSite').value = '';
+                document.getElementById('filterBddProcessus').value = '';
+            } else if (source === 'REGION') {
+                // Réinitialise site et processus pour afficher tous les sites et processus de cette région (et date si choisie)
+                document.getElementById('filterBddSite').value = '';
+                document.getElementById('filterBddProcessus').value = '';
+            } else if (source === 'SITE') {
+                // Réinitialise processus pour afficher tous les processus de ce site
+                document.getElementById('filterBddProcessus').value = '';
+            }
             remplirFiltresBDD();
         }
 
@@ -1140,9 +1195,9 @@
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
             const constatsTrouves = (db.constatsControle || []).filter(c =>
-                (!fDate || getConstatDateFR(c) === fDate) &&
+                (!fDate || getConstatDateFR(c, mapMissions) === fDate) &&
                 (!fReg || getConstatRegion(c, mapMissions) === fReg) &&
-                (!fSite || getConstatSite(c) === fSite) &&
+                (!fSite || getConstatSite(c, mapMissions) === fSite) &&
                 (!fProc || getConstatProcessus(c) === fProc)
             );
 
@@ -1156,8 +1211,8 @@
             const missionInfo = mapMissions[selectedId] || {};
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
             const regionRecuperee = normaliserRegion(premierConstat.region || missionInfo.region || '');
-            const dateCtrlTrouvee = getConstatDateFR(premierConstat) || formatDateToFR(missionInfo.date) || formatDateToFR(getTodayISO());
-            const siteTrouve = getConstatSite(premierConstat) || missionInfo.entite || '';
+            const dateCtrlTrouvee = getConstatDateFR(premierConstat, mapMissions) || formatDateToFR(missionInfo.date) || formatDateToFR(getTodayISO());
+            const siteTrouve = getConstatSite(premierConstat, mapMissions) || missionInfo.entite || '';
 
             missionData = {
                 _loadedFromBDDFilter: { date: fDate, region: fReg, site: fSite, processus: fProc },
@@ -1173,7 +1228,7 @@
                     controleurs: premierConstat.controleur || missionInfo.controleur || ''
                 },
                 pointsControle: constatsTrouves.map(c => {
-                    const dLigne = getConstatDateFR(c) || dateCtrlTrouvee;
+                    const dLigne = getConstatDateFR(c, mapMissions) || dateCtrlTrouvee;
                     const pointObj = {
                         _bddIdConstat: c.idConstat,
                         _initialDate: dLigne,
