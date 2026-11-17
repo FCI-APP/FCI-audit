@@ -172,9 +172,13 @@
 
         .filters-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            grid-template-columns: repeat(5, minmax(165px, 1fr));
             gap: 10px;
             align-items: end;
+        }
+
+        @media (max-width: 1280px) {
+            .filters-grid { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); }
         }
 
         .filter-group { display: flex; flex-direction: column; gap: 4px; }
@@ -185,8 +189,21 @@
             color: var(--primary-blue);
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 5px;
         }
+        .lock-badge {
+            font-size: 0.62rem;
+            background: #E2E8F0;
+            color: #475569;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+            display: none;
+        }
+        .filter-group.is-locked .lock-badge { display: inline-flex; align-items: center; gap: 3px; }
+        .filter-group.is-locked label { color: #64748B; }
+
         .filter-select {
             padding: 7px 10px;
             border-radius: 6px;
@@ -200,10 +217,17 @@
             outline: none;
             width: 100%;
             min-height: 34px;
+            transition: all 0.15s;
         }
         .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
         .filter-select.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
-        .filter-select:disabled { opacity: 0.55; cursor: not-allowed; background: #E2E8F0; }
+        .filter-select:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+            background: #E2E8F0;
+            color: #64748B;
+            border-color: #CBD5E1;
+        }
 
         /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; margin-bottom: 20px; }
@@ -426,7 +450,7 @@
             </div>
         </header>
 
-        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES (ALIMENTÉS UNIQUEMENT PAR LA BDD) -->
+        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES EN CASCADE -->
         <section class="pilotage-panel">
             <div class="niveau-tabs-bar">
                 <div class="niveau-tabs no-print" role="tablist">
@@ -452,58 +476,78 @@
             </div>
 
             <div class="filters-grid no-print">
-                <div class="filter-group">
-                    <label for="filtreRegion"><i class="fa-solid fa-map-pin"></i> Région Postale</label>
-                    <select id="filtreRegion" class="filter-select" onchange="onChangeRegion()">
+                <div class="filter-group" id="grpRegion">
+                    <label for="filtreRegion">
+                        <span><i class="fa-solid fa-map-pin"></i> Région Postale</span>
+                        <span class="lock-badge"><i class="fa-solid fa-lock"></i> Bloqué</span>
+                    </label>
+                    <select id="filtreRegion" class="filter-select" onchange="onFilterChange('REGION')">
                         <option value="TOUS">-- Toutes les régions --</option>
                     </select>
                 </div>
 
-                <div class="filter-group">
-                    <label for="filtreCentre"><i class="fa-solid fa-building-flag"></i> Centre / Site</label>
-                    <select id="filtreCentre" class="filter-select" onchange="onChangeCentre()">
+                <div class="filter-group" id="grpCentre">
+                    <label for="filtreCentre">
+                        <span><i class="fa-solid fa-building-flag"></i> Centre / Site</span>
+                        <span class="lock-badge"><i class="fa-solid fa-lock"></i> Bloqué</span>
+                    </label>
+                    <select id="filtreCentre" class="filter-select" onchange="onFilterChange('CENTRE')">
                         <option value="TOUS">-- Tous les centres --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreDate"><i class="fa-regular fa-calendar-check"></i> Date définie</label>
-                    <select id="filtreDate" class="filter-select" onchange="onChangeDateSpecifique()">
+                    <label for="filtreDate"><span><i class="fa-regular fa-calendar-check"></i> Date définie</span></label>
+                    <select id="filtreDate" class="filter-select" onchange="onFilterChange('DATE')">
                         <option value="TOUS">-- Toutes les dates --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreDateDebut"><i class="fa-solid fa-calendar-day"></i> Début période d'analyse</label>
-                    <select id="filtreDateDebut" class="filter-select" onchange="onChangePlageDates()">
+                    <label for="filtreDateDebut"><span><i class="fa-solid fa-calendar-day"></i> Début période</span></label>
+                    <select id="filtreDateDebut" class="filter-select" onchange="onFilterChange('DEBUT')">
                         <option value="TOUS">-- Date début --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreDateFin"><i class="fa-solid fa-calendar-week"></i> Fin période d'analyse</label>
-                    <select id="filtreDateFin" class="filter-select" onchange="onChangePlageDates()">
+                    <label for="filtreDateFin"><span><i class="fa-solid fa-calendar-week"></i> Fin période</span></label>
+                    <select id="filtreDateFin" class="filter-select" onchange="onFilterChange('FIN')">
                         <option value="TOUS">-- Date fin --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreType"><i class="fa-solid fa-tags"></i> Type de Contrôle</label>
-                    <select id="filtreType" class="filter-select" onchange="actualiserAnalyse()">
+                    <label for="filtreType"><span><i class="fa-solid fa-tags"></i> Type de Contrôle</span></label>
+                    <select id="filtreType" class="filter-select" onchange="onFilterChange('TYPE')">
                         <option value="TOUS">-- Tous les types --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
-                    <select id="filtreProcessus" class="filter-select" onchange="actualiserAnalyse()">
+                    <label for="filtreProcessus"><span><i class="fa-solid fa-diagram-project"></i> Processus</span></label>
+                    <select id="filtreProcessus" class="filter-select" onchange="onFilterChange('PROCESSUS')">
                         <option value="TOUS">-- Tous les processus --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreStatut"><i class="fa-solid fa-circle-dot"></i> Statut Constat</label>
-                    <select id="filtreStatut" class="filter-select" onchange="actualiserAnalyse()">
+                    <label for="filtreControle"><span><i class="fa-solid fa-list-check"></i> Contrôle</span></label>
+                    <select id="filtreControle" class="filter-select" onchange="onFilterChange('CONTROLE')">
+                        <option value="TOUS">-- Tous les contrôles --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtrePC"><span><i class="fa-solid fa-crosshairs"></i> Point de Contrôle (PC)</span></label>
+                    <select id="filtrePC" class="filter-select" onchange="onFilterChange('PC')">
+                        <option value="TOUS">-- Tous les PC --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreStatut"><span><i class="fa-solid fa-circle-dot"></i> Statut Constat</span></label>
+                    <select id="filtreStatut" class="filter-select" onchange="onFilterChange('STATUT')">
                         <option value="TOUS">-- Tous les statuts --</option>
                     </select>
                 </div>
@@ -882,9 +926,9 @@
                     region: String(c.region || m.region || '').trim().toUpperCase(),
                     site: String(c.entite || c.site || m.entite || '').trim(),
                     processus: String(c.processus || '').trim(),
-                    risque: String(c.risque || 'N/A').trim(),
-                    controle: String(c.controle || 'N/A').trim(),
-                    pc: String(c.pc || 'N/A').trim(),
+                    risque: String(c.risque || '').trim(),
+                    controle: String(c.controle || '').trim(),
+                    pc: String(c.pc || '').trim(),
                     pop: parseInt(c.pop) || 0,
                     ech, ok, ko,
                     tc: isNaN(tc) ? 0 : tc,
@@ -912,9 +956,9 @@
                     region: String(e.region || m.region || '').trim().toUpperCase(),
                     site: String(e.entite || e.site || e.agence || m.entite || '').trim(),
                     processus: String(e.processus || 'Vérification Encaisses').trim(),
-                    risque: String(e.risque || 'N/A').trim(),
-                    controle: String(e.controle || 'N/A').trim(),
-                    pc: String(e.pc || 'N/A').trim(),
+                    risque: String(e.risque || '').trim(),
+                    controle: String(e.controle || '').trim(),
+                    pc: String(e.pc || '').trim(),
                     pop: parseInt(e.pop) || 0,
                     ech, ok, ko,
                     tc: isNaN(tc) ? 0 : tc,
@@ -927,118 +971,8 @@
             });
 
             toutesLesDonnees = unifies;
-            peuplerFiltresInitiaux();
             appliquerEtatNiveau();
-            actualiserAnalyse();
-        }
-
-        function peuplerFiltresInitiaux() {
-            // 1. Régions : UNIQUEMENT celles enregistrées dans la BDD
-            const selReg = document.getElementById('filtreRegion');
-            const valReg = selReg.value;
-            const regionsBDD = [...new Set(toutesLesDonnees.map(d => d.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            selReg.innerHTML = '<option value="TOUS">-- Toutes les régions --</option>';
-            regionsBDD.forEach(r => {
-                selReg.innerHTML += `<option value="${r}">${r}</option>`;
-            });
-            selReg.value = regionsBDD.includes(valReg) ? valReg : 'TOUS';
-
-            // 2. Centres / Sites : UNIQUEMENT ceux enregistrés dans la BDD
-            peuplerSelectCentres();
-
-            // 3. Date définie, Début période & Fin période : UNIQUEMENT les dates inscrites dans la BDD
-            const datesISOUniques = [...new Set(toutesLesDonnees.map(d => d.dateISO).filter(Boolean))].sort();
-            const datesDesc = [...datesISOUniques].reverse();
-
-            const selDate = document.getElementById('filtreDate');
-            const valDate = selDate.value;
-            selDate.innerHTML = '<option value="TOUS">-- Toutes les dates --</option>';
-            datesDesc.forEach(iso => {
-                selDate.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
-            });
-            selDate.value = datesISOUniques.includes(valDate) ? valDate : 'TOUS';
-
-            const selDebut = document.getElementById('filtreDateDebut');
-            const valDebut = selDebut.value;
-            selDebut.innerHTML = '<option value="TOUS">-- Date début --</option>';
-            datesISOUniques.forEach(iso => {
-                selDebut.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
-            });
-            selDebut.value = datesISOUniques.includes(valDebut) ? valDebut : 'TOUS';
-
-            const selFin = document.getElementById('filtreDateFin');
-            const valFin = selFin.value;
-            selFin.innerHTML = '<option value="TOUS">-- Date fin --</option>';
-            datesDesc.forEach(iso => {
-                selFin.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
-            });
-            selFin.value = datesISOUniques.includes(valFin) ? valFin : 'TOUS';
-
-            // 4. Types de contrôle : UNIQUEMENT ceux enregistrés dans la BDD
-            const selType = document.getElementById('filtreType');
-            const valType = selType.value;
-            const typesBDD = [...new Set(toutesLesDonnees.map(d => d.typeControle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            selType.innerHTML = '<option value="TOUS">-- Tous les types --</option>';
-            typesBDD.forEach(t => {
-                selType.innerHTML += `<option value="${t}">${t}</option>`;
-            });
-            selType.value = typesBDD.includes(valType) ? valType : 'TOUS';
-
-            // 5. Processus : UNIQUEMENT ceux enregistrés dans la BDD
-            const selProc = document.getElementById('filtreProcessus');
-            const valProc = selProc.value;
-            const procsBDD = [...new Set(toutesLesDonnees.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            selProc.innerHTML = '<option value="TOUS">-- Tous les processus --</option>';
-            procsBDD.forEach(p => {
-                selProc.innerHTML += `<option value="${p}">${p}</option>`;
-            });
-            selProc.value = procsBDD.includes(valProc) ? valProc : 'TOUS';
-
-            // 6. Statuts constat : UNIQUEMENT ceux enregistrés dans la BDD
-            const selStatut = document.getElementById('filtreStatut');
-            const valStatut = selStatut.value;
-            const ordreStatuts = ['EN_COURS', 'CLOTURE', 'NON_CLOTURE'];
-            const statutsPresentsSet = new Set(toutesLesDonnees.map(d => d.statut).filter(Boolean));
-            const statutsBDD = [
-                ...ordreStatuts.filter(s => statutsPresentsSet.has(s)),
-                ...[...statutsPresentsSet].filter(s => !ordreStatuts.includes(s))
-            ];
-            selStatut.innerHTML = '<option value="TOUS">-- Tous les statuts --</option>';
-            statutsBDD.forEach(st => {
-                selStatut.innerHTML += `<option value="${st}">${libelleStatut(st)}</option>`;
-            });
-            selStatut.value = statutsBDD.includes(valStatut) ? valStatut : 'TOUS';
-        }
-
-        function peuplerSelectCentres() {
-            const reg = document.getElementById('filtreRegion').value;
-            const selCentre = document.getElementById('filtreCentre');
-            const valCentre = selCentre.value;
-            const source = reg === 'TOUS' ? toutesLesDonnees : toutesLesDonnees.filter(d => d.region === reg);
-            const sitesBDD = [...new Set(source.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            selCentre.innerHTML = '<option value="TOUS">-- Tous les centres --</option>';
-            sitesBDD.forEach(s => {
-                selCentre.innerHTML += `<option value="${s}">${s}</option>`;
-            });
-            selCentre.value = sitesBDD.includes(valCentre) ? valCentre : 'TOUS';
-        }
-
-        function onChangeDateSpecifique() {
-            const dateVal = document.getElementById('filtreDate').value;
-            if (dateVal !== 'TOUS') {
-                document.getElementById('filtreDateDebut').value = 'TOUS';
-                document.getElementById('filtreDateFin').value = 'TOUS';
-            }
-            actualiserAnalyse();
-        }
-
-        function onChangePlageDates() {
-            const dDebut = document.getElementById('filtreDateDebut').value;
-            const dFin = document.getElementById('filtreDateFin').value;
-            if (dDebut !== 'TOUS' || dFin !== 'TOUS') {
-                document.getElementById('filtreDate').value = 'TOUS';
-            }
-            actualiserAnalyse();
+            actualiserFiltresDynamiquesEtAnalyse();
         }
 
         function correspondFiltreTemporel(isoDate, dateSpecifique, dateDebut, dateFin) {
@@ -1058,33 +992,159 @@
             return 'Toutes les dates';
         }
 
-        function changerNiveau(nouveauNiveau) {
-            niveauActif = nouveauNiveau;
-            const selReg = document.getElementById('filtreRegion');
-            const selCentre = document.getElementById('filtreCentre');
+        function lireEtatFiltres() {
+            return {
+                reg: niveauActif === 'NATIONAL' ? 'TOUS' : document.getElementById('filtreRegion').value,
+                centre: niveauActif === 'CENTRE' ? document.getElementById('filtreCentre').value : 'TOUS',
+                dateSpec: document.getElementById('filtreDate').value,
+                dateDebut: document.getElementById('filtreDateDebut').value,
+                dateFin: document.getElementById('filtreDateFin').value,
+                typeCtrl: document.getElementById('filtreType').value,
+                proc: document.getElementById('filtreProcessus').value,
+                ctrl: document.getElementById('filtreControle').value,
+                pc: document.getElementById('filtrePC').value,
+                statut: document.getElementById('filtreStatut').value
+            };
+        }
 
+        function filtrerSubset(etat, exclure = []) {
+            return toutesLesDonnees.filter(d => {
+                if (!exclure.includes('REGION') && etat.reg !== 'TOUS' && d.region !== etat.reg) return false;
+                if (!exclure.includes('CENTRE') && etat.centre !== 'TOUS' && d.site !== etat.centre) return false;
+                if (!exclure.includes('TEMPS') && !correspondFiltreTemporel(d.dateISO, etat.dateSpec, etat.dateDebut, etat.dateFin)) return false;
+                if (!exclure.includes('TYPE') && etat.typeCtrl !== 'TOUS' && d.typeControle !== etat.typeCtrl) return false;
+                if (!exclure.includes('PROCESSUS') && etat.proc !== 'TOUS' && d.processus !== etat.proc) return false;
+                if (!exclure.includes('CONTROLE') && etat.ctrl !== 'TOUS' && d.controle !== etat.ctrl) return false;
+                if (!exclure.includes('PC') && etat.pc !== 'TOUS' && d.pc !== etat.pc) return false;
+                if (!exclure.includes('STATUT') && etat.statut !== 'TOUS' && d.statut !== etat.statut) return false;
+                return true;
+            });
+        }
+
+        function remplirSelectOptions(selectEl, valeursUniques, libelleTous, formatterFn = null) {
+            const valActuelle = selectEl.value;
+            selectEl.innerHTML = `<option value="TOUS">${libelleTous}</option>`;
+            valeursUniques.forEach(v => {
+                const txt = formatterFn ? formatterFn(v) : v;
+                selectEl.innerHTML += `<option value="${v}">${txt}</option>`;
+            });
+            if (valeursUniques.includes(valActuelle)) {
+                selectEl.value = valActuelle;
+                return valActuelle;
+            } else {
+                selectEl.value = 'TOUS';
+                return 'TOUS';
+            }
+        }
+
+        function actualiserFiltresDynamiquesEtAnalyse() {
+            const etat = lireEtatFiltres();
+
+            // 1. Liste des Régions (toutes les régions enregistrées dans la BDD)
+            const selReg = document.getElementById('filtreRegion');
+            const regionsBDD = [...new Set(toutesLesDonnees.map(d => d.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             if (niveauActif === 'NATIONAL') {
+                remplirSelectOptions(selReg, regionsBDD, '-- Verrouillé (National) --');
                 selReg.value = 'TOUS';
-                peuplerSelectCentres();
+                etat.reg = 'TOUS';
+            } else {
+                etat.reg = remplirSelectOptions(selReg, regionsBDD, '-- Toutes les régions --');
+            }
+
+            // 2. Liste des Centres / Sites :
+            //    - Onglet CENTRE : uniquement les centres de la région sélectionnée (ou tous les centres BDD si aucune région choisie)
+            //    - Onglet REGIONAL & NATIONAL : verrouillé
+            const selCentre = document.getElementById('filtreCentre');
+            if (niveauActif === 'CENTRE') {
+                const baseCentres = etat.reg !== 'TOUS'
+                    ? toutesLesDonnees.filter(d => d.region === etat.reg)
+                    : toutesLesDonnees;
+                const centresBDD = [...new Set(baseCentres.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+                etat.centre = remplirSelectOptions(selCentre, centresBDD, '-- Tous les centres --');
+            } else {
+                remplirSelectOptions(selCentre, [], '-- Verrouillé --');
                 selCentre.value = 'TOUS';
-            } else if (niveauActif === 'REGIONAL') {
-                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
-                    selReg.value = selReg.options[1].value;
+                etat.centre = 'TOUS';
+            }
+
+            // 3. Dates (Date définie, Début période, Fin période) : basées sur les enregistrements correspondant au périmètre + autres filtres actifs
+            const baseDates = filtrerSubset(etat, ['TEMPS']);
+            const datesAsc = [...new Set(baseDates.map(d => d.dateISO).filter(Boolean))].sort();
+            const datesDesc = [...datesAsc].reverse();
+
+            etat.dateSpec = remplirSelectOptions(document.getElementById('filtreDate'), datesDesc, '-- Toutes les dates --', formaterDateFR);
+            etat.dateDebut = remplirSelectOptions(document.getElementById('filtreDateDebut'), datesAsc, '-- Date début --', formaterDateFR);
+            etat.dateFin = remplirSelectOptions(document.getElementById('filtreDateFin'), datesDesc, '-- Date fin --', formaterDateFR);
+
+            // 4. Type de Contrôle (uniquement ceux présents pour la sélection active)
+            const baseTypes = filtrerSubset(etat, ['TYPE']);
+            const typesBDD = [...new Set(baseTypes.map(d => d.typeControle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            etat.typeCtrl = remplirSelectOptions(document.getElementById('filtreType'), typesBDD, '-- Tous les types --');
+
+            // 5. Processus (uniquement ceux présents pour la sélection active)
+            const baseProcs = filtrerSubset(etat, ['PROCESSUS']);
+            const procsBDD = [...new Set(baseProcs.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            etat.proc = remplirSelectOptions(document.getElementById('filtreProcessus'), procsBDD, '-- Tous les processus --');
+
+            // 6. Contrôle (cascadé selon Région/Centre/Dates/Type/Processus/Statut)
+            const baseCtrls = filtrerSubset(etat, ['CONTROLE']);
+            const ctrlsBDD = [...new Set(baseCtrls.map(d => d.controle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            etat.ctrl = remplirSelectOptions(document.getElementById('filtreControle'), ctrlsBDD, '-- Tous les contrôles --');
+
+            // 7. Point de Contrôle (PC) (cascadé selon Région/Centre/Dates/Type/Processus/Contrôle/Statut)
+            const basePCs = filtrerSubset(etat, ['PC']);
+            const pcsBDD = [...new Set(basePCs.map(d => d.pc).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            etat.pc = remplirSelectOptions(document.getElementById('filtrePC'), pcsBDD, '-- Tous les PC --');
+
+            // 8. Statut Constat (uniquement les statuts présents pour la sélection active)
+            const baseStatuts = filtrerSubset(etat, ['STATUT']);
+            const ordreStatuts = ['EN_COURS', 'CLOTURE', 'NON_CLOTURE'];
+            const statutsSet = new Set(baseStatuts.map(d => d.statut).filter(Boolean));
+            const statutsBDD = [
+                ...ordreStatuts.filter(s => statutsSet.has(s)),
+                ...[...statutsSet].filter(s => !ordreStatuts.includes(s))
+            ];
+            etat.statut = remplirSelectOptions(document.getElementById('filtreStatut'), statutsBDD, '-- Tous les statuts --', libelleStatut);
+
+            actualiserAnalyse(etat);
+        }
+
+        function onFilterChange(source) {
+            if (source === 'REGION') {
+                // Réinitialiser le centre et les filtres aval pour ne garder que les éléments valides de cette région
+                document.getElementById('filtreCentre').value = 'TOUS';
+            } else if (source === 'CENTRE') {
+                // Si un centre est choisi alors que la région était sur TOUS, synchroniser automatiquement sa région
+                const centreVal = document.getElementById('filtreCentre').value;
+                if (centreVal !== 'TOUS' && document.getElementById('filtreRegion').value === 'TOUS') {
+                    const match = toutesLesDonnees.find(d => d.site === centreVal);
+                    if (match && match.region) {
+                        document.getElementById('filtreRegion').value = match.region;
+                    }
                 }
-                peuplerSelectCentres();
-                selCentre.value = 'TOUS';
-            } else if (niveauActif === 'CENTRE') {
-                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
-                    selReg.value = selReg.options[1].value;
+            } else if (source === 'DATE') {
+                if (document.getElementById('filtreDate').value !== 'TOUS') {
+                    document.getElementById('filtreDateDebut').value = 'TOUS';
+                    document.getElementById('filtreDateFin').value = 'TOUS';
                 }
-                peuplerSelectCentres();
-                if (selCentre.value === 'TOUS' && selCentre.options.length > 1) {
-                    selCentre.value = selCentre.options[1].value;
+            } else if (source === 'DEBUT' || source === 'FIN') {
+                if (document.getElementById('filtreDateDebut').value !== 'TOUS' || document.getElementById('filtreDateFin').value !== 'TOUS') {
+                    document.getElementById('filtreDate').value = 'TOUS';
                 }
             }
 
+            actualiserFiltresDynamiquesEtAnalyse();
+        }
+
+        function changerNiveau(nouveauNiveau) {
+            niveauActif = nouveauNiveau;
+
+            // Réinitialiser les filtres géographiques selon l'onglet choisi
+            document.getElementById('filtreRegion').value = 'TOUS';
+            document.getElementById('filtreCentre').value = 'TOUS';
+
             appliquerEtatNiveau();
-            actualiserAnalyse();
+            actualiserFiltresDynamiquesEtAnalyse();
         }
 
         function appliquerEtatNiveau() {
@@ -1094,58 +1154,46 @@
 
             const selReg = document.getElementById('filtreRegion');
             const selCentre = document.getElementById('filtreCentre');
+            const grpReg = document.getElementById('grpRegion');
+            const grpCentre = document.getElementById('grpCentre');
 
-            selReg.classList.toggle('highlight-focus', niveauActif === 'REGIONAL');
-            selCentre.classList.toggle('highlight-focus', niveauActif === 'CENTRE');
-
-            selCentre.disabled = (niveauActif === 'REGIONAL');
-        }
-
-        function onChangeRegion() {
-            peuplerSelectCentres();
-            const reg = document.getElementById('filtreRegion').value;
-            if (reg !== 'TOUS' && niveauActif === 'NATIONAL') {
-                niveauActif = 'REGIONAL';
-            } else if (reg === 'TOUS' && niveauActif === 'REGIONAL') {
-                niveauActif = 'NATIONAL';
+            if (niveauActif === 'NATIONAL') {
+                selReg.disabled = true;
+                selCentre.disabled = true;
+                grpReg.classList.add('is-locked');
+                grpCentre.classList.add('is-locked');
+                selReg.classList.remove('highlight-focus');
+                selCentre.classList.remove('highlight-focus');
+            } else if (niveauActif === 'REGIONAL') {
+                selReg.disabled = false;
+                selCentre.disabled = true;
+                grpReg.classList.remove('is-locked');
+                grpCentre.classList.add('is-locked');
+                selReg.classList.add('highlight-focus');
+                selCentre.classList.remove('highlight-focus');
+            } else {
+                selReg.disabled = false;
+                selCentre.disabled = false;
+                grpReg.classList.remove('is-locked');
+                grpCentre.classList.remove('is-locked');
+                selReg.classList.remove('highlight-focus');
+                selCentre.classList.add('highlight-focus');
             }
-            if (niveauActif === 'CENTRE') {
-                const selCentre = document.getElementById('filtreCentre');
-                selCentre.value = selCentre.options.length > 1 ? selCentre.options[1].value : 'TOUS';
-            }
-            appliquerEtatNiveau();
-            actualiserAnalyse();
-        }
-
-        function onChangeCentre() {
-            const centre = document.getElementById('filtreCentre').value;
-            if (centre !== 'TOUS' && niveauActif !== 'CENTRE') {
-                niveauActif = 'CENTRE';
-                const match = toutesLesDonnees.find(d => d.site === centre);
-                if (match && match.region && document.getElementById('filtreRegion').value === 'TOUS') {
-                    document.getElementById('filtreRegion').value = match.region;
-                }
-                appliquerEtatNiveau();
-            } else if (centre === 'TOUS' && niveauActif === 'CENTRE') {
-                niveauActif = document.getElementById('filtreRegion').value !== 'TOUS' ? 'REGIONAL' : 'NATIONAL';
-                appliquerEtatNiveau();
-            }
-            actualiserAnalyse();
         }
 
         function reinitialiserFiltresTDB() {
-            niveauActif = 'NATIONAL';
             document.getElementById('filtreRegion').value = 'TOUS';
-            peuplerSelectCentres();
             document.getElementById('filtreCentre').value = 'TOUS';
             document.getElementById('filtreDate').value = 'TOUS';
             document.getElementById('filtreDateDebut').value = 'TOUS';
             document.getElementById('filtreDateFin').value = 'TOUS';
             document.getElementById('filtreType').value = 'TOUS';
             document.getElementById('filtreProcessus').value = 'TOUS';
+            document.getElementById('filtreControle').value = 'TOUS';
+            document.getElementById('filtrePC').value = 'TOUS';
             document.getElementById('filtreStatut').value = 'TOUS';
             appliquerEtatNiveau();
-            actualiserAnalyse();
+            actualiserFiltresDynamiquesEtAnalyse();
         }
 
         function viderTDB() {
@@ -1156,65 +1204,44 @@
             exportClassementSecondaire = [];
             derniersTypes = [];
             derniersProcessus = [];
-
-            document.getElementById('filtreRegion').value = 'TOUS';
-            peuplerFiltresInitiaux();
             reinitialiserFiltresTDB();
         }
 
-        function actualiserAnalyse() {
-            const reg = document.getElementById('filtreRegion').value;
-            const centre = document.getElementById('filtreCentre').value;
-            const dateSpec = document.getElementById('filtreDate').value;
-            const dateDebut = document.getElementById('filtreDateDebut').value;
-            const dateFin = document.getElementById('filtreDateFin').value;
-            const typeCtrl = document.getElementById('filtreType').value;
-            const proc = document.getElementById('filtreProcessus').value;
-            const statut = document.getElementById('filtreStatut').value;
+        function actualiserAnalyse(etatParam = null) {
+            const etat = etatParam || lireEtatFiltres();
+            const { reg, centre, dateSpec, dateDebut, dateFin, typeCtrl, proc, ctrl, pc, statut } = etat;
 
             document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
             document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', dateDebut !== 'TOUS');
             document.getElementById('filtreDateFin').classList.toggle('highlight-focus', dateFin !== 'TOUS');
+            document.getElementById('filtreProcessus').classList.toggle('highlight-focus', proc !== 'TOUS');
+            document.getElementById('filtreControle').classList.toggle('highlight-focus', ctrl !== 'TOUS');
+            document.getElementById('filtrePC').classList.toggle('highlight-focus', pc !== 'TOUS');
 
             const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : Totalité des Régions & Centres · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : Toutes Régions & Centres · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (BDD)' : reg} · ${infoTemps}`;
             } else {
-                const nomCentre = centre === 'TOUS' ? 'Tous les centres (BDD)' : centre;
+                const nomCentre = centre === 'TOUS' ? 'Tous les centres' : centre;
                 scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} · ${infoTemps}`;
             }
 
-            const donneesFiltrees = toutesLesDonnees.filter(d => {
-                if (niveauActif === 'REGIONAL' && reg !== 'TOUS' && d.region !== reg) return false;
-                if (niveauActif === 'CENTRE') {
-                    if (reg !== 'TOUS' && d.region !== reg) return false;
-                    if (centre !== 'TOUS' && d.site !== centre) return false;
-                }
-                if (niveauActif === 'NATIONAL') {
-                    if (reg !== 'TOUS' && d.region !== reg) return false;
-                    if (centre !== 'TOUS' && d.site !== centre) return false;
-                }
-                if (!correspondFiltreTemporel(d.dateISO, dateSpec, dateDebut, dateFin)) return false;
-                if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
-                if (proc !== 'TOUS' && d.processus !== proc) return false;
-                if (statut !== 'TOUS' && d.statut !== statut) return false;
-                return true;
-            });
-
+            const donneesFiltrees = filtrerSubset(etat, []);
             dernieresDonneesFiltrees = donneesFiltrees;
 
-            calculerEtAfficherKPIs(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin);
-            calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin, typeCtrl, proc, statut);
+            calculerEtAfficherKPIs(donneesFiltrees, etat);
+            calculerBenchmarkEtSynthese(donneesFiltrees, etat);
             genererAlertesAutomatiques(donneesFiltrees);
             construireTableauxSelonNiveau(donneesFiltrees, reg, centre);
             afficherTableDetaillee(donneesFiltrees);
             construireGraphiquesSelonNiveau(donneesFiltrees, reg, centre);
         }
 
-        function calculerEtAfficherKPIs(donnees, reg, centre, dateSpec, dateDebut, dateFin) {
+        function calculerEtAfficherKPIs(donnees, etat) {
+            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
             const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
             const regionsUniques = new Set(donnees.map(d => d.region).filter(Boolean));
             const procsUniques = new Set(donnees.map(d => d.processus).filter(Boolean));
@@ -1285,14 +1312,9 @@
             document.getElementById('subKpiCouverture').textContent = subCouv;
         }
 
-        function calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin, typeCtrl, proc, statut) {
-            const baseTransverse = toutesLesDonnees.filter(d => {
-                if (!correspondFiltreTemporel(d.dateISO, dateSpec, dateDebut, dateFin)) return false;
-                if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
-                if (proc !== 'TOUS' && d.processus !== proc) return false;
-                if (statut !== 'TOUS' && d.statut !== statut) return false;
-                return true;
-            });
+        function calculerBenchmarkEtSynthese(donneesFiltrees, etat) {
+            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
+            const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
 
             const tcSelection = calculerTCPondere(donneesFiltrees);
             const baseRegion = reg !== 'TOUS' ? baseTransverse.filter(d => d.region === reg) : baseTransverse;
@@ -1301,7 +1323,7 @@
 
             const lbl1 = (niveauActif === 'CENTRE' && centre !== 'TOUS')
                 ? `Centre : ${centre}`
-                : (reg !== 'TOUS' ? `Région : ${reg}` : 'Réseau National Sélectionné');
+                : (reg !== 'TOUS' ? `Région : ${reg}` : 'Périmètre National Sélectionné');
             const lbl2 = reg !== 'TOUS' ? `Moyenne Régionale (${reg})` : 'Moyenne Régionale Globale';
 
             document.getElementById('benchLabel1').textContent = lbl1;
@@ -1354,7 +1376,7 @@
 
             const box = document.getElementById('syntheseDecisionnelleBox');
             if (donneesFiltrees.length === 0) {
-                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée affichée dans le tableau de bord.`;
+                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée correspondante dans la BDD pour cette combinaison de filtres.`;
                 return;
             }
 
@@ -1545,8 +1567,8 @@
                             <tr>
                                 <td class="num-center"><b>#${i + 1}</b></td>
                                 <td><b>${r.processus}</b></td>
-                                <td>${r.controle}</td>
-                                <td>${r.pc}</td>
+                                <td>${r.controle || 'N/A'}</td>
+                                <td>${r.pc || 'N/A'}</td>
                                 <td class="num-center">${r.nb}</td>
                                 <td class="num-center">${r.ech}</td>
                                 <td class="num-center" style="color:var(--success); font-weight:700;">${r.ok}</td>
@@ -1574,7 +1596,7 @@
                 donnees.forEach(d => {
                     if (!mapProcC[d.processus]) mapProcC[d.processus] = { items: [], pcs: new Set() };
                     mapProcC[d.processus].items.push(d);
-                    mapProcC[d.processus].pcs.add(d.pc);
+                    if (d.pc) mapProcC[d.processus].pcs.add(d.pc);
                 });
                 const rowsProcC = Object.entries(mapProcC).map(([p, obj]) => {
                     const tc = calculerTCPondere(obj.items);
@@ -1690,7 +1712,7 @@
                 });
                 const rowsProcR = Object.values(mapProcR).map(g => ({
                     processus: g.processus,
-                    controle: g.controle,
+                    controle: g.controle || 'N/A',
                     nb: g.items.length,
                     ko: g.items.reduce((a, b) => a + b.ko, 0),
                     tc: calculerTCPondere(g.items)
@@ -1832,8 +1854,8 @@
                 }
             }
 
-            // Bloc Type de Contrôle : affiche uniquement les types présents dans la BDD
-            const typesPresents = [...new Set(toutesLesDonnees.map(d => d.typeControle).filter(Boolean))];
+            // Bloc Type de Contrôle
+            const typesPresents = [...new Set(donnees.map(d => d.typeControle).filter(Boolean))];
             const typesData = typesPresents.map(t => {
                 const items = donnees.filter(d => d.typeControle === t);
                 return {
@@ -1868,7 +1890,7 @@
 
             const mapProc = {};
             donnees.forEach(d => {
-                const cle = niveauActif === 'CENTRE' ? `${d.processus} — ${d.pc}` : d.processus;
+                const cle = niveauActif === 'CENTRE' ? `${d.processus} — ${d.pc || 'N/A'}` : d.processus;
                 if (!mapProc[cle]) mapProc[cle] = [];
                 mapProc[cle].push(d);
             });
@@ -1903,7 +1925,7 @@
             tbody.innerHTML = '';
 
             if (donnees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché. Utilisez Actualiser pour recharger depuis la BDD.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères.</td></tr>';
                 return;
             }
 
@@ -1919,8 +1941,8 @@
                         <td><b>${c.region}</b></td>
                         <td>${c.site}</td>
                         <td><b>${c.processus}</b></td>
-                        <td>${c.controle}</td>
-                        <td>${c.pc}</td>
+                        <td>${c.controle || 'N/A'}</td>
+                        <td>${c.pc || 'N/A'}</td>
                         <td class="num-center">${c.ech}</td>
                         <td class="num-center" style="color:var(--success); font-weight:700;">${c.ok}</td>
                         <td class="num-center" style="color:var(--danger); font-weight:700;">${c.ko}</td>
@@ -1986,7 +2008,7 @@
             if (niveauActif === 'CENTRE') {
                 document.getElementById('titreChart2').innerHTML = `<i class="fa-solid fa-crosshairs"></i> Taux de Conformité (%) par Point de Contrôle (PC) du Centre`;
                 donnees.forEach(d => {
-                    const cle = d.pc && d.pc !== 'N/A' ? d.pc : d.controle;
+                    const cle = d.pc || d.controle || 'N/A';
                     if (!mapG2[cle]) mapG2[cle] = [];
                     mapG2[cle].push(d);
                 });
@@ -2131,8 +2153,8 @@
                 "Centre / Site": c.site,
                 "Type de Contrôle": c.typeControle,
                 "Processus": c.processus,
-                "Contrôle": c.controle,
-                "Point de Contrôle (PC)": c.pc,
+                "Contrôle": c.controle || 'N/A',
+                "Point de Contrôle (PC)": c.pc || 'N/A',
                 "Pop": c.pop,
                 "Ech": c.ech,
                 "OK": c.ok,
