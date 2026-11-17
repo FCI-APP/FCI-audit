@@ -873,12 +873,9 @@
         }
 
         function viderTouteLaBDD() {
-            if (confirm("⚠️ Voulez-vous vraiment réinitialiser l'ensemble de la BDD locale (Missions + FC + Encaisses) ?\n(Les fichiers archivés sur GitHub restent conservés.)")) {
-                if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
-                else localStorage.removeItem('fci_database');
-                reinitialiserFiltresBDD();
-                alert("La BDD locale a été vidée.");
-            }
+            if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
+            else localStorage.removeItem('fci_database');
+            reinitialiserFiltresBDD();
         }
 
         function exporterBDDAction() {
