@@ -1,0 +1,39 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-17T16:24:23.243Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-SUIVI-1794932662545-1-1",
+      "idMission": "MIS-ENC-SUIVI-1794932662545",
+      "typeControle": "Vérification",
+      "region": "OUEJDA",
+      "site": "NADOR CD",
+      "entite": "NADOR CD",
+      "controleur": "jabari",
+      "responsable": "",
+      "date": "2027-02-16",
+      "dateVerification": "2027-02-16",
+      "dateDebut": "2026-09-01",
+      "dateFin": "2026-09-30",
+      "processus": "Philatélie",
+      "risque": "Spoliation ou vol de timbres",
+      "controle": "Contrôle de l'approvisionnement du réseau",
+      "pc": "Les approvisionnements en valeurs postales communiqués par le CNTP sont-ils conformes aux quantités saisies sur SI COMMERCIAL ?",
+      "pop": 900,
+      "ech": 880,
+      "ok": 5,
+      "ko": 875,
+      "tc": 0.5681818181818182,
+      "statut": "CLOTURE",
+      "constat": "non conforme",
+      "recommandation": "calculer",
+      "avisResponsable": "vu",
+      "isModifie": false,
+      "modifie": false,
+      "isSuivi": true,
+      "suivi": true
+    }
+  ]
+}
