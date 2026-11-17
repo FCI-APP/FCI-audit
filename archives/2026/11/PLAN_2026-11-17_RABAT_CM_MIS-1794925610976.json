@@ -1,0 +1,30 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "PLAN",
+  "dateArchivage": "2026-11-17T14:26:51.742Z",
+  "donnees": {
+    "idMission": "MIS-1794925610976",
+    "region": "RABAT",
+    "typeControle": "Systématique",
+    "date": "2026-11-17",
+    "dateDebut": "2026-10-01",
+    "dateFin": "2026-10-31",
+    "entite": "RABAT CM",
+    "controleur": "meliani",
+    "pointsSelectionnes": [
+      {
+        "Processus": "Exploitation E-sign",
+        "Intitulé du risque": "Perte des données client de la certification e-sign sur le système",
+        "Intitulé Contrôle": "Contrôle de la traçabilité des données",
+        "Points de contrôle": "1/ La traçabilité des dossiers depuis la réception jusqu'à l'archivage est-elle assurée ?"
+      },
+      {
+        "Processus": "Exploitation E-sign",
+        "Intitulé du risque": "Perte des données client de la certification e-sign sur le système",
+        "Intitulé Contrôle": "Contrôle de la traçabilité des données",
+        "Points de contrôle": "2/ Une sauvegarde périodique est-elle réalisée systématiquement ?"
+      }
+    ]
+  }
+}
