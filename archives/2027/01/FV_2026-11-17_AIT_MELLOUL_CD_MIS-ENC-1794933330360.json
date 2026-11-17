@@ -1,0 +1,39 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FV",
+  "dateArchivage": "2026-11-17T16:38:12.059Z",
+  "donnees": [
+    {
+      "idEncaisse": "ENC-MIS-ENC-1794933330360-1-1",
+      "idMission": "MIS-ENC-1794933330360",
+      "typeControle": "Vérification",
+      "region": "AGADIR",
+      "site": "AIT MELLOUL CD",
+      "entite": "AIT MELLOUL CD",
+      "controleur": "oubak",
+      "responsable": "",
+      "date": "2027-01-31",
+      "dateVerification": "2027-01-31",
+      "dateDebut": "2026-10-01",
+      "dateFin": "2026-10-31",
+      "processus": "Philatélie",
+      "risque": "Spoliation ou vol de timbres",
+      "controle": "Contrôle de la disponibilité du stock au niveau du réseau",
+      "pc": "La valeur des valeurs postales est-elle exacte ?",
+      "pop": 580,
+      "ech": 500,
+      "ok": 440,
+      "ko": 60,
+      "tc": 88,
+      "statut": "EN_COURS",
+      "constat": "eeeee",
+      "recommandation": "fffffff",
+      "avisResponsable": "--",
+      "isModifie": true,
+      "modifie": true,
+      "isSuivi": false,
+      "suivi": false
+    }
+  ]
+}
