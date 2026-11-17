@@ -187,7 +187,7 @@
             align-items: center;
             gap: 5px;
         }
-        .filter-select, .filter-input-date {
+        .filter-select {
             padding: 7px 10px;
             border-radius: 6px;
             font-family: inherit;
@@ -201,8 +201,8 @@
             width: 100%;
             min-height: 34px;
         }
-        .filter-select:focus, .filter-input-date:focus { border-color: var(--primary-blue); background: #FFFFFF; }
-        .filter-select.highlight-focus, .filter-input-date.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
+        .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
+        .filter-select.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
         .filter-select:disabled { opacity: 0.55; cursor: not-allowed; background: #E2E8F0; }
 
         /* KPI CARDS */
@@ -426,7 +426,7 @@
             </div>
         </header>
 
-        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES (CENTRE - REGION - NATIONAL) -->
+        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES (ALIMENTÉS UNIQUEMENT PAR LA BDD) -->
         <section class="pilotage-panel">
             <div class="niveau-tabs-bar">
                 <div class="niveau-tabs no-print" role="tablist">
@@ -443,7 +443,7 @@
 
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                     <span class="scope-indicator" id="scopeIndicator">
-                        <i class="fa-solid fa-layer-group"></i> Périmètre : Réseau National (Toutes régions)
+                        <i class="fa-solid fa-layer-group"></i> Périmètre : Réseau National
                     </span>
                     <button type="button" class="btn btn-outline no-print" onclick="reinitialiserFiltresTDB()" title="Réinitialiser tous les filtres">
                         <i class="fa-solid fa-filter-circle-xmark"></i> Réinitialiser
@@ -475,21 +475,22 @@
 
                 <div class="filter-group">
                     <label for="filtreDateDebut"><i class="fa-solid fa-calendar-day"></i> Début période d'analyse</label>
-                    <input type="date" id="filtreDateDebut" class="filter-input-date" onchange="onChangePlageDates()">
+                    <select id="filtreDateDebut" class="filter-select" onchange="onChangePlageDates()">
+                        <option value="TOUS">-- Date début --</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
                     <label for="filtreDateFin"><i class="fa-solid fa-calendar-week"></i> Fin période d'analyse</label>
-                    <input type="date" id="filtreDateFin" class="filter-input-date" onchange="onChangePlageDates()">
+                    <select id="filtreDateFin" class="filter-select" onchange="onChangePlageDates()">
+                        <option value="TOUS">-- Date fin --</option>
+                    </select>
                 </div>
 
                 <div class="filter-group">
                     <label for="filtreType"><i class="fa-solid fa-tags"></i> Type de Contrôle</label>
                     <select id="filtreType" class="filter-select" onchange="actualiserAnalyse()">
                         <option value="TOUS">-- Tous les types --</option>
-                        <option value="Thématique">Thématique</option>
-                        <option value="Systématique">Systématique</option>
-                        <option value="Vérification">Vérification</option>
                     </select>
                 </div>
 
@@ -504,9 +505,6 @@
                     <label for="filtreStatut"><i class="fa-solid fa-circle-dot"></i> Statut Constat</label>
                     <select id="filtreStatut" class="filter-select" onchange="actualiserAnalyse()">
                         <option value="TOUS">-- Tous les statuts --</option>
-                        <option value="EN_COURS">En cours</option>
-                        <option value="CLOTURE">Clôturé</option>
-                        <option value="NON_CLOTURE">Non clôturé</option>
                     </select>
                 </div>
             </div>
@@ -560,7 +558,7 @@
             </div>
         </section>
 
-        <!-- COMPARATIF A 3 NIVEAUX + DETECTION AUTOMATIQUE & SYNTHESE DECISIONNELLE -->
+        <!-- COMPARATIF A 3 NIVEAUX + SYNTHESE DECISIONNELLE -->
         <section class="decision-grid">
             <div class="panel-card">
                 <h3>
@@ -641,7 +639,7 @@
             </div>
         </section>
 
-        <!-- SECOND TABLEAU D'ANALYSE CROISÉE (CENTRES AU NIVEAU NATIONAL OU PROCESSUS/CONTRÔLES/PC AUX NIVEAUX RÉGIONAL & CENTRE) -->
+        <!-- SECOND TABLEAU D'ANALYSE CROISÉE -->
         <section class="analytics-tables-grid">
             <div class="table-card" style="margin-bottom:0;">
                 <h3 id="titreTableSecondaire">
@@ -727,10 +725,6 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        const REGIONS_BARID = [
-            'MARRAKECH', 'AGADIR', 'CASA', 'SETTAT', 'RABAT',
-            'TANGER', 'FES', 'MEKNES', 'OUJEDA', 'LAAYOUNE'
-        ];
         const SEUIL_ALERTE_TC = 75.0;
 
         let niveauActif = 'NATIONAL'; // 'CENTRE' | 'REGIONAL' | 'NATIONAL'
@@ -821,7 +815,6 @@
             return 0;
         }
 
-        // Calcule l'évolution entre la dernière date contrôlée et les dates antérieures
         function calculerEvolutionTC(items) {
             const dates = [...new Set(items.map(i => i.dateISO).filter(Boolean))].sort();
             if (dates.length < 2) {
@@ -886,9 +879,9 @@
                     dateISO: iso,
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
-                    region: String(c.region || m.region || 'NON DÉFINIE').trim().toUpperCase(),
-                    site: String(c.entite || c.site || m.entite || 'Site non précisé').trim(),
-                    processus: String(c.processus || 'Autres').trim(),
+                    region: String(c.region || m.region || '').trim().toUpperCase(),
+                    site: String(c.entite || c.site || m.entite || '').trim(),
+                    processus: String(c.processus || '').trim(),
                     risque: String(c.risque || 'N/A').trim(),
                     controle: String(c.controle || 'N/A').trim(),
                     pc: String(c.pc || 'N/A').trim(),
@@ -916,8 +909,8 @@
                     dateISO: iso,
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
-                    region: String(e.region || m.region || 'NON DÉFINIE').trim().toUpperCase(),
-                    site: String(e.entite || e.site || e.agence || m.entite || 'Site non précisé').trim(),
+                    region: String(e.region || m.region || '').trim().toUpperCase(),
+                    site: String(e.entite || e.site || e.agence || m.entite || '').trim(),
                     processus: String(e.processus || 'Vérification Encaisses').trim(),
                     risque: String(e.risque || 'N/A').trim(),
                     controle: String(e.controle || 'N/A').trim(),
@@ -940,34 +933,81 @@
         }
 
         function peuplerFiltresInitiaux() {
+            // 1. Régions : UNIQUEMENT celles enregistrées dans la BDD
             const selReg = document.getElementById('filtreRegion');
             const valReg = selReg.value;
-            const regionsPresentes = new Set([...REGIONS_BARID, ...toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE')]);
+            const regionsBDD = [...new Set(toutesLesDonnees.map(d => d.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             selReg.innerHTML = '<option value="TOUS">-- Toutes les régions --</option>';
-            [...regionsPresentes].forEach(r => {
+            regionsBDD.forEach(r => {
                 selReg.innerHTML += `<option value="${r}">${r}</option>`;
             });
-            selReg.value = [...regionsPresentes].includes(valReg) ? valReg : 'TOUS';
+            selReg.value = regionsBDD.includes(valReg) ? valReg : 'TOUS';
 
+            // 2. Centres / Sites : UNIQUEMENT ceux enregistrés dans la BDD
             peuplerSelectCentres();
+
+            // 3. Date définie, Début période & Fin période : UNIQUEMENT les dates inscrites dans la BDD
+            const datesISOUniques = [...new Set(toutesLesDonnees.map(d => d.dateISO).filter(Boolean))].sort();
+            const datesDesc = [...datesISOUniques].reverse();
 
             const selDate = document.getElementById('filtreDate');
             const valDate = selDate.value;
-            const datesISOUniques = [...new Set(toutesLesDonnees.map(d => d.dateISO).filter(Boolean))].sort().reverse();
             selDate.innerHTML = '<option value="TOUS">-- Toutes les dates --</option>';
-            datesISOUniques.forEach(iso => {
+            datesDesc.forEach(iso => {
                 selDate.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
             });
             selDate.value = datesISOUniques.includes(valDate) ? valDate : 'TOUS';
 
+            const selDebut = document.getElementById('filtreDateDebut');
+            const valDebut = selDebut.value;
+            selDebut.innerHTML = '<option value="TOUS">-- Date début --</option>';
+            datesISOUniques.forEach(iso => {
+                selDebut.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
+            });
+            selDebut.value = datesISOUniques.includes(valDebut) ? valDebut : 'TOUS';
+
+            const selFin = document.getElementById('filtreDateFin');
+            const valFin = selFin.value;
+            selFin.innerHTML = '<option value="TOUS">-- Date fin --</option>';
+            datesDesc.forEach(iso => {
+                selFin.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
+            });
+            selFin.value = datesISOUniques.includes(valFin) ? valFin : 'TOUS';
+
+            // 4. Types de contrôle : UNIQUEMENT ceux enregistrés dans la BDD
+            const selType = document.getElementById('filtreType');
+            const valType = selType.value;
+            const typesBDD = [...new Set(toutesLesDonnees.map(d => d.typeControle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            selType.innerHTML = '<option value="TOUS">-- Tous les types --</option>';
+            typesBDD.forEach(t => {
+                selType.innerHTML += `<option value="${t}">${t}</option>`;
+            });
+            selType.value = typesBDD.includes(valType) ? valType : 'TOUS';
+
+            // 5. Processus : UNIQUEMENT ceux enregistrés dans la BDD
             const selProc = document.getElementById('filtreProcessus');
             const valProc = selProc.value;
-            const procs = [...new Set(toutesLesDonnees.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            const procsBDD = [...new Set(toutesLesDonnees.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             selProc.innerHTML = '<option value="TOUS">-- Tous les processus --</option>';
-            procs.forEach(p => {
+            procsBDD.forEach(p => {
                 selProc.innerHTML += `<option value="${p}">${p}</option>`;
             });
-            selProc.value = procs.includes(valProc) ? valProc : 'TOUS';
+            selProc.value = procsBDD.includes(valProc) ? valProc : 'TOUS';
+
+            // 6. Statuts constat : UNIQUEMENT ceux enregistrés dans la BDD
+            const selStatut = document.getElementById('filtreStatut');
+            const valStatut = selStatut.value;
+            const ordreStatuts = ['EN_COURS', 'CLOTURE', 'NON_CLOTURE'];
+            const statutsPresentsSet = new Set(toutesLesDonnees.map(d => d.statut).filter(Boolean));
+            const statutsBDD = [
+                ...ordreStatuts.filter(s => statutsPresentsSet.has(s)),
+                ...[...statutsPresentsSet].filter(s => !ordreStatuts.includes(s))
+            ];
+            selStatut.innerHTML = '<option value="TOUS">-- Tous les statuts --</option>';
+            statutsBDD.forEach(st => {
+                selStatut.innerHTML += `<option value="${st}">${libelleStatut(st)}</option>`;
+            });
+            selStatut.value = statutsBDD.includes(valStatut) ? valStatut : 'TOUS';
         }
 
         function peuplerSelectCentres() {
@@ -975,19 +1015,19 @@
             const selCentre = document.getElementById('filtreCentre');
             const valCentre = selCentre.value;
             const source = reg === 'TOUS' ? toutesLesDonnees : toutesLesDonnees.filter(d => d.region === reg);
-            const sites = [...new Set(source.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesBDD = [...new Set(source.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             selCentre.innerHTML = '<option value="TOUS">-- Tous les centres --</option>';
-            sites.forEach(s => {
+            sitesBDD.forEach(s => {
                 selCentre.innerHTML += `<option value="${s}">${s}</option>`;
             });
-            selCentre.value = sites.includes(valCentre) ? valCentre : 'TOUS';
+            selCentre.value = sitesBDD.includes(valCentre) ? valCentre : 'TOUS';
         }
 
         function onChangeDateSpecifique() {
             const dateVal = document.getElementById('filtreDate').value;
             if (dateVal !== 'TOUS') {
-                document.getElementById('filtreDateDebut').value = '';
-                document.getElementById('filtreDateFin').value = '';
+                document.getElementById('filtreDateDebut').value = 'TOUS';
+                document.getElementById('filtreDateFin').value = 'TOUS';
             }
             actualiserAnalyse();
         }
@@ -995,24 +1035,26 @@
         function onChangePlageDates() {
             const dDebut = document.getElementById('filtreDateDebut').value;
             const dFin = document.getElementById('filtreDateFin').value;
-            if (dDebut || dFin) {
+            if (dDebut !== 'TOUS' || dFin !== 'TOUS') {
                 document.getElementById('filtreDate').value = 'TOUS';
             }
             actualiserAnalyse();
         }
 
         function correspondFiltreTemporel(isoDate, dateSpecifique, dateDebut, dateFin) {
-            if (dateSpecifique !== 'TOUS') return isoDate === dateSpecifique;
-            if (dateDebut && (!isoDate || isoDate < dateDebut)) return false;
-            if (dateFin && (!isoDate || isoDate > dateFin)) return false;
+            if (dateSpecifique !== 'TOUS') {
+                return isoDate === dateSpecifique;
+            }
+            if (dateDebut !== 'TOUS' && (!isoDate || isoDate < dateDebut)) return false;
+            if (dateFin !== 'TOUS' && (!isoDate || isoDate > dateFin)) return false;
             return true;
         }
 
         function libelleFiltreTemporel(dateSpecifique, dateDebut, dateFin) {
             if (dateSpecifique !== 'TOUS') return `Date : ${formaterDateFR(dateSpecifique)}`;
-            if (dateDebut && dateFin) return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
-            if (dateDebut) return `Période : à partir du ${formaterDateFR(dateDebut)}`;
-            if (dateFin) return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
+            if (dateDebut !== 'TOUS' && dateFin !== 'TOUS') return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
+            if (dateDebut !== 'TOUS') return `Période : à partir du ${formaterDateFR(dateDebut)}`;
+            if (dateFin !== 'TOUS') return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
             return 'Toutes les dates';
         }
 
@@ -1022,23 +1064,18 @@
             const selCentre = document.getElementById('filtreCentre');
 
             if (niveauActif === 'NATIONAL') {
-                // Au niveau national : analyse sur la totalité des centres et régions
                 selReg.value = 'TOUS';
                 peuplerSelectCentres();
                 selCentre.value = 'TOUS';
             } else if (niveauActif === 'REGIONAL') {
-                // Au niveau régional : analyse sur une seule région choisie
-                if (selReg.value === 'TOUS' && toutesLesDonnees.length > 0) {
-                    const premiereReg = [...new Set(toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE'))][0];
-                    if (premiereReg) selReg.value = premiereReg;
+                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
+                    selReg.value = selReg.options[1].value;
                 }
                 peuplerSelectCentres();
                 selCentre.value = 'TOUS';
             } else if (niveauActif === 'CENTRE') {
-                // Au niveau centre : analyse sur un seul centre choisi
-                if (selReg.value === 'TOUS' && toutesLesDonnees.length > 0) {
-                    const premiereReg = [...new Set(toutesLesDonnees.map(d => d.region).filter(r => r && r !== 'NON DÉFINIE'))][0];
-                    if (premiereReg) selReg.value = premiereReg;
+                if (selReg.value === 'TOUS' && selReg.options.length > 1) {
+                    selReg.value = selReg.options[1].value;
                 }
                 peuplerSelectCentres();
                 if (selCentre.value === 'TOUS' && selCentre.options.length > 1) {
@@ -1061,7 +1098,6 @@
             selReg.classList.toggle('highlight-focus', niveauActif === 'REGIONAL');
             selCentre.classList.toggle('highlight-focus', niveauActif === 'CENTRE');
 
-            // Au niveau Régional, le périmètre porte sur la région entière (tous ses centres)
             selCentre.disabled = (niveauActif === 'REGIONAL');
         }
 
@@ -1103,8 +1139,8 @@
             peuplerSelectCentres();
             document.getElementById('filtreCentre').value = 'TOUS';
             document.getElementById('filtreDate').value = 'TOUS';
-            document.getElementById('filtreDateDebut').value = '';
-            document.getElementById('filtreDateFin').value = '';
+            document.getElementById('filtreDateDebut').value = 'TOUS';
+            document.getElementById('filtreDateFin').value = 'TOUS';
             document.getElementById('filtreType').value = 'TOUS';
             document.getElementById('filtreProcessus').value = 'TOUS';
             document.getElementById('filtreStatut').value = 'TOUS';
@@ -1137,21 +1173,20 @@
             const statut = document.getElementById('filtreStatut').value;
 
             document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
-            document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', Boolean(dateDebut));
-            document.getElementById('filtreDateFin').classList.toggle('highlight-focus', Boolean(dateFin));
+            document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', dateDebut !== 'TOUS');
+            document.getElementById('filtreDateFin').classList.toggle('highlight-focus', dateFin !== 'TOUS');
 
             const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : Totalité des Régions & Centres · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Sélectionner une région' : reg} (Tous ses centres & processus) · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (BDD)' : reg} · ${infoTemps}`;
             } else {
-                const nomCentre = centre === 'TOUS' ? 'Sélectionner un centre' : centre;
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} (Processus, Contrôles, PC) · ${infoTemps}`;
+                const nomCentre = centre === 'TOUS' ? 'Tous les centres (BDD)' : centre;
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} · ${infoTemps}`;
             }
 
-            // Filtrage strict selon le niveau choisi
             const donneesFiltrees = toutesLesDonnees.filter(d => {
                 if (niveauActif === 'REGIONAL' && reg !== 'TOUS' && d.region !== reg) return false;
                 if (niveauActif === 'CENTRE') {
@@ -1225,6 +1260,7 @@
             document.getElementById('subKpiKO').textContent = `${nbNonClotures} non clôturé(s) · ${nbSuivis} suivi(s)`;
 
             const sitesPlanifies = new Set(missionsFiltrees.map(m => m.entite).filter(Boolean));
+            const totalRegionsBDD = new Set(toutesLesDonnees.map(d => d.region).filter(Boolean)).size;
             let tauxCouverture = 0;
             let subCouv = '';
             if (niveauActif === 'CENTRE') {
@@ -1238,9 +1274,9 @@
             if (sitesPlanifies.size > 0) {
                 tauxCouverture = Math.min(100, (sitesUniques.size / sitesPlanifies.size) * 100);
                 subCouv = `${sitesUniques.size} site(s) contrôlé(s) / ${sitesPlanifies.size} planifié(s)`;
-            } else if (niveauActif === 'NATIONAL') {
-                tauxCouverture = (regionsUniques.size / REGIONS_BARID.length) * 100;
-                subCouv = `${regionsUniques.size} région(s) couverte(s) / ${REGIONS_BARID.length}`;
+            } else if (niveauActif === 'NATIONAL' && totalRegionsBDD > 0) {
+                tauxCouverture = (regionsUniques.size / totalRegionsBDD) * 100;
+                subCouv = `${regionsUniques.size} région(s) couverte(s) / ${totalRegionsBDD}`;
             } else {
                 tauxCouverture = donnees.length > 0 ? 100 : 0;
                 subCouv = `${sitesUniques.size} centre(s) contrôlé(s)`;
@@ -1357,7 +1393,6 @@
             const alertes = [];
 
             if (niveauActif === 'CENTRE') {
-                // Au niveau Centre : alerte sur les Processus / PC sous 75% dans le centre choisi
                 const mapProc = {};
                 donnees.forEach(d => {
                     if (!mapProc[d.processus]) mapProc[d.processus] = [];
@@ -1377,7 +1412,6 @@
                     });
                 }
             } else {
-                // Aux niveaux Régional et National : alerte sur les Centres sous 75%
                 const mapSites = {};
                 donnees.forEach(d => {
                     if (!mapSites[d.site]) mapSites[d.site] = { region: d.region, items: [] };
@@ -1461,10 +1495,7 @@
             exportClassementSecondaire = [];
 
             if (niveauActif === 'CENTRE') {
-                // =========================================================================
-                // 1. NIVEAU CENTRE : Classement interne des Processus & Contrôles / PC dans le centre choisi
-                // =========================================================================
-                const nomCentre = centre === 'TOUS' ? 'Centre sélectionné' : centre;
+                const nomCentre = centre === 'TOUS' ? 'Tous les centres (BDD)' : centre;
                 titreP.innerHTML = `
                     <span><i class="fa-solid fa-ranking-star"></i> Classement des Processus, Contrôles & Points de Contrôle (PC) — Centre : ${nomCentre}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Analyse détaillée intra-centre</span>`;
@@ -1527,7 +1558,6 @@
                     });
                 }
 
-                // Tableau secondaire : Synthèse par Processus dans le centre choisi
                 titreS.innerHTML = `<span><i class="fa-solid fa-diagram-project"></i> Performance par Processus dans le Centre (${nomCentre})</span>`;
                 theadS.innerHTML = `
                     <tr>
@@ -1575,10 +1605,7 @@
                 }
 
             } else if (niveauActif === 'REGIONAL') {
-                // =========================================================================
-                // 2. NIVEAU RÉGIONAL : Classement & Évolution des Centres de la région choisie + Processus/PC
-                // =========================================================================
-                const nomReg = reg === 'TOUS' ? 'Région sélectionnée' : reg;
+                const nomReg = reg === 'TOUS' ? 'Toutes les régions (BDD)' : reg;
                 titreP.innerHTML = `
                     <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Centres / Sites — Région : ${nomReg}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Comparaison des centres de la région</span>`;
@@ -1644,7 +1671,6 @@
                     });
                 }
 
-                // Tableau secondaire : Classement des Processus & Contrôles dans la région choisie
                 titreS.innerHTML = `<span><i class="fa-solid fa-diagram-project"></i> Classement des Processus & Contrôles — Région ${nomReg}</span>`;
                 theadS.innerHTML = `
                     <tr>
@@ -1691,12 +1717,9 @@
                 }
 
             } else {
-                // =========================================================================
-                // 3. NIVEAU NATIONAL : Totalité des Régions + Totalité des Centres avec évolution
-                // =========================================================================
                 titreP.innerHTML = `
                     <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Régions (Réseau National)</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Comparaison globale des 10 régions postales</span>`;
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Comparaison globale des régions enregistrées</span>`;
 
                 theadP.innerHTML = `
                     <tr>
@@ -1758,7 +1781,6 @@
                     });
                 }
 
-                // Tableau secondaire : Classement & Évolution de tous les Centres au niveau National
                 titreS.innerHTML = `<span><i class="fa-solid fa-building-columns"></i> Classement & Évolution des Centres / Sites (National)</span>`;
                 theadS.innerHTML = `
                     <tr>
@@ -1810,9 +1832,9 @@
                 }
             }
 
-            // Bloc Type de Contrôle & Top Processus / PC (commun aux 3 niveaux sur le périmètre filtré)
-            const typesOrder = ['Thématique', 'Systématique', 'Vérification'];
-            const typesData = typesOrder.map(t => {
+            // Bloc Type de Contrôle : affiche uniquement les types présents dans la BDD
+            const typesPresents = [...new Set(toutesLesDonnees.map(d => d.typeControle).filter(Boolean))];
+            const typesData = typesPresents.map(t => {
                 const items = donnees.filter(d => d.typeControle === t);
                 return {
                     type: t,
@@ -1827,18 +1849,22 @@
 
             const tbodyType = document.getElementById('tbodyTypeControle');
             tbodyType.innerHTML = '';
-            typesData.forEach(t => {
-                const pillCls = t.type === 'Thématique' ? 'pill-them' : (t.type === 'Systématique' ? 'pill-syst' : 'pill-verif');
-                tbodyType.innerHTML += `
-                    <tr>
-                        <td><span class="pill ${pillCls}">${t.type}</span></td>
-                        <td class="num-center">${t.nb}</td>
-                        <td class="num-center">${t.ech}</td>
-                        <td class="num-center" style="color:var(--success); font-weight:700;">${t.ok}</td>
-                        <td class="num-center" style="color:var(--danger); font-weight:700;">${t.ko}</td>
-                        <td class="num-center"><b>${t.tc.toFixed(1)}%</b></td>
-                    </tr>`;
-            });
+            if (typesData.length === 0) {
+                tbodyType.innerHTML = `<tr><td colspan="6" class="num-center" style="color:var(--text-muted);">Aucun type de contrôle.</td></tr>`;
+            } else {
+                typesData.forEach(t => {
+                    const pillCls = t.type === 'Thématique' ? 'pill-them' : (t.type === 'Systématique' ? 'pill-syst' : 'pill-verif');
+                    tbodyType.innerHTML += `
+                        <tr>
+                            <td><span class="pill ${pillCls}">${t.type}</span></td>
+                            <td class="num-center">${t.nb}</td>
+                            <td class="num-center">${t.ech}</td>
+                            <td class="num-center" style="color:var(--success); font-weight:700;">${t.ok}</td>
+                            <td class="num-center" style="color:var(--danger); font-weight:700;">${t.ko}</td>
+                            <td class="num-center"><b>${t.tc.toFixed(1)}%</b></td>
+                        </tr>`;
+                });
+            }
 
             const mapProc = {};
             donnees.forEach(d => {
@@ -1912,10 +1938,6 @@
             if (chartStatutsInst) chartStatutsInst.destroy();
             if (chartEvolutionInst) chartEvolutionInst.destroy();
 
-            // Graphique 1 : adapté au niveau
-            // - NATIONAL : Comparaison des Régions (%)
-            // - REGIONAL : Comparaison des Centres de la région choisie (%)
-            // - CENTRE   : Comparaison des Processus du centre choisi (%)
             const mapG1 = {};
             if (niveauActif === 'NATIONAL') {
                 document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)`;
@@ -1960,9 +1982,6 @@
                 }
             });
 
-            // Graphique 2 :
-            // - NATIONAL & REGIONAL : TC (%) par Processus
-            // - CENTRE : TC (%) par Point de Contrôle (PC) du centre choisi
             const mapG2 = {};
             if (niveauActif === 'CENTRE') {
                 document.getElementById('titreChart2').innerHTML = `<i class="fa-solid fa-crosshairs"></i> Taux de Conformité (%) par Point de Contrôle (PC) du Centre`;
@@ -2003,7 +2022,6 @@
                 }
             });
 
-            // Graphique 3 : Répartition des Statuts
             const nbEnCours = donnees.filter(d => d.statut === 'EN_COURS').length;
             const nbCloture = donnees.filter(d => d.statut === 'CLOTURE').length;
             const nbNonCloture = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
@@ -2025,7 +2043,6 @@
                 }
             });
 
-            // Graphique 4 : Évolution Chronologique (TC% & KO)
             const mapEvo = {};
             donnees.forEach(d => {
                 const cleDate = d.dateISO || '9999-99-99';
