@@ -1,0 +1,36 @@
+{
+  "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
+  "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
+  "typeArchive": "FC",
+  "dateArchivage": "2026-11-17T16:18:09.483Z",
+  "donnees": [
+    {
+      "idConstat": "CST-SUIVI-1794932288569-1",
+      "idMission": "MIS-SUIVI-1794932288569",
+      "region": "MEKNES",
+      "typeControle": "Systématique",
+      "entite": "ERRACHIDIA CD",
+      "site": "ERRACHIDIA CD",
+      "controleur": "anaflous",
+      "date": "01/03/2027",
+      "dateControle": "01/03/2027",
+      "processus": "Développement commercial",
+      "risque": "Retard dans la transmission du reporting commercial",
+      "controle": "contrôle du délais de transmission des reporting commerciaux",
+      "pc": "2/ les délais de transmission des reporting sont-ils respectés?",
+      "pop": 89,
+      "ech": 80,
+      "ok": 12,
+      "ko": 68,
+      "tc": 15,
+      "constat": "bravo",
+      "recommandation": "ajuster",
+      "avisResponsable": "vu",
+      "statut": "EN_COURS",
+      "isModifie": false,
+      "modifie": false,
+      "isSuivi": true,
+      "suivi": true
+    }
+  ]
+}
