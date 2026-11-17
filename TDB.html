@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Tableau de Bord (TDB)</title>
+    <title>FCI v1.0 - Analyse & Pilotage</title>
     <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js & SheetJS (Excel) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -82,24 +84,19 @@
         .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .last-refresh-pill {
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: #065F46;
-            background-color: #D1FAE5;
-            border: 1px solid #6EE7B7;
-            padding: 5px 10px;
-            border-radius: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .header-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
-        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 0.875rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-primary:hover { background-color: var(--dark-blue); }
+        .btn-excel { background-color: #10B981; color: #FFFFFF; }
+        .btn-excel:hover { background-color: #059669; }
+        .btn-pdf { background-color: #475569; color: #FFFFFF; }
+        .btn-pdf:hover { background-color: #334155; }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
         .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .btn-danger:hover { background-color: #FECACA; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--card-bg); padding: 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); border-left: 4px solid var(--primary-blue); }
@@ -121,6 +118,17 @@
         th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
         th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
         tr:nth-child(even) { background-color: #F8FAFC; }
+
+        @media print {
+            @page { size: A4 landscape; margin: 12mm; }
+            body { background-color: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .sidebar, .no-print { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; }
+            .page-header, .kpi-card, .chart-card, .table-card { box-shadow: none !important; break-inside: avoid; }
+            .charts-grid { grid-template-columns: 1fr 1fr !important; gap: 15px !important; }
+            table { font-size: 0.75rem; }
+            th, td { padding: 6px 8px; }
+        }
     </style>
 </head>
 <body>
@@ -137,7 +145,7 @@
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
-                <li class="active"><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="TDB.html"><span>6. Analyse & Pilotage</span><span class="badge-status badge-actif">Actif</span></a></li>
             </ul>
         </div>
         <div class="sidebar-footer">
@@ -148,11 +156,12 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Tableau de Bord Synthétique (TDB)</h1>
+                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Analyse & Pilotage</h1>
                 <p>Analyse globale et visuelle des résultats de contrôles</p>
             </div>
-            <div style="display:flex; flex-wrap:wrap; gap:10px; align-items: center;">
-                <span class="last-refresh-pill" id="lastRefreshBadgeTDB"><i class="fa-solid fa-check-circle"></i> À jour</span>
+            <div class="header-actions no-print">
+                <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport au format Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
+                <button class="btn btn-pdf" onclick="imprimerPDF()" title="Imprimer ou enregistrer en PDF"><i class="fa-solid fa-file-pdf"></i> Imprimer PDF</button>
                 <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
                 <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
@@ -212,19 +221,11 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        function actualiserBadgeHorodatageTDB() {
-            const badge = document.getElementById('lastRefreshBadgeTDB');
-            if (!badge) return;
-            const now = new Date();
-            const hh = String(now.getHours()).padStart(2, '0');
-            const mm = String(now.getMinutes()).padStart(2, '0');
-            const ss = String(now.getSeconds()).padStart(2, '0');
-            badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Actualisé à ${hh}:${mm}:${ss}`;
-        }
+        let chartProcessusInstance = null;
+        let chartOkKoInstance = null;
 
         document.addEventListener('DOMContentLoaded', () => { 
             chargerTableauDeBord(); 
-            actualiserBadgeHorodatageTDB();
         });
 
         function chargerTableauDeBord() {
@@ -279,6 +280,67 @@
             initialiserGraphiques(constatsControle, totalOkControle + totalOkEncaisse, totalKoControle + totalKoEncaisse);
         }
 
+        function exporterExcelTDB() {
+            if (typeof XLSX === 'undefined') {
+                alert("La bibliothèque Excel (SheetJS) n'est pas chargée.");
+                return;
+            }
+
+            const db = FCIDatabase.getDB();
+            const constatsControle = (db.constatsControle || []).map(c => ({ ...c, _source: 'Fiche de Contrôle (FC)' }));
+            const constatsEncaisses = (db.constatsEncaisses || []).map(e => ({ ...e, _source: 'Vérification Encaisses (FV)' }));
+            const tousLesConstats = [...constatsControle, ...constatsEncaisses];
+
+            const wb = XLSX.utils.book_new();
+
+            // Onglet 1 : Synthèse des KPIs
+            const kpiRows = [
+                { "Indicateur": "Missions Enregistrées", "Valeur": document.getElementById('kpiMissions').textContent },
+                { "Indicateur": "TC Moyen Fiches Contrôle", "Valeur": document.getElementById('kpiTcControle').textContent },
+                { "Indicateur": "TC Moyen Encaisses", "Valeur": document.getElementById('kpiTcEncaisses').textContent },
+                { "Indicateur": "Total Anomalies (KO)", "Valeur": document.getElementById('kpiTotalKO').textContent }
+            ];
+            const wsKPI = XLSX.utils.json_to_sheet(kpiRows);
+            wsKPI['!cols'] = [{ wch: 30 }, { wch: 18 }];
+            XLSX.utils.book_append_sheet(wb, wsKPI, "Indicateurs Clés");
+
+            // Onglet 2 : Synthèse Détaillée des Constats
+            const dataRows = tousLesConstats.map(c => ({
+                "Source": c._source,
+                "Date": c.date || '',
+                "Région": c.region || '',
+                "Entité / Site": c.entite || c.site || '',
+                "Type de Contrôle": c.typeControle || '',
+                "Processus": c.processus || 'N/A',
+                "Risque": c.risque || 'N/A',
+                "Contrôle": c.controle || 'N/A',
+                "Point de Contrôle (PC)": c.pc || 'N/A',
+                "Pop": parseInt(c.pop) || 0,
+                "Ech": parseInt(c.ech) || 0,
+                "OK": parseInt(c.ok) || 0,
+                "KO": parseInt(c.ko) || 0,
+                "TC (%)": c.tc !== undefined ? parseFloat(parseFloat(c.tc).toFixed(1)) : 0,
+                "Statut": c.statut || '',
+                "Constat / Remarques": c.constat || ''
+            }));
+
+            const wsConstats = XLSX.utils.json_to_sheet(dataRows.length > 0 ? dataRows : [{ "Information": "Aucun constat enregistré dans la BDD." }]);
+            wsConstats['!cols'] = [
+                { wch: 24 }, { wch: 12 }, { wch: 15 }, { wch: 22 }, { wch: 18 },
+                { wch: 22 }, { wch: 25 }, { wch: 25 }, { wch: 32 },
+                { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 },
+                { wch: 14 }, { wch: 35 }
+            ];
+            XLSX.utils.book_append_sheet(wb, wsConstats, "Analyse & Pilotage");
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${dateStr}.xlsx`);
+        }
+
+        function imprimerPDF() {
+            window.print();
+        }
+
         function viderBDD() {
             if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
                 FCIDatabase.viderBDD();
@@ -288,6 +350,9 @@
         }
 
         function initialiserGraphiques(constatsControle, totalOK, totalKO) {
+            if (chartProcessusInstance) chartProcessusInstance.destroy();
+            if (chartOkKoInstance) chartOkKoInstance.destroy();
+
             const processusMap = {};
             constatsControle.forEach(c => {
                 const proc = c.processus || 'Autres';
@@ -302,7 +367,7 @@
                 return item.ech > 0 ? ((item.ok / item.ech) * 100).toFixed(1) : 0;
             });
 
-            new Chart(document.getElementById('chartProcessus').getContext('2d'), {
+            chartProcessusInstance = new Chart(document.getElementById('chartProcessus').getContext('2d'), {
                 type: 'bar',
                 data: {
                     labels: labels.length > 0 ? labels : ['Aucune donnée'],
@@ -311,7 +376,7 @@
                 options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
             });
 
-            new Chart(document.getElementById('chartOkKo').getContext('2d'), {
+            chartOkKoInstance = new Chart(document.getElementById('chartOkKo').getContext('2d'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Conformes (OK)', 'Anomalies (KO)'],
