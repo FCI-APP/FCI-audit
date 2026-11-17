@@ -187,7 +187,7 @@
             align-items: center;
             gap: 5px;
         }
-        .filter-select {
+        .filter-select, .filter-input-date {
             padding: 7px 10px;
             border-radius: 6px;
             font-family: inherit;
@@ -198,9 +198,11 @@
             color: var(--text-dark);
             cursor: pointer;
             outline: none;
+            width: 100%;
+            min-height: 34px;
         }
-        .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
-        .filter-select.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
+        .filter-select:focus, .filter-input-date:focus { border-color: var(--primary-blue); background: #FFFFFF; }
+        .filter-select.highlight-focus, .filter-input-date.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
 
         /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; margin-bottom: 20px; }
@@ -460,10 +462,20 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtrePeriode"><i class="fa-regular fa-calendar"></i> Période (Mois)</label>
-                    <select id="filtrePeriode" class="filter-select" onchange="actualiserAnalyse()">
-                        <option value="TOUS">-- Toutes les périodes --</option>
+                    <label for="filtreDate"><i class="fa-regular fa-calendar-check"></i> Date définie</label>
+                    <select id="filtreDate" class="filter-select" onchange="onChangeDateSpecifique()">
+                        <option value="TOUS">-- Toutes les dates --</option>
                     </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreDateDebut"><i class="fa-solid fa-calendar-day"></i> Début période d'analyse</label>
+                    <input type="date" id="filtreDateDebut" class="filter-input-date" onchange="onChangePlageDates()">
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreDateFin"><i class="fa-solid fa-calendar-week"></i> Fin période d'analyse</label>
+                    <input type="date" id="filtreDateFin" class="filter-input-date" onchange="onChangePlageDates()">
                 </div>
 
                 <div class="filter-group">
@@ -897,14 +909,14 @@
 
             peuplerSelectCentres();
 
-            const selPer = document.getElementById('filtrePeriode');
-            const valPer = selPer.value;
-            const periodes = [...new Set(toutesLesDonnees.map(d => d.periode).filter(p => p && p !== 'Non daté'))].sort().reverse();
-            selPer.innerHTML = '<option value="TOUS">-- Toutes les périodes --</option>';
-            periodes.forEach(p => {
-                selPer.innerHTML += `<option value="${p}">${p}</option>`;
+            const selDate = document.getElementById('filtreDate');
+            const valDate = selDate.value;
+            const datesISOUniques = [...new Set(toutesLesDonnees.map(d => d.dateISO).filter(Boolean))].sort().reverse();
+            selDate.innerHTML = '<option value="TOUS">-- Toutes les dates --</option>';
+            datesISOUniques.forEach(iso => {
+                selDate.innerHTML += `<option value="${iso}">${formaterDateFR(iso)}</option>`;
             });
-            if (periodes.includes(valPer)) selPer.value = valPer;
+            if (datesISOUniques.includes(valDate)) selDate.value = valDate;
 
             const selProc = document.getElementById('filtreProcessus');
             const valProc = selProc.value;
@@ -927,6 +939,49 @@
                 selCentre.innerHTML += `<option value="${s}">${s}</option>`;
             });
             if (sites.includes(valCentre)) selCentre.value = valCentre;
+        }
+
+        function onChangeDateSpecifique() {
+            const dateVal = document.getElementById('filtreDate').value;
+            if (dateVal !== 'TOUS') {
+                document.getElementById('filtreDateDebut').value = '';
+                document.getElementById('filtreDateFin').value = '';
+            }
+            actualiserAnalyse();
+        }
+
+        function onChangePlageDates() {
+            const dDebut = document.getElementById('filtreDateDebut').value;
+            const dFin = document.getElementById('filtreDateFin').value;
+            if (dDebut || dFin) {
+                document.getElementById('filtreDate').value = 'TOUS';
+            }
+            actualiserAnalyse();
+        }
+
+        function correspondFiltreTemporel(isoDate, dateSpecifique, dateDebut, dateFin) {
+            if (dateSpecifique !== 'TOUS') {
+                return isoDate === dateSpecifique;
+            }
+            if (dateDebut && (!isoDate || isoDate < dateDebut)) return false;
+            if (dateFin && (!isoDate || isoDate > dateFin)) return false;
+            return true;
+        }
+
+        function libelleFiltreTemporel(dateSpecifique, dateDebut, dateFin) {
+            if (dateSpecifique !== 'TOUS') {
+                return `Date : ${formaterDateFR(dateSpecifique)}`;
+            }
+            if (dateDebut && dateFin) {
+                return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
+            }
+            if (dateDebut) {
+                return `Période : à partir du ${formaterDateFR(dateDebut)}`;
+            }
+            if (dateFin) {
+                return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
+            }
+            return 'Toutes les dates';
         }
 
         function changerNiveau(nouveauNiveau) {
@@ -1005,7 +1060,9 @@
             document.getElementById('filtreRegion').value = 'TOUS';
             peuplerSelectCentres();
             document.getElementById('filtreCentre').value = 'TOUS';
-            document.getElementById('filtrePeriode').value = 'TOUS';
+            document.getElementById('filtreDate').value = 'TOUS';
+            document.getElementById('filtreDateDebut').value = '';
+            document.getElementById('filtreDateFin').value = '';
             document.getElementById('filtreType').value = 'TOUS';
             document.getElementById('filtreProcessus').value = 'TOUS';
             document.getElementById('filtreStatut').value = 'TOUS';
@@ -1016,25 +1073,33 @@
         function actualiserAnalyse() {
             const reg = document.getElementById('filtreRegion').value;
             const centre = document.getElementById('filtreCentre').value;
-            const periode = document.getElementById('filtrePeriode').value;
+            const dateSpec = document.getElementById('filtreDate').value;
+            const dateDebut = document.getElementById('filtreDateDebut').value;
+            const dateFin = document.getElementById('filtreDateFin').value;
             const typeCtrl = document.getElementById('filtreType').value;
             const proc = document.getElementById('filtreProcessus').value;
             const statut = document.getElementById('filtreStatut').value;
 
+            // Mise en évidence des champs temporels actifs
+            document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
+            document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', Boolean(dateDebut));
+            document.getElementById('filtreDateFin').classList.toggle('highlight-focus', Boolean(dateFin));
+
+            const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : ${reg === 'TOUS' ? 'Réseau complet (10 Régions)' : reg}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : ${reg === 'TOUS' ? 'Réseau complet (10 Régions)' : reg} · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes Régions' : reg}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes Régions' : reg} · ${infoTemps}`;
             } else {
                 const nomCentre = centre === 'TOUS' ? 'Sélectionner un centre / site' : centre;
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} · ${infoTemps}`;
             }
 
             const donneesFiltrees = toutesLesDonnees.filter(d => {
                 if (reg !== 'TOUS' && d.region !== reg) return false;
                 if (centre !== 'TOUS' && d.site !== centre) return false;
-                if (periode !== 'TOUS' && d.periode !== periode) return false;
+                if (!correspondFiltreTemporel(d.dateISO, dateSpec, dateDebut, dateFin)) return false;
                 if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
                 if (proc !== 'TOUS' && d.processus !== proc) return false;
                 if (statut !== 'TOUS' && d.statut !== statut) return false;
@@ -1043,21 +1108,22 @@
 
             dernieresDonneesFiltrees = donneesFiltrees;
 
-            calculerEtAfficherKPIs(donneesFiltrees, reg, centre, periode);
-            calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, periode, typeCtrl, proc, statut);
+            calculerEtAfficherKPIs(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin);
+            calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin, typeCtrl, proc, statut);
             genererAlertesAutomatiques(donneesFiltrees);
             construireClassementEtTables(donneesFiltrees);
             afficherTableDetaillee(donneesFiltrees);
             construireGraphiques(donneesFiltrees, reg);
         }
 
-        function calculerEtAfficherKPIs(donnees, reg, centre, periode) {
+        function calculerEtAfficherKPIs(donnees, reg, centre, dateSpec, dateDebut, dateFin) {
             const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
             const regionsUniques = new Set(donnees.map(d => d.region).filter(Boolean));
             const missionsFiltrees = toutesLesMissions.filter(m => {
                 if (reg !== 'TOUS' && String(m.region || '').toUpperCase() !== reg) return false;
                 if (centre !== 'TOUS' && String(m.entite || '') !== centre) return false;
-                if (periode !== 'TOUS' && normaliserDateISO(m.date).slice(0, 7) !== periode) return false;
+                const mISO = normaliserDateISO(m.date);
+                if (!correspondFiltreTemporel(mISO, dateSpec, dateDebut, dateFin)) return false;
                 return true;
             });
 
@@ -1101,9 +1167,9 @@
             document.getElementById('subKpiCouverture').textContent = subCouv;
         }
 
-        function calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, periode, typeCtrl, proc, statut) {
+        function calculerBenchmarkEtSynthese(donneesFiltrees, reg, centre, dateSpec, dateDebut, dateFin, typeCtrl, proc, statut) {
             const baseTransverse = toutesLesDonnees.filter(d => {
-                if (periode !== 'TOUS' && d.periode !== periode) return false;
+                if (!correspondFiltreTemporel(d.dateISO, dateSpec, dateDebut, dateFin)) return false;
                 if (typeCtrl !== 'TOUS' && d.typeControle !== typeCtrl) return false;
                 if (proc !== 'TOUS' && d.processus !== proc) return false;
                 if (statut !== 'TOUS' && d.statut !== statut) return false;
@@ -1187,7 +1253,7 @@
                 .sort((a, b) => a.tc - b.tc)[0];
 
             box.innerHTML = `
-                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle Automatique :</strong><br>
+                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle Automatique (${libelleFiltreTemporel(dateSpec, dateDebut, dateFin)}) :</strong><br>
                 Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
                 (soit <strong>${signeEcart} pts</strong> par rapport à la moyenne nationale de ${tcNational.toFixed(1)}%).
                 On dénombre <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} constat(s) non clôturé(s)</strong>.
@@ -1513,20 +1579,22 @@
                 }
             });
 
+            // Évolution chronologique par date de contrôle
             const mapEvo = {};
             donnees.forEach(d => {
-                const per = d.periode !== 'Non daté' ? d.periode : 'Sans date';
-                if (!mapEvo[per]) mapEvo[per] = [];
-                mapEvo[per].push(d);
+                const cleDate = d.dateISO || '9999-99-99';
+                if (!mapEvo[cleDate]) mapEvo[cleDate] = [];
+                mapEvo[cleDate].push(d);
             });
-            const periodesTriees = Object.keys(mapEvo).sort();
-            const tcSeries = periodesTriees.map(p => parseFloat(calculerTCPondere(mapEvo[p]).toFixed(1)));
-            const koSeries = periodesTriees.map(p => mapEvo[p].reduce((a, b) => a + b.ko, 0));
+            const datesTriees = Object.keys(mapEvo).sort();
+            const labelsEvo = datesTriees.map(iso => iso === '9999-99-99' ? 'Sans date' : formaterDateFR(iso));
+            const tcSeries = datesTriees.map(iso => parseFloat(calculerTCPondere(mapEvo[iso]).toFixed(1)));
+            const koSeries = datesTriees.map(iso => mapEvo[iso].reduce((a, b) => a + b.ko, 0));
 
             chartEvolutionInst = new Chart(document.getElementById('chartEvolution').getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: periodesTriees.length > 0 ? periodesTriees : ['Aucune période'],
+                    labels: labelsEvo.length > 0 ? labelsEvo : ['Aucune date'],
                     datasets: [
                         {
                             label: 'Taux de Conformité (%)',
@@ -1566,11 +1634,16 @@
                 return;
             }
 
+            const dateSpec = document.getElementById('filtreDate').value;
+            const dateDebut = document.getElementById('filtreDateDebut').value;
+            const dateFin = document.getElementById('filtreDateFin').value;
+
             const wb = XLSX.utils.book_new();
 
             const kpiRows = [
                 { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
                 { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
+                { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateSpec, dateDebut, dateFin) },
                 { "Indicateur": "Volume Constats Filtrés", "Valeur": document.getElementById('kpiVolume').textContent },
                 { "Indicateur": "Taux de Conformité Pondéré (%)", "Valeur": document.getElementById('kpiTcGlobal').textContent },
                 { "Indicateur": "Détail TC (FC / Encaisses)", "Valeur": document.getElementById('subKpiTcGlobal').textContent },
@@ -1579,7 +1652,7 @@
                 { "Indicateur": "Taux de Couverture", "Valeur": document.getElementById('kpiCouverture').textContent }
             ];
             const wsKPI = XLSX.utils.json_to_sheet(kpiRows);
-            wsKPI['!cols'] = [{ wch: 34 }, { wch: 42 }];
+            wsKPI['!cols'] = [{ wch: 34 }, { wch: 48 }];
             XLSX.utils.book_append_sheet(wb, wsKPI, "1_Synthese_KPIs");
 
             const rowsClassement = dernierClassement.map((r, i) => ({
