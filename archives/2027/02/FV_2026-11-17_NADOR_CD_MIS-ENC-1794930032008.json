@@ -2,7 +2,7 @@
   "application": "Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027",
   "organisme": "Barid Al-Maghrib - Direction Contrôle Générale",
   "typeArchive": "FV",
-  "dateArchivage": "2026-11-17T15:42:05.346Z",
+  "dateArchivage": "2026-11-17T16:23:32.651Z",
   "donnees": [
     {
       "idEncaisse": "ENC-MIS-ENC-1794930032008-1-1",
@@ -26,7 +26,7 @@
       "ok": 5,
       "ko": 875,
       "tc": 0.5681818181818182,
-      "statut": "CLOTURE",
+      "statut": "NON_CLOTURE",
       "constat": "non conforme",
       "recommandation": "calculer",
       "avisResponsable": "vu",
