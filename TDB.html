@@ -415,8 +415,8 @@
             <div class="header-actions no-print">
                 <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport analytique complet en Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
                 <button class="btn btn-pdf" onclick="imprimerPDF()" title="Imprimer ou enregistrer en PDF"><i class="fa-solid fa-file-pdf"></i> Imprimer PDF</button>
-                <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button class="btn btn-danger" onclick="viderBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Recharger les données depuis la BDD"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button class="btn btn-danger" onclick="viderTDB()" title="Vider uniquement la sélection affichée dans le tableau de bord"><i class="fa-solid fa-eraser"></i> Vider TDB</button>
                 <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
         </header>
@@ -1070,6 +1070,19 @@
             actualiserAnalyse();
         }
 
+        function viderTDB() {
+            // Vide uniquement l'espace de travail et la sélection de la feuille TDB sans toucher à la BDD
+            toutesLesDonnees = [];
+            toutesLesMissions = [];
+            dernieresDonneesFiltrees = [];
+            dernierClassement = [];
+            derniersTypes = [];
+            derniersProcessus = [];
+
+            peuplerFiltresInitiaux();
+            reinitialiserFiltresTDB();
+        }
+
         function actualiserAnalyse() {
             const reg = document.getElementById('filtreRegion').value;
             const centre = document.getElementById('filtreCentre').value;
@@ -1080,7 +1093,6 @@
             const proc = document.getElementById('filtreProcessus').value;
             const statut = document.getElementById('filtreStatut').value;
 
-            // Mise en évidence des champs temporels actifs
             document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
             document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', Boolean(dateDebut));
             document.getElementById('filtreDateFin').classList.toggle('highlight-focus', Boolean(dateFin));
@@ -1234,7 +1246,7 @@
 
             const box = document.getElementById('syntheseDecisionnelleBox');
             if (donneesFiltrees.length === 0) {
-                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée disponible pour les filtres sélectionnés.`;
+                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée affichée dans le tableau de bord.`;
                 return;
             }
 
@@ -1266,7 +1278,7 @@
             ul.innerHTML = '';
 
             if (donnees.length === 0) {
-                ul.innerHTML = `<li class="alert-item alert-warning"><i class="fa-solid fa-circle-info"></i> Aucun constat enregistré pour évaluer les seuils d'alerte.</li>`;
+                ul.innerHTML = `<li class="alert-item alert-warning"><i class="fa-solid fa-circle-info"></i> Aucune donnée sélectionnée pour évaluer les seuils d'alerte.</li>`;
                 return;
             }
 
@@ -1460,7 +1472,7 @@
             tbody.innerHTML = '';
 
             if (donnees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat ne correspond aux critères sélectionnés.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché. Utilisez Actualiser pour recharger depuis la BDD.</td></tr>';
                 return;
             }
 
@@ -1579,7 +1591,6 @@
                 }
             });
 
-            // Évolution chronologique par date de contrôle
             const mapEvo = {};
             donnees.forEach(d => {
                 const cleDate = d.dateISO || '9999-99-99';
@@ -1709,14 +1720,6 @@
 
         function imprimerPDF() {
             window.print();
-        }
-
-        function viderBDD() {
-            if (confirm("⚠️ Voulez-vous vraiment vider toute la BDD ?")) {
-                FCIDatabase.viderBDD();
-                chargerEtPreparerDonnees();
-                alert("La BDD a été réinitialisée.");
-            }
         }
     </script>
 </body>
