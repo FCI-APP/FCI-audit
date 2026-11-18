@@ -445,6 +445,28 @@
         .pill-verif { background: #D1FAE5; color: #065F46; }
         .pill-cov { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
 
+        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
+        .tag-touche {
+            display: inline-block;
+            background: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+        .tag-non-touche {
+            display: inline-block;
+            background: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
         .evo-up { color: #059669; font-weight: 800; }
         .evo-down { color: #DC2626; font-weight: 800; }
         .evo-flat { color: #64748B; font-weight: 700; }
@@ -733,6 +755,39 @@
             </div>
         </section>
 
+        <!-- SECTION COUVERTURE & GRAPHIQUES DE CLASSEMENT (ONGLETS RÉGIONAL & NATIONAL) -->
+        <section id="sectionCouvertureEtClassementCharts" style="display:none;">
+            <!-- Graphiques Classement Région & Classement Centre + Graphique Couverture -->
+            <div class="charts-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+                <div class="chart-card">
+                    <h3 id="titreChartCouverture"><i class="fa-solid fa-chart-bar"></i> Taux de Couverture (%)</h3>
+                    <div class="chart-canvas-wrap"><canvas id="chartCouverture"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3 id="titreChartClassementRegion"><i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)</h3>
+                    <div class="chart-canvas-wrap"><canvas id="chartClassementRegion"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <h3 id="titreChartClassementCentre"><i class="fa-solid fa-building-circle-check"></i> Classement des Centres / Sites (TC %)</h3>
+                    <div class="chart-canvas-wrap"><canvas id="chartClassementCentre"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Tableau dédié Taux de Couverture avec Noms des Sites/Régions Touchés et Non Touchés -->
+            <div class="table-card">
+                <h3 id="titreTableCouvertureDetail">
+                    <span><i class="fa-solid fa-map-location-dot"></i> Tableau de Couverture : Entités Touchées et Non Touchées</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreTableCouvertureDetail">Détail nominal des sites / régions couverts et restants</span>
+                </h3>
+                <div class="table-scroll">
+                    <table>
+                        <thead id="theadTableCouvertureDetail"></thead>
+                        <tbody id="tbodyTableCouvertureDetail"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- TABLEAU PRINCIPAL DE CLASSEMENT & ÉVOLUTION SELON L'ONGLET ACTIF -->
         <section class="table-card">
             <h3 id="titreTableClassementPrincipal">
@@ -904,6 +959,7 @@
         let dernieresDonneesFiltrees = [];
         let exportClassementPrincipal = [];
         let exportClassementSecondaire = [];
+        let exportCouvertureDetail = [];
         let derniersTypes = [];
         let derniersProcessus = [];
 
@@ -911,6 +967,9 @@
         let chartProcessusInst = null;
         let chartStatutsInst = null;
         let chartEvolutionInst = null;
+        let chartCouvertureInst = null;
+        let chartClassementRegionInst = null;
+        let chartClassementCentreInst = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             chargerEtPreparerDonnees();
@@ -1006,15 +1065,23 @@
 
         function calculerCouvertureRegion(regNorm, listeDonneesRegion) {
             const refCentres = REFERENTIEL_CENTRES_PAR_REGION[regNorm] || [];
-            const totalCentres = refCentres.length;
-            const sitesTouches = new Set(listeDonneesRegion.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
-            const nbTouches = sitesTouches.size;
-            const denom = Math.max(totalCentres, nbTouches);
+            const sitesTouchesSet = new Set(listeDonneesRegion.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
+
+            const sitesTouchesList = [...sitesTouchesSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesNonTouchesList = refCentres
+                .filter(c => !sitesTouchesSet.has(c.trim().toUpperCase()))
+                .sort((a, b) => a.localeCompare(b, 'fr'));
+
+            const nbTouches = sitesTouchesList.length;
+            const denom = Math.max(refCentres.length, nbTouches);
             const taux = denom > 0 ? (nbTouches / denom) * 100 : 0;
+
             return {
                 centresTouches: nbTouches,
                 totalCentres: denom,
-                tauxCouverture: taux
+                tauxCouverture: taux,
+                sitesTouchesList,
+                sitesNonTouchesList
             };
         }
 
@@ -1361,6 +1428,7 @@
             dernieresDonneesFiltrees = [];
             exportClassementPrincipal = [];
             exportClassementSecondaire = [];
+            exportCouvertureDetail = [];
             derniersTypes = [];
             derniersProcessus = [];
             reinitialiserFiltresTDB();
@@ -1395,6 +1463,7 @@
             genererDescriptionOnglet(donneesFiltrees, etat);
             calculerBenchmarkEtSynthese(donneesFiltrees, etat);
             genererAlertesAutomatiques(donneesFiltrees);
+            construireCouvertureEtClassementCharts(donneesFiltrees, etat);
             construireTableauxSelonNiveau(donneesFiltrees, reg, centre);
             afficherTableDetaillee(donneesFiltrees);
             construireGraphiquesSelonNiveau(donneesFiltrees, reg, centre);
@@ -1771,6 +1840,271 @@
 
             alertes.slice(0, 4).forEach(al => {
                 ul.innerHTML += `<li class="alert-item ${al.type}"><i class="fa-solid ${al.icon}" style="margin-top:2px;"></i><span>${al.text}</span></li>`;
+            });
+        }
+
+        function formaterBadgesListe(listeNoms, classeCss, texteVide = 'Aucun') {
+            if (!listeNoms || listeNoms.length === 0) {
+                return `<span style="color:var(--text-muted); font-style:italic; font-size:0.74rem;">${texteVide}</span>`;
+            }
+            return `<div class="tag-list">${listeNoms.map(n => `<span class="${classeCss}">${n}</span>`).join('')}</div>`;
+        }
+
+        function construireCouvertureEtClassementCharts(donnees, etat) {
+            const section = document.getElementById('sectionCouvertureEtClassementCharts');
+            if (chartCouvertureInst) chartCouvertureInst.destroy();
+            if (chartClassementRegionInst) chartClassementRegionInst.destroy();
+            if (chartClassementCentreInst) chartClassementCentreInst.destroy();
+
+            exportCouvertureDetail = [];
+
+            if (niveauActif === 'CENTRE') {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            const { reg } = etat;
+            const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
+
+            // 1. Préparation données Classement Régions (base transverse pour comparer toutes les régions)
+            const classementRegionsData = LISTE_10_REGIONS.map(r => {
+                const itemsR = baseTransverse.filter(d => d.region === r);
+                return {
+                    region: r,
+                    nb: itemsR.length,
+                    tc: parseFloat(calculerTCPondere(itemsR).toFixed(1))
+                };
+            }).sort((a, b) => b.tc - a.tc || b.nb - a.nb);
+
+            // 2. Préparation données Classement Centres (selon périmètre actif)
+            const mapCentres = {};
+            donnees.forEach(d => {
+                if (!d.site) return;
+                if (!mapCentres[d.site]) mapCentres[d.site] = [];
+                mapCentres[d.site].push(d);
+            });
+            const classementCentresData = Object.entries(mapCentres)
+                .map(([site, items]) => ({
+                    site,
+                    nb: items.length,
+                    tc: parseFloat(calculerTCPondere(items).toFixed(1))
+                }))
+                .sort((a, b) => b.tc - a.tc || b.nb - a.nb);
+
+            const theadCov = document.getElementById('theadTableCouvertureDetail');
+            const tbodyCov = document.getElementById('tbodyTableCouvertureDetail');
+            tbodyCov.innerHTML = '';
+
+            if (niveauActif === 'REGIONAL') {
+                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
+                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture des Sites (${nomReg})`;
+                document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)`;
+                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement des Centres (${nomReg} — TC %)`;
+
+                document.getElementById('titreTableCouvertureDetail').innerHTML = `
+                    <span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture Régional : Sites Touchés & Sites Non Touchés (${nomReg})</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Liste détaillée des centres contrôlés et restants à couvrir</span>`;
+
+                theadCov.innerHTML = `
+                    <tr>
+                        <th>Région</th>
+                        <th class="num-center">Taux Couverture</th>
+                        <th class="num-center">Touchés / Total</th>
+                        <th>Noms des Sites Touchés</th>
+                        <th>Noms des Sites Non Touchés</th>
+                    </tr>`;
+
+                const regsCibles = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
+                const detailsCov = regsCibles.map(r => {
+                    const itemsR = donnees.filter(d => d.region === r);
+                    return { region: r, ...calculerCouvertureRegion(r, itemsR) };
+                }).sort((a, b) => b.tauxCouverture - a.tauxCouverture);
+
+                detailsCov.forEach(item => {
+                    exportCouvertureDetail.push({
+                        "Région": item.region,
+                        "Taux Couverture (%)": Number(item.tauxCouverture.toFixed(1)),
+                        "Sites Touchés (Nb)": item.centresTouches,
+                        "Total Sites Référentiel": item.totalCentres,
+                        "Noms des Sites Touchés": item.sitesTouchesList.join(', ') || 'Aucun',
+                        "Noms des Sites Non Touchés": item.sitesNonTouchesList.join(', ') || 'Aucun'
+                    });
+
+                    tbodyCov.innerHTML += `
+                        <tr>
+                            <td><b>${item.region}</b></td>
+                            <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
+                            <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres}</td>
+                            <td>${formaterBadgesListe(item.sitesTouchesList, 'tag-touche', 'Aucun site touché')}</td>
+                            <td>${formaterBadgesListe(item.sitesNonTouchesList, 'tag-non-touche', 'Tous les sites couverts')}</td>
+                        </tr>`;
+                });
+
+                // Graphique Couverture Régionale (Sites touchés vs non touchés)
+                chartCouvertureInst = new Chart(document.getElementById('chartCouverture').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: detailsCov.map(d => d.region),
+                        datasets: [
+                            {
+                                label: 'Sites Touchés',
+                                data: detailsCov.map(d => d.centresTouches),
+                                backgroundColor: '#10B981',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Sites Non Touchés',
+                                data: detailsCov.map(d => d.sitesNonTouchesList.length),
+                                backgroundColor: '#CBD5E1',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { stacked: true },
+                            y: { stacked: true, beginAtZero: true }
+                        },
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+
+            } else {
+                // NIVEAU NATIONAL
+                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture Nationale des Régions & Centres (%)`;
+                document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement National des Régions (TC %)`;
+                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement National des Centres / Sites (TC %)`;
+
+                document.getElementById('titreTableCouvertureDetail').innerHTML = `
+                    <span><i class="fa-solid fa-globe"></i> Tableau de Couverture National : Régions Touchées & Non Touchées + Sites par Région</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">État nominal de la couverture territoriale nationale</span>`;
+
+                theadCov.innerHTML = `
+                    <tr>
+                        <th>Périmètre / Région</th>
+                        <th class="num-center">Taux Couverture</th>
+                        <th class="num-center">Touchés / Total</th>
+                        <th>Entités Touchées (Régions / Sites)</th>
+                        <th>Entités Non Touchées (Régions / Sites)</th>
+                    </tr>`;
+
+                const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
+                const regionsToucheesList = LISTE_10_REGIONS.filter(r => regionsToucheesSet.has(r));
+                const regionsNonToucheesList = LISTE_10_REGIONS.filter(r => !regionsToucheesSet.has(r));
+                const tauxCouvRegNat = (regionsToucheesList.length / LISTE_10_REGIONS.length) * 100;
+
+                exportCouvertureDetail.push({
+                    "Périmètre / Région": "SYNTHÈSE NATIONALE (10 RÉGIONS)",
+                    "Taux Couverture (%)": Number(tauxCouvRegNat.toFixed(1)),
+                    "Touchés": regionsToucheesList.length,
+                    "Total": LISTE_10_REGIONS.length,
+                    "Entités Touchées": regionsToucheesList.join(', ') || 'Aucune',
+                    "Entités Non Touchées": regionsNonToucheesList.join(', ') || 'Aucune'
+                });
+
+                tbodyCov.innerHTML += `
+                    <tr style="background:#EFF6FF;">
+                        <td><b style="color:var(--primary-blue);"><i class="fa-solid fa-globe"></i> SYNTHÈSE NATIONALE (RÉGIONS)</b></td>
+                        <td class="num-center"><span class="pill pill-cov">${tauxCouvRegNat.toFixed(1)}%</span></td>
+                        <td class="num-center"><b>${regionsToucheesList.length}</b> / ${LISTE_10_REGIONS.length} régions</td>
+                        <td>${formaterBadgesListe(regionsToucheesList, 'tag-touche', 'Aucune région touchée')}</td>
+                        <td>${formaterBadgesListe(regionsNonToucheesList, 'tag-non-touche', 'Toutes les régions couvertes')}</td>
+                    </tr>`;
+
+                const detailsNatParReg = LISTE_10_REGIONS.map(r => {
+                    const itemsR = donnees.filter(d => d.region === r);
+                    return { region: r, ...calculerCouvertureRegion(r, itemsR) };
+                }).sort((a, b) => b.tauxCouverture - a.tauxCouverture);
+
+                detailsNatParReg.forEach(item => {
+                    exportCouvertureDetail.push({
+                        "Périmètre / Région": item.region,
+                        "Taux Couverture (%)": Number(item.tauxCouverture.toFixed(1)),
+                        "Touchés": item.centresTouches,
+                        "Total": item.totalCentres,
+                        "Entités Touchées": item.sitesTouchesList.join(', ') || 'Aucun',
+                        "Entités Non Touchées": item.sitesNonTouchesList.join(', ') || 'Aucun'
+                    });
+
+                    tbodyCov.innerHTML += `
+                        <tr>
+                            <td><b>${item.region}</b></td>
+                            <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
+                            <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres} sites</td>
+                            <td>${formaterBadgesListe(item.sitesTouchesList, 'tag-touche', 'Aucun site touché')}</td>
+                            <td>${formaterBadgesListe(item.sitesNonTouchesList, 'tag-non-touche', 'Tous les sites couverts')}</td>
+                        </tr>`;
+                });
+
+                // Graphique Couverture Nationale (Taux de couverture % par région)
+                chartCouvertureInst = new Chart(document.getElementById('chartCouverture').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: detailsNatParReg.map(d => d.region),
+                        datasets: [{
+                            label: 'Taux de Couverture (%)',
+                            data: detailsNatParReg.map(d => parseFloat(d.tauxCouverture.toFixed(1))),
+                            backgroundColor: detailsNatParReg.map(d => d.tauxCouverture === 0 ? '#CBD5E1' : (d.tauxCouverture < 50 ? '#F59E0B' : '#10B981')),
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, max: 100 } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+
+            // Graphique Classement des Régions (dans onglet Régional & National)
+            chartClassementRegionInst = new Chart(document.getElementById('chartClassementRegion').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: classementRegionsData.map(r => r.region),
+                    datasets: [{
+                        label: 'TC Pondéré (%)',
+                        data: classementRegionsData.map(r => r.tc),
+                        backgroundColor: classementRegionsData.map(r => {
+                            if (niveauActif === 'REGIONAL' && reg !== 'TOUS' && r.region === reg) return '#EAAA00';
+                            if (r.nb === 0) return '#CBD5E1';
+                            return r.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#003366';
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Graphique Classement des Centres / Sites (dans onglet Régional & National)
+            const topCentres = classementCentresData.slice(0, 12);
+            chartClassementCentreInst = new Chart(document.getElementById('chartClassementCentre').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: topCentres.length > 0 ? topCentres.map(c => c.site) : ['Aucun centre'],
+                    datasets: [{
+                        label: 'TC Pondéré (%)',
+                        data: topCentres.length > 0 ? topCentres.map(c => c.tc) : [0],
+                        backgroundColor: topCentres.map(c => c.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#0284C7'),
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
             });
         }
 
@@ -2426,6 +2760,11 @@
             const wsClass2 = XLSX.utils.json_to_sheet(exportClassementSecondaire.length > 0 ? exportClassementSecondaire : [{ "Info": "Aucune donnée" }]);
             XLSX.utils.book_append_sheet(wb, wsClass2, "3_Classement_Secondaire");
 
+            if (exportCouvertureDetail.length > 0) {
+                const wsCov = XLSX.utils.json_to_sheet(exportCouvertureDetail);
+                XLSX.utils.book_append_sheet(wb, wsCov, "4_Couverture_Detail");
+            }
+
             const rowsDetail = dernieresDonneesFiltrees.map(c => ({
                 "Date": c.dateFR,
                 "Source": c.source,
@@ -2446,7 +2785,7 @@
                 "Constat / Remarques": c.constat
             }));
             const wsDetail = XLSX.utils.json_to_sheet(rowsDetail.length > 0 ? rowsDetail : [{ "Info": "Aucun constat" }]);
-            XLSX.utils.book_append_sheet(wb, wsDetail, "4_Detail_Constats");
+            XLSX.utils.book_append_sheet(wb, wsDetail, "5_Detail_Constats");
 
             const dateStr = new Date().toISOString().slice(0, 10);
             XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${niveauActif}_${dateStr}.xlsx`);
