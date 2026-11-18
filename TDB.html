@@ -445,12 +445,22 @@
         .pill-verif { background: #D1FAE5; color: #065F46; }
         .pill-cov { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
 
-        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 380px; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
         .tag-touche {
             display: inline-block;
             background: #ECFDF5;
             color: #065F46;
             border: 1px solid #A7F3D0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+        .tag-touche-verif {
+            display: inline-block;
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 0.68rem;
@@ -1066,8 +1076,22 @@
         function calculerCouvertureRegion(regNorm, listeDonneesRegion) {
             const refCentres = REFERENTIEL_CENTRES_PAR_REGION[regNorm] || [];
             const sitesTouchesSet = new Set(listeDonneesRegion.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
+            const sitesTouchesControleSet = new Set(
+                listeDonneesRegion
+                    .filter(d => d.source === 'FC')
+                    .map(d => String(d.site || '').trim().toUpperCase())
+                    .filter(Boolean)
+            );
+            const sitesTouchesVerificationSet = new Set(
+                listeDonneesRegion
+                    .filter(d => d.source === 'FV')
+                    .map(d => String(d.site || '').trim().toUpperCase())
+                    .filter(Boolean)
+            );
 
             const sitesTouchesList = [...sitesTouchesSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesTouchesControleList = [...sitesTouchesControleSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesTouchesVerificationList = [...sitesTouchesVerificationSet].sort((a, b) => a.localeCompare(b, 'fr'));
             const sitesNonTouchesList = refCentres
                 .filter(c => !sitesTouchesSet.has(c.trim().toUpperCase()))
                 .sort((a, b) => a.localeCompare(b, 'fr'));
@@ -1081,6 +1105,8 @@
                 totalCentres: denom,
                 tauxCouverture: taux,
                 sitesTouchesList,
+                sitesTouchesControleList,
+                sitesTouchesVerificationList,
                 sitesNonTouchesList
             };
         }
@@ -1920,14 +1946,15 @@
 
                 document.getElementById('titreTableCouvertureDetail').innerHTML = `
                     <span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture Régional : Sites Touchés & Sites Non Touchés (${nomReg})</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Liste détaillée des centres contrôlés et restants à couvrir</span>`;
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Distinction des centres touchés par contrôle (FC), par vérification (FV) et restants à couvrir</span>`;
 
                 theadCov.innerHTML = `
                     <tr>
                         <th>Région</th>
                         <th class="num-center">Taux Couverture</th>
                         <th class="num-center">Touchés / Total</th>
-                        <th>Noms des Sites Touchés</th>
+                        <th>Noms des Sites Touchés par contrôle</th>
+                        <th>Noms des Sites Touchés par vérification</th>
                         <th>Noms des Sites Non Touchés</th>
                     </tr>`;
 
@@ -1943,7 +1970,8 @@
                         "Taux Couverture (%)": Number(item.tauxCouverture.toFixed(1)),
                         "Sites Touchés (Nb)": item.centresTouches,
                         "Total Sites Référentiel": item.totalCentres,
-                        "Noms des Sites Touchés": item.sitesTouchesList.join(', ') || 'Aucun',
+                        "Noms des Sites Touchés par contrôle": item.sitesTouchesControleList.join(', ') || 'Aucun',
+                        "Noms des Sites Touchés par vérification": item.sitesTouchesVerificationList.join(', ') || 'Aucun',
                         "Noms des Sites Non Touchés": item.sitesNonTouchesList.join(', ') || 'Aucun'
                     });
 
@@ -1952,7 +1980,8 @@
                             <td><b>${item.region}</b></td>
                             <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
                             <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres}</td>
-                            <td>${formaterBadgesListe(item.sitesTouchesList, 'tag-touche', 'Aucun site touché')}</td>
+                            <td>${formaterBadgesListe(item.sitesTouchesControleList, 'tag-touche', 'Aucun site touché par contrôle')}</td>
+                            <td>${formaterBadgesListe(item.sitesTouchesVerificationList, 'tag-touche-verif', 'Aucun site touché par vérification')}</td>
                             <td>${formaterBadgesListe(item.sitesNonTouchesList, 'tag-non-touche', 'Tous les sites couverts')}</td>
                         </tr>`;
                 });
