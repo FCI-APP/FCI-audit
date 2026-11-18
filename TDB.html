@@ -445,7 +445,7 @@
         .pill-verif { background: #D1FAE5; color: #065F46; }
         .pill-cov { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
 
-        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 380px; }
         .tag-touche {
             display: inline-block;
             background: #ECFDF5;
@@ -773,11 +773,11 @@
                 </div>
             </div>
 
-            <!-- Tableau dédié Taux de Couverture avec Noms des Sites/Régions Touchés et Non Touchés -->
+            <!-- Tableau dédié Taux de Couverture (Sites par Région en Régional / Régions uniquement en National) -->
             <div class="table-card">
                 <h3 id="titreTableCouvertureDetail">
                     <span><i class="fa-solid fa-map-location-dot"></i> Tableau de Couverture : Entités Touchées et Non Touchées</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreTableCouvertureDetail">Détail nominal des sites / régions couverts et restants</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreTableCouvertureDetail">Détail nominal des entités couvertes et restantes</span>
                 </h3>
                 <div class="table-scroll">
                     <table>
@@ -1448,7 +1448,7 @@
             const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : Toutes Régions & Centres · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (10)' : reg} · ${infoTemps}`;
             } else {
@@ -1540,12 +1540,12 @@
                 return;
             }
 
-            // NATIONAL
-            document.getElementById('lblKpiCouverture').textContent = 'Taux Couverture National';
-            const tauxCouvNationalRegions = (regionsUniques.size / LISTE_10_REGIONS.length) * 100;
-            const tauxCouvNationalCentres = (sitesUniques.size / TOTAL_CENTRES_NATIONAL) * 100;
+            // NATIONAL : raisonnement exclusivement par région (sur les 10 régions)
+            document.getElementById('lblKpiCouverture').textContent = 'Taux Couverture National (Régions)';
+            const nbRegionsTouchees = LISTE_10_REGIONS.filter(r => regionsUniques.has(r)).length;
+            const tauxCouvNationalRegions = (nbRegionsTouchees / LISTE_10_REGIONS.length) * 100;
             document.getElementById('kpiCouverture').textContent = tauxCouvNationalRegions.toFixed(1) + ' %';
-            document.getElementById('subKpiCouverture').textContent = `${regionsUniques.size}/${LISTE_10_REGIONS.length} régions · ${sitesUniques.size}/${TOTAL_CENTRES_NATIONAL} centres (${tauxCouvNationalCentres.toFixed(1)}%)`;
+            document.getElementById('subKpiCouverture').textContent = `${nbRegionsTouchees} / ${LISTE_10_REGIONS.length} régions touchées`;
         }
 
         function genererDescriptionOnglet(donnees, etat) {
@@ -1621,31 +1621,27 @@
                 ).join(' · ');
 
                 bodyEl.innerHTML = `
-                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${reg}</strong>`}), le taux de couverture s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
+                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${reg}</strong>`}), le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
                     <ul>
                         <li><strong>Couverture et interventions par région :</strong> ${resumeParRegion}.</li>
                         <li><strong>Conformité & remédiation régionale :</strong> Le taux de conformité pondéré atteint <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
                     </ul>
                 `;
             } else {
-                titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau National`;
+                // NIVEAU NATIONAL : raisonnement exclusivement par région
+                titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau National (Approche Régionale)`;
 
                 const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
-                const nbRegTouchees = regionsToucheesSet.size;
-                const tauxCouvNationalReg = (nbRegTouchees / LISTE_10_REGIONS.length) * 100;
-
-                const centresTouchesSet = new Set(donnees.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
-                const nbCentresTouches = centresTouchesSet.size;
-                const tauxCouvNationalCentres = (nbCentresTouches / TOTAL_CENTRES_NATIONAL) * 100;
-
+                const regionsToucheesList = LISTE_10_REGIONS.filter(r => regionsToucheesSet.has(r));
                 const regionsRestantes = LISTE_10_REGIONS.filter(r => !regionsToucheesSet.has(r));
+                const tauxCouvNationalReg = (regionsToucheesList.length / LISTE_10_REGIONS.length) * 100;
 
                 bodyEl.innerHTML = `
-                    <p>À l'échelle nationale, le taux de couverture des régions atteint <span class="desc-chip">${tauxCouvNationalReg.toFixed(1)}%</span> (<span class="desc-chip">${nbRegTouchees} région(s) touchée(s) sur ${LISTE_10_REGIONS.length}</span>) et la couverture du réseau des centres s'établit à <span class="desc-chip">${tauxCouvNationalCentres.toFixed(1)}%</span> (<span class="desc-chip">${nbCentresTouches} centres touchés sur ${TOTAL_CENTRES_NATIONAL}</span>).</p>
+                    <p>À l'échelle nationale, le taux de couverture territoriale s'élève à <span class="desc-chip">${tauxCouvNationalReg.toFixed(1)}%</span> avec <span class="desc-chip">${regionsToucheesList.length} région(s) touchée(s) sur ${LISTE_10_REGIONS.length}</span>.</p>
                     <ul>
+                        <li><strong>Couverture régionale :</strong> Régions touchées (<span class="desc-chip">${regionsToucheesList.length}</span>) : <strong>${regionsToucheesList.length > 0 ? regionsToucheesList.join(', ') : 'Aucune'}</strong>. Régions non touchées (<span class="desc-chip">${regionsRestantes.length}</span>) : <strong>${regionsRestantes.length > 0 ? regionsRestantes.join(', ') : 'Aucune (100% couvertes)'}</strong>.</li>
                         <li><strong>Volume national des contrôles & vérifications :</strong> <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> (${ops.constatsFC} constats) et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> (${ops.constatsFV} constats) ont été réalisés, totalisant <span class="desc-chip">${donnees.length} constat(s)</span>.</li>
-                        <li><strong>Conformité & clôture nationale :</strong> Le taux de conformité pondéré national est de <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
-                        <li><strong>Couverture territoriale restante :</strong> ${regionsRestantes.length > 0 ? `<strong>${regionsRestantes.join(', ')}</strong> (${regionsRestantes.length} région(s), soit ${((regionsRestantes.length / LISTE_10_REGIONS.length) * 100).toFixed(1)}%) n'ont pas encore enregistré de contrôle sur la période.` : `<strong>100% des 10 régions</strong> sont couvertes sur la période.`}</li>
+                        <li><strong>Conformité & clôture nationale :</strong> Le taux de conformité pondéré national est de <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
                     </ul>
                 `;
             }
@@ -1772,7 +1768,7 @@
                         text: `<b>${procsSensibles.length} processus sous ${SEUIL_ALERTE_TC}% dans ce centre :</b> ${top3}.`
                     });
                 }
-            } else {
+            } else if (niveauActif === 'REGIONAL') {
                 const mapSites = {};
                 donnees.forEach(d => {
                     if (!mapSites[d.site]) mapSites[d.site] = { region: d.region, items: [] };
@@ -1795,6 +1791,26 @@
                         type: 'alert-critical',
                         icon: 'fa-building-circle-exclamation',
                         text: `<b>${sitesSensibles.length} centre(s) sous le seuil de ${SEUIL_ALERTE_TC}% :</b> ${top3}.`
+                    });
+                }
+            } else {
+                // NATIONAL : alerte par région sous le seuil
+                const regionsSensibles = LISTE_10_REGIONS.map(r => {
+                    const itemsR = donnees.filter(d => d.region === r);
+                    return {
+                        region: r,
+                        nb: itemsR.length,
+                        tc: calculerTCPondere(itemsR),
+                        ko: itemsR.reduce((a, b) => a + b.ko, 0)
+                    };
+                }).filter(r => r.nb > 0 && r.tc < SEUIL_ALERTE_TC).sort((a, b) => a.tc - b.tc);
+
+                if (regionsSensibles.length > 0) {
+                    const top3 = regionsSensibles.slice(0, 3).map(r => `<b>${r.region}</b> (${r.tc.toFixed(1)}%, ${r.ko} KO)`).join(', ');
+                    alertes.push({
+                        type: 'alert-critical',
+                        icon: 'fa-map-location-dot',
+                        text: `<b>${regionsSensibles.length} région(s) sous le seuil de ${SEUIL_ALERTE_TC}% :</b> ${top3}.`
                     });
                 }
             }
@@ -1973,22 +1989,22 @@
                 });
 
             } else {
-                // NIVEAU NATIONAL
-                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture Nationale des Régions & Centres (%)`;
+                // NIVEAU NATIONAL : raisonnement exclusivement par région (les sites sont déjà traités dans l'onglet Régional)
+                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-pie"></i> Couverture Nationale des Régions (10 Régions)`;
                 document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement National des Régions (TC %)`;
                 document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement National des Centres / Sites (TC %)`;
 
                 document.getElementById('titreTableCouvertureDetail').innerHTML = `
-                    <span><i class="fa-solid fa-globe"></i> Tableau de Couverture National : Régions Touchées & Non Touchées + Sites par Région</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">État nominal de la couverture territoriale nationale</span>`;
+                    <span><i class="fa-solid fa-globe"></i> Tableau de Couverture National : Régions Touchées & Régions Non Touchées</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Approche exclusivement régionale sur les 10 régions (détail des sites disponible dans l'onglet Régional)</span>`;
 
                 theadCov.innerHTML = `
                     <tr>
-                        <th>Périmètre / Région</th>
+                        <th>Périmètre</th>
                         <th class="num-center">Taux Couverture</th>
-                        <th class="num-center">Touchés / Total</th>
-                        <th>Entités Touchées (Régions / Sites)</th>
-                        <th>Entités Non Touchées (Régions / Sites)</th>
+                        <th class="num-center">Régions Touchées / Total</th>
+                        <th>Noms des Régions Touchées</th>
+                        <th>Noms des Régions Non Touchées</th>
                     </tr>`;
 
                 const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
@@ -1997,65 +2013,41 @@
                 const tauxCouvRegNat = (regionsToucheesList.length / LISTE_10_REGIONS.length) * 100;
 
                 exportCouvertureDetail.push({
-                    "Périmètre / Région": "SYNTHÈSE NATIONALE (10 RÉGIONS)",
+                    "Périmètre": "RÉSEAU NATIONAL (10 RÉGIONS)",
                     "Taux Couverture (%)": Number(tauxCouvRegNat.toFixed(1)),
-                    "Touchés": regionsToucheesList.length,
-                    "Total": LISTE_10_REGIONS.length,
-                    "Entités Touchées": regionsToucheesList.join(', ') || 'Aucune',
-                    "Entités Non Touchées": regionsNonToucheesList.join(', ') || 'Aucune'
+                    "Régions Touchées (Nb)": regionsToucheesList.length,
+                    "Total Régions": LISTE_10_REGIONS.length,
+                    "Noms des Régions Touchées": regionsToucheesList.join(', ') || 'Aucune',
+                    "Noms des Régions Non Touchées": regionsNonToucheesList.join(', ') || 'Aucune'
                 });
 
-                tbodyCov.innerHTML += `
+                tbodyCov.innerHTML = `
                     <tr style="background:#EFF6FF;">
-                        <td><b style="color:var(--primary-blue);"><i class="fa-solid fa-globe"></i> SYNTHÈSE NATIONALE (RÉGIONS)</b></td>
+                        <td><b style="color:var(--primary-blue);"><i class="fa-solid fa-globe"></i> RÉSEAU NATIONAL (10 RÉGIONS)</b></td>
                         <td class="num-center"><span class="pill pill-cov">${tauxCouvRegNat.toFixed(1)}%</span></td>
                         <td class="num-center"><b>${regionsToucheesList.length}</b> / ${LISTE_10_REGIONS.length} régions</td>
                         <td>${formaterBadgesListe(regionsToucheesList, 'tag-touche', 'Aucune région touchée')}</td>
-                        <td>${formaterBadgesListe(regionsNonToucheesList, 'tag-non-touche', 'Toutes les régions couvertes')}</td>
+                        <td>${formaterBadgesListe(regionsNonToucheesList, 'tag-non-touche', 'Toutes les régions couvertes (10/10)')}</td>
                     </tr>`;
 
-                const detailsNatParReg = LISTE_10_REGIONS.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    return { region: r, ...calculerCouvertureRegion(r, itemsR) };
-                }).sort((a, b) => b.tauxCouverture - a.tauxCouverture);
-
-                detailsNatParReg.forEach(item => {
-                    exportCouvertureDetail.push({
-                        "Périmètre / Région": item.region,
-                        "Taux Couverture (%)": Number(item.tauxCouverture.toFixed(1)),
-                        "Touchés": item.centresTouches,
-                        "Total": item.totalCentres,
-                        "Entités Touchées": item.sitesTouchesList.join(', ') || 'Aucun',
-                        "Entités Non Touchées": item.sitesNonTouchesList.join(', ') || 'Aucun'
-                    });
-
-                    tbodyCov.innerHTML += `
-                        <tr>
-                            <td><b>${item.region}</b></td>
-                            <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
-                            <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres} sites</td>
-                            <td>${formaterBadgesListe(item.sitesTouchesList, 'tag-touche', 'Aucun site touché')}</td>
-                            <td>${formaterBadgesListe(item.sitesNonTouchesList, 'tag-non-touche', 'Tous les sites couverts')}</td>
-                        </tr>`;
-                });
-
-                // Graphique Couverture Nationale (Taux de couverture % par région)
+                // Graphique Couverture Nationale (Régions Touchées vs Régions Non Touchées)
                 chartCouvertureInst = new Chart(document.getElementById('chartCouverture').getContext('2d'), {
-                    type: 'bar',
+                    type: 'doughnut',
                     data: {
-                        labels: detailsNatParReg.map(d => d.region),
+                        labels: [
+                            `Régions Touchées (${regionsToucheesList.length})`,
+                            `Régions Non Touchées (${regionsNonToucheesList.length})`
+                        ],
                         datasets: [{
-                            label: 'Taux de Couverture (%)',
-                            data: detailsNatParReg.map(d => parseFloat(d.tauxCouverture.toFixed(1))),
-                            backgroundColor: detailsNatParReg.map(d => d.tauxCouverture === 0 ? '#CBD5E1' : (d.tauxCouverture < 50 ? '#F59E0B' : '#10B981')),
-                            borderRadius: 4
+                            data: [regionsToucheesList.length, regionsNonToucheesList.length],
+                            backgroundColor: ['#10B981', '#EF4444'],
+                            borderWidth: 2
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true, max: 100 } },
-                        plugins: { legend: { display: false } }
+                        plugins: { legend: { position: 'bottom' } }
                     }
                 });
             }
@@ -2345,16 +2337,16 @@
                 });
 
             } else {
+                // NIVEAU NATIONAL : classement et statut de couverture par région uniquement
                 titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Régions (Réseau National)</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Taux de couverture régional, Contrôles (FC), Vérifications (FV) & conformité</span>`;
+                    <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Régions (Réseau National)</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Statut régional (Touchée / Non touchée), Contrôles (FC), Vérifications (FV) & conformité</span>`;
 
                 theadP.innerHTML = `
                     <tr>
                         <th class="num-center">Rang</th>
                         <th>Région Postale</th>
-                        <th class="num-center">Centres Touchés</th>
-                        <th class="num-center">Couverture (%)</th>
+                        <th class="num-center">Statut Couverture</th>
                         <th class="num-center">Contrôles (FC)</th>
                         <th class="num-center">Vérifications (FV)</th>
                         <th class="num-center">Constats</th>
@@ -2369,7 +2361,6 @@
 
                 const rowsRegs = LISTE_10_REGIONS.map(r => {
                     const itemsR = donnees.filter(d => d.region === r);
-                    const cov = calculerCouvertureRegion(r, itemsR);
                     const ops = compterFCetFV(itemsR);
                     const ech = itemsR.reduce((a, b) => a + b.ech, 0);
                     const ok = itemsR.reduce((a, b) => a + b.ok, 0);
@@ -2378,19 +2369,21 @@
                     const evo = calculerEvolutionTC(itemsR);
                     const clot = itemsR.filter(x => x.statut === 'CLOTURE').length;
                     const tauxClot = itemsR.length > 0 ? (clot / itemsR.length) * 100 : 0;
+                    const estTouchee = itemsR.length > 0;
                     return {
-                        region: r, ...cov, ...ops, nb: itemsR.length,
+                        region: r, estTouchee, ...ops, nb: itemsR.length,
                         ech, ok, ko, tc, evo, tauxClot,
-                        risque: itemsR.length > 0 ? qualifierRisque(tc, ko) : { label: 'Non contrôlé', cls: 'pill-modere' }
+                        risque: estTouchee ? qualifierRisque(tc, ko) : { label: 'Non contrôlée', cls: 'pill-modere' }
                     };
                 }).sort((a, b) => b.nb - a.nb || b.tc - a.tc);
 
                 tbodyP.innerHTML = '';
                 rowsRegs.forEach((r, i) => {
+                    const statutCouvTxt = r.estTouchee ? 'Touchée' : 'Non touchée';
+                    const statutCouvCls = r.estTouchee ? 'pill-faible' : 'pill-critique';
                     exportClassementPrincipal.push({
                         "Rang": i + 1, "Région": r.region,
-                        "Centres Touchés": `${r.centresTouches}/${r.totalCentres}`,
-                        "Taux Couverture (%)": Number(r.tauxCouverture.toFixed(1)),
+                        "Statut Couverture": statutCouvTxt,
                         "Nb Contrôles (FC)": r.nbControlesFC, "Nb Vérifications (FV)": r.nbVerificationsFV,
                         "Constats": r.nb, "Ech": r.ech, "OK": r.ok, "KO": r.ko,
                         "TC (%)": Number(r.tc.toFixed(1)), "Évolution": r.evo.texte,
@@ -2400,8 +2393,7 @@
                         <tr>
                             <td class="num-center"><b>#${i + 1}</b></td>
                             <td><b>${r.region}</b></td>
-                            <td class="num-center">${r.centresTouches} / ${r.totalCentres}</td>
-                            <td class="num-center"><span class="pill pill-cov">${r.tauxCouverture.toFixed(1)}%</span></td>
+                            <td class="num-center"><span class="pill ${statutCouvCls}">${statutCouvTxt}</span></td>
                             <td class="num-center"><span class="pill pill-them">${r.nbControlesFC} (${r.constatsFC} PC)</span></td>
                             <td class="num-center"><span class="pill pill-verif">${r.nbVerificationsFV} (${r.constatsFV} PC)</span></td>
                             <td class="num-center">${r.nb}</td>
