@@ -1,273 +1,185 @@
 /**
- * Module d'authentification et de gestion de session — FCI v1.0
- * Dépôt : FCI-APP/FCI-audit
+ * FCI v1.0 - Module d'Authentification & Cloisonnement Régional (36 Comptes)
+ * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  */
 (function () {
-  "use strict";
+    const SESSION_KEY = 'fci_auth_session_v1';
 
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCNf8cxY2IX4iQA5QkvFhd3YgrLloB9CxY",
-    authDomain: "fci-audit-auth.firebaseapp.com",
-    projectId: "fci-audit-auth",
-    storageBucket: "fci-audit-auth.firebasestorage.app",
-    messagingSenderId: "270808708",
-    appId: "1:270808708:web:cf9ed710bb843ada7534d1"
-  };
+    const FCI_USERS = [
+        // ================= 6 COMPTES SIÈGE =================
+        { username: 'admin-siege',      password: 'dcp@+2026',            fonction: 'Administrateur',       role: 'ADMIN',        region: 'SIEGE' },
+        { username: 'directeur-001',    password: 'directeur@+2026',      fonction: 'Directeur',            role: 'DIRECTEUR',    region: 'SIEGE' },
+        { username: 'chef service-001', password: 'chef service1@+2026',  fonction: 'Chef de service 1',    role: 'CHEF_SERVICE', region: 'SIEGE' },
+        { username: 'chef service-002', password: 'chef service2@+2026',  fonction: 'Chef de service 2',    role: 'CHEF_SERVICE', region: 'SIEGE' },
+        { username: 'chef service-003', password: 'chef service3@+2026',  fonction: 'Chef de service 3',    role: 'CHEF_SERVICE', region: 'SIEGE' },
+        { username: 'chef service-004', password: 'chef service4@+2026',  fonction: 'Chef de service 4',    role: 'CHEF_SERVICE', region: 'SIEGE' },
 
-  const DOMAIN_SUFFIX = "@fci-audit.local";
-  const SESSION_KEY = "fci_current_user";
-  const SDK_VERSION = "10.14.1";
+        // ================= 30 COMPTES CONTRÔLEURS RÉGIONAUX (3 PAR RÉGION) =================
+        // Casablanca
+        { username: 'CASA-001',         password: 'CASA1@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
+        { username: 'CASA-002',         password: 'CASA2@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
+        { username: 'CASA-003',         password: 'CASA3@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
 
-  const ROLE_LABELS = {
-    ADMIN: "Administrateur Siège",
-    RESPONSABLE_REGIONAL: "Responsable Régional",
-    CONTROLEUR: "Contrôleur"
-  };
+        // Settat
+        { username: 'SETTAT-001',       password: 'SETTAT1@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
+        { username: 'SETTAT-002',       password: 'SETTAT2@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
+        { username: 'SETTAT-003',       password: 'SETTAT3@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
 
-  // Masquer immédiatement les pages protégées pendant la vérification
-  const isLoginPage = /(^|\/)login\.html(\?|#|$)/i.test(window.location.pathname);
-  if (!isLoginPage && document.documentElement) {
-    document.documentElement.style.visibility = "hidden";
-  }
+        // Rabat
+        { username: 'RABAT-001',        password: 'RABAT1@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
+        { username: 'RABAT-002',        password: 'RABAT2@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
+        { username: 'RABAT-003',        password: 'RABAT3@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
 
-  function loadScript(src) {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[src="${src}"]`)) {
-        resolve();
-        return;
-      }
-      const s = document.createElement("script");
-      s.src = src;
-      s.async = false;
-      s.onload = () => resolve();
-      s.onerror = () => reject(new Error("Échec de chargement : " + src));
-      document.head.appendChild(s);
-    });
-  }
+        // Tanger
+        { username: 'TANGER-001',       password: 'TANGER1@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
+        { username: 'TANGER-002',       password: 'TANGER2@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
+        { username: 'TANGER-003',       password: 'TANGER3@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
 
-  let initPromise = null;
-  function ensureFirebaseReady() {
-    if (initPromise) return initPromise;
-    initPromise = (async () => {
-      if (!window.firebase) {
-        await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-app-compat.js`);
-        await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-auth-compat.js`);
-        await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-firestore-compat.js`);
-      }
-      if (!firebase.apps.length) {
-        firebase.initializeApp(FIREBASE_CONFIG);
-      }
-      return {
-        auth: firebase.auth(),
-        db: firebase.firestore()
-      };
-    })();
-    return initPromise;
-  }
+        // Marrakech
+        { username: 'MARRAKECH-001',    password: 'MARRAKECH1@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
+        { username: 'MARRAKECH-002',    password: 'MARRAKECH2@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
+        { username: 'MARRAKECH-003',    password: 'MARRAKECH3@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
 
-  function normalizeEmail(identifiant) {
-    const clean = String(identifiant || "").trim().toLowerCase();
-    if (!clean) return "";
-    return clean.includes("@") ? clean : `${clean}${DOMAIN_SUFFIX}`;
-  }
+        // Agadir
+        { username: 'AGADIR-001',       password: 'AGADIR1@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
+        { username: 'AGADIR-002',       password: 'AGADIR2@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
+        { username: 'AGADIR-003',       password: 'AGADIR3@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
 
-  function getCachedUser() {
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) {
-      return null;
+        // Fès
+        { username: 'FES-001',          password: 'FES1@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
+        { username: 'FES-002',          password: 'FES2@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
+        { username: 'FES-003',          password: 'FES3@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
+
+        // Meknès
+        { username: 'MEKNES-001',       password: 'MEKNES1@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
+        { username: 'MEKNES-002',       password: 'MEKNES2@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
+        { username: 'MEKNES-003',       password: 'MEKNES3@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
+
+        // Laâyoune (identifiants LAYOUNE-001..003 rattachés au code région LAAYOUNE)
+        { username: 'LAYOUNE-001',      password: 'LAYOUNE1@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
+        { username: 'LAYOUNE-002',      password: 'LAYOUNE2@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
+        { username: 'LAYOUNE-003',      password: 'LAYOUNE3@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
+
+        // Oujda (identifiants OUJDA-001..003 rattachés au code région OUEJDA)
+        { username: 'OUJDA-001',        password: 'OUJDA1@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' },
+        { username: 'OUJDA-002',        password: 'OUJDA2@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' },
+        { username: 'OUJDA-003',        password: 'OUJDA3@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' }
+    ];
+
+    function getCurrentUser() {
+        try {
+            const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !parsed.username) return null;
+            return parsed;
+        } catch (e) {
+            return null;
+        }
     }
-  }
 
-  function setCachedUser(profile) {
-    try {
-      if (profile) {
-        sessionStorage.setItem(SESSION_KEY, JSON.stringify(profile));
-      } else {
+    function login(usernameInput, passwordInput) {
+        const cleanUser = String(usernameInput || '').trim();
+        const cleanPass = String(passwordInput || '').trim();
+
+        const found = FCI_USERS.find(
+            u => u.username.toLowerCase() === cleanUser.toLowerCase() && u.password === cleanPass
+        );
+
+        if (!found) {
+            return { success: false, message: "Nom d'utilisateur ou mot de passe incorrect." };
+        }
+
+        const sessionData = {
+            username: found.username,
+            fonction: found.fonction,
+            role: found.role,
+            region: found.region,
+            loginTime: new Date().toISOString()
+        };
+
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+        return { success: true, user: sessionData };
+    }
+
+    function logout() {
         sessionStorage.removeItem(SESSION_KEY);
-      }
-    } catch (e) {
-      // Ignorer erreur quota sessionStorage
-    }
-  }
-
-  async function fetchUserProfile(uid) {
-    const { db } = await ensureFirebaseReady();
-    const doc = await db.collection("utilisateurs").doc(uid).get();
-    if (!doc.exists) return null;
-    return { uid, ...doc.data() };
-  }
-
-  async function login(identifiant, password) {
-    const { auth } = await ensureFirebaseReady();
-    const email = normalizeEmail(identifiant);
-    if (!email || !password) {
-      throw new Error("Veuillez saisir votre identifiant et votre mot de passe.");
+        localStorage.removeItem(SESSION_KEY);
+        window.location.href = 'login.html';
     }
 
-    const cred = await auth.signInWithEmailAndPassword(email, password);
-    const profile = await fetchUserProfile(cred.user.uid);
-
-    if (!profile) {
-      await auth.signOut();
-      throw new Error("Profil utilisateur introuvable dans la base. Contactez l'administrateur.");
+    function isSiege() {
+        const u = getCurrentUser();
+        return Boolean(u && u.region === 'SIEGE');
     }
 
-    if (profile.actif === false) {
-      await auth.signOut();
-      throw new Error("Ce compte est désactivé. Contactez l'administrateur.");
+    function isAdmin() {
+        const u = getCurrentUser();
+        return Boolean(u && u.role === 'ADMIN');
     }
 
-    setCachedUser(profile);
-    return profile;
-  }
+    function injecterProfilSidebar(user) {
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar || document.getElementById('fciUserSessionBox')) return;
 
-  async function logout() {
-    try {
-      const { auth } = await ensureFirebaseReady();
-      await auth.signOut();
-    } finally {
-      setCachedUser(null);
-      window.location.replace("login.html");
-    }
-  }
+        const footer = sidebar.querySelector('.sidebar-footer');
+        const box = document.createElement('div');
+        box.id = 'fciUserSessionBox';
+        box.style.cssText = [
+            'margin: 10px 12px;',
+            'padding: 10px 12px;',
+            'background: rgba(0, 0, 0, 0.28);',
+            'border: 1px solid rgba(234, 170, 0, 0.45);',
+            'border-radius: 6px;',
+            'color: #FFFFFF;',
+            'font-size: 0.76rem;',
+            'line-height: 1.4;'
+        ].join('');
 
-  function renderUserWidget(profile) {
-    if (document.getElementById("fci-auth-user-card")) return;
+        const badgePerimetre = user.region === 'SIEGE'
+            ? '<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#EAAA00;color:#002244;font-weight:800;font-size:0.68rem;">SIÈGE · ACCÈS NATIONAL</span>'
+            : `<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#0284C7;color:#FFFFFF;font-weight:800;font-size:0.68rem;">RÉGION : ${user.region}</span>`;
 
-    const roleText = ROLE_LABELS[profile.role] || profile.role || "Utilisateur";
-    const regionText = profile.region === "SIEGE" ? "Direction Centrale (Siège)" : `DR ${profile.region}`;
-    const isAdmin = profile.role === "ADMIN";
+        box.innerHTML = `
+            <div style="display:flex;align-items:center;gap:7px;font-weight:800;color:#FDE68A;">
+                <i class="fa-solid fa-user-shield"></i>
+                <span>${user.username}</span>
+            </div>
+            <div style="color:rgba(255,255,255,0.85);font-size:0.72rem;margin-top:2px;">${user.fonction}</div>
+            <div>${badgePerimetre}</div>
+            <button type="button" id="btnFciLogout" style="margin-top:9px;width:100%;padding:6px 10px;border:none;border-radius:5px;background:#DC2626;color:#FFFFFF;font-family:inherit;font-size:0.74rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
+            </button>
+        `;
 
-    const card = document.createElement("div");
-    card.id = "fci-auth-user-card";
-    card.style.cssText = [
-      "margin: 12px 10px",
-      "padding: 12px",
-      "border-radius: 10px",
-      "background: rgba(255, 255, 255, 0.08)",
-      "border: 1px solid rgba(234, 170, 0, 0.35)",
-      "color: #ffffff",
-      "font-family: 'Plus Jakarta Sans', sans-serif",
-      "font-size: 12px"
-    ].join(";");
+        if (footer) {
+            sidebar.insertBefore(box, footer);
+        } else {
+            sidebar.appendChild(box);
+        }
 
-    card.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <div style="width:30px;height:30px;border-radius:50%;background:#EAAA00;color:#003366;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">
-          <i class="fas fa-user-shield"></i>
-        </div>
-        <div style="overflow:hidden;">
-          <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${profile.nomComplet || profile.identifiant}">
-            ${profile.nomComplet || profile.identifiant}
-          </div>
-          <div style="font-size:11px;color:#EAAA00;font-weight:600;">${roleText}</div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.82);margin-bottom:10px;padding-left:2px;">
-        <i class="fas fa-map-marker-alt" style="color:#EAAA00;margin-right:4px;"></i>${regionText}
-      </div>
-      ${isAdmin ? `
-        <a href="AdminComptes.html" style="display:block;text-align:center;margin-bottom:7px;padding:6px 8px;border-radius:6px;background:#EAAA00;color:#003366;font-weight:700;text-decoration:none;font-size:11.5px;">
-          <i class="fas fa-users-cog" style="margin-right:5px;"></i>Gestion des comptes
-        </a>
-      ` : ""}
-      <button type="button" id="fci-logout-btn" style="width:100%;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.28);background:rgba(220,38,38,0.85);color:#fff;font-weight:600;font-size:11.5px;cursor:pointer;">
-        <i class="fas fa-sign-out-alt" style="margin-right:5px;"></i>Déconnexion
-      </button>
-    `;
-
-    // Recherche de la barre latérale existante sans modifier sa structure
-    const sidebar =
-      document.querySelector(".sidebar") ||
-      document.querySelector("aside") ||
-      document.querySelector("#sidebar");
-
-    if (sidebar) {
-      sidebar.appendChild(card);
-    } else {
-      card.style.position = "fixed";
-      card.style.bottom = "12px";
-      card.style.left = "12px";
-      card.style.zIndex = "9999";
-      card.style.background = "#003366";
-      card.style.boxShadow = "0 6px 18px rgba(0,0,0,0.25)";
-      document.body.appendChild(card);
+        document.getElementById('btnFciLogout').addEventListener('click', logout);
     }
 
-    const logoutBtn = document.getElementById("fci-logout-btn");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => logout());
-    }
-  }
+    const isLoginPage = window.location.pathname.toLowerCase().endsWith('login.html');
+    const currentUser = getCurrentUser();
 
-  function protectPage(options = {}) {
-    if (isLoginPage) return;
-
-    ensureFirebaseReady()
-      .then(({ auth }) => {
-        auth.onAuthStateChanged(async (user) => {
-          if (!user) {
-            setCachedUser(null);
-            window.location.replace("login.html");
-            return;
-          }
-
-          try {
-            const profile = await fetchUserProfile(user.uid);
-            if (!profile || profile.actif === false) {
-              await auth.signOut();
-              setCachedUser(null);
-              window.location.replace("login.html");
-              return;
-            }
-
-            if (options.adminOnly && profile.role !== "ADMIN") {
-              window.location.replace("index.html");
-              return;
-            }
-
-            setCachedUser(profile);
-            document.documentElement.style.visibility = "visible";
-
-            const mountUI = () => {
-              renderUserWidget(profile);
-              window.dispatchEvent(new CustomEvent("fci-auth-ready", { detail: profile }));
-            };
-
-            if (document.readyState === "loading") {
-              document.addEventListener("DOMContentLoaded", mountUI);
-            } else {
-              mountUI();
-            }
-          } catch (err) {
-            console.error("Erreur vérification session FCI :", err);
-            window.location.replace("login.html");
-          }
+    if (!isLoginPage && !currentUser) {
+        window.location.replace('login.html');
+    } else if (!isLoginPage && currentUser) {
+        document.addEventListener('DOMContentLoaded', () => {
+            injecterProfilSidebar(currentUser);
+            window.dispatchEvent(new CustomEvent('fci-auth-ready', { detail: currentUser }));
         });
-      })
-      .catch((err) => {
-        console.error("Erreur initialisation Firebase FCI :", err);
-        window.location.replace("login.html");
-      });
-  }
+    }
 
-  window.FCIAuth = {
-    FIREBASE_CONFIG,
-    DOMAIN_SUFFIX,
-    ROLE_LABELS,
-    ensureFirebaseReady,
-    login,
-    logout,
-    getCurrentUser: getCachedUser,
-    protectPage
-  };
-
-  // Protection automatique sur toute page autre que login.html
-  if (!isLoginPage) {
-    protectPage({
-      adminOnly: /(^|\/)AdminComptes\.html(\?|#|$)/i.test(window.location.pathname)
-    });
-  }
+    window.FCIAuth = {
+        getCurrentUser,
+        login,
+        logout,
+        isSiege,
+        isAdmin,
+        getAllUsersCount: () => FCI_USERS.length
+    };
 })();
