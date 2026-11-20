@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
+    <!-- Protection de session FCI -->
+    <script src="fci-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -143,7 +145,7 @@
         .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
         .form-group label { font-size: 0.74rem; font-weight: 700; color: var(--primary-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .form-control { padding: 8px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.84rem; outline: none; background-color: #FFF; font-weight: 600; transition: border-color 0.2s, background-color 0.2s; }
-        .form-control:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .form-control:disabled { background-color: #F1F5F9; color: #475569; cursor: not-allowed; }
         .form-control.filter-active { border: 2px solid var(--accent-gold); background-color: #FFFDF5; color: var(--primary-blue); font-weight: 700; }
 
         .date-bdd-pill {
@@ -256,7 +258,7 @@
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
@@ -271,11 +273,8 @@
                 <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
             </ul>
         </div>
-        <div>
-            <div id="fci-sidebar-user-slot"></div>
-            <div class="sidebar-footer">
-                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-            </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
@@ -469,25 +468,8 @@
         </section>
     </main>
 
-    <!-- Scripts Firebase Auth & BDD Centralisée -->
-    <script type="module" src="fci-auth.js"></script>
-    <script type="module" src="fci-db-manager.js"></script>
-
-    <script type="module">
-        import { initFCISessionGuard } from "./fci-auth.js";
-        import { syncFromFirestoreToLocal, upsertFCIRecord, deleteFCIRecord } from "./fci-db-manager.js";
-
-        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
-        const currentUser = await initFCISessionGuard();
-        await syncFromFirestoreToLocal(currentUser);
-
-        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
-        const userBox = document.getElementById("fci-auth-sidebar-box");
-        const slot = document.getElementById("fci-sidebar-user-slot");
-        if (userBox && slot) {
-            slot.appendChild(userBox);
-        }
-
+    <script src="fci-db-manager.js"></script>
+    <script>
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
                 "MARRAKECH CTD",
@@ -651,6 +633,45 @@
         let currentMissionId = "";
         let loadedEncaisseIds = [];
 
+        function getUserRegionRestriction() {
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (!u || !u.region || u.region === 'SIEGE') return '';
+            return normaliserRegion(u.region);
+        }
+
+        function appliquerRestrictionRegionSaisie() {
+            const restrictedReg = getUserRegionRestriction();
+            const regSelect = document.getElementById('regionSite');
+            if (!regSelect) return;
+
+            if (restrictedReg) {
+                const siteActuel = document.getElementById('nomSite').value;
+                regSelect.value = restrictedReg;
+                regSelect.disabled = true;
+                onRegionEncaisseChange(siteActuel);
+            } else {
+                regSelect.disabled = false;
+            }
+        }
+
+        function getUserTracePayload(mode = 'ARCHIVE') {
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (!u) return {};
+            const nom = u.nomComplet || u.identifiant;
+            if (mode === 'MODIFIER') {
+                return {
+                    modifiePar: nom,
+                    modifieParId: u.identifiant,
+                    modifieParRole: u.role
+                };
+            }
+            return {
+                creePar: nom,
+                creeParId: u.identifiant,
+                creeParRole: u.role
+            };
+        }
+
         function lireDBSecurisee() {
             let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
@@ -684,40 +705,7 @@
         function normaliserRegion(val) {
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
-            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
-            if (reg === 'CASABLANCA') reg = 'CASA';
             return reg;
-        }
-
-        function getAccessibleEncaisses(db) {
-            const all = db.constatsEncaisses || [];
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                return all.filter(c => !c.cree_par_id || c.cree_par_id === currentUser.username);
-            }
-            return all;
-        }
-
-        function applyUserRoleDefaultsFV() {
-            const regionEl = document.getElementById('regionSite');
-            const ctrlInput = document.getElementById('nomControleur');
-            const respInput = document.getElementById('nomResponsable');
-
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                const userReg = normaliserRegion(currentUser.region_code);
-                regionEl.value = CENTRES_PAR_REGION[userReg] ? userReg : "";
-                regionEl.disabled = true;
-                window.onRegionEncaisseChange('');
-                ctrlInput.removeAttribute('readonly');
-                ctrlInput.value = currentUser.nom || currentUser.username || '';
-            } else {
-                regionEl.value = '';
-                regionEl.disabled = false;
-                window.onRegionEncaisseChange('');
-                ctrlInput.value = '';
-                ctrlInput.setAttribute('readonly', 'readonly');
-            }
-            respInput.value = '';
-            respInput.setAttribute('readonly', 'readonly');
         }
 
         function getItemVal(item, keys) {
@@ -793,7 +781,7 @@
                 : '';
         }
 
-        window.onDateVerificationChange = function() {
+        function onDateVerificationChange() {
             updateHeaderDateVerifBadge();
             const dateFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
             addedPoints.forEach(p => {
@@ -801,17 +789,22 @@
                 p.constats.forEach(c => { c.dateVerification = dateFR; });
             });
             renderPoints();
-        };
+        }
 
-        window.updateConstatDate = function(pIndex, cIndex, valISO) {
+        function updateConstatDate(pIndex, cIndex, valISO) {
             const dateFR = formatDateToJJMMAAAA(valISO);
             addedPoints[pIndex].constats[cIndex].dateVerification = dateFR;
             if (cIndex === 0) addedPoints[pIndex].dateVerification = dateFR;
             renderPoints();
-        };
+        }
 
-        window.onRegionEncaisseChange = function(sitePreselectionne = '') {
-            const region = document.getElementById('regionSite').value;
+        function onRegionEncaisseChange(sitePreselectionne = '') {
+            const restrictedReg = getUserRegionRestriction();
+            const regSelect = document.getElementById('regionSite');
+            if (restrictedReg && regSelect.value !== restrictedReg) {
+                regSelect.value = restrictedReg;
+            }
+            const region = restrictedReg || regSelect.value;
             const siteSelect = document.getElementById('nomSite');
             siteSelect.innerHTML = '';
 
@@ -838,7 +831,7 @@
 
             siteSelect.disabled = false;
             if (sitePreselectionne) siteSelect.value = sitePreselectionne;
-        };
+        }
 
         function trouverRegionDuSite(siteName) {
             if (!siteName) return '';
@@ -848,19 +841,41 @@
             return '';
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+            try { resetDateField(); } catch (e) {}
+            try {
+                document.getElementById('nomControleur').value = '';
+                document.getElementById('nomResponsable').value = '';
+                setTimeout(() => {
+                    document.getElementById('nomControleur').value = '';
+                    document.getElementById('nomResponsable').value = '';
+                    appliquerRestrictionRegionSaisie();
+                }, 50);
+            } catch (e) {}
+            try { appliquerRestrictionRegionSaisie(); } catch (e) {}
+            try { remplirFiltresEncaissesBDD(); } catch (e) {}
+            chargerReferentielJSON();
+        });
+
+        window.addEventListener('fci-auth-ready', () => {
+            appliquerRestrictionRegionSaisie();
+            remplirFiltresEncaissesBDD();
+        });
+
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
                 remplirFiltresEncaissesBDD();
             }
         });
 
-        window.reinitialiserFiltresBDDFV = function() {
+        function reinitialiserFiltresBDDFV() {
+            const restrictedReg = getUserRegionRestriction();
             const selDate = document.getElementById('filterFvBddDate');
             const selReg = document.getElementById('filterFvBddRegion');
             const selSite = document.getElementById('filterFvBddSite');
             const selProc = document.getElementById('filterFvBddProcessus');
             if (selDate) selDate.value = '';
-            if (selReg) selReg.value = '';
+            if (selReg) selReg.value = restrictedReg || '';
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresEncaissesBDD();
@@ -868,13 +883,17 @@
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) statusEl.innerText = '';
             }
-        };
+        }
 
         function remplirFiltresEncaissesBDD() {
             const db = lireDBSecurisee();
-            const encaisses = getAccessibleEncaisses(db);
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const restrictedReg = getUserRegionRestriction();
+            const encaisses = (db.constatsEncaisses || []).filter(c =>
+                !restrictedReg || getEncaisseRegion(c, mapMissions) === restrictedReg
+            );
 
             const badgeCount = document.getElementById('bddCountInfoFV');
             if (badgeCount) {
@@ -888,7 +907,7 @@
             if (!selDate || !selReg || !selSite || !selProc) return;
 
             let valDate = selDate.value;
-            let valReg = selReg.value;
+            let valReg = restrictedReg || selReg.value;
             let valSite = selSite.value;
             let valProc = selProc.value;
 
@@ -907,19 +926,21 @@
                 valDate = '';
             }
 
-            const regions = [...new Set(
-                encaisses
-                    .filter(c =>
-                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
-                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
-                        (!valProc || getEncaisseProcessus(c) === valProc)
-                    )
-                    .map(c => getEncaisseRegion(c, mapMissions))
-                    .filter(Boolean)
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            const regions = restrictedReg
+                ? [restrictedReg]
+                : [...new Set(
+                    encaisses
+                        .filter(c =>
+                            (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                            (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                            (!valProc || getEncaisseProcessus(c) === valProc)
+                        )
+                        .map(c => getEncaisseRegion(c, mapMissions))
+                        .filter(Boolean)
+                )].sort((a, b) => a.localeCompare(b, 'fr'));
 
             if (valReg && !regions.includes(valReg)) {
-                valReg = '';
+                valReg = restrictedReg || '';
             }
 
             const sites = [...new Set(
@@ -955,8 +976,14 @@
             selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
-                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+            if (restrictedReg) {
+                selReg.innerHTML = `<option value="${restrictedReg}" selected>${restrictedReg}</option>`;
+                selReg.disabled = true;
+            } else {
+                selReg.disabled = false;
+                selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                    regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+            }
 
             selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
@@ -965,12 +992,12 @@
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
 
             selDate.classList.toggle('filter-active', Boolean(valDate));
-            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selReg.classList.toggle('filter-active', Boolean(valReg) && !restrictedReg);
             selSite.classList.toggle('filter-active', Boolean(valSite));
             selProc.classList.toggle('filter-active', Boolean(valProc));
 
             const statusEl = document.getElementById('searchEncaisseStatus');
-            if (statusEl && (valDate || valReg || valSite || valProc)) {
+            if (statusEl && (valDate || (!restrictedReg && valReg) || valSite || valProc)) {
                 const nbCorrespondants = encaisses.filter(c =>
                     (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
                     (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
@@ -981,9 +1008,10 @@
             }
         }
 
-        window.onFilterFvBDDChange = function(source = '') {
+        function onFilterFvBDDChange(source = '') {
+            const restrictedReg = getUserRegionRestriction();
             if (source === 'DATE') {
-                document.getElementById('filterFvBddRegion').value = '';
+                if (!restrictedReg) document.getElementById('filterFvBddRegion').value = '';
                 document.getElementById('filterFvBddSite').value = '';
                 document.getElementById('filterFvBddProcessus').value = '';
             } else if (source === 'REGION') {
@@ -993,7 +1021,7 @@
                 document.getElementById('filterFvBddProcessus').value = '';
             }
             remplirFiltresEncaissesBDD();
-        };
+        }
 
         function resetDateField() {
             const today = new Date().toISOString().split('T')[0];
@@ -1049,7 +1077,7 @@
             });
         }
 
-        window.onProcessusChange = function() {
+        function onProcessusChange() {
             const proc = document.getElementById('selectProcessus').value;
             const risqueSelect = document.getElementById('selectRisque');
             const ctrlSelect = document.getElementById('selectControle');
@@ -1069,9 +1097,9 @@
                 risqueSelect.appendChild(opt);
             });
             risqueSelect.disabled = false;
-        };
+        }
 
-        window.onRisqueChange = function() {
+        function onRisqueChange() {
             const proc = document.getElementById('selectProcessus').value;
             const risque = document.getElementById('selectRisque').value;
             const ctrlSelect = document.getElementById('selectControle');
@@ -1088,9 +1116,9 @@
                 ctrlSelect.appendChild(opt);
             });
             ctrlSelect.disabled = false;
-        };
+        }
 
-        window.onControleChange = function() {
+        function onControleChange() {
             const proc = document.getElementById('selectProcessus').value;
             const risque = document.getElementById('selectRisque').value;
             const ctrl = document.getElementById('selectControle').value;
@@ -1101,9 +1129,9 @@
                 document.getElementById('pcPreviewText').innerText = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
                 document.getElementById('pcPreviewBox').style.display = 'block';
             }
-        };
+        }
 
-        window.addSelectedPointControl = function() {
+        function addSelectedPointControl() {
             const proc = document.getElementById('selectProcessus').value;
             const risque = document.getElementById('selectRisque').value;
             const ctrl = document.getElementById('selectControle').value;
@@ -1126,8 +1154,8 @@
 
             renderPoints();
             document.getElementById('selectProcessus').value = '';
-            window.onProcessusChange();
-        };
+            onProcessusChange();
+        }
 
         function getStatutSelectClass(statut) {
             if (statut === 'CLOTURE') return 'statut-select-CLOTURE';
@@ -1260,16 +1288,16 @@
             updateKpisAndSummary();
         }
 
-        window.togglePointSelect = function(pIndex, isChecked) { addedPoints[pIndex].selected = isChecked; updateKpisAndSummary(); };
-        window.selectAllPoints = function() { addedPoints.forEach(p => p.selected = true); renderPoints(); };
-        window.deselectAllPoints = function() { addedPoints.forEach(p => p.selected = false); renderPoints(); };
+        function togglePointSelect(pIndex, isChecked) { addedPoints[pIndex].selected = isChecked; updateKpisAndSummary(); }
+        function selectAllPoints() { addedPoints.forEach(p => p.selected = true); renderPoints(); }
+        function deselectAllPoints() { addedPoints.forEach(p => p.selected = false); renderPoints(); }
 
-        window.updateConstatStatut = function(pIndex, cIndex, statutVal) {
+        function updateConstatStatut(pIndex, cIndex, statutVal) {
             addedPoints[pIndex].constats[cIndex].statut = statutVal;
             renderPoints();
-        };
+        }
 
-        window.updateConstatNumbers = function(pIndex, cIndex, field, value) {
+        function updateConstatNumbers(pIndex, cIndex, field, value) {
             const val = parseInt(value) || 0;
             const c = addedPoints[pIndex].constats[cIndex];
             c[field] = val;
@@ -1285,20 +1313,20 @@
                 c.rate = (c.ok / c.echantillon) * 100;
             } else { c.ko = 0; c.rate = 100; }
             renderPoints();
-        };
+        }
 
-        window.updateConstatText = function(pIndex, cIndex, field, value) {
+        function updateConstatText(pIndex, cIndex, field, value) {
             addedPoints[pIndex].constats[cIndex][field] = value;
             renderPoints();
-        };
+        }
 
-        window.addConstatToPoint = function(pIndex) {
+        function addConstatToPoint(pIndex) {
             const dateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
             addedPoints[pIndex].constats.push({ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
             renderPoints();
-        };
-        window.removeConstat = function(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); };
-        window.removePoint = function(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); };
+        }
+        function removeConstat(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); }
+        function removePoint(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); }
 
         function updateKpisAndSummary() {
             const activePoints = addedPoints.filter(p => p.selected);
@@ -1360,21 +1388,31 @@
             summaryCard.style.display = 'flex';
         }
 
-        window.clearForm = function() {
+        function clearForm() {
             addedPoints = [];
             currentMissionId = "";
             loadedEncaisseIds = [];
-            applyUserRoleDefaultsFV();
+            const restrictedReg = getUserRegionRestriction();
+            const regSelect = document.getElementById('regionSite');
+            regSelect.value = restrictedReg || '';
+            regSelect.disabled = Boolean(restrictedReg);
+            onRegionEncaisseChange('');
+            const ctrlInput = document.getElementById('nomControleur');
+            const respInput = document.getElementById('nomResponsable');
+            ctrlInput.value = '';
+            ctrlInput.setAttribute('readonly', 'readonly');
+            respInput.value = '';
+            respInput.setAttribute('readonly', 'readonly');
             document.getElementById('periodeDebut').value = '';
             document.getElementById('periodeFin').value = '';
             document.getElementById('selectProcessus').value = '';
-            window.onProcessusChange();
+            onProcessusChange();
             resetDateField();
             renderPoints();
             localStorage.removeItem('fci_fiche_verification_encaisses');
             document.getElementById('searchEncaisseStatus').innerText = '';
-            window.reinitialiserFiltresBDDFV();
-        };
+            reinitialiserFiltresBDDFV();
+        }
 
         function validateCohérenceEchantillon() {
             for (let p of addedPoints) {
@@ -1389,7 +1427,8 @@
         }
 
         function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
-            const region = document.getElementById('regionSite').value;
+            const restrictedReg = getUserRegionRestriction();
+            const region = restrictedReg || document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const responsable = document.getElementById('nomResponsable').value.trim();
@@ -1399,6 +1438,7 @@
             const periodeFin = document.getElementById('periodeFin').value;
             const activePoints = addedPoints.filter(p => p.selected);
             const timestampSuivi = Date.now();
+            const traceUser = getUserTracePayload(mode);
             const lot = [];
 
             activePoints.forEach((p, pIdx) => {
@@ -1447,8 +1487,7 @@
                         modifie: estMarqueModifie,
                         isSuivi: estSuivi,
                         suivi: estSuivi,
-                        cree_par_id: currentUser ? currentUser.username : '',
-                        cree_par_nom: currentUser ? currentUser.nom : ''
+                        ...traceUser
                     });
                 });
             });
@@ -1456,37 +1495,11 @@
             return lot;
         }
 
-        async function syncEncaissesVersFirestore(lotEncaisses) {
-            for (const item of lotEncaisses) {
-                const tc = Number(item.tc || 0);
-                const evalLabel = tc >= 100 ? "Conforme" : (tc > 0 ? "Partiellement conforme" : "Non conforme");
-                const statutLabel = item.statut === "CLOTURE" ? "Clôturé" : (item.statut === "NON_CLOTURE" ? "Ouvert" : "En cours");
-
-                await upsertFCIRecord({
-                    record_uid: item.idEncaisse,
-                    numero_fiche: item.idEncaisse,
-                    code_mission: item.idMission,
-                    date_controle: formatDateToISO(item.dateVerification || item.date),
-                    region: item.region,
-                    site: item.site || item.entite,
-                    type_controle: item.typeControle || "Vérification",
-                    processus: item.processus,
-                    code_pc: item.controle,
-                    libelle_pc: item.pc,
-                    evaluation: evalLabel,
-                    taux_conformite: tc,
-                    constat: item.constat,
-                    recommandation: item.recommandation,
-                    statut_suivi: statutLabel,
-                    is_followup: Boolean(item.isSuivi)
-                }, "FV");
-            }
-        }
-
-        window.archiverFicheEncaisse = async function() {
+        async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
-            const region = document.getElementById('regionSite').value;
+            const restrictedReg = getUserRegionRestriction();
+            const region = restrictedReg || document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
 
@@ -1518,19 +1531,18 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncEncaissesVersFirestore(lotConstatsFV);
-
-                window.clearForm();
+                clearForm();
                 remplirFiltresEncaissesBDD();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
             }
-        };
+        }
 
-        window.trouverFicheEncaisseBDD = function() {
+        function trouverFicheEncaisseBDD() {
+            const restrictedReg = getUserRegionRestriction();
             const fDateFR = document.getElementById('filterFvBddDate').value;
-            const fReg = document.getElementById('filterFvBddRegion').value;
+            const fReg = restrictedReg || document.getElementById('filterFvBddRegion').value;
             const fSite = document.getElementById('filterFvBddSite').value;
             const fProc = document.getElementById('filterFvBddProcessus').value;
 
@@ -1543,7 +1555,7 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            const constatsFV = getAccessibleEncaisses(db).filter(c =>
+            const constatsFV = (db.constatsEncaisses || []).filter(c =>
                 (!fDateFR || getEncaisseDateFR(c, mapMissions) === fDateFR) &&
                 (!fReg || getEncaisseRegion(c, mapMissions) === fReg) &&
                 (!fSite || getEncaisseSite(c, mapMissions) === fSite) &&
@@ -1570,11 +1582,11 @@
             if (sample.dateFin) document.getElementById('periodeFin').value = formatDateToISO(sample.dateFin);
 
             const siteVal = getEncaisseSite(sample, mapMissions);
-            let regVal = (currentUser && currentUser.role === "CONTROLEUR")
-                ? normaliserRegion(currentUser.region_code)
-                : normaliserRegion(sample.region || trouverRegionDuSite(siteVal));
-            document.getElementById('regionSite').value = regVal;
-            window.onRegionEncaisseChange(siteVal);
+            let regVal = restrictedReg || normaliserRegion(sample.region || trouverRegionDuSite(siteVal));
+            const regSelect = document.getElementById('regionSite');
+            regSelect.value = regVal;
+            regSelect.disabled = Boolean(restrictedReg);
+            onRegionEncaisseChange(siteVal);
 
             const ctrlInput = document.getElementById('nomControleur');
             const respInput = document.getElementById('nomResponsable');
@@ -1615,9 +1627,9 @@
             });
 
             renderPoints();
-        };
+        }
 
-        window.modifierFicheEncaisse = async function() {
+        async function modifierFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à modifier.");
                 return;
@@ -1625,7 +1637,8 @@
 
             if (!validateCohérenceEchantillon()) return;
 
-            const region = document.getElementById('regionSite').value;
+            const restrictedReg = getUserRegionRestriction();
+            const region = restrictedReg || document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             if (!region || !site || !controleur) {
@@ -1681,17 +1694,15 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncEncaissesVersFirestore(lotMisAJour);
-
-                window.clearForm();
+                clearForm();
                 remplirFiltresEncaissesBDD();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
             }
-        };
+        }
 
-        window.suiviFicheEncaisse = async function() {
+        async function suiviFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD pour créer un suivi.");
                 return;
@@ -1699,7 +1710,8 @@
 
             if (!validateCohérenceEchantillon()) return;
 
-            const region = document.getElementById('regionSite').value;
+            const restrictedReg = getUserRegionRestriction();
+            const region = restrictedReg || document.getElementById('regionSite').value;
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             if (!region || !site || !controleur) {
@@ -1730,17 +1742,15 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncEncaissesVersFirestore(nouvellesLignesSuivi);
-
-                window.clearForm();
+                clearForm();
                 remplirFiltresEncaissesBDD();
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = texteOriginal;
             }
-        };
+        }
 
-        window.supprimerFicheEncaisse = async function() {
+        function supprimerFicheEncaisse() {
             if (!addedPoints || addedPoints.length === 0) {
                 alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à supprimer.");
                 return;
@@ -1754,30 +1764,21 @@
 
             if (idsToDelete.size > 0) {
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
-                for (const idToDel of idsToDelete) {
-                    await deleteFCIRecord(idToDel);
-                }
             } else if (currentMissionId) {
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
             }
             sauvegarderDBSecurisee(db);
 
-            window.clearForm();
+            clearForm();
             remplirFiltresEncaissesBDD();
-        };
+        }
 
-        window.exportToExcel = function() {
+        function exportToExcel() {
             if (!validateCohérenceEchantillon()) return;
             const activePoints = addedPoints.filter(p => p.selected);
             if (activePoints.length === 0) { alert("Veuillez cocher au moins un point avant d'exporter."); return; }
             XLSX.writeFile(XLSX.utils.json_to_sheet(activePoints), "Fiche_Encaisses_Export.xlsx");
-        };
-
-        // Initialisation immédiate après authentification
-        resetDateField();
-        applyUserRoleDefaultsFV();
-        remplirFiltresEncaissesBDD();
-        chargerReferentielJSON();
+        }
     </script>
 </body>
 </html>
