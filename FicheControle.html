@@ -1,1266 +1,1511 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>3. Fiche de Contrôle (FC) — FCI v1.0 | Barid Al-Maghrib</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --primary-blue: #003366;
-      --dark-blue: #002244;
-      --accent-gold: #EAAA00;
-      --bg-light: #f1f5f9;
-      --border-color: #cbd5e1;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI v1.0 - Fiche de Contrôle Terrain (FC)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    <style>
+        :root {
+            --primary: #003366;
+            --primary-dark: #002244;
+            --accent: #EAAA00;
+            --bg-light: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --info: #3B82F6;
+            --sidebar-width: 260px;
+        }
 
-    body {
-      display: flex;
-      min-height: 100vh;
-      background: var(--bg-light);
-      color: var(--text-main);
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; }
 
-    /* Barre latérale fixe */
-    .sidebar {
-      width: 265px;
-      background: var(--primary-blue);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
-    }
+        .sidebar { width: var(--sidebar-width); background-color: var(--primary); color: white; display: flex; flex-direction: column; justify-content: space-between; position: fixed; height: 100vh; z-index: 100; overflow-y: auto; }
+        .sidebar-header { padding: 20px 15px; background-color: var(--primary-dark); text-align: center; border-bottom: 2px solid var(--accent); }
+        .sidebar-header h2 { font-size: 0.85rem; line-height: 1.4; font-weight: 800; color: #FFFFFF; text-transform: uppercase; }
+        .sidebar-nav { list-style: none; padding: 15px 0; flex-grow: 1; }
+        .sidebar-nav li a { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 0.88rem; border-left: 4px solid transparent; transition: 0.2s; }
+        .sidebar-nav li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
+        .badge-status { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background-color: var(--accent); color: var(--primary-dark); }
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; color: rgba(255, 255, 255, 0.6); border-top: 1px solid rgba(255, 255, 255, 0.1); background-color: rgba(0,0,0,0.2); }
 
-    .sidebar-header {
-      padding: 20px 18px;
-      background: var(--dark-blue);
-      border-bottom: 3px solid var(--accent-gold);
-    }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 25px 35px; width: calc(100% - var(--sidebar-width)); }
 
-    .sidebar-header .org-tag {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      color: var(--accent-gold);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; background-color: var(--card-bg); padding: 18px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); margin-bottom: 18px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px; }
+        .header-title h1 { font-size: 1.4rem; color: var(--primary); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .header-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 3px; }
 
-    .sidebar-header h2 {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.3;
-    }
+        .saisie-line-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary);
+            margin-bottom: 14px;
+        }
+        .section-line-label {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .single-row-7 {
+            display: grid;
+            grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.95fr;
+            gap: 10px;
+            align-items: end;
+        }
 
-    .sidebar-header small {
-      display: block;
-      font-size: 11px;
-      color: #cbd5e1;
-      margin-top: 4px;
-    }
+        .modif-line-card {
+            background-color: #FFFBEB;
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid #FDE68A;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 20px;
+        }
+        .single-row-modif {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.45fr 1.45fr auto;
+            gap: 12px;
+            align-items: end;
+        }
 
-    .sidebar-nav {
-      padding: 14px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      overflow-y: auto;
-    }
+        .meta-item { display: flex; flex-direction: column; min-width: 0; }
+        .meta-item span.label, .meta-item label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .input-date-ctrl { width: 100%; padding: 7px 9px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.82rem; color: var(--primary); font-weight: 700; outline: none; background-color: #FFF; transition: border-color 0.2s, background-color 0.2s; }
+        .input-date-ctrl:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .input-date-ctrl.filter-active { border: 2px solid var(--accent); background-color: #FFFDF5; }
 
-    .sidebar-nav a {
-      color: #e2e8f0;
-      text-decoration: none;
-      padding: 10px 12px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
+        .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; white-space: nowrap; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-accent { background-color: var(--accent); color: var(--primary-dark); }
+        .btn-outline { background-color: white; border: 1px solid var(--border-color); color: var(--text-dark); }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .btn-warning { background-color: #FFEDD5; color: #C2410C; border: 1px solid #FB923C; }
+        .btn-warning:hover { background-color: #FED7AA; }
+        .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .btn-suivi:hover { background-color: #BFDBFE; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
 
-    .sidebar-nav a:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-    }
+        .date-bdd-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #EFF6FF;
+            color: var(--primary);
+            border: 1px solid #93C5FD;
+            padding: 4px 11px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+        .date-modified-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #60A5FA;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.73rem;
+            font-weight: 800;
+        }
 
-    .sidebar-nav a.active {
-      background: rgba(234, 170, 0, 0.18);
-      color: var(--accent-gold);
-      font-weight: 700;
-      border-left: 3px solid var(--accent-gold);
-    }
+        .imported-meta-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin-bottom: 10px;
+            font-size: 0.78rem;
+        }
+        .imported-chip {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .imported-chip strong { color: var(--primary); }
 
-    /* Contenu principal */
-    .main-content {
-      margin-left: 265px;
-      flex: 1;
-      padding: 24px;
-      max-width: calc(100vw - 265px);
-      display: flex;
-      flex-direction: column;
-    }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; }
+        .kpi-card h3 { font-size: 1.3rem; font-weight: 800; color: var(--primary); }
 
-    .topbar {
-      background: #ffffff;
-      padding: 18px 22px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border-left: 5px solid var(--primary-blue);
-    }
+        .process-group { background-color: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 25px; overflow: hidden; }
+        .process-header { background-color: #EEF2F6; padding: 12px 20px; border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); }
+        .control-item { padding: 18px 20px; border-bottom: 1px solid var(--border-color); }
 
-    .topbar h1 {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
+        .eval-section { display: grid; grid-template-columns: 330px 1fr; gap: 18px; background-color: #FAFAFA; padding: 14px; border-radius: 6px; border: 1px solid #E2E8F0; }
+        .metrics-block { display: flex; flex-direction: column; gap: 8px; background: white; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); }
+        .input-inline { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+        .input-inline label { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+        .input-inline input[type="number"] {
+            width: 82px;
+            padding: 5px 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 4px;
+            text-align: left !important;
+            font-weight: 700;
+        }
+        .input-inline select, .input-inline input[type="date"] {
+            width: 138px;
+            padding: 5px 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 4px;
+            text-align: left !important;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--primary);
+        }
+        .rate-box { margin-top: 4px; padding: 8px; background-color: #F1F5F9; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); }
 
-    .topbar p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+        .fields-block { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .field-group { display: flex; flex-direction: column; }
+        .field-group label { font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        .field-group textarea { width: 100%; min-height: 75px; padding: 8px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.85rem; }
 
-    .actions-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+        .summary-card { background: var(--primary-dark); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 25px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
+        .summary-info { display: flex; align-items: center; gap: 15px; }
+        .summary-info h3 { font-size: 1.25rem; font-weight: 800; color: #FFFFFF; }
+        .summary-info h3 span { color: var(--accent); font-size: 1.45rem; }
 
-    .btn {
-      padding: 9px 14px;
-      border-radius: 7px;
-      border: none;
-      font-size: 12.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
-    .btn:hover { opacity: 0.92; }
-    .btn:active { transform: scale(0.99); }
-    .btn-primary { background: var(--primary-blue); color: #ffffff; }
-    .btn-gold { background: var(--accent-gold); color: var(--dark-blue); }
-    .btn-success { background: #15803d; color: #ffffff; }
-    .btn-outline { background: #ffffff; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
-    .btn-danger { background: #dc2626; color: #ffffff; }
-    .btn-warning { background: #d97706; color: #ffffff; }
-    .btn-sm { padding: 5px 8px; font-size: 11px; }
+        .center-description { background: rgba(255, 255, 255, 0.08); padding: 15px 18px; border-radius: 6px; border-left: 4px solid var(--accent); font-size: 0.9rem; line-height: 1.5; color: #F1F5F9; }
 
-    /* KPIs */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
+        .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
-    .kpi-card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 14px 18px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      border-top: 3px solid var(--primary-blue);
-    }
+        @media (max-width: 1280px) {
+            .single-row-7 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .single-row-modif { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        }
 
-    .kpi-card.gold { border-top-color: var(--accent-gold); }
-    .kpi-card.danger { border-top-color: #dc2626; }
-    .kpi-card.success { border-top-color: #16a34a; }
-    .kpi-card .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
-    .kpi-card .kpi-value { font-size: 21px; font-weight: 700; color: var(--dark-blue); margin-top: 4px; }
-
-    /* Cartes & Formulaires */
-    .card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 18px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .card-title {
-      font-size: 14.5px;
-      font-weight: 700;
-      color: var(--dark-blue);
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 13px;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .form-field.span-2 { grid-column: span 2; }
-    .form-field.span-4 { grid-column: span 4; }
-
-    .form-field label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
-
-    .form-field input,
-    .form-field select,
-    .form-field textarea {
-      width: 100%;
-      padding: 8px 11px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 12.5px;
-      text-align: left;
-      outline: none;
-      background: #ffffff;
-    }
-
-    .form-field input:focus,
-    .form-field select:focus,
-    .form-field textarea:focus {
-      border-color: var(--primary-blue);
-    }
-
-    .form-field input[readonly],
-    .form-field select:disabled {
-      background: #f1f5f9;
-      color: #475569;
-      cursor: not-allowed;
-    }
-
-    /* Tableau de saisie des points de contrôle */
-    .table-wrapper {
-      overflow-x: auto;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    th {
-      background: var(--primary-blue);
-      color: #ffffff;
-      text-align: left;
-      padding: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 9px 10px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: top;
-    }
-
-    tr:hover td { background: #f8fafc; }
-
-    td select,
-    td input,
-    td textarea {
-      width: 100%;
-      padding: 6px 8px;
-      border: 1px solid #cbd5e1;
-      border-radius: 5px;
-      font-size: 12px;
-      text-align: left;
-    }
-
-    /* Badges */
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 10.5px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .eval-conforme { background: #dcfce7; color: #166534; }
-    .eval-partiel { background: #fef3c7; color: #92400e; }
-    .eval-nonconforme { background: #fee2e2; color: #991b1b; }
-    .eval-na { background: #f1f5f9; color: #475569; }
-
-    .suivi-ouvert { background: #fee2e2; color: #991b1b; }
-    .suivi-encours { background: #fef3c7; color: #92400e; }
-    .suivi-cloture { background: #dcfce7; color: #166534; }
-
-    /* Filtres historique */
-    .filters-bar {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto;
-      gap: 10px;
-      margin-bottom: 14px;
-      align-items: center;
-    }
-
-    .filters-bar input,
-    .filters-bar select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 12px;
-      background: #ffffff;
-    }
-
-    /* Modal édition / suivi granulaire par point de contrôle */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 20, 45, 0.55);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-backdrop.open { display: flex; }
-
-    .modal-box {
-      background: #ffffff;
-      width: 100%;
-      max-width: 650px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      background: var(--primary-blue);
-      color: #ffffff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid var(--accent-gold);
-    }
-
-    .modal-body {
-      padding: 18px 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 13px;
-    }
-
-    .modal-footer {
-      padding: 12px 20px;
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .status-toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--dark-blue);
-      color: #ffffff;
-      padding: 11px 16px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      font-weight: 600;
-      border-left: 4px solid var(--accent-gold);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      display: none;
-      z-index: 1200;
-    }
-
-    footer.app-footer {
-      margin-top: auto;
-      padding-top: 14px;
-      text-align: center;
-      font-size: 11.5px;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 1150px) {
-      .form-grid { grid-template-columns: repeat(2, 1fr); }
-      .filters-bar { grid-template-columns: 1fr 1fr; }
-    }
-  </style>
+        @media print {
+            .sidebar, .action-buttons, .modif-line-card { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Barre latérale fixe -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="org-tag">Barid Al-Maghrib</div>
-      <h2>Fiche de Contrôle Intelligente</h2>
-      <small>Direction Contrôle Générale • FCI v1.0</small>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="index.html"><i class="fas fa-book"></i> 1. Référentiel de contrôle</a>
-      <a href="Planification.html"><i class="fas fa-calendar-alt"></i> 2. Planification</a>
-      <a href="FicheControle.html" class="active"><i class="fas fa-clipboard-check"></i> 3. Fiche de Contrôle (FC)</a>
-      <a href="FicheEncaisses.html"><i class="fas fa-coins"></i> 4. Vérification Encaisses</a>
-      <a href="BDD.html"><i class="fas fa-database"></i> 5. Base de Données (BDD)</a>
-      <a href="TDB.html"><i class="fas fa-chart-line"></i> 6. Analyse & Pilotage</a>
-    </nav>
-  </aside>
+    <aside class="sidebar" id="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <ul class="sidebar-nav">
+                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
+                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
+                <li class="active"><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Actif</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
+            </ul>
+        </div>
+        <div>
+            <div id="fci-sidebar-user-slot"></div>
+            <div class="sidebar-footer">
+                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+            </div>
+        </div>
+    </aside>
 
-  <!-- Contenu principal -->
-  <main class="main-content">
-    <div class="topbar">
-      <div>
-        <h1>3. Fiche de Contrôle (FC)</h1>
-        <p>Exécution des contrôles systématiques & thématiques et suivi granulaire par point de contrôle</p>
-      </div>
-      <div class="actions-group">
-        <button type="button" id="btnExportFCExcel" class="btn btn-success">
-          <i class="fas fa-file-excel"></i> Exporter FC Excel
-        </button>
-      </div>
-    </div>
-
-    <!-- KPIs FC -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Points contrôlés (FC)</div>
-        <div class="kpi-value" id="kpiFcTotal">0</div>
-      </div>
-      <div class="kpi-card success">
-        <div class="kpi-label">Conformes</div>
-        <div class="kpi-value" id="kpiFcConforme">0</div>
-      </div>
-      <div class="kpi-card danger">
-        <div class="kpi-label">Non conformes / Partiels</div>
-        <div class="kpi-value" id="kpiFcNonConforme">0</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-label">Recommandations ouvertes</div>
-        <div class="kpi-value" id="kpiFcOuvert">0</div>
-      </div>
-    </div>
-
-    <!-- Bloc 1 : Identification de la mission & Chargement des PC -->
-    <div class="card">
-      <div class="card-title">
-        <span><i class="fas fa-clipboard-list"></i> Saisie d'une nouvelle Fiche de Contrôle</span>
-        <span id="fcFicheCodeBadge" style="font-size:12px;color:var(--primary-blue);background:#eff6ff;padding:3px 10px;border-radius:6px;"></span>
-      </div>
-
-      <div class="form-grid" style="margin-bottom:16px;">
-        <div class="form-field">
-          <label for="fcMissionSelect">N° Mission (Planification)</label>
-          <select id="fcMissionSelect">
-            <option value="">-- Saisie libre / Hors planning --</option>
-          </select>
+    <main class="main-content">
+        <div class="header-bar">
+            <div class="header-title">
+                <h1>Fiche de Contrôle Terrain (FC)</h1>
+                <p>Saisie, évaluation, consultation et suivi des constats d'audit</p>
+            </div>
+            <div class="action-buttons" style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button type="button" class="btn btn-refresh" id="btnActualiserFC" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button type="button" class="btn btn-danger" onclick="viderFormulaireFC()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button type="button" class="btn btn-primary" id="btnArchiverFC" onclick="archiverFicheControle()"><i class="fa-solid fa-box-archive"></i> Archiver FC</button>
+                <button type="button" class="btn btn-warning" id="btnModifierFC" onclick="modifierFicheControle()" title="Met à jour uniquement le(s) point(s) de contrôle modifié(s) dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
+                <button type="button" class="btn btn-suivi" id="btnSuiviFC" onclick="suiviFicheControle()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi uniquement pour le(s) PC modifié(s)"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                <button type="button" class="btn btn-danger" onclick="supprimerFicheControle()" title="Supprime la ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                <button type="button" class="btn btn-accent" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Export Excel</button>
+                <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+            </div>
         </div>
 
-        <div class="form-field">
-          <label for="fcRegion">Région Postale *</label>
-          <select id="fcRegion" required>
-            <option value="">-- Sélectionner --</option>
-            <option value="CASA">Casablanca (CASA)</option>
-            <option value="SETTAT">Settat (SETTAT)</option>
-            <option value="RABAT">Rabat (RABAT)</option>
-            <option value="TANGER">Tanger (TANGER)</option>
-            <option value="MARRAKECH">Marrakech (MARRAKECH)</option>
-            <option value="AGADIR">Agadir (AGADIR)</option>
-            <option value="FES">Fès (FES)</option>
-            <option value="MEKNES">Meknès (MEKNES)</option>
-            <option value="LAAYOUNE">Laâyoune (LAAYOUNE)</option>
-            <option value="OUJEDA">Oujda (OUJEDA)</option>
-          </select>
+        <div id="saisie-bar-container"></div>
+
+        <div class="modif-line-card">
+            <div class="section-line-label" style="color:#92400E;">
+                <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD)
+                <span id="bddCountInfo" style="background:#FEF3C7; color:#92400E; border:1px solid #F59E0B; padding:2px 8px; border-radius:10px; font-size:0.72rem; text-transform:none;"></span>
+                <span id="searchStatus" style="margin-left:auto; color:var(--primary); font-weight:700; text-transform:none;"></span>
+            </div>
+            <div class="single-row-modif">
+                <div class="meta-item">
+                    <label for="filterBddDate">Date de contrôle (jj/mm/aaaa)</label>
+                    <select id="filterBddDate" class="input-date-ctrl" onchange="onFilterBDDChange('DATE')">
+                        <option value="">-- Toutes les dates --</option>
+                    </select>
+                </div>
+                <div class="meta-item">
+                    <label for="filterBddRegion">Région</label>
+                    <select id="filterBddRegion" class="input-date-ctrl" onchange="onFilterBDDChange('REGION')">
+                        <option value="">-- Toutes les régions --</option>
+                    </select>
+                </div>
+                <div class="meta-item">
+                    <label for="filterBddSite">Site contrôlé</label>
+                    <select id="filterBddSite" class="input-date-ctrl" onchange="onFilterBDDChange('SITE')">
+                        <option value="">-- Tous les sites --</option>
+                    </select>
+                </div>
+                <div class="meta-item">
+                    <label for="filterBddProcessus">Processus contrôlé</label>
+                    <select id="filterBddProcessus" class="input-date-ctrl" onchange="onFilterBDDChange('PROCESSUS')">
+                        <option value="">-- Tous les processus --</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltresBDD()" title="Réinitialiser les 4 listes déroulantes"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+                    <button type="button" class="btn btn-primary" onclick="trouverFicheControleBDD()"><i class="fa-solid fa-search"></i> Charger depuis BDD</button>
+                </div>
+            </div>
         </div>
 
-        <div class="form-field">
-          <label for="fcSite">Site / Centre contrôlé *</label>
-          <input type="text" id="fcSite" placeholder="Ex: Agence Marrakech Médina" required />
-        </div>
+        <div id="content-area"></div>
+    </main>
 
-        <div class="form-field">
-          <label for="fcDateControle">Date du contrôle *</label>
-          <input type="date" id="fcDateControle" required />
-        </div>
+    <!-- Scripts Firebase Auth & BDD Centralisée -->
+    <script type="module" src="fci-auth.js"></script>
+    <script type="module" src="fci-db-manager.js"></script>
 
-        <div class="form-field">
-          <label for="fcTypeControle">Type de contrôle *</label>
-          <select id="fcTypeControle">
-            <option value="Systématique">Contrôle Systématique</option>
-            <option value="Thématique">Contrôle Thématique</option>
-          </select>
-        </div>
+    <script type="module">
+        import { initFCISessionGuard } from "./fci-auth.js";
+        import { syncFromFirestoreToLocal, upsertFCIRecord, deleteFCIRecord } from "./fci-db-manager.js";
 
-        <div class="form-field">
-          <label for="fcDomaineFilter">Domaine du Référentiel</label>
-          <select id="fcDomaineFilter">
-            <option value="">Tous les domaines</option>
-          </select>
-        </div>
+        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
+        const currentUser = await initFCISessionGuard();
+        await syncFromFirestoreToLocal(currentUser);
 
-        <div class="form-field">
-          <label for="fcControleur">Contrôleur</label>
-          <input type="text" id="fcControleur" readonly />
-        </div>
-
-        <div class="form-field" style="justify-content:flex-end;">
-          <button type="button" id="btnAfficherPC" class="btn btn-gold" style="width:100%;justify-content:center;">
-            <i class="fas fa-list-check"></i> Afficher PC du référentiel
-          </button>
-        </div>
-      </div>
-
-      <!-- Grille de saisie des points de contrôle -->
-      <div class="table-wrapper" style="margin-bottom:14px;">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:110px;">Code PC</th>
-              <th style="width:160px;">Domaine / Processus</th>
-              <th>Point de contrôle</th>
-              <th style="width:165px;">Résultat / Évaluation</th>
-              <th style="width:210px;">Constat & Pièces</th>
-              <th style="width:210px;">Recommandation</th>
-              <th style="width:130px;">Échéance</th>
-              <th style="width:45px;"></th>
-            </tr>
-          </thead>
-          <tbody id="fcSaisieBody">
-            <tr>
-              <td colspan="8" style="text-align:center;padding:20px;color:#64748b;">
-                Sélectionnez le type de contrôle / domaine puis cliquez sur <strong>« Afficher PC du référentiel »</strong> (ou ajoutez un point manuel).
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-        <div style="display:flex;gap:8px;">
-          <button type="button" id="btnAddManualPC" class="btn btn-outline">
-            <i class="fas fa-plus"></i> Ajouter un PC hors référentiel
-          </button>
-          <button type="button" id="btnViderSaisie" class="btn btn-outline">
-            <i class="fas fa-eraser"></i> Vider la grille
-          </button>
-        </div>
-        <button type="button" id="btnArchiverFC" class="btn btn-primary">
-          <i class="fas fa-cloud-upload-alt"></i> Enregistrer & Archiver la FC en BDD
-        </button>
-      </div>
-    </div>
-
-    <!-- Bloc 2 : Historique & Suivi granulaire par Point de Contrôle -->
-    <div class="card">
-      <div class="card-title">
-        <span><i class="fas fa-database"></i> Points de Contrôle enregistrés (Modification & Suivi par PC)</span>
-        <span id="fcScopeBadge" style="font-size:11.5px;color:var(--text-muted);font-weight:600;"></span>
-      </div>
-
-      <div class="filters-bar">
-        <input type="text" id="histSearch" placeholder="Rechercher N° FC, mission, site, code PC, constat..." />
-        <select id="histRegion">
-          <option value="">Toutes les régions</option>
-          <option value="CASA">Casablanca</option>
-          <option value="SETTAT">Settat</option>
-          <option value="RABAT">Rabat</option>
-          <option value="TANGER">Tanger</option>
-          <option value="MARRAKECH">Marrakech</option>
-          <option value="AGADIR">Agadir</option>
-          <option value="FES">Fès</option>
-          <option value="MEKNES">Meknès</option>
-          <option value="LAAYOUNE">Laâyoune</option>
-          <option value="OUJEDA">Oujda</option>
-        </select>
-        <select id="histSite">
-          <option value="">Tous les sites</option>
-        </select>
-        <select id="histEval">
-          <option value="">Toutes évaluations</option>
-          <option value="Conforme">Conforme</option>
-          <option value="Partiellement conforme">Partiellement conforme</option>
-          <option value="Non conforme">Non conforme</option>
-          <option value="Non applicable">Non applicable</option>
-        </select>
-        <select id="histSuivi">
-          <option value="">Tous statuts suivi</option>
-          <option value="Ouvert">Ouvert</option>
-          <option value="En cours">En cours</option>
-          <option value="Clôturé">Clôturé</option>
-        </select>
-        <button type="button" id="btnResetHistFilters" class="btn btn-outline" title="Réinitialiser">
-          <i class="fas fa-undo"></i>
-        </button>
-      </div>
-
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Réf. FC / Date</th>
-              <th>Région & Site</th>
-              <th>Code & Point de contrôle</th>
-              <th>Évaluation</th>
-              <th>Constat & Recommandation</th>
-              <th>Statut Suivi</th>
-              <th>Contrôleur</th>
-              <th>Actions (PC)</th>
-            </tr>
-          </thead>
-          <tbody id="fcHistoryBody">
-            <tr>
-              <td colspan="8" style="text-align:center;padding:24px;color:#64748b;">
-                <i class="fas fa-spinner fa-spin"></i> Chargement des fiches de contrôle...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <footer class="app-footer">
-      Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027 — Barid Al-Maghrib • Direction Contrôle Générale
-    </footer>
-  </main>
-
-  <!-- Modal granulaire : Modification ou Suivi d'un Point de Contrôle spécifique -->
-  <div class="modal-backdrop" id="pcEditModal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="pcModalTitle">Modifier / Suivre le Point de Contrôle</h3>
-        <button type="button" id="btnClosePcModal" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;">&times;</button>
-      </div>
-      <form id="pcEditForm">
-        <input type="hidden" id="modalDocId" />
-        <input type="hidden" id="modalMode" />
-        <div class="modal-body">
-          <div class="form-field">
-            <label>Code PC</label>
-            <input type="text" id="mCodePc" readonly />
-          </div>
-          <div class="form-field">
-            <label>Site / Région</label>
-            <input type="text" id="mSiteRegion" readonly />
-          </div>
-          <div class="form-field span-2">
-            <label>Libellé du point de contrôle</label>
-            <input type="text" id="mLibellePc" readonly />
-          </div>
-          <div class="form-field">
-            <label for="mEvaluation">Évaluation *</label>
-            <select id="mEvaluation" required>
-              <option value="Conforme">Conforme</option>
-              <option value="Partiellement conforme">Partiellement conforme</option>
-              <option value="Non conforme">Non conforme</option>
-              <option value="Non applicable">Non applicable</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label for="mStatutSuivi">Statut de suivi *</label>
-            <select id="mStatutSuivi" required>
-              <option value="Ouvert">Ouvert</option>
-              <option value="En cours">En cours</option>
-              <option value="Clôturé">Clôturé</option>
-            </select>
-          </div>
-          <div class="form-field span-2">
-            <label for="mConstat">Constat détaillé</label>
-            <textarea id="mConstat" rows="2"></textarea>
-          </div>
-          <div class="form-field span-2">
-            <label for="mRecommandation">Recommandation / Action corrective</label>
-            <textarea id="mRecommandation" rows="2"></textarea>
-          </div>
-          <div class="form-field">
-            <label for="mEcheance">Échéance de mise en œuvre</label>
-            <input type="date" id="mEcheance" />
-          </div>
-          <div class="form-field">
-            <label for="mDateCloture">Date de clôture / suivi</label>
-            <input type="date" id="mDateCloture" />
-          </div>
-          <div class="form-field span-2">
-            <label for="mCommentaireSuivi">Note de suivi / Vérification de levée</label>
-            <input type="text" id="mCommentaireSuivi" placeholder="Pièces reçues, état d'avancement..." />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="btnCancelPcModal" class="btn btn-outline">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div class="status-toast" id="statusToast"></div>
-
-  <!-- Scripts Firebase Auth & Database Manager -->
-  <script type="module" src="fci-auth.js"></script>
-  <script type="module" src="fci-db-manager.js"></script>
-  <script type="module">
-    import { initFCISessionGuard, db } from "./fci-auth.js";
-    import {
-      syncFromFirestoreToLocal,
-      upsertFCIRecord,
-      deleteFCIRecord,
-      getLocalDatabase
-    } from "./fci-db-manager.js";
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    let currentUser = null;
-    let referentiel = [];
-    let planifications = [];
-    let fcRecords = [];
-    let saisieRows = [];
-
-    function showToast(msg) {
-      const t = document.getElementById("statusToast");
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3200);
-    }
-
-    function normalizeRegionCode(code) {
-      const c = String(code || "").trim().toUpperCase();
-      if (c === "OUJDA") return "OUJEDA";
-      if (c === "LAYOUNE") return "LAAYOUNE";
-      if (c === "CASABLANCA") return "CASA";
-      return c;
-    }
-
-    function generateFcNumber() {
-      const y = new Date().getFullYear();
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return `FC-${y}-${rand}`;
-    }
-
-    // 1. Initialisation de la session
-    currentUser = await initFCISessionGuard();
-    document.getElementById("fcControleur").value = `${currentUser.username} — ${currentUser.nom_complet}`;
-    document.getElementById("fcDateControle").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("fcFicheCodeBadge").textContent = generateFcNumber();
-
-    if (currentUser.role === "CONTROLEUR") {
-      const reg = normalizeRegionCode(currentUser.region_code);
-      document.getElementById("fcRegion").value = reg;
-      document.getElementById("fcRegion").disabled = true;
-      document.getElementById("histRegion").value = reg;
-      document.getElementById("histRegion").disabled = true;
-      document.getElementById("fcScopeBadge").textContent = `Périmètre : Mes fiches (${currentUser.username})`;
-    } else {
-      document.getElementById("fcScopeBadge").textContent = `Périmètre : Vue consolidée Division`;
-    }
-
-    // 2. Chargement du référentiel + synchronisation Firestore
-    async function initData() {
-      const localDb = await syncFromFirestoreToLocal(currentUser);
-      planifications = localDb.planifications || [];
-      fcRecords = (localDb.controles || []).sort((a, b) =>
-        String(b.date_controle || b.date_creation || "").localeCompare(String(a.date_controle || a.date_creation || ""))
-      );
-
-      // Charger référentiel depuis Firestore
-      const refSnap = await getDocs(collection(db, "fci_referentiel"));
-      referentiel = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-      populateMissionsDropdown();
-      populateDomainesDropdown();
-      populateHistSitesDropdown();
-      updateKPIs();
-      renderHistoryTable();
-    }
-
-    function populateMissionsDropdown() {
-      const sel = document.getElementById("fcMissionSelect");
-      const activePlans = planifications.filter(p => p.type_mission !== "Vérification Encaisses");
-      sel.innerHTML = '<option value="">-- Saisie libre / Hors planning --</option>' +
-        activePlans.map(p =>
-          `<option value="${p.firestore_id || p.record_uid}">${p.code_mission} | ${normalizeRegionCode(p.region)} - ${p.site} (${p.date_debut})</option>`
-        ).join("");
-    }
-
-    function populateDomainesDropdown() {
-      const sel = document.getElementById("fcDomaineFilter");
-      const domaines = [...new Set(referentiel.map(r => r.domaine).filter(Boolean))].sort();
-      sel.innerHTML = '<option value="">Tous les domaines</option>' +
-        domaines.map(d => `<option value="${d}">${d}</option>`).join("");
-    }
-
-    function populateHistSitesDropdown() {
-      const sel = document.getElementById("histSite");
-      const selectedReg = document.getElementById("histRegion").value;
-      const relevant = selectedReg
-        ? fcRecords.filter(r => normalizeRegionCode(r.region) === selectedReg)
-        : fcRecords;
-      const sites = [...new Set(relevant.map(r => r.site).filter(Boolean))].sort();
-      const prev = sel.value;
-      sel.innerHTML = '<option value="">Tous les sites</option>' +
-        sites.map(s => `<option value="${s}">${s}</option>`).join("");
-      if (sites.includes(prev)) sel.value = prev;
-    }
-
-    // Auto-remplissage depuis la mission sélectionnée
-    document.getElementById("fcMissionSelect").addEventListener("change", (e) => {
-      const m = planifications.find(p => (p.firestore_id || p.record_uid) === e.target.value);
-      if (!m) return;
-      if (currentUser.role !== "CONTROLEUR") {
-        document.getElementById("fcRegion").value = normalizeRegionCode(m.region);
-      }
-      document.getElementById("fcSite").value = m.site || "";
-      if (m.date_debut) document.getElementById("fcDateControle").value = m.date_debut;
-      if (m.type_mission === "Contrôle Thématique") {
-        document.getElementById("fcTypeControle").value = "Thématique";
-      } else {
-        document.getElementById("fcTypeControle").value = "Systématique";
-      }
-    });
-
-    // 3. Chargement des points de contrôle dans la grille de saisie
-    document.getElementById("btnAfficherPC").addEventListener("click", () => {
-      const typeCtrl = document.getElementById("fcTypeControle").value;
-      const dom = document.getElementById("fcDomaineFilter").value;
-
-      const matching = referentiel.filter(r => {
-        const matchType = !r.type || r.type === typeCtrl;
-        const matchDom = !dom || r.domaine === dom;
-        return matchType && matchDom;
-      });
-
-      if (matching.length === 0) {
-        showToast("Aucun point de contrôle trouvé pour ce filtre dans le référentiel.");
-        return;
-      }
-
-      saisieRows = matching.map(r => ({
-        code_pc: r.code,
-        domaine: r.domaine || "",
-        processus: r.processus || "",
-        libelle_pc: r.libelle || "",
-        risque: r.risque || "Moyen",
-        evaluation: "Conforme",
-        constat: "",
-        recommandation: "",
-        echeance: ""
-      }));
-
-      renderSaisieGrid();
-      showToast(`${saisieRows.length} point(s) de contrôle chargé(s).`);
-    });
-
-    document.getElementById("btnAddManualPC").addEventListener("click", () => {
-      const idx = saisieRows.length + 1;
-      saisieRows.push({
-        code_pc: `PC-MAN-${String(idx).padStart(2, "0")}`,
-        domaine: document.getElementById("fcDomaineFilter").value || "Contrôle Terrain",
-        processus: "Vérification complémentaire",
-        libelle_pc: "",
-        risque: "Moyen",
-        evaluation: "Conforme",
-        constat: "",
-        recommandation: "",
-        echeance: ""
-      });
-      renderSaisieGrid();
-    });
-
-    document.getElementById("btnViderSaisie").addEventListener("click", () => {
-      saisieRows = [];
-      renderSaisieGrid();
-    });
-
-    function renderSaisieGrid() {
-      const tbody = document.getElementById("fcSaisieBody");
-      if (saisieRows.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="text-align:center;padding:20px;color:#64748b;">
-              Grille vide. Cliquez sur <strong>« Afficher PC du référentiel »</strong> ou ajoutez un PC manuel.
-            </td>
-          </tr>`;
-        return;
-      }
-
-      tbody.innerHTML = saisieRows.map((row, idx) => `
-        <tr>
-          <td><input type="text" value="${row.code_pc}" onchange="window.updateSaisieField(${idx}, 'code_pc', this.value)" /></td>
-          <td>
-            <div style="font-weight:600;">${row.domaine}</div>
-            <div style="font-size:11px;color:#64748b;">${row.processus}</div>
-          </td>
-          <td>
-            <textarea rows="2" onchange="window.updateSaisieField(${idx}, 'libelle_pc', this.value)">${row.libelle_pc}</textarea>
-          </td>
-          <td>
-            <select onchange="window.updateSaisieField(${idx}, 'evaluation', this.value)">
-              <option value="Conforme" ${row.evaluation === "Conforme" ? "selected" : ""}>Conforme</option>
-              <option value="Partiellement conforme" ${row.evaluation === "Partiellement conforme" ? "selected" : ""}>Partiellement conforme</option>
-              <option value="Non conforme" ${row.evaluation === "Non conforme" ? "selected" : ""}>Non conforme</option>
-              <option value="Non applicable" ${row.evaluation === "Non applicable" ? "selected" : ""}>Non applicable</option>
-            </select>
-          </td>
-          <td>
-            <textarea rows="2" placeholder="Observations / constats..." onchange="window.updateSaisieField(${idx}, 'constat', this.value)">${row.constat}</textarea>
-          </td>
-          <td>
-            <textarea rows="2" placeholder="Action corrective..." onchange="window.updateSaisieField(${idx}, 'recommandation', this.value)">${row.recommandation}</textarea>
-          </td>
-          <td>
-            <input type="date" value="${row.echeance}" onchange="window.updateSaisieField(${idx}, 'echeance', this.value)" />
-          </td>
-          <td style="text-align:center;">
-            <button type="button" class="btn btn-danger btn-sm" onclick="window.removeSaisieRow(${idx})" title="Retirer">
-              <i class="fas fa-times"></i>
-            </button>
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    window.updateSaisieField = (idx, field, val) => {
-      if (saisieRows[idx]) saisieRows[idx][field] = val;
-    };
-
-    window.removeSaisieRow = (idx) => {
-      saisieRows.splice(idx, 1);
-      renderSaisieGrid();
-    };
-
-    // 4. Archivage en BDD Firestore (un enregistrement granulaire par Point de Contrôle)
-    document.getElementById("btnArchiverFC").addEventListener("click", async () => {
-      const region = normalizeRegionCode(document.getElementById("fcRegion").value);
-      const site = document.getElementById("fcSite").value.trim();
-      const dateCtrl = document.getElementById("fcDateControle").value;
-      const typeCtrl = document.getElementById("fcTypeControle").value;
-      const missionSel = document.getElementById("fcMissionSelect");
-      const missionLabel = missionSel.value ? missionSel.options[missionSel.selectedIndex].text.split("|")[0].trim() : "HORS-PLANNING";
-      const numeroFc = document.getElementById("fcFicheCodeBadge").textContent;
-
-      if (!region || !site || !dateCtrl) {
-        showToast("Veuillez renseigner la région, le site et la date du contrôle.");
-        return;
-      }
-
-      if (saisieRows.length === 0) {
-        showToast("Aucun point de contrôle dans la grille à enregistrer.");
-        return;
-      }
-
-      const btn = document.getElementById("btnArchiverFC");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archivage en cours...';
-
-      try {
-        for (const row of saisieRows) {
-          const isConform = row.evaluation === "Conforme" || row.evaluation === "Non applicable";
-          const recordPayload = {
-            source_module: "FC",
-            type_fiche: "FC",
-            numero_fiche: numeroFc,
-            code_mission: missionLabel,
-            region,
-            site,
-            date_controle: dateCtrl,
-            type_controle: typeCtrl,
-            domaine: row.domaine,
-            processus: row.processus,
-            code_pc: row.code_pc,
-            libelle_pc: row.libelle_pc,
-            risque: row.risque,
-            evaluation: row.evaluation,
-            constat: row.constat,
-            recommandation: row.recommandation,
-            echeance: row.echeance,
-            statut_suivi: isConform ? "Clôturé" : "Ouvert",
-            commentaire_suivi: ""
-          };
-
-          const saved = await upsertFCIRecord(recordPayload, "FC");
-          fcRecords.unshift(saved);
+        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
+        const userBox = document.getElementById("fci-auth-sidebar-box");
+        const slot = document.getElementById("fci-sidebar-user-slot");
+        if (userBox && slot) {
+            slot.appendChild(userBox);
         }
 
-        saisieRows = [];
-        renderSaisieGrid();
-        document.getElementById("fcFicheCodeBadge").textContent = generateFcNumber();
-        populateHistSitesDropdown();
-        updateKPIs();
-        renderHistoryTable();
-        showToast(`Fiche ${numeroFc} archivée avec succès dans Firestore.`);
-      } catch (err) {
-        showToast("Erreur lors de l'enregistrement : " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Enregistrer & Archiver la FC en BDD';
-      }
-    });
+        const CENTRES_PAR_REGION = {
+            "MARRAKECH": [
+                "MARRAKECH CTD",
+                "MARRAKECH SYBA CD",
+                "AGENCE MESSAGERIE GUELIZ MARRAKECH",
+                "ESSAOUIRA CCC",
+                "SAFI CD",
+                "SAFI CM",
+                "EL KELAA DES SERAGHNAS CCC",
+                "OUARZAZATE CCC",
+                "TINEGIR CLD",
+                "BENGUERIR CLD",
+                "EL YOUSSOUFIA CLD",
+                "SERVICE OPERATION REGIONAL MARRAKECH",
+                "SERVICE SUPPORT REGIONAL MARRAKECH"
+            ],
+            "AGADIR": [
+                "AGADIR CTD",
+                "AGADIR CM",
+                "AGADIR AM",
+                "INEZEGANE CD",
+                "AIT MELLOUL CD",
+                "OULED TAIMA CLD",
+                "TAROUDANT CCC",
+                "TIZNIT CCC",
+                "GUELMIM CCC",
+                "TANTAN CLD",
+                "SERVICE OPERATION REGIONAL AGADIR",
+                "SERVICE SUPPORT REGIONAL AGADIR"
+            ],
+            "CASA": [
+                "PNC",
+                "CNA",
+                "CASA COMPLEXE MOHAMMED 5 CD",
+                "CASA HAY HASSANI CD",
+                "CASA HAY MESSALA CD",
+                "CASA HAY MOHAMMADI CD",
+                "CASA BONDANG CTD",
+                "CASA EL AZZHAR CD",
+                "CASA SIDI MOUMEN CD",
+                "CASA SIDI OUTHMANE CD",
+                "BOUSSKOURA CD",
+                "AIN HARROUDA CLD",
+                "TIT MELLILCLD",
+                "AGENCE MESSAGERIE AVENUE DES FAR",
+                "CPX",
+                "CASA SOUKRATE AM",
+                "AIN SEBAA PLAGE AM",
+                "MOHAMMADIA CCC",
+                "MOHAMMADIA AM",
+                "BEN SLIMANE CLD",
+                "BOUZNIKA CLD",
+                "DAR BOUAZZA CLD",
+                "AGENCE COURRIER CASA BONDANG",
+                "CASA BONDANG CM",
+                "SERVICE OPERATION REGIONAL CASA",
+                "SERVICE SUPPORT REGIONAL CASA"
+            ],
+            "SETTAT": [
+                "BENI MELLAL CCC",
+                "BERRECHID CCC",
+                "LHOURIBGA CCC",
+                "SETTAT CCC",
+                "SETTAT CD",
+                "EL JADIDA CM",
+                "EL JADIDA CD",
+                "DEROUA OULED ZIANE CLD",
+                "OUED ZEM CLD",
+                "FKIH BEN SALEH CLD",
+                "SOUK SEBT OULED NEMA CLD",
+                "KASBAT TADLA CLD",
+                "SERVICE OPERATION REGIONAL SETTAT",
+                "SERVICE SUPPORT REGIONAL SETTAT"
+            ],
+            "RABAT": [
+                "RABAT CM",
+                "RABAT CTD",
+                "RABAT IRRFANE",
+                "TEMARA CD",
+                "TEMARA AM",
+                "KENITRA CD",
+                "KENITRA AM",
+                "KENITRA CM",
+                "SALE AM",
+                "SALE CD",
+                "SALE EL JADIDA CD",
+                "SALE EL JADIDA CM",
+                "SOUK LARBAA DU GHARB CLD",
+                "SIDI SLIMANE CLD",
+                "OUAZZANE CLD",
+                "SIDI KACEM CD",
+                "TIFFELT CLD",
+                "KHEMISSAT CD",
+                "SERVICE OPERATION REGIONAL RABAT",
+                "SERVICE SUPPORT REGIONAL RABAT"
+            ],
+            "TANGER": [
+                "TANGER AM",
+                "TANGER CM",
+                "TANGER CD",
+                "TETOUAN CD",
+                "TETOUAN AM",
+                "TETOUAN CCC",
+                "KSAR LAKBIR CD",
+                "ARACHE CCC",
+                "SERVICE OPERATION REGIONAL TANGER",
+                "SERVICE SUPPORT REGIONAL TANGER"
+            ],
+            "LAAYOUNE": [
+                "DAKHLA AM",
+                "DAKHLA CLD",
+                "ESSEMARA CLD",
+                "LAAYOUNE CCC",
+                "LAAYOUNE AM",
+                "LAAYOUNE AM PORT",
+                "BOUJDOUR AM",
+                "GUERGURATE AM",
+                "SERVICE OPERATION REGIONAL LAAYOUNE",
+                "SERVICE SUPPORT REGIONAL LAAYOUNE"
+            ],
+            "FES": [
+                "FES AM",
+                "FES CM",
+                "FES CTD",
+                "EL HOUCEIMA CLD",
+                "SEFFROU CLD",
+                "TAZA CLD",
+                "TAZA CM",
+                "GUERCIF CLD",
+                "SERVICE OPERATION REGIONAL FES",
+                "SERVICE SUPPORT REGIONAL FES"
+            ],
+            "MEKNES": [
+                "MEKNES CD",
+                "MEKNES AM",
+                "MEKNES CM",
+                "AZEROU CLD",
+                "MIDELT CLD",
+                "ERRACHIDIA CD",
+                "SERVICE OPERATION REGIONAL MEKNES",
+                "SERVICE SUPPORT REGIONAL MEKNES"
+            ],
+            "OUEJDA": [
+                "OUEJDA CD",
+                "OUEJDA AM",
+                "OUEJDA CM",
+                "BERKANE CD",
+                "BERKANE AM",
+                "NADOR CD",
+                "NADOR AM",
+                "NADOR CM",
+                "TAOURIRTE CLD",
+                "SERVICE OPERATION REGIONAL OUJEDA",
+                "SERVICE SUPPORT REGIONAL OUJEDA"
+            ]
+        };
 
-    // 5. Modification & Suivi granulaire par Point de Contrôle
-    const pcModal = document.getElementById("pcEditModal");
+        const LISTE_REGIONS = Object.keys(CENTRES_PAR_REGION);
+        let missionData = null;
 
-    window.openPcModal = (docId, mode) => {
-      const rec = fcRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!rec) return;
+        function lireDBSecurisee() {
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [], bdd: [] };
+            try {
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
+                    const loaded = FCIDatabase.getDB();
+                    if (loaded && typeof loaded === 'object') db = loaded;
+                } else {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                }
+            } catch (e) {
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                } catch (err) {}
+            }
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            if (!Array.isArray(db.bdd)) db.bdd = [];
+            return db;
+        }
 
-      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez modifier que vos propres contrôles.");
-        return;
-      }
+        function sauvegarderDBSecurisee(db) {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
+                FCIDatabase.saveDB(db);
+            } else {
+                localStorage.setItem('fci_database', JSON.stringify(db));
+            }
+        }
 
-      document.getElementById("modalDocId").value = docId;
-      document.getElementById("modalMode").value = mode;
-      document.getElementById("pcModalTitle").textContent =
-        mode === "SUIVI"
-          ? `Suivi de recommandation — ${rec.code_pc} (${rec.numero_fiche})`
-          : `Modifier le Point de Contrôle — ${rec.code_pc}`;
+        function normaliserRegion(val) {
+            let reg = String(val || '').toUpperCase().trim();
+            if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+            if (reg === 'CASABLANCA') reg = 'CASA';
+            return reg;
+        }
 
-      document.getElementById("mCodePc").value = rec.code_pc || "";
-      document.getElementById("mSiteRegion").value = `${normalizeRegionCode(rec.region)} • ${rec.site}`;
-      document.getElementById("mLibellePc").value = rec.libelle_pc || "";
-      document.getElementById("mEvaluation").value = rec.evaluation || "Conforme";
-      document.getElementById("mStatutSuivi").value = rec.statut_suivi || "Ouvert";
-      document.getElementById("mConstat").value = rec.constat || "";
-      document.getElementById("mRecommandation").value = rec.recommandation || "";
-      document.getElementById("mEcheance").value = rec.echeance || "";
-      document.getElementById("mDateCloture").value = rec.date_cloture || "";
-      document.getElementById("mCommentaireSuivi").value = rec.commentaire_suivi || "";
+        function getConstatDateFR(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return formatDateToFR(c.date || c.dateControle || c.date_controle || m.date || m.dateControle || '');
+        }
 
-      pcModal.classList.add("open");
-    };
+        function getConstatRegion(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return normaliserRegion(c.region || m.region || '');
+        }
 
-    document.getElementById("btnClosePcModal").addEventListener("click", () => pcModal.classList.remove("open"));
-    document.getElementById("btnCancelPcModal").addEventListener("click", () => pcModal.classList.remove("open"));
+        function getConstatSite(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return String(c.entite || c.site || c.centre || m.entite || '').trim();
+        }
 
-    document.getElementById("pcEditForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const docId = document.getElementById("modalDocId").value;
-      const existing = fcRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!existing) return;
+        function getConstatProcessus(c) {
+            if (!c) return '';
+            return String(c.processus || c.Processus || '').trim();
+        }
 
-      const updatedPayload = {
-        ...existing,
-        evaluation: document.getElementById("mEvaluation").value,
-        statut_suivi: document.getElementById("mStatutSuivi").value,
-        constat: document.getElementById("mConstat").value.trim(),
-        recommandation: document.getElementById("mRecommandation").value.trim(),
-        echeance: document.getElementById("mEcheance").value,
-        date_cloture: document.getElementById("mDateCloture").value,
-        commentaire_suivi: document.getElementById("mCommentaireSuivi").value.trim()
-      };
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined) return item[k];
+            }
+            return '';
+        }
 
-      const saved = await upsertFCIRecord(updatedPayload, "FC");
-      const idx = fcRecords.findIndex(r => (r.firestore_id || r.record_uid) === docId);
-      if (idx >= 0) fcRecords[idx] = saved;
+        function formatDateToFR(val) {
+            if (!val || val === '-' || val === '--') return '';
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('-')) {
+                const parts = str.split('-');
+                if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+            }
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+            }
+            return str;
+        }
 
-      pcModal.classList.remove("open");
-      updateKPIs();
-      renderHistoryTable();
-      showToast(`Point de contrôle ${saved.code_pc} mis à jour.`);
-    });
+        function formatDateToISO(val) {
+            if (!val || val === '-' || val === '--') return '';
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return str;
+        }
 
-    window.deleteFcPoint = async (docId, codePc) => {
-      const rec = fcRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!rec) return;
+        function getTodayISO() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
 
-      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez supprimer que vos propres enregistrements.");
-        return;
-      }
+        function libelleStatut(code) {
+            if (code === 'CLOTURE') return '🟢 Clôturé';
+            if (code === 'NON_CLOTURE') return '🔴 Non clôturé';
+            return '🟡 En cours';
+        }
 
-      await deleteFCIRecord(docId);
-      fcRecords = fcRecords.filter(r => (r.firestore_id || r.record_uid) !== docId);
-      populateHistSitesDropdown();
-      updateKPIs();
-      renderHistoryTable();
-      showToast(`Point ${codePc} supprimé.`);
-    };
+        function getSnapshotPointFC(item) {
+            const ev = item.eval || {};
+            return JSON.stringify({
+                date: formatDateToISO(item._bddDateControle || (missionData && missionData.metadata ? missionData.metadata.dateControle : '')),
+                statut: ev.statutConstat || 'EN_COURS',
+                pop: Number(ev.population) || 0,
+                ech: Number(ev.echantillon) || 0,
+                ok: Number(ev.nombreOk) || 0,
+                ko: Number(ev.nombreKo) || 0,
+                constat: String(ev.constat || '').trim(),
+                reco: String(ev.recommandation || '').trim(),
+                avis: String(ev.avisResponsable || '').trim()
+            });
+        }
 
-    // 6. KPIs & Rendu du tableau historique
-    function updateKPIs() {
-      document.getElementById("kpiFcTotal").textContent = fcRecords.length;
-      document.getElementById("kpiFcConforme").textContent = fcRecords.filter(r => r.evaluation === "Conforme").length;
-      document.getElementById("kpiFcNonConforme").textContent = fcRecords.filter(r =>
-        r.evaluation === "Non conforme" || r.evaluation === "Partiellement conforme"
-      ).length;
-      document.getElementById("kpiFcOuvert").textContent = fcRecords.filter(r =>
-        r.statut_suivi === "Ouvert" || r.statut_suivi === "En cours"
-      ).length;
-    }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                remplirFiltresBDD();
+            } else if (e.key === 'fci_fiche_controle_active') {
+                chargerDonneesMission();
+            }
+        });
 
-    function getEvalBadge(ev) {
-      if (ev === "Conforme") return '<span class="badge eval-conforme">Conforme</span>';
-      if (ev === "Partiellement conforme") return '<span class="badge eval-partiel">Partiel</span>';
-      if (ev === "Non conforme") return '<span class="badge eval-nonconforme">Non conforme</span>';
-      return '<span class="badge eval-na">N/A</span>';
-    }
+        window.reinitialiserFiltresBDD = function() {
+            const selDate = document.getElementById('filterBddDate');
+            const selReg = document.getElementById('filterBddRegion');
+            const selSite = document.getElementById('filterBddSite');
+            const selProc = document.getElementById('filterBddProcessus');
+            if (selDate) selDate.value = '';
+            if (selReg) selReg.value = '';
+            if (selSite) selSite.value = '';
+            if (selProc) selProc.value = '';
+            remplirFiltresBDD();
+            if (!missionData) {
+                document.getElementById('searchStatus').innerText = '';
+            }
+        };
 
-    function getSuiviBadge(st) {
-      if (st === "Clôturé") return '<span class="badge suivi-cloture">Clôturé</span>';
-      if (st === "En cours") return '<span class="badge suivi-encours">En cours</span>';
-      return '<span class="badge suivi-ouvert">Ouvert</span>';
-    }
+        function getAccessibleConstatsFC(db) {
+            const all = db.constatsControle || [];
+            if (currentUser && currentUser.role === "CONTROLEUR") {
+                return all.filter(c => !c.cree_par_id || c.cree_par_id === currentUser.username);
+            }
+            return all;
+        }
 
-    function renderHistoryTable() {
-      const q = document.getElementById("histSearch").value.trim().toLowerCase();
-      const fReg = document.getElementById("histRegion").value;
-      const fSite = document.getElementById("histSite").value;
-      const fEval = document.getElementById("histEval").value;
-      const fSuivi = document.getElementById("histSuivi").value;
+        function remplirFiltresBDD() {
+            const db = lireDBSecurisee();
+            const constats = getAccessibleConstatsFC(db);
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-      const filtered = fcRecords.filter(r => {
-        const matchText = !q ||
-          String(r.numero_fiche || "").toLowerCase().includes(q) ||
-          String(r.code_mission || "").toLowerCase().includes(q) ||
-          String(r.site || "").toLowerCase().includes(q) ||
-          String(r.code_pc || "").toLowerCase().includes(q) ||
-          String(r.libelle_pc || "").toLowerCase().includes(q) ||
-          String(r.constat || "").toLowerCase().includes(q);
-        const matchReg = !fReg || normalizeRegionCode(r.region) === fReg;
-        const matchSite = !fSite || r.site === fSite;
-        const matchEval = !fEval || r.evaluation === fEval;
-        const matchSuivi = !fSuivi || r.statut_suivi === fSuivi;
-        return matchText && matchReg && matchSite && matchEval && matchSuivi;
-      });
+            const badgeCount = document.getElementById('bddCountInfo');
+            if (badgeCount) {
+                badgeCount.innerText = `${constats.length} constat(s) FC en BDD`;
+            }
 
-      const tbody = document.getElementById("fcHistoryBody");
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="text-align:center;padding:24px;color:#64748b;">
-              Aucun point de contrôle enregistré ne correspond aux critères.
-            </td>
-          </tr>`;
-        return;
-      }
+            const selDate = document.getElementById('filterBddDate');
+            const selReg = document.getElementById('filterBddRegion');
+            const selSite = document.getElementById('filterBddSite');
+            const selProc = document.getElementById('filterBddProcessus');
+            if (!selDate || !selReg || !selSite || !selProc) return;
 
-      tbody.innerHTML = filtered.map(r => {
-        const docId = r.firestore_id || r.record_uid;
-        const canEdit = currentUser.role === "ADMIN" || r.cree_par_id === currentUser.username;
-        return `
-          <tr>
-            <td style="white-space:nowrap;">
-              <strong>${r.numero_fiche || "-"}</strong>
-              <div style="font-size:11px;color:#64748b;">${r.date_controle || "-"}</div>
-              <div style="font-size:10.5px;color:#003366;">${r.code_mission || ""}</div>
-            </td>
-            <td>
-              <strong>${normalizeRegionCode(r.region)}</strong>
-              <div style="font-size:11.5px;">${r.site || "-"}</div>
-            </td>
-            <td>
-              <strong>${r.code_pc || "-"}</strong>
-              <div style="font-size:11.5px;color:#334155;">${r.libelle_pc || "-"}</div>
-            </td>
-            <td>${getEvalBadge(r.evaluation)}</td>
-            <td>
-              ${r.constat ? `<div><strong>Constat :</strong> ${r.constat}</div>` : ""}
-              ${r.recommandation ? `<div style="color:#003366;margin-top:2px;"><strong>Reco :</strong> ${r.recommandation}</div>` : ""}
-              ${r.echeance ? `<div style="font-size:11px;color:#64748b;">Échéance : ${r.echeance}</div>` : ""}
-            </td>
-            <td>${getSuiviBadge(r.statut_suivi)}</td>
-            <td style="white-space:nowrap;">
-              <strong>${r.cree_par_id || "-"}</strong>
-              <div style="font-size:11px;color:#64748b;">${r.cree_par_nom || ""}</div>
-            </td>
-            <td style="white-space:nowrap;">
-              ${canEdit ? `
-                <button type="button" class="btn btn-primary btn-sm" onclick="window.openPcModal('${docId}', 'EDIT')" title="Modifier ce point de contrôle">
-                  <i class="fas fa-edit"></i> Modifier
-                </button>
-                <button type="button" class="btn btn-warning btn-sm" onclick="window.openPcModal('${docId}', 'SUIVI')" title="Suivi de recommandation">
-                  <i class="fas fa-tasks"></i> Suivi
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteFcPoint('${docId}', '${String(r.code_pc || "").replace(/'/g, "\\'")}')" title="Supprimer ce PC">
-                  <i class="fas fa-trash"></i>
-                </button>
-              ` : `<span style="font-size:11px;color:#94a3b8;"><i class="fas fa-eye"></i> Consultation</span>`}
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
+            let valDate = selDate.value;
+            let valReg = selReg.value;
+            let valSite = selSite.value;
+            let valProc = selProc.value;
 
-    // 7. Export Excel
-    document.getElementById("btnExportFCExcel").addEventListener("click", () => {
-      const rows = fcRecords.map(r => ({
-        "N° Fiche FC": r.numero_fiche,
-        "N° Mission": r.code_mission,
-        "Date Contrôle": r.date_controle,
-        "Région": normalizeRegionCode(r.region),
-        "Site / Centre": r.site,
-        "Type Contrôle": r.type_controle,
-        "Domaine": r.domaine,
-        "Code PC": r.code_pc,
-        "Point de contrôle": r.libelle_pc,
-        "Évaluation": r.evaluation,
-        "Constat": r.constat || "",
-        "Recommandation": r.recommandation || "",
-        "Échéance": r.echeance || "",
-        "Statut Suivi": r.statut_suivi || "",
-        "Contrôleur": `${r.cree_par_id || ""} - ${r.cree_par_nom || ""}`
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Fiches_Controle_FC");
-      XLSX.writeFile(wb, `Fiches_Controle_FC_BaridAlMaghrib_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    });
+            const dates = [...new Set(
+                constats
+                    .filter(c =>
+                        (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                        (!valProc || getConstatProcessus(c) === valProc)
+                    )
+                    .map(c => getConstatDateFR(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
 
-    // Écouteurs de filtres en cascade
-    document.getElementById("histSearch").addEventListener("input", renderHistoryTable);
-    document.getElementById("histRegion").addEventListener("change", () => {
-      populateHistSitesDropdown();
-      renderHistoryTable();
-    });
-    document.getElementById("histSite").addEventListener("change", renderHistoryTable);
-    document.getElementById("histEval").addEventListener("change", renderHistoryTable);
-    document.getElementById("histSuivi").addEventListener("change", renderHistoryTable);
-    document.getElementById("btnResetHistFilters").addEventListener("click", () => {
-      document.getElementById("histSearch").value = "";
-      if (currentUser.role !== "CONTROLEUR") {
-        document.getElementById("histRegion").value = "";
-      }
-      populateHistSitesDropdown();
-      document.getElementById("histSite").value = "";
-      document.getElementById("histEval").value = "";
-      document.getElementById("histSuivi").value = "";
-      renderHistoryTable();
-    });
+            if (valDate && !dates.includes(valDate)) valDate = '';
 
-    await initData();
-  </script>
+            const regions = [...new Set(
+                constats
+                    .filter(c =>
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                        (!valProc || getConstatProcessus(c) === valProc)
+                    )
+                    .map(c => getConstatRegion(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valReg && !regions.includes(valReg)) valReg = '';
+
+            const sites = [...new Set(
+                constats
+                    .filter(c =>
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                        (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
+                        (!valProc || getConstatProcessus(c) === valProc)
+                    )
+                    .map(c => getConstatSite(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valSite && !sites.includes(valSite)) valSite = '';
+
+            const procs = [...new Set(
+                constats
+                    .filter(c =>
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                        (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite)
+                    )
+                    .map(c => getConstatProcessus(c))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valProc && !procs.includes(valProc)) valProc = '';
+
+            selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
+                dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
+
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+
+            selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
+                sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
+
+            selProc.innerHTML = `<option value="">-- Tous les processus (${procs.length}) --</option>` +
+                procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
+
+            selDate.classList.toggle('filter-active', Boolean(valDate));
+            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selSite.classList.toggle('filter-active', Boolean(valSite));
+            selProc.classList.toggle('filter-active', Boolean(valProc));
+
+            const statusEl = document.getElementById('searchStatus');
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
+                const nbCorrespondants = constats.filter(c =>
+                    (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                    (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
+                    (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                    (!valProc || getConstatProcessus(c) === valProc)
+                ).length;
+                statusEl.innerText = `${nbCorrespondants} constat(s) correspondant(s) en BDD`;
+            }
+        }
+
+        window.onFilterBDDChange = function(source = '') {
+            if (source === 'DATE') {
+                document.getElementById('filterBddRegion').value = '';
+                document.getElementById('filterBddSite').value = '';
+                document.getElementById('filterBddProcessus').value = '';
+            } else if (source === 'REGION') {
+                document.getElementById('filterBddSite').value = '';
+                document.getElementById('filterBddProcessus').value = '';
+            } else if (source === 'SITE') {
+                document.getElementById('filterBddProcessus').value = '';
+            }
+            remplirFiltresBDD();
+        };
+
+        function chargerDonneesMission() {
+            const dataRaw = localStorage.getItem('fci_fiche_controle_active');
+            if (!dataRaw) { afficherEtatVide(); return; }
+
+            missionData = JSON.parse(dataRaw);
+            if (!missionData.pointsControle || missionData.pointsControle.length === 0) { afficherEtatVide(); return; }
+            if (!missionData.metadata) missionData.metadata = {};
+
+            if (currentUser && currentUser.role === "CONTROLEUR") {
+                missionData.metadata.region = normaliserRegion(currentUser.region_code);
+                if (!missionData.metadata.controleurs) {
+                    missionData.metadata.controleurs = currentUser.nom || currentUser.username || "";
+                }
+            } else if (missionData.metadata.region) {
+                missionData.metadata.region = normaliserRegion(missionData.metadata.region);
+            }
+
+            missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
+            missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
+            missionData.metadata.periodeFin = formatDateToFR(missionData.metadata.periodeFin || missionData.metadata.dateFinControle);
+
+            missionData.pointsControle.forEach((item) => {
+                if (!item._bddDateControle) {
+                    item._bddDateControle = missionData.metadata.dateControle;
+                }
+                if (!item.eval) {
+                    item.eval = {
+                        population: 0,
+                        echantillon: 0,
+                        nombreOk: 0,
+                        nombreKo: 0,
+                        tauxConformite: "0.00",
+                        statutConstat: 'EN_COURS',
+                        constat: '',
+                        recommandation: '',
+                        avisResponsable: ''
+                    };
+                }
+            });
+
+            renderPage();
+        }
+
+        function renderSaisieBar() {
+            const barContainer = document.getElementById('saisie-bar-container');
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                barContainer.innerHTML = '';
+                return;
+            }
+
+            const meta = missionData.metadata || {};
+            const dateCtrlFR = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+            const dateCtrlISO = formatDateToISO(dateCtrlFR);
+            const dateDebutISO = formatDateToISO(meta.periodeDebut);
+            const dateFinISO = formatDateToISO(meta.periodeFin);
+
+            const isControleur = currentUser && currentUser.role === "CONTROLEUR";
+            const regionActuelle = meta.region || '';
+            const regionOptionsHtml = LISTE_REGIONS.map(r =>
+                `<option value="${r}" ${regionActuelle === r ? 'selected' : ''}>${r}</option>`
+            ).join('');
+
+            const centresDisponibles = CENTRES_PAR_REGION[regionActuelle] || [];
+            let centreOptionsHtml = '';
+            if (!regionActuelle) {
+                centreOptionsHtml = `<option value="">-- Région requise --</option>`;
+            } else {
+                centreOptionsHtml = `<option value="">-- Sélectionner centre --</option>`;
+                centresDisponibles.forEach(c => {
+                    centreOptionsHtml += `<option value="${c}" ${meta.entite === c ? 'selected' : ''}>${c}</option>`;
+                });
+                if (meta.entite && !centresDisponibles.includes(meta.entite)) {
+                    centreOptionsHtml += `<option value="${meta.entite}" selected>${meta.entite}</option>`;
+                }
+            }
+
+            const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
+
+            barContainer.innerHTML = `
+                <div class="saisie-line-card">
+                    <div class="section-line-label">
+                        <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
+                        <span style="margin-left:auto;">${badgeDateInfo}</span>
+                    </div>
+                    <div class="single-row-7">
+                        <div class="meta-item">
+                            <span class="label">Région *</span>
+                            <select class="input-date-ctrl" ${isControleur ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                                <option value="">-- Région --</option>
+                                ${regionOptionsHtml}
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Centre *</span>
+                            <select class="input-date-ctrl" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
+                                ${centreOptionsHtml}
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date contrôle *</span>
+                            <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date début contrôle</span>
+                            <input type="date" class="input-date-ctrl" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date fin contrôle</span>
+                            <input type="date" class="input-date-ctrl" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Contrôleur</span>
+                            <input type="text" class="input-date-ctrl" value="${meta.controleurs || ''}" oninput="mettreAJourMetadata('controleurs', this.value)" placeholder="Contrôleur">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Type de contrôle</span>
+                            <select class="input-date-ctrl" onchange="mettreAJourMetadata('typeControle', this.value)">
+                                <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
+                                <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function afficherEtatVide() {
+            document.getElementById('saisie-bar-container').innerHTML = '';
+            document.getElementById('content-area').innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-folder-open" style="font-size:3rem; color:var(--text-muted); margin-bottom:15px;"></i>
+                    <h3>Aucune mission active chargée</h3>
+                    <p>Veuillez lancer une mission depuis l'onglet Planification ou charger une fiche depuis l'espace Modification / Suivi BDD ci-dessus.</p>
+                    <br><a href="Planification.html" class="btn btn-primary"><i class="fa-solid fa-arrow-left"></i> Aller à la Planification</a>
+                </div>
+            `;
+        }
+
+        function renderPage() {
+            const contentArea = document.getElementById('content-area');
+            const points = missionData.pointsControle || [];
+
+            if (points.length === 0) { afficherEtatVide(); return; }
+
+            renderSaisieBar();
+
+            const parProcessus = {};
+            points.forEach(p => {
+                const proc = getItemVal(p, ['Processus']) || "Processus Non Spécifié";
+                if (!parProcessus[proc]) parProcessus[proc] = [];
+                parProcessus[proc].push(p);
+            });
+
+            let totalTaux = 0, nbPointsEvalues = 0;
+            let countCloture = 0, countNonCloture = 0, countEnCours = 0;
+
+            points.forEach(p => {
+                if (parseFloat(p.eval.echantillon) > 0) { totalTaux += parseFloat(p.eval.tauxConformite || 0); nbPointsEvalues++; }
+                if (p.eval.statutConstat === 'CLOTURE') countCloture++;
+                else if (p.eval.statutConstat === 'NON_CLOTURE') countNonCloture++;
+                else countEnCours++;
+            });
+
+            const tauxConformiteMoyen = nbPointsEvalues > 0 ? (totalTaux / nbPointsEvalues).toFixed(2) : "0.00";
+            const globalRate = parseFloat(tauxConformiteMoyen);
+            const dateCtrlCourante = formatDateToFR(missionData.metadata?.dateControle) || formatDateToFR(getTodayISO());
+
+            let html = `
+                <div class="kpi-grid">
+                    <div class="kpi-card" style="border-left:4px solid var(--primary);"><div><h3>${tauxConformiteMoyen} %</h3><p style="font-size:0.8rem; color:var(--text-muted);">TC Moyen Centre</p></div></div>
+                    <div class="kpi-card"><div><h3>${countCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Clôturés</p></div></div>
+                    <div class="kpi-card"><div><h3>${countNonCloture}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats Non Clôturés</p></div></div>
+                    <div class="kpi-card"><div><h3>${countEnCours}</h3><p style="font-size:0.8rem; color:var(--text-muted);">Constats en cours</p></div></div>
+                </div>
+            `;
+
+            for (const [proc, items] of Object.entries(parProcessus)) {
+                html += `<div class="process-group"><div class="process-header"><span><i class="fa-solid fa-diagram-project"></i> Processus : ${proc}</span><span style="background:var(--primary); color:white; padding:4px 10px; border-radius:12px; font-size:0.75rem;">${items.length} Point(s)</span></div>`;
+                items.forEach((item) => {
+                    const idx = points.indexOf(item);
+                    const ev = item.eval;
+                    const dateLigneFR = formatDateToFR(item._bddDateControle || dateCtrlCourante);
+                    const dateLigneISO = formatDateToISO(dateLigneFR);
+                    const estModifieDepuisChargement = Boolean(item._initialSnapshot && item._initialSnapshot !== getSnapshotPointFC(item));
+
+                    const badgeEtatLigne = estModifieDepuisChargement
+                        ? `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`
+                        : (item._bddIdConstat ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>` : '');
+
+                    html += `
+                        <div class="control-item">
+                            <div style="margin-bottom:10px;">
+                                <div class="imported-meta-strip">
+                                    <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateLigneFR}</span>
+                                    <span class="imported-chip">Pop : <strong>${ev.population}</strong></span>
+                                    <span class="imported-chip">Ech : <strong>${ev.echantillon}</strong></span>
+                                    <span class="imported-chip">OK : <strong style="color:var(--success);">${ev.nombreOk}</strong></span>
+                                    <span class="imported-chip">KO : <strong style="color:var(--danger);">${ev.nombreKo}</strong></span>
+                                    <span class="imported-chip">TC : <strong>${ev.tauxConformite} %</strong></span>
+                                    <span class="imported-chip">Statut : <strong>${libelleStatut(ev.statutConstat)}</strong></span>
+                                    ${badgeEtatLigne}
+                                </div>
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <span style="font-size:0.78rem; background:#FEF3C7; color:#D97706; padding:3px 8px; border-radius:4px; font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Risque : ${getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])}</span>
+                                </div>
+                                <div style="font-weight:700; margin-top:5px; font-size:0.92rem;">Contrôle : ${getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])}</div>
+                                <div style="font-size:0.85rem; background:#F1F5F9; padding:6px 10px; border-left:3px solid var(--primary); margin-top:5px;"><strong>PC :</strong> ${getItemVal(item, ['Points de contrôle', 'Point de contrôle'])}</div>
+                            </div>
+                            <div class="eval-section">
+                                <div class="metrics-block">
+                                    <div class="input-inline">
+                                        <label>Date *</label>
+                                        <input type="date" value="${dateLigneISO}" onchange="mettreAJourDatePoint(${idx}, this.value)">
+                                    </div>
+                                    <div class="input-inline">
+                                        <label>Statut *</label>
+                                        <select onchange="mettreAJourCalcul(${idx}, 'statutConstat', this.value)">
+                                            <option value="CLOTURE" ${ev.statutConstat === 'CLOTURE' ? 'selected' : ''}>🟢 Clôturé</option>
+                                            <option value="NON_CLOTURE" ${ev.statutConstat === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Non clôturé</option>
+                                            <option value="EN_COURS" ${ev.statutConstat === 'EN_COURS' ? 'selected' : ''}>🟡 En cours</option>
+                                        </select>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                        <div class="input-inline"><label>Pop. *</label><input type="number" min="0" value="${ev.population}" onchange="mettreAJourCalcul(${idx}, 'population', this.value)"></div>
+                                        <div class="input-inline"><label>Échant. *</label><input type="number" min="0" value="${ev.echantillon}" onchange="mettreAJourCalcul(${idx}, 'echantillon', this.value)"></div>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                        <div class="input-inline"><label>OK *</label><input type="number" min="0" value="${ev.nombreOk}" onchange="mettreAJourCalcul(${idx}, 'nombreOk', this.value)"></div>
+                                        <div class="input-inline"><label>KO</label><input type="number" value="${ev.nombreKo}" readonly style="background:#F1F5F9;"></div>
+                                    </div>
+                                    <div class="rate-box"><span>Conformité</span><strong>${ev.tauxConformite} %</strong></div>
+                                </div>
+                                <div class="fields-block">
+                                    <div class="field-group"><label><i class="fa-solid fa-pen-to-square"></i> Constat *</label><textarea onchange="mettreAJourChamp(${idx}, 'constat', this.value)" placeholder="Constats obligatoires...">${ev.constat}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-lightbulb"></i> Recommandation *</label><textarea onchange="mettreAJourChamp(${idx}, 'recommandation', this.value)" placeholder="Recommandations obligatoires...">${ev.recommandation}</textarea></div>
+                                    <div class="field-group"><label><i class="fa-solid fa-comment-dots"></i> Avis du Responsable (Facultatif)</label><textarea onchange="mettreAJourChamp(${idx}, 'avisResponsable', this.value)" placeholder="Observations du responsable de l'entité...">${ev.avisResponsable || ''}</textarea></div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += `</div>`;
+            }
+
+            let badgeText = "---", badgeClass = "", descText = "";
+            if (nbPointsEvalues === 0) {
+                badgeText = "NON ÉVALUÉ"; badgeClass = "avis-satisfaisante";
+                descText = "Aucun point de contrôle n'a encore été échantillonné pour calculer la synthèse du centre.";
+            } else if (globalRate < 60) {
+                badgeText = "Gestion non satisfaisante"; badgeClass = "avis-non-satisfaisante";
+                descText = "<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances dans l'application des procédures et contrôles. Un plan d'action immédiat est requis.";
+            } else if (globalRate < 80) {
+                badgeText = "Gestion satisfaisante"; badgeClass = "avis-satisfaisante";
+                descText = "<strong>Niveau de risque modéré :</strong> Exigences opérationnelles respectées dans l'ensemble, mais des écarts résiduels subsistent.";
+            } else if (globalRate < 95) {
+                badgeText = "Bonne gestion"; badgeClass = "avis-bonne";
+                descText = "<strong>Niveau de risque maîtrisé :</strong> Conformité globale élevée, ajustements mineurs à poursuivre.";
+            } else {
+                badgeText = "Très bonne gestion"; badgeClass = "avis-tres-bonne";
+                descText = "<strong>Niveau de maîtrise fort :</strong> Excellence opérationnelle et strict respect des dispositifs de contrôle permanent.";
+            }
+
+            html += `
+                <section class="summary-card">
+                    <div class="summary-top">
+                        <div class="summary-info">
+                            <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent);"></i>
+                            <div>
+                                <h3>TAUX MOYEN DU CENTRE : <span>${tauxConformiteMoyen} %</span></h3>
+                                <p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Synthèse globale calculée sur les points évalués de la mission.</p>
+                            </div>
+                        </div>
+                        <div><span class="badge-avis-global ${badgeClass}">${badgeText}</span></div>
+                    </div>
+                    <div class="center-description">
+                        <strong style="display: block; color: var(--accent); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description & Situation du Centre :</strong>
+                        <p>${descText}</p>
+                    </div>
+                </section>
+            `;
+
+            contentArea.innerHTML = html;
+        }
+
+        window.onRegionFCChange = function(nouvelleRegion) {
+            missionData.metadata.region = nouvelleRegion;
+            missionData.metadata.entite = '';
+            sauvegarderLocalement();
+            renderPage();
+        };
+
+        window.mettreAJourMetadataDate = function(champ, val) {
+            const frDate = formatDateToFR(val);
+            missionData.metadata[champ] = frDate;
+            if (champ === 'dateControle' && Array.isArray(missionData.pointsControle)) {
+                missionData.pointsControle.forEach(p => { p._bddDateControle = frDate; });
+            }
+            sauvegarderLocalement();
+            renderPage();
+        };
+
+        window.mettreAJourDatePoint = function(index, valISO) {
+            const frDate = formatDateToFR(valISO);
+            missionData.pointsControle[index]._bddDateControle = frDate;
+            sauvegarderLocalement();
+            renderPage();
+        };
+
+        window.mettreAJourMetadata = function(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); renderPage(); };
+
+        window.mettreAJourCalcul = function(index, champ, valeur) {
+            const ev = missionData.pointsControle[index].eval;
+            if (champ === 'statutConstat') ev.statutConstat = valeur;
+            else ev[champ] = parseFloat(valeur) || 0;
+
+            if (ev.echantillon > ev.population && ev.population > 0) {
+                alert("⚠️ L'échantillon doit être inférieur ou égal à la population.");
+                ev.echantillon = 0;
+            }
+
+            if (ev.echantillon > 0) {
+                if (ev.nombreOk > ev.echantillon) ev.nombreOk = ev.echantillon;
+                ev.nombreKo = Math.max(0, ev.echantillon - ev.nombreOk);
+                ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
+            } else { ev.nombreKo = 0; ev.tauxConformite = "0.00"; }
+            sauvegarderLocalement(); renderPage();
+        };
+
+        window.mettreAJourChamp = function(index, champ, val) { missionData.pointsControle[index].eval[champ] = val; sauvegarderLocalement(); renderPage(); };
+
+        function validerChampsObligatoires(listePointsCibles = null) {
+            const pointsAValider = listePointsCibles || (missionData ? missionData.pointsControle : []);
+            if (!missionData || !pointsAValider || pointsAValider.length === 0) {
+                return { valide: false, messageErreur: "Aucune donnée de contrôle valide." };
+            }
+            if (!missionData.metadata || !missionData.metadata.region) {
+                return { valide: false, messageErreur: "Veuillez sélectionner une Région avant d'enregistrer." };
+            }
+            if (!missionData.metadata.entite) {
+                return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'enregistrer." };
+            }
+            for (let p of pointsAValider) {
+                const ev = p.eval;
+                const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
+                if (ev.echantillon > ev.population && ev.population > 0) return { valide: false, messageErreur: `Point "${pcName}" : Échantillon > Population.` };
+                if (!ev.echantillon || ev.echantillon <= 0) return { valide: false, messageErreur: `Point "${pcName}" : Échantillon requis.` };
+                if (!ev.constat || ev.constat.trim() === '') return { valide: false, messageErreur: `Point "${pcName}" : Constat obligatoire.` };
+                if (!ev.recommandation || ev.recommandation.trim() === '') return { valide: false, messageErreur: `Point "${pcName}" : Recommandation obligatoire.` };
+            }
+            return { valide: true };
+        }
+
+        function construirePayloadConstatsFC(idMission, mode = 'ARCHIVE', listePointsFiltres = null) {
+            const meta = missionData.metadata || {};
+            const typeControleMission = meta.typeControle || 'Thématique';
+            const regionMission = meta.region || '';
+            const dateCtrlDefaut = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+            const timestampSuivi = Date.now();
+            const sourcePoints = listePointsFiltres || missionData.pointsControle;
+
+            return sourcePoints.map((p, idx) => {
+                const dateLigne = formatDateToFR(p._bddDateControle) || dateCtrlDefaut;
+                const estSuivi = (mode === 'SUIVI') ? true : Boolean(p._isSuivi);
+                const estMarqueModifie = (mode === 'MODIFIER')
+                    ? true
+                    : (mode === 'SUIVI' ? false : Boolean(p._isModifie));
+
+                return {
+                    idConstat: mode === 'SUIVI'
+                        ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
+                        : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
+                    idMission: idMission,
+                    region: regionMission,
+                    typeControle: typeControleMission,
+                    entite: meta.entite || 'Controle',
+                    site: meta.entite || 'Controle',
+                    controleur: meta.controleurs || '',
+                    date: dateLigne,
+                    dateControle: dateLigne,
+                    processus: getItemVal(p, ['Processus']),
+                    risque: getItemVal(p, ['Intitulé du risque', 'Intitulé risque']),
+                    controle: getItemVal(p, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                    pc: getItemVal(p, ['Points de contrôle', 'Point de contrôle']),
+                    pop: parseInt(p.eval.population) || 0,
+                    ech: parseInt(p.eval.echantillon) || 0,
+                    ok: parseInt(p.eval.nombreOk) || 0,
+                    ko: parseInt(p.eval.nombreKo) || 0,
+                    tc: parseFloat(p.eval.tauxConformite) || 0,
+                    constat: p.eval.constat,
+                    recommandation: p.eval.recommandation,
+                    avisResponsable: p.eval.avisResponsable || '',
+                    statut: p.eval.statutConstat,
+                    isModifie: estMarqueModifie,
+                    modifie: estMarqueModifie,
+                    isSuivi: estSuivi,
+                    suivi: estSuivi,
+                    cree_par_id: currentUser ? currentUser.username : '',
+                    cree_par_nom: currentUser ? currentUser.nom : ''
+                };
+            });
+        }
+
+        async function syncConstatsVersFirestore(constatsList) {
+            for (const c of constatsList) {
+                const tc = Number(c.tc || 0);
+                const evalLabel = tc >= 100 ? "Conforme" : (tc > 0 ? "Partiellement conforme" : "Non conforme");
+                const statutLabel = c.statut === "CLOTURE" ? "Clôturé" : (c.statut === "NON_CLOTURE" ? "Ouvert" : "En cours");
+
+                await upsertFCIRecord({
+                    record_uid: c.idConstat,
+                    numero_fiche: c.idConstat,
+                    code_mission: c.idMission,
+                    date_controle: formatDateToISO(c.dateControle || c.date),
+                    region: c.region,
+                    site: c.site || c.entite,
+                    type_controle: c.typeControle,
+                    processus: c.processus,
+                    code_pc: c.controle,
+                    libelle_pc: c.pc,
+                    evaluation: evalLabel,
+                    taux_conformite: tc,
+                    constat: c.constat,
+                    recommandation: c.recommandation,
+                    statut_suivi: statutLabel,
+                    is_followup: Boolean(c.isSuivi)
+                }, "FC");
+            }
+        }
+
+        window.archiverFicheControle = async function() {
+            const val = validerChampsObligatoires();
+            if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
+
+            const btn = document.getElementById('btnArchiverFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
+            }
+
+            try {
+                const meta = missionData.metadata || {};
+                const idMission = meta.idMission || ("MIS-" + Date.now());
+                meta.idMission = idMission;
+                const typeControleMission = meta.typeControle || 'Thématique';
+                const regionMission = meta.region || '';
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+
+                const constatsBDD = construirePayloadConstatsFC(idMission, 'ARCHIVE');
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
+                    await FCIDatabase.enregistrerMission({
+                        idMission: idMission,
+                        region: regionMission,
+                        typeControle: typeControleMission,
+                        date: dateCtrl,
+                        dateDebut: meta.periodeDebut || '',
+                        dateFin: meta.periodeFin || '',
+                        entite: meta.entite || '',
+                        controleur: meta.controleurs || '',
+                        pointsSelectionnes: missionData.pointsControle
+                    }, false);
+                }
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                    await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
+                } else {
+                    const db = lireDBSecurisee();
+                    db.constatsControle = [...db.constatsControle, ...constatsBDD];
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncConstatsVersFirestore(constatsBDD);
+
+                window.viderFormulaireFC();
+                remplirFiltresBDD();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
+        };
+
+        window.trouverFicheControleBDD = function() {
+            const fDate = document.getElementById('filterBddDate').value;
+            const fReg = document.getElementById('filterBddRegion').value;
+            const fSite = document.getElementById('filterBddSite').value;
+            const fProc = document.getElementById('filterBddProcessus').value;
+
+            if (!fDate && !fReg && !fSite && !fProc) {
+                alert("Veuillez sélectionner au moins un critère (Date de contrôle, Région, Site contrôlé ou Processus contrôlé) dans la BDD.");
+                return;
+            }
+
+            const db = lireDBSecurisee();
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const constatsTrouves = getAccessibleConstatsFC(db).filter(c =>
+                (!fDate || getConstatDateFR(c, mapMissions) === fDate) &&
+                (!fReg || getConstatRegion(c, mapMissions) === fReg) &&
+                (!fSite || getConstatSite(c, mapMissions) === fSite) &&
+                (!fProc || getConstatProcessus(c) === fProc)
+            );
+
+            if (constatsTrouves.length === 0) {
+                alert("Aucun constat correspondant dans la BDD pour ces critères.");
+                return;
+            }
+
+            const premierConstat = constatsTrouves[0];
+            const selectedId = premierConstat.idMission || ("MIS-" + Date.now());
+            const missionInfo = mapMissions[selectedId] || {};
+            const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
+            const regionRecuperee = normaliserRegion(premierConstat.region || missionInfo.region || '');
+            const dateCtrlTrouvee = getConstatDateFR(premierConstat, mapMissions) || formatDateToFR(missionInfo.date) || formatDateToFR(getTodayISO());
+            const siteTrouve = getConstatSite(premierConstat, mapMissions) || missionInfo.entite || '';
+
+            missionData = {
+                _loadedFromBDDFilter: { date: fDate, region: fReg, site: fSite, processus: fProc },
+                _loadedConstatIds: constatsTrouves.map(c => c.idConstat).filter(Boolean),
+                metadata: {
+                    idMission: selectedId,
+                    region: regionRecuperee,
+                    entite: siteTrouve,
+                    typeControle: typeCtrlRecupere,
+                    dateControle: dateCtrlTrouvee,
+                    periodeDebut: formatDateToFR(missionInfo.dateDebut || ''),
+                    periodeFin: formatDateToFR(missionInfo.dateFin || ''),
+                    controleurs: premierConstat.controleur || missionInfo.controleur || ''
+                },
+                pointsControle: constatsTrouves.map(c => {
+                    const dLigne = getConstatDateFR(c, mapMissions) || dateCtrlTrouvee;
+                    const pointObj = {
+                        _bddIdConstat: c.idConstat,
+                        _initialDate: dLigne,
+                        _bddDateControle: dLigne,
+                        _isModifie: Boolean(c.isModifie || c.modifie),
+                        _isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idConstat || '').toUpperCase().includes('SUIVI')),
+                        Processus: getConstatProcessus(c),
+                        "Intitulé du risque": c.risque,
+                        "Intitulé Contrôle": c.controle,
+                        "Points de contrôle": c.pc,
+                        eval: {
+                            population: c.pop || 0,
+                            echantillon: c.ech || 0,
+                            nombreOk: c.ok || 0,
+                            nombreKo: c.ko || 0,
+                            tauxConformite: (c.tc !== undefined ? c.tc : 0).toString(),
+                            statutConstat: c.statut || 'EN_COURS',
+                            constat: c.constat || '',
+                            recommandation: c.recommandation || '',
+                            avisResponsable: c.avisResponsable || ''
+                        }
+                    };
+                    pointObj._initialSnapshot = getSnapshotPointFC(pointObj);
+                    return pointObj;
+                })
+            };
+
+            sauvegarderLocalement();
+            renderPage();
+            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} ligne(s) FC importée(s) — Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
+        };
+
+        window.modifierFicheControle = async function() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD à modifier.");
+                return;
+            }
+
+            const pointsModifies = missionData.pointsControle.filter(p => {
+                if (!p._initialSnapshot) return true;
+                return p._initialSnapshot !== getSnapshotPointFC(p);
+            });
+
+            if (pointsModifies.length === 0) {
+                alert("⚠️ Aucune modification détectée sur les points de contrôle.\nModifiez d'abord le(s) point(s) de contrôle concerné(s) (date, statut, constat, chiffres...) avant de cliquer sur Modifier.");
+                return;
+            }
+
+            const val = validerChampsObligatoires(pointsModifies);
+            if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
+
+            const btn = document.getElementById('btnModifierFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
+            }
+
+            try {
+                const db = lireDBSecurisee();
+                const meta = missionData.metadata || {};
+                const idMission = meta.idMission || ("MIS-" + Date.now());
+                meta.idMission = idMission;
+
+                const constatsMisAJour = construirePayloadConstatsFC(idMission, 'MODIFIER', pointsModifies);
+                const listeExistante = db.constatsControle || [];
+
+                constatsMisAJour.forEach(itemMaj => {
+                    const idxExistant = listeExistante.findIndex(c =>
+                        (itemMaj.idConstat && c.idConstat === itemMaj.idConstat) ||
+                        (c.idMission === itemMaj.idMission && c.pc === itemMaj.pc && c.controle === itemMaj.controle)
+                    );
+                    if (idxExistant !== -1) {
+                        listeExistante[idxExistant] = {
+                            ...listeExistante[idxExistant],
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        };
+                    } else {
+                        listeExistante.push({
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        });
+                    }
+                });
+
+                db.constatsControle = listeExistante;
+                sauvegarderDBSecurisee(db);
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                    await FCIDatabase.enregistrerConstatsControle(constatsMisAJour, true);
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncConstatsVersFirestore(constatsMisAJour);
+
+                window.viderFormulaireFC();
+                remplirFiltresBDD();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
+        };
+
+        window.suiviFicheControle = async function() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD pour créer un suivi.");
+                return;
+            }
+
+            const pointsModifiesPourSuivi = missionData.pointsControle.filter(p => {
+                if (!p._initialSnapshot) return true;
+                return p._initialSnapshot !== getSnapshotPointFC(p);
+            });
+
+            if (pointsModifiesPourSuivi.length === 0) {
+                alert("⚠️ Aucune modification détectée sur les points de contrôle.\nEffectuez d'abord vos modifications sur le(s) PC concerné(s) avant de cliquer sur Suivi : la ligne initiale sera conservée intacte et une nouvelle ligne de suivi sera ajoutée dans la BDD.");
+                return;
+            }
+
+            const val = validerChampsObligatoires(pointsModifiesPourSuivi);
+            if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
+
+            const btn = document.getElementById('btnSuiviFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+            }
+
+            try {
+                const db = lireDBSecurisee();
+                const meta = missionData.metadata || {};
+                const idMissionSuivi = "MIS-SUIVI-" + Date.now();
+                const dateCtrl = formatDateToFR(pointsModifiesPourSuivi[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
+                const typeControleMission = meta.typeControle || 'Thématique';
+                const regionMission = meta.region || '';
+
+                const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
+
+                db.constatsControle = [...(db.constatsControle || []), ...nouvellesLignesSuivi];
+                sauvegarderDBSecurisee(db);
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
+                    await FCIDatabase.enregistrerMission({
+                        idMission: idMissionSuivi,
+                        region: regionMission,
+                        typeControle: typeControleMission,
+                        date: dateCtrl,
+                        dateDebut: meta.periodeDebut || '',
+                        dateFin: meta.periodeFin || '',
+                        entite: meta.entite || '',
+                        controleur: meta.controleurs || '',
+                        pointsSelectionnes: pointsModifiesPourSuivi
+                    }, false);
+                    sauvegarderDBSecurisee(db);
+                }
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
+                    await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncConstatsVersFirestore(nouvellesLignesSuivi);
+
+                window.viderFormulaireFC();
+                remplirFiltresBDD();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
+        };
+
+        window.supprimerFicheControle = async function() {
+            if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
+                alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD à supprimer.");
+                return;
+            }
+
+            const db = lireDBSecurisee();
+            const idsPointsCharges = missionData.pointsControle
+                .map(p => p._bddIdConstat)
+                .filter(Boolean);
+            const idsToDelete = new Set([...(missionData._loadedConstatIds || []), ...idsPointsCharges]);
+
+            if (idsToDelete.size > 0) {
+                db.constatsControle = (db.constatsControle || []).filter(c => !idsToDelete.has(c.idConstat));
+                for (const idToDel of idsToDelete) {
+                    await deleteFCIRecord(idToDel);
+                }
+            } else if (missionData.metadata && missionData.metadata.idMission) {
+                db.missions = (db.missions || []).filter(m => m.idMission !== missionData.metadata.idMission);
+                db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== missionData.metadata.idMission);
+            }
+
+            sauvegarderDBSecurisee(db);
+            window.viderFormulaireFC();
+            remplirFiltresBDD();
+        };
+
+        function sauvegarderLocalement() { localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData)); }
+
+        window.viderFormulaireFC = function() {
+            localStorage.removeItem('fci_fiche_controle_active');
+            missionData = null;
+            afficherEtatVide();
+            document.getElementById('searchStatus').innerText = '';
+            window.reinitialiserFiltresBDD();
+        };
+
+        window.exporterExcel = function() {
+            if (!missionData || !missionData.pointsControle) return;
+            XLSX.writeFile(XLSX.utils.json_to_sheet(missionData.pointsControle), "FicheControle_Export.xlsx");
+        };
+
+        // Initialisation immédiate après authentification
+        chargerDonneesMission();
+        remplirFiltresBDD();
+    </script>
 </body>
 </html>
