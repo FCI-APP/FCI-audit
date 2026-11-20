@@ -3,19 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Analyse & Pilotage</title>
-    <!-- FontAwesome v6.4.0 -->
+    <title>FCI v1.0 - Feuille 5 : Base de Données Centralisée (BDD)</title>
+    <!-- Protection de session FCI -->
+    <script src="fci-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Chart.js & SheetJS (Excel) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
             --primary-blue: #003366;
-            --active-tab-blue: #004C99;
             --dark-blue: #002244;
             --accent-gold: #EAAA00;
             --bg-light: #F4F6F9;
@@ -26,43 +23,28 @@
             --success: #10B981;
             --danger: #EF4444;
             --warning: #F59E0B;
-            --info: #2563EB;
+            --info: #3B82F6;
             --sidebar-width: 250px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
-        /* SIDEBAR */
         .sidebar {
-            width: var(--sidebar-width);
-            background-color: var(--primary-blue);
-            color: #FFFFFF;
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            display: flex; flex-direction: column;
-            justify-content: space-between;
-            z-index: 100;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
-            overflow-y: auto;
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
+            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15); overflow-y: auto;
         }
 
-        .sidebar-header {
-            padding: 20px 15px;
-            background-color: var(--dark-blue);
-            text-align: center;
-            border-bottom: 2px solid var(--accent-gold);
-        }
-
+        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
         .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
         .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
         .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
         .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 20px; color: rgba(255, 255, 255, 0.8); text-decoration: none;
-            font-size: 0.88rem; font-weight: 600; transition: all 0.2s ease;
-            border-left: 4px solid transparent;
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            border-left: 4px solid transparent; transition: all 0.2s;
         }
         .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
         .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
@@ -70,438 +52,232 @@
         .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
         .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
 
-        .sidebar-footer {
-            padding: 15px; background-color: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 0.75rem; line-height: 1.4; color: rgba(255,255,255,0.6); text-align: center;
-        }
+        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 
-        /* MAIN CONTENT */
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 26px; max-width: calc(100vw - var(--sidebar-width)); }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
         .page-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 18px; background: var(--card-bg); padding: 18px 24px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
-            flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .page-title p { font-size: 0.84rem; color: var(--text-muted); margin-top: 4px; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
 
-        .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-        .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
+        .btn { padding: 9px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-primary:hover { background-color: var(--dark-blue); }
-        .btn-excel { background-color: #10B981; color: #FFFFFF; }
-        .btn-excel:hover { background-color: #059669; }
-        .btn-pdf { background-color: #475569; color: #FFFFFF; }
-        .btn-pdf:hover { background-color: #334155; }
-        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
-        .btn-refresh:hover { background-color: #BAE6FD; }
-        .btn-outline { background-color: #FFFFFF; color: var(--primary-blue); border-color: #CBD5E1; }
+        .btn-refresh { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .btn-refresh:hover { background-color: #BFDBFE; }
+        .btn-success { background-color: var(--success); color: #FFF; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-accent:hover { background-color: #d99b00; }
+        .btn-outline { background-color: #FFFFFF; color: var(--primary-blue); border: 1px solid #CBD5E1; }
         .btn-outline:hover { background-color: #F1F5F9; }
+        .btn-neutral { background-color: #F1F5F9; color: var(--primary-blue); border: 1px solid #CBD5E1; }
+        .btn-neutral:hover { background-color: #E2E8F0; }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .btn-danger:hover { background-color: #FECACA; }
+        .btn-danger:hover { background-color: #FCA5A5; }
 
-        /* BARRE DE PILOTAGE MULTI-NIVEAUX */
-        .pilotage-panel {
-            background: var(--card-bg);
+        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+        .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
+        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .table-responsive-wrapper {
+            width: 100%;
+            overflow-x: auto;
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-        }
-
-        .niveau-tabs-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding-bottom: 14px;
-            margin-bottom: 14px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .niveau-tabs {
-            display: inline-flex;
-            background: #EFF3F8;
-            padding: 4px;
-            border-radius: 8px;
-            gap: 6px;
-            border: 1px solid #CBD5E1;
-        }
-
-        .niveau-tab {
-            padding: 9px 18px;
-            border: 1px solid transparent;
             border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.84rem;
-            font-weight: 700;
-            cursor: pointer;
-            color: var(--text-muted);
-            background: transparent;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            transition: all 0.2s;
         }
 
-        .niveau-tab:hover { color: var(--primary-blue); background: rgba(255,255,255,0.8); }
-        .niveau-tab.active {
-            background: var(--active-tab-blue);
-            color: #FFFFFF;
-            border-color: #003366;
-            box-shadow: 0 2px 6px rgba(0, 76, 153, 0.32);
-        }
-        .niveau-tab.active i { color: var(--accent-gold); }
-
-        .scope-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #FFFBEB;
-            border: 1px solid #FCD34D;
-            color: #92400E;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .filters-grid {
+        .multi-filter-bar {
             display: grid;
-            grid-template-columns: repeat(5, minmax(165px, 1fr));
+            grid-template-columns: repeat(6, minmax(160px, 1fr));
             gap: 10px;
             align-items: end;
-        }
-
-        @media (max-width: 1280px) {
-            .filters-grid { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); }
-        }
-
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .filter-group label {
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--primary-blue);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 5px;
-        }
-        .lock-badge {
-            font-size: 0.62rem;
-            background: #E2E8F0;
-            color: #475569;
-            padding: 1px 5px;
-            border-radius: 4px;
-            font-weight: 700;
-            display: none;
-        }
-        .filter-group.is-locked .lock-badge { display: inline-flex; align-items: center; gap: 3px; }
-        .filter-group.is-locked label { color: #64748B; }
-
-        .filter-select {
-            padding: 7px 10px;
-            border-radius: 6px;
-            font-family: inherit;
-            font-size: 0.8rem;
-            font-weight: 700;
-            border: 1px solid #CBD5E1;
             background: #F8FAFC;
-            color: var(--text-dark);
-            cursor: pointer;
-            outline: none;
-            width: 100%;
-            min-height: 34px;
-            transition: all 0.15s;
-        }
-        .filter-select:focus { border-color: var(--primary-blue); background: #FFFFFF; }
-        .filter-select.highlight-focus { border: 2px solid var(--accent-gold); background: #FFFDF5; }
-        .filter-select:disabled {
-            opacity: 0.65;
-            cursor: not-allowed;
-            background: #E2E8F0;
-            color: #64748B;
-            border-color: #CBD5E1;
-        }
-
-        /* KPI CARDS */
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 14px; margin-bottom: 20px; }
-        .kpi-card {
-            background: var(--card-bg);
-            padding: 16px 18px;
+            padding: 12px 14px;
             border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
             border: 1px solid var(--border-color);
-            border-left: 4px solid var(--primary-blue);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            width: 100%;
         }
-        .kpi-card.success { border-left-color: var(--success); }
-        .kpi-card.warning { border-left-color: var(--warning); }
-        .kpi-card.danger { border-left-color: var(--danger); }
-        .kpi-card.info { border-left-color: var(--info); }
-
-        .kpi-icon {
-            width: 44px; height: 44px; border-radius: 8px;
-            background: rgba(0, 51, 102, 0.08); color: var(--primary-blue);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem; flex-shrink: 0;
-        }
-        .kpi-info { min-width: 0; }
-        .kpi-info p { font-size: 0.72rem; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
-        .kpi-info h3 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; margin: 2px 0; }
-        .kpi-sub { font-size: 0.73rem; font-weight: 600; color: var(--text-muted); display: block; }
-
-        /* ENCART DESCRIPTIONS ANALYTIQUES PAR ONGLET */
-        .description-onglet-box {
-            background: linear-gradient(135deg, #002244 0%, #003366 100%);
-            color: #F8FAFC;
-            border-radius: 8px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            border-left: 5px solid var(--accent-gold);
-            box-shadow: 0 2px 6px rgba(0, 34, 68, 0.14);
-        }
-        .description-onglet-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-        }
-        .description-onglet-header h3 {
-            font-size: 0.9rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--accent-gold);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .description-onglet-body {
-            font-size: 0.84rem;
-            line-height: 1.62;
-            color: #E2E8F0;
-        }
-        .description-onglet-body ul {
-            margin-top: 7px;
-            padding-left: 18px;
+        .filter-select-group {
             display: flex;
             flex-direction: column;
             gap: 5px;
+            min-width: 0;
         }
-        .description-onglet-body li strong { color: #FFFFFF; }
-        .desc-chip {
-            background: rgba(234, 170, 0, 0.22);
-            color: #FDE68A;
-            padding: 1px 6px;
-            border-radius: 4px;
+        .filter-select-group label {
+            font-size: 0.72rem;
             font-weight: 800;
-        }
-
-        /* BENCHMARK 3 NIVEAUX & SYNTHESE DECISIONNELLE */
-        .decision-grid {
-            display: grid;
-            grid-template-columns: 1.1fr 1.4fr;
-            gap: 18px;
-            margin-bottom: 22px;
-        }
-
-        .panel-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-
-        .panel-card h3 {
-            font-size: 0.95rem;
-            color: var(--primary-blue);
-            font-weight: 800;
-            border-bottom: 2px solid #F1F5F9;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
+            text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 8px;
+            gap: 5px;
         }
-
-        .benchmark-bars { display: flex; flex-direction: column; gap: 12px; }
-        .bench-item { display: flex; flex-direction: column; gap: 5px; }
-        .bench-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; }
-        .bench-track { width: 100%; height: 11px; background: #E2E8F0; border-radius: 6px; overflow: hidden; }
-        .bench-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
-
-        .alert-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .alert-item {
-            padding: 9px 12px;
+        .filter-dropdown {
+            padding: 7px 10px;
             border-radius: 6px;
-            font-size: 0.81rem;
-            line-height: 1.4;
-            display: flex;
-            align-items: flex-start;
-            gap: 9px;
-            border-left: 4px solid;
-        }
-        .alert-critical { background: #FEF2F2; color: #991B1B; border-color: #EF4444; }
-        .alert-warning { background: #FFFBEB; color: #92400E; border-color: #F59E0B; }
-        .alert-ok { background: #ECFDF5; color: #065F46; border-color: #10B981; }
-
-        .synthese-box {
-            margin-top: 12px;
-            padding: 11px 14px;
-            background: #F8FAFC;
-            border: 1px dashed #94A3B8;
-            border-radius: 6px;
-            font-size: 0.81rem;
+            font-size: 0.8rem;
+            font-weight: 800;
+            border: 1px solid #CBD5E1;
+            outline: none;
+            cursor: pointer;
+            background-color: #FFFFFF;
             color: var(--text-dark);
-            line-height: 1.5;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .filter-dropdown:disabled {
+            cursor: not-allowed;
+            opacity: 0.9;
         }
 
-        /* CHARTS GRID */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 22px;
-        }
-        .chart-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 18px 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .chart-card h3 {
-            font-size: 0.94rem;
-            color: var(--primary-blue);
-            font-weight: 800;
-            border-bottom: 2px solid #F1F5F9;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .chart-canvas-wrap { position: relative; height: 265px; width: 100%; }
+        .filter-date-theme label { color: #1E40AF; }
+        .filter-date-theme .filter-dropdown { background-color: #EFF6FF; color: #1E3A8A; border-color: #93C5FD; }
 
-        /* TABLES ANALYTIQUES */
-        .analytics-tables-grid {
-            display: grid;
-            grid-template-columns: 1.35fr 1fr;
-            gap: 18px;
-            margin-bottom: 22px;
+        .filter-region-theme label { color: #6D28D9; }
+        .filter-region-theme .filter-dropdown { background-color: #F5F3FF; color: #5B21B6; border-color: #C4B5FD; }
+
+        .filter-site-theme label { color: #0F766E; }
+        .filter-site-theme .filter-dropdown { background-color: #F0FDFA; color: #115E59; border-color: #5EEAD4; }
+
+        .filter-processus-theme label { color: #B45309; }
+        .filter-processus-theme .filter-dropdown { background-color: #FFFBEB; color: #92400E; border-color: #FCD34D; }
+
+        .filter-statut-theme label { color: #BE123C; }
+        .filter-statut-theme .filter-dropdown { background-color: #FFF1F2; color: #9F1239; border-color: #FDA4AF; }
+
+        .filter-type-theme label { color: #047857; }
+        .filter-type-theme .filter-dropdown { background-color: #ECFDF5; color: #065F46; border-color: #6EE7B7; }
+
+        .select-statut-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; }
+        .select-statut-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; }
+        .select-statut-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; }
+
+        .select-type-Thematique { background-color: #DBEAFE !important; color: #1E40AF !important; border-color: #93C5FD !important; }
+        .select-type-Systematique { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #FCD34D !important; }
+        .select-type-Verification { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #6EE7B7 !important; }
+
+        table.bdd-table {
+            width: 100%;
+            min-width: 1980px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            table-layout: auto;
         }
-
-        .table-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 18px 20px;
-            margin-bottom: 22px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        table.bdd-table th, table.bdd-table td {
+            padding: 11px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid rgba(226, 232, 240, 0.55);
+            vertical-align: top;
+            line-height: 1.45;
+            word-break: normal;
+            overflow-wrap: break-word;
         }
-        .table-card h3 {
-            font-size: 0.95rem;
-            color: var(--primary-blue);
-            font-weight: 800;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
-        th, td { padding: 9px 11px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-        th { background-color: var(--primary-blue); color: white; font-weight: 700; text-transform: uppercase; font-size: 0.71rem; letter-spacing: 0.3px; white-space: nowrap; }
-        tr:nth-child(even) { background-color: #F8FAFC; }
-        tr:hover { background-color: #EFF6FF; }
-
-        .num-center { text-align: center !important; }
-        .pill { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
-        .pill-critique { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .pill-eleve { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; }
-        .pill-modere { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-        .pill-faible { background: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
-
-        .pill-them { background: #DBEAFE; color: #1E40AF; }
-        .pill-syst { background: #FEF3C7; color: #92400E; }
-        .pill-verif { background: #D1FAE5; color: #065F46; }
-        .pill-cov { background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE; }
-
-        .tag-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
-        .tag-touche {
-            display: inline-block;
-            background: #ECFDF5;
-            color: #065F46;
-            border: 1px solid #A7F3D0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.68rem;
+        table.bdd-table th {
+            background-color: var(--primary-blue);
+            color: white;
             font-weight: 700;
-        }
-        .tag-touche-verif {
-            display: inline-block;
-            background: #EFF6FF;
-            color: #1E40AF;
-            border: 1px solid #BFDBFE;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            font-weight: 700;
-        }
-        .tag-non-touche {
-            display: inline-block;
-            background: #FEF2F2;
-            color: #991B1B;
-            border: 1px solid #FECACA;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.68rem;
-            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
 
-        .evo-up { color: #059669; font-weight: 800; }
-        .evo-down { color: #DC2626; font-weight: 800; }
-        .evo-flat { color: #64748B; font-weight: 700; }
+        .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
+        .col-region { width: 115px; min-width: 115px; white-space: nowrap; }
+        .col-centre { width: 175px; min-width: 175px; }
+        .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
+        .col-risque { width: 220px; min-width: 220px; }
+        .col-controle { width: 230px; min-width: 230px; }
+        .col-pc { width: 260px; min-width: 260px; }
+        .col-constat { width: 290px; min-width: 290px; background-color: rgba(248, 250, 252, 0.45); }
+        .col-num { width: 62px; min-width: 62px; text-align: center !important; white-space: nowrap; }
+        .col-tc { width: 78px; min-width: 78px; text-align: center !important; white-space: nowrap; }
+        .col-badge { width: 150px; min-width: 150px; text-align: center !important; white-space: nowrap; }
 
-        @media (max-width: 1180px) {
-            .decision-grid, .charts-grid, .analytics-tables-grid { grid-template-columns: 1fr; }
+        tr.row-thematique { background-color: #FFFFFF; }
+        tr.row-thematique:hover { background-color: #EFF6FF; }
+
+        tr.row-systematique { background-color: #FFFBEB; }
+        tr.row-systematique:hover { background-color: #FEF3C7; }
+
+        tr.row-verification { background-color: #ECFDF5; }
+        tr.row-verification:hover { background-color: #D1FAE5; }
+
+        .badge-type {
+            display: inline-block; padding: 4px 9px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+        }
+        .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+        .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+
+        /* Symbole Modifier (Stylo orange) sous Type de contrôle */
+        .badge-modifie-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #FFEDD5;
+            color: #C2410C;
+            border: 1px solid #FB923C;
+        }
+
+        /* Symbole Suivi (Bleu) sous Type de contrôle */
+        .badge-suivi-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.66rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #DBEAFE;
+            color: #1D4ED8;
+            border: 1px solid #60A5FA;
+        }
+
+        .badge-statut-constat {
+            display: inline-block; padding: 4px 10px; border-radius: 12px;
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
+        }
+        .statut-encours { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
+        .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
+
+        @media (max-width: 1360px) {
+            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         }
 
         @media print {
-            @page { size: A4 landscape; margin: 10mm; }
-            body { background-color: #FFFFFF; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .sidebar, .no-print { display: none !important; }
-            .main-content { margin-left: 0 !important; max-width: 100% !important; width: 100% !important; padding: 0 !important; }
-            .page-header, .pilotage-panel, .kpi-card, .description-onglet-box, .panel-card, .chart-card, .table-card { box-shadow: none !important; break-inside: avoid; }
-            .charts-grid { grid-template-columns: 1fr 1fr !important; gap: 12px !important; }
-            .chart-canvas-wrap { height: 210px !important; }
-            table { font-size: 0.72rem; }
-            th, td { padding: 5px 7px; }
+            .sidebar, .header-actions-bdd, .multi-filter-bar { display: none !important; }
+            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
+            .table-responsive-wrapper { overflow: visible !important; border: none !important; }
+            table.bdd-table { min-width: 100% !important; font-size: 0.7rem !important; }
         }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
@@ -512,501 +288,150 @@
                 <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
                 <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
-                <li class="active"><a href="TDB.html"><span>6. Analyse & Pilotage</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="TDB.html"><span>6. Analyse & Pilotage</span><span class="badge-status badge-actif">Disponible</span></a></li>
             </ul>
         </div>
-        <div>
-            <div id="fci-sidebar-user-slot"></div>
-            <div class="sidebar-footer">
-                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-            </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Analyse & Pilotage</h1>
-                <p>Pilotage décisionnel multi-niveaux (Centre / Site, Régional, National) — Barid Al-Maghrib</p>
+                <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
+                <p>Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
             </div>
-            <div class="header-actions no-print">
-                <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport analytique complet en Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
-                <button class="btn btn-pdf" onclick="imprimerPDF()" title="Imprimer ou enregistrer en PDF"><i class="fa-solid fa-file-pdf"></i> Imprimer PDF</button>
-                <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Recharger les données depuis la BDD"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button class="btn btn-danger" onclick="viderTDB()" title="Vider uniquement l'affichage de la feuille Analyse & Pilotage"><i class="fa-solid fa-eraser"></i> Vider TDB</button>
-                <button class="btn btn-primary" onclick="exporterBDDTDB()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+            <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
+                <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
+                <button type="button" class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
+                <button type="button" class="btn btn-accent" onclick="exporterExcelBDD()"><i class="fa-solid fa-file-excel"></i> Télécharger fichier Excel</button>
+                <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
+                <button type="button" class="btn btn-primary" onclick="exporterBDDAction()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
         </header>
 
-        <!-- BARRE DE SELECTION DU NIVEAU & FILTRES DYNAMIQUES EN CASCADE -->
-        <section class="pilotage-panel">
-            <div class="niveau-tabs-bar">
-                <div class="niveau-tabs no-print" role="tablist">
-                    <button type="button" class="niveau-tab" id="tabCentre" onclick="changerNiveau('CENTRE')">
-                        <i class="fa-solid fa-building"></i> Niveau Centre / Site
-                    </button>
-                    <button type="button" class="niveau-tab" id="tabRegional" onclick="changerNiveau('REGIONAL')">
-                        <i class="fa-solid fa-map-location-dot"></i> Niveau Régional
-                    </button>
-                    <button type="button" class="niveau-tab active" id="tabNational" onclick="changerNiveau('NATIONAL')">
-                        <i class="fa-solid fa-globe"></i> Niveau National
-                    </button>
-                </div>
-
-                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <span class="scope-indicator" id="scopeIndicator">
-                        <i class="fa-solid fa-layer-group"></i> Périmètre : Réseau National
-                    </span>
-                    <button type="button" class="btn btn-outline no-print" onclick="reinitialiserFiltresTDB()" title="Réinitialiser tous les filtres">
-                        <i class="fa-solid fa-filter-circle-xmark"></i> Réinitialiser
-                    </button>
-                </div>
-            </div>
-
-            <div class="filters-grid no-print">
-                <div class="filter-group" id="grpRegion">
-                    <label for="filtreRegion">
-                        <span><i class="fa-solid fa-map-pin"></i> Région Postale</span>
-                        <span class="lock-badge"><i class="fa-solid fa-lock"></i> Bloqué</span>
-                    </label>
-                    <select id="filtreRegion" class="filter-select" onchange="onFilterChange('REGION')">
-                        <option value="TOUS">-- Toutes les régions --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group" id="grpCentre">
-                    <label for="filtreCentre">
-                        <span><i class="fa-solid fa-building-flag"></i> Centre / Site</span>
-                        <span class="lock-badge"><i class="fa-solid fa-lock"></i> Bloqué</span>
-                    </label>
-                    <select id="filtreCentre" class="filter-select" onchange="onFilterChange('CENTRE')">
-                        <option value="TOUS">-- Tous les centres --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreDate"><span><i class="fa-regular fa-calendar-check"></i> Date définie</span></label>
-                    <select id="filtreDate" class="filter-select" onchange="onFilterChange('DATE')">
-                        <option value="TOUS">-- Toutes les dates --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreDateDebut"><span><i class="fa-solid fa-calendar-day"></i> Début période</span></label>
-                    <select id="filtreDateDebut" class="filter-select" onchange="onFilterChange('DEBUT')">
-                        <option value="TOUS">-- Date début --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreDateFin"><span><i class="fa-solid fa-calendar-week"></i> Fin période</span></label>
-                    <select id="filtreDateFin" class="filter-select" onchange="onFilterChange('FIN')">
-                        <option value="TOUS">-- Date fin --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreType"><span><i class="fa-solid fa-tags"></i> Type de Contrôle</span></label>
-                    <select id="filtreType" class="filter-select" onchange="onFilterChange('TYPE')">
-                        <option value="TOUS">-- Tous les types --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreProcessus"><span><i class="fa-solid fa-diagram-project"></i> Processus</span></label>
-                    <select id="filtreProcessus" class="filter-select" onchange="onFilterChange('PROCESSUS')">
-                        <option value="TOUS">-- Tous les processus --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreControle"><span><i class="fa-solid fa-list-check"></i> Contrôle</span></label>
-                    <select id="filtreControle" class="filter-select" onchange="onFilterChange('CONTROLE')">
-                        <option value="TOUS">-- Tous les contrôles --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtrePC"><span><i class="fa-solid fa-crosshairs"></i> Point de Contrôle (PC)</span></label>
-                    <select id="filtrePC" class="filter-select" onchange="onFilterChange('PC')">
-                        <option value="TOUS">-- Tous les PC --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreStatut"><span><i class="fa-solid fa-circle-dot"></i> Statut Constat</span></label>
-                    <select id="filtreStatut" class="filter-select" onchange="onFilterChange('STATUT')">
-                        <option value="TOUS">-- Tous les statuts --</option>
-                    </select>
-                </div>
-            </div>
-        </section>
-
-        <!-- INDICATEURS CLES DE PERFORMANCE (KPIs) -->
-        <section class="kpi-row">
-            <div class="kpi-card">
-                <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
-                <div class="kpi-info">
-                    <p id="lblKpiVolume">Périmètre Contrôlé</p>
-                    <h3 id="kpiVolume">0</h3>
-                    <span class="kpi-sub" id="subKpiVolume">0 mission(s) · 0 site(s)</span>
-                </div>
-            </div>
-
-            <div class="kpi-card success">
-                <div class="kpi-icon" style="color: var(--success); background: rgba(16,185,129,0.1);"><i class="fa-solid fa-shield-check"></i></div>
-                <div class="kpi-info">
-                    <p>Taux Conformité Pondéré</p>
-                    <h3 id="kpiTcGlobal">0.0 %</h3>
-                    <span class="kpi-sub" id="subKpiTcGlobal">FC: 0.0% · Encaisses: 0.0%</span>
-                </div>
-            </div>
-
-            <div class="kpi-card info">
-                <div class="kpi-icon" style="color: var(--info); background: rgba(37,99,235,0.1);"><i class="fa-solid fa-check-double"></i></div>
-                <div class="kpi-info">
-                    <p>Taux de Clôture Constats</p>
-                    <h3 id="kpiTauxCloture">0.0 %</h3>
-                    <span class="kpi-sub" id="subKpiCloture">0 clôturé(s) / 0 constat(s)</span>
-                </div>
-            </div>
-
-            <div class="kpi-card danger">
-                <div class="kpi-icon" style="color: var(--danger); background: rgba(239,68,68,0.1);"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="kpi-info">
-                    <p>Anomalies (KO) & En Retard</p>
-                    <h3 id="kpiTotalKO">0</h3>
-                    <span class="kpi-sub" id="subKpiKO">0 non clôturé(s) · 0 suivi(s)</span>
-                </div>
-            </div>
-
-            <div class="kpi-card warning">
-                <div class="kpi-icon" style="color: var(--warning); background: rgba(245,158,11,0.12);"><i class="fa-solid fa-gauge-high"></i></div>
-                <div class="kpi-info">
-                    <p id="lblKpiCouverture">Taux de Couverture</p>
-                    <h3 id="kpiCouverture">0.0 %</h3>
-                    <span class="kpi-sub" id="subKpiCouverture">Contrôlés / Planifiés</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- DESCRIPTIONS ANALYTIQUES ADAPTÉES À L'ONGLET ACTIF (CENTRE / RÉGION / NATIONAL) -->
-        <section class="description-onglet-box">
-            <div class="description-onglet-header">
-                <h3 id="titreDescriptionOnglet"><i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau National</h3>
-                <span style="font-size:0.74rem; color:#CBD5E1;" id="sousTitreDescriptionOnglet">Synthèse chiffrée des indicateurs de l'onglet actif</span>
-            </div>
-            <div class="description-onglet-body" id="contenuDescriptionOnglet">
-                Chargement de la description analytique...
-            </div>
-        </section>
-
-        <!-- COMPARATIF A 3 NIVEAUX + SYNTHESE DECISIONNELLE -->
-        <section class="decision-grid">
-            <div class="panel-card">
+        <div class="table-card">
+            <div class="table-header-bar">
                 <h3>
-                    <span><i class="fa-solid fa-scale-balanced" style="color:var(--accent-gold);"></i> Positionnement & Comparaison (3 Niveaux)</span>
-                    <span id="badgeRang" class="pill pill-modere" style="display:none;">Rang : --</span>
+                    <i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))
                 </h3>
-                <div class="benchmark-bars" id="benchmarkContainer">
-                    <div class="bench-item">
-                        <div class="bench-header">
-                            <span id="benchLabel1">Périmètre Sélectionné</span>
-                            <span id="benchVal1" style="color:var(--primary-blue);">0.0 %</span>
-                        </div>
-                        <div class="bench-track"><div class="bench-fill" id="benchBar1" style="width:0%; background:var(--primary-blue);"></div></div>
+
+                <div class="multi-filter-bar">
+                    <div class="filter-select-group filter-date-theme">
+                        <label for="selectFiltreDate"><i class="fa-regular fa-calendar-days"></i> Date de contrôle</label>
+                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Toutes les dates --</option>
+                        </select>
                     </div>
-                    <div class="bench-item">
-                        <div class="bench-header">
-                            <span id="benchLabel2">Moyenne Régionale (Pondérée)</span>
-                            <span id="benchVal2" style="color:#0369A1;">0.0 %</span>
-                        </div>
-                        <div class="bench-track"><div class="bench-fill" id="benchBar2" style="width:0%; background:#0284C7;"></div></div>
+
+                    <div class="filter-select-group filter-region-theme">
+                        <label for="selectFiltreRegion"><i class="fa-solid fa-map-location-dot"></i> Région</label>
+                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Toutes les régions --</option>
+                        </select>
                     </div>
-                    <div class="bench-item">
-                        <div class="bench-header">
-                            <span>Moyenne Nationale Réseau (Pondérée)</span>
-                            <span id="benchVal3" style="color:#059669;">0.0 %</span>
-                        </div>
-                        <div class="bench-track"><div class="bench-fill" id="benchBar3" style="width:0%; background:#10B981;"></div></div>
+
+                    <div class="filter-select-group filter-site-theme">
+                        <label for="selectFiltreSite"><i class="fa-solid fa-building"></i> Site</label>
+                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les sites --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-processus-theme">
+                        <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
+                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les processus --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-statut-theme">
+                        <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut</label>
+                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les statuts --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-type-theme">
+                        <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle</label>
+                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les types --</option>
+                        </select>
                     </div>
                 </div>
-                <div class="synthese-box" id="syntheseDecisionnelleBox">
-                    Chargement de la synthèse décisionnelle...
-                </div>
             </div>
 
-            <div class="panel-card">
-                <h3>
-                    <span><i class="fa-solid fa-bell" style="color:var(--danger);"></i> Détection Automatique des Situations Préoccupantes</span>
-                    <span style="font-size:0.72rem; color:var(--text-muted); font-weight:700;">Seuil d'alerte : TC &lt; 75%</span>
-                </h3>
-                <ul class="alert-list" id="alertesAutomatiquesList"></ul>
-            </div>
-        </section>
-
-        <!-- GRAPHIQUES INTERACTIFS ADAPTÉS AU NIVEAU (CENTRE / REGIONAL / NATIONAL) -->
-        <section class="charts-grid">
-            <div class="chart-card">
-                <h3 id="titreChart1"><i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)</h3>
-                <div class="chart-canvas-wrap"><canvas id="chartComparatif"></canvas></div>
-            </div>
-
-            <div class="chart-card">
-                <h3 id="titreChart2"><i class="fa-solid fa-diagram-project"></i> Taux de Conformité (%) par Processus</h3>
-                <div class="chart-canvas-wrap"><canvas id="chartProcessus"></canvas></div>
-            </div>
-
-            <div class="chart-card">
-                <h3 id="titreChart3"><i class="fa-solid fa-chart-pie"></i> Répartition des Statuts & Types de Contrôle</h3>
-                <div class="chart-canvas-wrap"><canvas id="chartStatuts"></canvas></div>
-            </div>
-
-            <div class="chart-card">
-                <h3 id="titreChart4"><i class="fa-solid fa-chart-line"></i> Évolution Chronologique (Taux de Conformité % & Anomalies KO)</h3>
-                <div class="chart-canvas-wrap"><canvas id="chartEvolution"></canvas></div>
-            </div>
-        </section>
-
-        <!-- SECTION COUVERTURE & GRAPHIQUES DE CLASSEMENT (ONGLETS RÉGIONAL & NATIONAL) -->
-        <section id="sectionCouvertureEtClassementCharts" style="display:none;">
-            <div class="charts-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-                <div class="chart-card">
-                    <h3 id="titreChartCouverture"><i class="fa-solid fa-chart-bar"></i> Taux de Couverture (%)</h3>
-                    <div class="chart-canvas-wrap"><canvas id="chartCouverture"></canvas></div>
-                </div>
-                <div class="chart-card">
-                    <h3 id="titreChartClassementRegion"><i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)</h3>
-                    <div class="chart-canvas-wrap"><canvas id="chartClassementRegion"></canvas></div>
-                </div>
-                <div class="chart-card">
-                    <h3 id="titreChartClassementCentre"><i class="fa-solid fa-building-circle-check"></i> Classement des Centres / Sites (TC %)</h3>
-                    <div class="chart-canvas-wrap"><canvas id="chartClassementCentre"></canvas></div>
-                </div>
-            </div>
-
-            <div class="table-card">
-                <h3 id="titreTableCouvertureDetail">
-                    <span><i class="fa-solid fa-map-location-dot"></i> Tableau de Couverture : Entités Touchées et Non Touchées</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreTableCouvertureDetail">Détail nominal des entités couvertes et restantes</span>
-                </h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead id="theadTableCouvertureDetail"></thead>
-                        <tbody id="tbodyTableCouvertureDetail"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TABLEAU PRINCIPAL DE CLASSEMENT & ÉVOLUTION SELON L'ONGLET ACTIF -->
-        <section class="table-card">
-            <h3 id="titreTableClassementPrincipal">
-                <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Régions</span>
-                <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreClassementPrincipal">Comparaison des performances et tendances</span>
-            </h3>
-            <div class="table-scroll">
-                <table>
-                    <thead id="theadClassementPrincipal"></thead>
-                    <tbody id="tbodyClassementPrincipal"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- SECOND TABLEAU D'ANALYSE CROISÉE -->
-        <section class="analytics-tables-grid">
-            <div class="table-card" style="margin-bottom:0;">
-                <h3 id="titreTableSecondaire">
-                    <span><i class="fa-solid fa-building-columns"></i> Classement & Évolution des Centres / Sites (National)</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreTableSecondaire">Comparaison globale des sites</span>
-                </h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead id="theadTableSecondaire"></thead>
-                        <tbody id="tbodyTableSecondaire"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="table-card" style="margin-bottom:0;">
-                <h3>
-                    <span><i class="fa-solid fa-layer-group"></i> Synthèse par Type de Contrôle & Statut</span>
-                </h3>
-                <div class="table-scroll" style="margin-bottom:14px;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Type de Contrôle</th>
-                                <th class="num-center">Constats</th>
-                                <th class="num-center">Ech</th>
-                                <th class="num-center">OK</th>
-                                <th class="num-center">KO</th>
-                                <th class="num-center">TC (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyTypeControle"></tbody>
-                    </table>
-                </div>
-
-                <h3 style="margin-top:8px;">
-                    <span id="titreMiniTableProcessus"><i class="fa-solid fa-crosshairs"></i> Classement des Processus & Points de Contrôle (PC)</span>
-                </h3>
-                <div class="table-scroll">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Processus / Point de Contrôle</th>
-                                <th class="num-center">Constats</th>
-                                <th class="num-center">KO</th>
-                                <th class="num-center">TC (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodyProcessusSensibles"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TABLEAU DÉTAILLÉ DES CONSTATS DU PÉRIMÈTRE CHOISI -->
-        <section class="table-card">
-            <h3>
-                <span id="titreTableDetail"><i class="fa-solid fa-list-check"></i> Détail des Processus, Contrôles, PC & Constats (<span id="countConstatsTable">0</span> ligne(s))</span>
-            </h3>
-            <div class="table-scroll">
-                <table>
+            <div class="table-responsive-wrapper">
+                <table class="bdd-table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Région</th>
-                            <th>Centre / Site</th>
-                            <th>Processus</th>
-                            <th>Contrôle</th>
-                            <th>Point de Contrôle (PC)</th>
-                            <th class="num-center">Ech</th>
-                            <th class="num-center">OK</th>
-                            <th class="num-center">KO</th>
-                            <th class="num-center">TC (%)</th>
-                            <th>Statut</th>
-                            <th>Type</th>
-                            <th>Constat / Remarques</th>
+                            <th class="col-date">Date contrôle / vérif.</th>
+                            <th class="col-region">Région</th>
+                            <th class="col-centre">Centre / Entité</th>
+                            <th class="col-processus">Processus</th>
+                            <th class="col-risque">Risque</th>
+                            <th class="col-controle">Contrôle</th>
+                            <th class="col-pc">PC</th>
+                            <th class="col-num">Pop</th>
+                            <th class="col-num">Ech</th>
+                            <th class="col-num">OK</th>
+                            <th class="col-num">KO</th>
+                            <th class="col-tc">TC (%)</th>
+                            <th class="col-constat">Constat</th>
+                            <th class="col-badge">Statut constat</th>
+                            <th class="col-badge">Type de contrôle</th>
                         </tr>
                     </thead>
-                    <tbody id="tdbTableBody"></tbody>
+                    <tbody id="tableBDDUnifiee"></tbody>
                 </table>
             </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Scripts Firebase Auth & BDD Centralisée -->
-    <script type="module" src="fci-auth.js"></script>
-    <script type="module" src="fci-db-manager.js"></script>
+    <script src="fci-db-manager.js"></script>
+    <script>
+        let filtreDateActif = 'TOUS';
+        let filtreRegionActif = 'TOUS';
+        let filtreSiteActif = 'TOUS';
+        let filtreProcessusActif = 'TOUS';
+        let filtreStatutActif = 'TOUS';
+        let filtreTypeActif = 'TOUS';
+        let dernieresLignesAffichees = [];
 
-    <script type="module">
-        import { initFCISessionGuard } from "./fci-auth.js";
-        import { syncFromFirestoreToLocal } from "./fci-db-manager.js";
+        const PALETTE_DYNAMIQUE = [
+            { bg: '#DBEAFE', text: '#1E40AF' },
+            { bg: '#F3E8FF', text: '#6B21A8' },
+            { bg: '#CCFBF1', text: '#115E59' },
+            { bg: '#FEF3C7', text: '#92400E' },
+            { bg: '#FCE7F3', text: '#9D174D' },
+            { bg: '#E0E7FF', text: '#3730A3' },
+            { bg: '#DCFCE7', text: '#166534' },
+            { bg: '#FFEDD5', text: '#9A3412' },
+            { bg: '#E0F2FE', text: '#075985' },
+            { bg: '#FAE8FF', text: '#86198F' }
+        ];
 
-        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
-        const currentUser = await initFCISessionGuard();
-        await syncFromFirestoreToLocal(currentUser);
-
-        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
-        const userBox = document.getElementById("fci-auth-sidebar-box");
-        const slot = document.getElementById("fci-sidebar-user-slot");
-        if (userBox && slot) {
-            slot.appendChild(userBox);
+        function normaliserRegion(val) {
+            let reg = String(val || '').toUpperCase().trim();
+            if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            return reg;
         }
 
-        const SEUIL_ALERTE_TC = 75.0;
+        function getUserRegionRestriction() {
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (!u || !u.region || u.region === 'SIEGE') return '';
+            return normaliserRegion(u.region);
+        }
 
-        const REFERENTIEL_CENTRES_PAR_REGION = {
-            "MARRAKECH": [
-                "MARRAKECH CTD", "MARRAKECH CM", "MARRAKECH SYBA CD", "AGENCE MESSAGERIE GUELIZ MARRAKECH",
-                "ESSAOUIRA CCC", "SAFI CD", "SAFI CM", "EL KELAA DES SERAGHNAS CCC", "OUARZAZATE CCC",
-                "TINEGIR CLD", "BENGUERIR CLD", "EL YOUSSOUFIA CLD",
-                "SERVICE OPERATION REGIONAL MARRAKECH", "SERVICE SUPPORT REGIONAL MARRAKECH"
-            ],
-            "AGADIR": [
-                "AGADIR CTD", "AGADIR CM", "AGADIR AM", "INEZEGANE CD", "AIT MELLOUL CD",
-                "OULED TAIMA CLD", "TAROUDANT CCC", "TIZNIT CCC", "GUELMIM CCC", "TANTAN CLD",
-                "SERVICE OPERATION REGIONAL AGADIR", "SERVICE SUPPORT REGIONAL AGADIR"
-            ],
-            "CASA": [
-                "PNC", "CNA", "CASA COMPLEXE MOHAMMED 5 CD", "CASA HAY HASSANI CD", "CASA HAY MESSALA CD",
-                "CASA HAY MOHAMMADI CD", "CASA BONDANG CTD", "CASA EL AZZHAR CD", "CASA SIDI MOUMEN CD",
-                "CASA SIDI OUTHMANE CD", "BOUSSKOURA CD", "AIN HARROUDA CLD", "TIT MELLILCLD",
-                "AGENCE MESSAGERIE AVENUE DES FAR", "CPX", "CASA SOUKRATE AM", "AIN SEBAA PLAGE AM",
-                "MOHAMMADIA CCC", "MOHAMMADIA AM", "BEN SLIMANE CLD", "BOUZNIKA CLD", "DAR BOUAZZA CLD",
-                "AGENCE COURRIER CASA BONDANG", "CASA BONDANG CM",
-                "SERVICE OPERATION REGIONAL CASA", "SERVICE SUPPORT REGIONAL CASA"
-            ],
-            "SETTAT": [
-                "BENI MELLAL CCC", "BERRECHID CCC", "LHOURIBGA CCC", "SETTAT CCC", "SETTAT CD",
-                "EL JADIDA CM", "EL JADIDA CD", "DEROUA OULED ZIANE CLD", "OUED ZEM CLD",
-                "FKIH BEN SALEH CLD", "SOUK SEBT OULED NEMA CLD", "KASBAT TADLA CLD",
-                "SERVICE OPERATION REGIONAL SETTAT", "SERVICE SUPPORT REGIONAL SETTAT"
-            ],
-            "RABAT": [
-                "RABAT CM", "RABAT CTD", "RABAT IRRFANE", "TEMARA CD", "TEMARA AM",
-                "KENITRA CD", "KENITRA AM", "KENITRA CM", "SALE AM", "SALE CD",
-                "SALE EL JADIDA CD", "SALE EL JADIDA CM", "SOUK LARBAA DU GHARB CLD",
-                "SIDI SLIMANE CLD", "OUAZZANE CLD", "SIDI KACEM CD", "TIFFELT CLD", "KHEMISSAT CD",
-                "SERVICE OPERATION REGIONAL RABAT", "SERVICE SUPPORT REGIONAL RABAT"
-            ],
-            "TANGER": [
-                "TANGER AM", "TANGER CM", "TANGER CD", "TETOUAN CD", "TETOUAN AM",
-                "TETOUAN CCC", "KSAR LAKBIR CD", "ARACHE CCC",
-                "SERVICE OPERATION REGIONAL TANGER", "SERVICE SUPPORT REGIONAL TANGER"
-            ],
-            "LAAYOUNE": [
-                "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM",
-                "LAAYOUNE AM PORT", "BOUJDOUR AM", "GUERGURATE AM",
-                "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
-            ],
-            "FES": [
-                "FES AM", "FES CM", "FES CTD", "EL HOUCEIMA CLD", "SEFFROU CLD",
-                "TAZA CLD", "TAZA CM", "GUERCIF CLD",
-                "SERVICE OPERATION REGIONAL FES", "SERVICE SUPPORT REGIONAL FES"
-            ],
-            "MEKNES": [
-                "MEKNES CD", "MEKNES AM", "MEKNES CM", "AZEROU CLD", "MIDELT CLD", "ERRACHIDIA CD",
-                "SERVICE OPERATION REGIONAL MEKNES", "SERVICE SUPPORT REGIONAL MEKNES"
-            ],
-            "OUEJDA": [
-                "OUEJDA CD", "OUEJDA AM", "OUEJDA CM", "BERKANE CD", "BERKANE AM",
-                "NADOR CD", "NADOR AM", "NADOR CM", "TAOURIRTE CLD",
-                "SERVICE OPERATION REGIONAL OUJEDA", "SERVICE SUPPORT REGIONAL OUJEDA"
-            ]
-        };
+        function getCouleurOptionIndex(index) {
+            return PALETTE_DYNAMIQUE[index % PALETTE_DYNAMIQUE.length];
+        }
 
-        const LISTE_10_REGIONS = Object.keys(REFERENTIEL_CENTRES_PAR_REGION);
-        const TOTAL_CENTRES_NATIONAL = LISTE_10_REGIONS.reduce((acc, r) => acc + REFERENTIEL_CENTRES_PAR_REGION[r].length, 0);
-
-        let niveauActif = (currentUser && currentUser.role === "CONTROLEUR") ? 'REGIONAL' : 'NATIONAL';
-        let toutesLesDonnees = [];
-        let toutesLesMissions = [];
-        let dernieresDonneesFiltrees = [];
-        let exportClassementPrincipal = [];
-        let exportClassementSecondaire = [];
-        let exportCouvertureDetail = [];
-        let derniersTypes = [];
-        let derniersProcessus = [];
-
-        let chartComparatifInst = null;
-        let chartProcessusInst = null;
-        let chartStatutsInst = null;
-        let chartEvolutionInst = null;
-        let chartCouvertureInst = null;
-        let chartClassementRegionInst = null;
-        let chartClassementCentreInst = null;
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'fci_database') {
-                chargerEtPreparerDonnees();
-            }
-        });
-
-        function lireDB() {
+        function lireBDDLocaleSecurisee() {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
                 return FCIDatabase.getDB();
             }
@@ -1018,1836 +443,489 @@
             }
         }
 
-        function filterRecordsByRole(list) {
-            if (!Array.isArray(list)) return [];
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                return list.filter(item => !item.cree_par_id || item.cree_par_id === currentUser.username);
+        function formaterDateBDD(valeurBrute) {
+            if (!valeurBrute) return '--';
+            let str = String(valeurBrute).trim();
+            if (!str || str === '--' || str === '-') return '--';
+            if (str.includes('T')) str = str.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                const [y, m, d] = str.split('-');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
             }
-            return list;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+                const [d, m, y] = str.split('/');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
+            }
+            return str;
         }
 
-        function normaliserRegion(val) {
-            let reg = String(val || '').trim().toUpperCase();
-            if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
-            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
-            if (reg === 'CASABLANCA') reg = 'CASA';
-            return reg;
-        }
-
-        function normaliserDateISO(val) {
-            if (!val) return '';
-            let s = String(val).trim();
-            if (s.includes('T')) s = s.split('T')[0];
-            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
-                const [d, m, y] = s.split('/');
+        function dateVersISOComparable(valeurBrute) {
+            if (!valeurBrute) return '9999-12-31';
+            let str = String(valeurBrute).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+                const [d, m, y] = str.split('/');
                 return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
             }
-            return '';
+            return '9999-12-31';
         }
 
-        function formaterDateFR(iso) {
-            if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '--';
-            const [y, m, d] = iso.split('-');
-            return `${d}/${m}/${y}`;
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerBDDEnVisuel();
+        });
+
+        window.addEventListener('fci-auth-ready', () => {
+            chargerBDDEnVisuel();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                chargerBDDEnVisuel();
+            }
+        });
+
+        function normaliserTypeControle(valeurBrute, sourceDefaut) {
+            const val = String(valeurBrute || '').trim().toLowerCase();
+            if (val.includes('syst')) {
+                return { label: 'Systématique', rowClass: 'row-systematique', badgeClass: 'badge-systematique' };
+            }
+            if (val.includes('vérif') || val.includes('verif')) {
+                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
+            }
+            if (val.includes('thém') || val.includes('them')) {
+                return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
+            }
+            if (sourceDefaut === 'FV') {
+                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
+            }
+            return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
         }
 
-        function normaliserType(val, source) {
-            const v = String(val || '').trim().toLowerCase();
-            if (v.includes('syst')) return 'Systématique';
-            if (v.includes('vérif') || v.includes('verif')) return 'Vérification';
-            if (v.includes('thém') || v.includes('them')) return 'Thématique';
-            return source === 'FV' ? 'Vérification' : 'Thématique';
+        function normaliserStatutConstat(valeurBrute) {
+            const val = String(valeurBrute || '').trim().toUpperCase();
+            if (val === 'CLOTURE' || val === 'CLÔTURÉ' || val === 'CLOTURÉ') {
+                return { code: 'CLOTURE', label: 'Clôturé', badgeClass: 'statut-cloture' };
+            }
+            if (val === 'NON_CLOTURE' || val === 'NON CLÔTURÉ' || val === 'NON CLOTURE') {
+                return { code: 'NON_CLOTURE', label: 'Non clôturé', badgeClass: 'statut-noncloture' };
+            }
+            return { code: 'EN_COURS', label: 'En cours', badgeClass: 'statut-encours' };
         }
 
-        function normaliserStatut(val) {
-            const v = String(val || '').trim().toUpperCase();
-            if (v === 'CLOTURE' || v === 'CLÔTURÉ' || v === 'CLOTURÉ') return 'CLOTURE';
-            if (v === 'NON_CLOTURE' || v === 'NON CLÔTURÉ' || v === 'NON CLOTURE' || v === 'OUVERT') return 'NON_CLOTURE';
-            return 'EN_COURS';
+        function estLigneSuivi(item, idEnregistrement, idMission) {
+            if (item && (item.isSuivi === true || item.suivi === true)) return true;
+            const id1 = String(idEnregistrement || '').toUpperCase();
+            const id2 = String(idMission || '').toUpperCase();
+            return id1.includes('SUIVI') || id2.includes('SUIVI');
         }
 
-        function libelleStatut(code) {
-            if (code === 'CLOTURE') return 'Clôturé';
-            if (code === 'NON_CLOTURE') return 'Non clôturé';
-            return 'En cours';
+        function estLigneModifiee(item) {
+            return Boolean(item && (item.isModifie === true || item.modifie === true));
         }
 
-        function compterFCetFV(liste) {
-            const opsFC = new Set();
-            const opsFV = new Set();
-            let constatsFC = 0;
-            let constatsFV = 0;
+        function mettreAJourStylesSelectsFiltres() {
+            const selStatut = document.getElementById('selectFiltreStatut');
+            const selType = document.getElementById('selectFiltreType');
 
-            liste.forEach(d => {
-                const cleOp = `${d.site || 'SITE'}|${d.dateISO || d.idMission || 'DATE'}`;
-                if (d.source === 'FC') {
-                    constatsFC++;
-                    opsFC.add(cleOp);
-                } else if (d.source === 'FV') {
-                    constatsFV++;
-                    opsFV.add(cleOp);
+            selStatut.className = 'filter-dropdown';
+            if (filtreStatutActif === 'EN_COURS') selStatut.classList.add('select-statut-EN_COURS');
+            else if (filtreStatutActif === 'CLOTURE') selStatut.classList.add('select-statut-CLOTURE');
+            else if (filtreStatutActif === 'NON_CLOTURE') selStatut.classList.add('select-statut-NON_CLOTURE');
+
+            selType.className = 'filter-dropdown';
+            if (filtreTypeActif === 'Thématique') selType.classList.add('select-type-Thematique');
+            else if (filtreTypeActif === 'Systématique') selType.classList.add('select-type-Systematique');
+            else if (filtreTypeActif === 'Vérification') selType.classList.add('select-type-Verification');
+        }
+
+        function appliquerMultiFiltre() {
+            const restrictedReg = getUserRegionRestriction();
+            filtreDateActif = document.getElementById('selectFiltreDate').value;
+            filtreRegionActif = restrictedReg || document.getElementById('selectFiltreRegion').value;
+            filtreSiteActif = document.getElementById('selectFiltreSite').value;
+            filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
+            filtreStatutActif = document.getElementById('selectFiltreStatut').value;
+            filtreTypeActif = document.getElementById('selectFiltreType').value;
+            mettreAJourStylesSelectsFiltres();
+            chargerBDDEnVisuel();
+        }
+
+        function reinitialiserFiltresBDD() {
+            const restrictedReg = getUserRegionRestriction();
+            filtreDateActif = 'TOUS';
+            filtreRegionActif = restrictedReg || 'TOUS';
+            filtreSiteActif = 'TOUS';
+            filtreProcessusActif = 'TOUS';
+            filtreStatutActif = 'TOUS';
+            filtreTypeActif = 'TOUS';
+            document.getElementById('selectFiltreDate').value = 'TOUS';
+            document.getElementById('selectFiltreRegion').value = restrictedReg || 'TOUS';
+            document.getElementById('selectFiltreSite').value = 'TOUS';
+            document.getElementById('selectFiltreProcessus').value = 'TOUS';
+            document.getElementById('selectFiltreStatut').value = 'TOUS';
+            document.getElementById('selectFiltreType').value = 'TOUS';
+            mettreAJourStylesSelectsFiltres();
+            chargerBDDEnVisuel();
+        }
+
+        function peuplerSelectDynamique(selectEl, valeursUniques, valeurActive, libelleTous, formatterLabelFn = null) {
+            if (!selectEl) return;
+            const liste = [...valeursUniques];
+            if (valeurActive !== 'TOUS' && !liste.includes(valeurActive)) {
+                liste.unshift(valeurActive);
+            }
+
+            let html = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">${libelleTous} (${valeursUniques.length})</option>`;
+            liste.forEach((val, idx) => {
+                const c = getCouleurOptionIndex(idx);
+                const label = formatterLabelFn ? formatterLabelFn(val) : val;
+                const selected = val === valeurActive ? 'selected' : '';
+                html += `<option value="${val}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${label}</option>`;
+            });
+            selectEl.innerHTML = html;
+        }
+
+        function mettreAJourCompteursOptions(lignesUnifiees) {
+            const restrictedReg = getUserRegionRestriction();
+            const selDate = document.getElementById('selectFiltreDate');
+            const selRegion = document.getElementById('selectFiltreRegion');
+            const selSite = document.getElementById('selectFiltreSite');
+            const selProcessus = document.getElementById('selectFiltreProcessus');
+            const selStatut = document.getElementById('selectFiltreStatut');
+            const selType = document.getElementById('selectFiltreType');
+
+            const datesMap = new Map();
+            lignesUnifiees.forEach(l => {
+                if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
+                    datesMap.set(l.dateCtrlVerif, l.dateISO);
                 }
             });
-
-            return {
-                nbControlesFC: opsFC.size,
-                nbVerificationsFV: opsFV.size,
-                constatsFC,
-                constatsFV
-            };
-        }
-
-        function calculerCouvertureRegion(regNorm, listeDonneesRegion) {
-            const refCentres = REFERENTIEL_CENTRES_PAR_REGION[regNorm] || [];
-            const sitesTouchesSet = new Set(listeDonneesRegion.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
-            const sitesTouchesControleSet = new Set(
-                listeDonneesRegion
-                    .filter(d => d.source === 'FC')
-                    .map(d => String(d.site || '').trim().toUpperCase())
-                    .filter(Boolean)
-            );
-            const sitesTouchesVerificationSet = new Set(
-                listeDonneesRegion
-                    .filter(d => d.source === 'FV')
-                    .map(d => String(d.site || '').trim().toUpperCase())
-                    .filter(Boolean)
+            const datesTriees = [...datesMap.entries()]
+                .sort((a, b) => a[1].localeCompare(b[1]))
+                .map(entry => entry[0]);
+            peuplerSelectDynamique(
+                selDate,
+                datesTriees,
+                filtreDateActif,
+                'Toutes les dates',
+                (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
             );
 
-            const sitesTouchesList = [...sitesTouchesSet].sort((a, b) => a.localeCompare(b, 'fr'));
-            const sitesTouchesControleList = [...sitesTouchesControleSet].sort((a, b) => a.localeCompare(b, 'fr'));
-            const sitesTouchesVerificationList = [...sitesTouchesVerificationSet].sort((a, b) => a.localeCompare(b, 'fr'));
-            const sitesNonTouchesList = refCentres
-                .filter(c => !sitesTouchesSet.has(c.trim().toUpperCase()))
-                .sort((a, b) => a.localeCompare(b, 'fr'));
+            if (restrictedReg) {
+                selRegion.innerHTML = `<option value="${restrictedReg}" selected style="background-color:#F5F3FF; color:#5B21B6; font-weight:700;">📍 ${restrictedReg} (${lignesUnifiees.length})</option>`;
+                selRegion.disabled = true;
+            } else {
+                selRegion.disabled = false;
+                const regionsTriees = [...new Set(
+                    lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
+                )].sort((a, b) => a.localeCompare(b, 'fr'));
+                peuplerSelectDynamique(
+                    selRegion,
+                    regionsTriees,
+                    filtreRegionActif,
+                    'Toutes les régions',
+                    (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
+                );
+            }
 
-            const nbTouches = sitesTouchesList.length;
-            const denom = Math.max(refCentres.length, nbTouches);
-            const taux = denom > 0 ? (nbTouches / denom) * 100 : 0;
+            const sourceSites = filtreRegionActif === 'TOUS'
+                ? lignesUnifiees
+                : lignesUnifiees.filter(l => l.region === filtreRegionActif);
+            const sitesTries = [...new Set(
+                sourceSites.map(l => l.entite).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selSite,
+                sitesTries,
+                filtreSiteActif,
+                'Tous les sites',
+                (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
+            );
 
-            return {
-                centresTouches: nbTouches,
-                totalCentres: denom,
-                tauxCouverture: taux,
-                sitesTouchesList,
-                sitesTouchesControleList,
-                sitesTouchesVerificationList,
-                sitesNonTouchesList
-            };
-        }
+            const processusTries = [...new Set(
+                lignesUnifiees.map(l => l.processus).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selProcessus,
+                processusTries,
+                filtreProcessusActif,
+                'Tous les processus',
+                (p) => `⚙️ ${p} (${lignesUnifiees.filter(l => l.processus === p).length})`
+            );
 
-        function calculerTCPondere(liste) {
-            let sumOk = 0, sumEch = 0;
-            liste.forEach(item => {
-                sumOk += item.ok;
-                sumEch += item.ech;
+            const STATUTS_CONFIG = [
+                { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
+                { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
+                { code: 'NON_CLOTURE', label: '🔴 Non clôturé', bg: '#FEE2E2', color: '#991B1B' }
+            ];
+            const statutsPresents = STATUTS_CONFIG.filter(st =>
+                lignesUnifiees.some(l => l.statutInfo.code === st.code) || filtreStatutActif === st.code
+            );
+            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${lignesUnifiees.length})</option>`;
+            statutsPresents.forEach(st => {
+                const nb = lignesUnifiees.filter(l => l.statutInfo.code === st.code).length;
+                const sel = filtreStatutActif === st.code ? 'selected' : '';
+                htmlStatut += `<option value="${st.code}" ${sel} style="background-color:${st.bg}; color:${st.color}; font-weight:700;">${st.label} (${nb})</option>`;
             });
-            if (sumEch > 0) return (sumOk / sumEch) * 100;
-            if (liste.length > 0) {
-                return liste.reduce((acc, i) => acc + i.tc, 0) / liste.length;
-            }
-            return 0;
+            selStatut.innerHTML = htmlStatut;
+
+            const TYPES_CONFIG = [
+                { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
+                { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
+                { val: 'Vérification', label: '🟢 Vérification', bg: '#D1FAE5', color: '#065F46' }
+            ];
+            const typesPresents = TYPES_CONFIG.filter(tp =>
+                lignesUnifiees.some(l => l.typeInfo.label === tp.val) || filtreTypeActif === tp.val
+            );
+            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${lignesUnifiees.length})</option>`;
+            typesPresents.forEach(tp => {
+                const nb = lignesUnifiees.filter(l => l.typeInfo.label === tp.val).length;
+                const sel = filtreTypeActif === tp.val ? 'selected' : '';
+                htmlType += `<option value="${tp.val}" ${sel} style="background-color:${tp.bg}; color:${tp.color}; font-weight:700;">${tp.label} (${nb})</option>`;
+            });
+            selType.innerHTML = htmlType;
         }
 
-        function calculerEvolutionTC(items) {
-            const dates = [...new Set(items.map(i => i.dateISO).filter(Boolean))].sort();
-            if (dates.length < 2) {
-                return { delta: null, html: '<span class="evo-flat">1ère période</span>', texte: '1ère période' };
+        function chargerBDDEnVisuel() {
+            const db = lireBDDLocaleSecurisee();
+            const tbody = document.getElementById('tableBDDUnifiee');
+            const totalBadge = document.getElementById('totalLignesBDD');
+            tbody.innerHTML = '';
+
+            const restrictedReg = getUserRegionRestriction();
+            if (restrictedReg) {
+                filtreRegionActif = restrictedReg;
             }
-            const derniereDate = dates[dates.length - 1];
-            const itemsDerniers = items.filter(i => i.dateISO === derniereDate);
-            const itemsAnterieurs = items.filter(i => i.dateISO && i.dateISO < derniereDate);
-
-            const tcDernier = calculerTCPondere(itemsDerniers);
-            const tcAnterieur = calculerTCPondere(itemsAnterieurs);
-            const delta = tcDernier - tcAnterieur;
-
-            if (delta > 0.05) {
-                return {
-                    delta,
-                    html: `<span class="evo-up"><i class="fa-solid fa-arrow-trend-up"></i> +${delta.toFixed(1)} pts</span>`,
-                    texte: `+${delta.toFixed(1)} pts`
-                };
-            } else if (delta < -0.05) {
-                return {
-                    delta,
-                    html: `<span class="evo-down"><i class="fa-solid fa-arrow-trend-down"></i> ${delta.toFixed(1)} pts</span>`,
-                    texte: `${delta.toFixed(1)} pts`
-                };
-            }
-            return {
-                delta: 0,
-                html: `<span class="evo-flat"><i class="fa-solid fa-minus"></i> 0.0 pt</span>`,
-                texte: '0.0 pt'
-            };
-        }
-
-        function qualifierRisque(tc, ko) {
-            if (tc < 60 || ko >= 10) return { label: 'Critique', cls: 'pill-critique' };
-            if (tc < 80 || ko >= 5) return { label: 'Élevé', cls: 'pill-eleve' };
-            if (tc < 95) return { label: 'Modéré', cls: 'pill-modere' };
-            return { label: 'Faible', cls: 'pill-faible' };
-        }
-
-        function chargerEtPreparerDonnees() {
-            const db = lireDB();
-            toutesLesMissions = filterRecordsByRole(db.missions || []);
 
             const mapMissions = {};
             (db.missions || []).forEach(m => {
                 if (m.idMission) mapMissions[m.idMission] = m;
             });
 
-            const unifies = [];
+            const mapConstatsFC = new Map();
+            (db.constatsControle || []).forEach((c, idx) => {
+                const key = c.idConstat || `FC-LEGACY-${c.idMission || ''}-${c.pc || ''}-${idx}`;
+                mapConstatsFC.set(key, c);
+            });
 
-            filterRecordsByRole(db.constatsControle || []).forEach(c => {
-                const m = mapMissions[c.idMission] || {};
-                const iso = normaliserDateISO(c.date || c.dateControle || m.date || m.dateControle);
-                const ech = parseInt(c.ech) || 0;
-                const ok = parseInt(c.ok) || 0;
-                const ko = parseInt(c.ko) || 0;
-                const tc = c.tc !== undefined ? parseFloat(c.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
-                unifies.push({
-                    source: 'FC',
-                    idMission: c.idMission || '',
-                    dateISO: iso,
-                    dateFR: formaterDateFR(iso),
-                    periode: iso ? iso.slice(0, 7) : 'Non daté',
-                    region: normaliserRegion(c.region || m.region || ''),
-                    site: String(c.entite || c.site || m.entite || '').trim(),
-                    processus: String(c.processus || '').trim(),
-                    risque: String(c.risque || '').trim(),
-                    controle: String(c.controle || '').trim(),
-                    pc: String(c.pc || '').trim(),
-                    pop: parseInt(c.pop) || 0,
-                    ech, ok, ko,
-                    tc: isNaN(tc) ? 0 : tc,
-                    constat: String(c.constat || '--').trim(),
-                    statut: normaliserStatut(c.statut || c.statutConstat),
-                    typeControle: normaliserType(c.typeControle || m.typeControle, 'FC'),
-                    isSuivi: Boolean(c.isSuivi || c.suivi || c.is_followup || String(c.idConstat || '').toUpperCase().includes('SUIVI')),
-                    isModifie: Boolean(c.isModifie || c.modifie)
+            const mapConstatsFV = new Map();
+            (db.constatsEncaisses || []).forEach((e, idx) => {
+                const key = e.idEncaisse || `FV-LEGACY-${e.idMission || ''}-${e.pc || ''}-${idx}`;
+                mapConstatsFV.set(key, e);
+            });
+
+            const lignesUnifiees = [];
+
+            mapConstatsFC.forEach(c => {
+                const missionAssociee = mapMissions[c.idMission] || {};
+                const regionNorm = normaliserRegion(c.region || missionAssociee.region || '');
+                if (restrictedReg && regionNorm !== restrictedReg) return;
+
+                const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
+                const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
+                const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
+                const isModifie = estLigneModifiee(c);
+                lignesUnifiees.push({
+                    dateISO: dateVersISOComparable(dateBrute),
+                    dateCtrlVerif: formaterDateBDD(dateBrute),
+                    region: regionNorm || '--',
+                    entite: c.entite || c.site || missionAssociee.entite || '--',
+                    processus: c.processus || '--',
+                    risque: c.risque || '--',
+                    controle: c.controle || '--',
+                    pc: c.pc || '--',
+                    pop: c.pop || 0,
+                    ech: c.ech || 0,
+                    ok: c.ok || 0,
+                    ko: c.ko || 0,
+                    tc: parseFloat(c.tc || 0),
+                    constat: c.constat || '--',
+                    statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
+                    typeInfo: normaliserTypeControle(typeBrut, 'FC'),
+                    isSuivi: isSuivi,
+                    isModifie: isModifie
                 });
             });
 
-            filterRecordsByRole(db.constatsEncaisses || []).forEach(e => {
-                const m = mapMissions[e.idMission] || {};
-                const iso = normaliserDateISO(e.date || e.dateVerification || m.date);
-                const ech = parseInt(e.ech) || 0;
-                const ok = parseInt(e.ok) || 0;
-                const ko = parseInt(e.ko) || 0;
-                const tc = e.tc !== undefined ? parseFloat(e.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
-                unifies.push({
-                    source: 'FV',
-                    idMission: e.idMission || '',
-                    dateISO: iso,
-                    dateFR: formaterDateFR(iso),
-                    periode: iso ? iso.slice(0, 7) : 'Non daté',
-                    region: normaliserRegion(e.region || m.region || ''),
-                    site: String(e.entite || e.site || e.agence || m.entite || '').trim(),
-                    processus: String(e.processus || 'Vérification Encaisses').trim(),
-                    risque: String(e.risque || '').trim(),
-                    controle: String(e.controle || '').trim(),
-                    pc: String(e.pc || '').trim(),
-                    pop: parseInt(e.pop) || 0,
-                    ech, ok, ko,
-                    tc: isNaN(tc) ? 0 : tc,
-                    constat: String(e.constat || '--').trim(),
-                    statut: normaliserStatut(e.statut || e.statutConstat),
-                    typeControle: normaliserType(e.typeControle, 'FV'),
-                    isSuivi: Boolean(e.isSuivi || e.suivi || e.is_followup || String(e.idEncaisse || '').toUpperCase().includes('SUIVI')),
-                    isModifie: Boolean(e.isModifie || e.modifie)
+            mapConstatsFV.forEach(e => {
+                const missionAssociee = mapMissions[e.idMission] || {};
+                const regionNorm = normaliserRegion(e.region || missionAssociee.region || '');
+                if (restrictedReg && regionNorm !== restrictedReg) return;
+
+                const typeBrut = e.typeControle || 'Vérification';
+                const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
+                const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
+                const isModifie = estLigneModifiee(e);
+                lignesUnifiees.push({
+                    dateISO: dateVersISOComparable(dateBrute),
+                    dateCtrlVerif: formaterDateBDD(dateBrute),
+                    region: regionNorm || '--',
+                    entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
+                    processus: e.processus || '--',
+                    risque: e.risque || '--',
+                    controle: e.controle || '--',
+                    pc: e.pc || '--',
+                    pop: e.pop || 0,
+                    ech: e.ech || 0,
+                    ok: e.ok || 0,
+                    ko: e.ko || 0,
+                    tc: parseFloat(e.tc || 0),
+                    constat: e.constat || '--',
+                    statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
+                    typeInfo: normaliserTypeControle(typeBrut, 'FV'),
+                    isSuivi: isSuivi,
+                    isModifie: isModifie
                 });
             });
 
-            toutesLesDonnees = unifies;
-            appliquerEtatNiveau();
-            actualiserFiltresDynamiquesEtAnalyse();
-        }
-
-        function correspondFiltreTemporel(isoDate, dateSpecifique, dateDebut, dateFin) {
-            if (dateSpecifique !== 'TOUS') {
-                return isoDate === dateSpecifique;
-            }
-            if (dateDebut !== 'TOUS' && (!isoDate || isoDate < dateDebut)) return false;
-            if (dateFin !== 'TOUS' && (!isoDate || isoDate > dateFin)) return false;
-            return true;
-        }
-
-        function libelleFiltreTemporel(dateSpecifique, dateDebut, dateFin) {
-            if (dateSpecifique !== 'TOUS') return `Date : ${formaterDateFR(dateSpecifique)}`;
-            if (dateDebut !== 'TOUS' && dateFin !== 'TOUS') return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
-            if (dateDebut !== 'TOUS') return `Période : à partir du ${formaterDateFR(dateDebut)}`;
-            if (dateFin !== 'TOUS') return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
-            return 'Toutes les dates';
-        }
-
-        function lireEtatFiltres() {
-            const isCtrl = currentUser && currentUser.role === "CONTROLEUR";
-            const ctrlReg = isCtrl ? normaliserRegion(currentUser.region_code) : 'TOUS';
-            return {
-                reg: niveauActif === 'NATIONAL' ? 'TOUS' : (isCtrl ? ctrlReg : document.getElementById('filtreRegion').value),
-                centre: niveauActif === 'CENTRE' ? document.getElementById('filtreCentre').value : 'TOUS',
-                dateSpec: document.getElementById('filtreDate').value,
-                dateDebut: document.getElementById('filtreDateDebut').value,
-                dateFin: document.getElementById('filtreDateFin').value,
-                typeCtrl: document.getElementById('filtreType').value,
-                proc: document.getElementById('filtreProcessus').value,
-                ctrl: document.getElementById('filtreControle').value,
-                pc: document.getElementById('filtrePC').value,
-                statut: document.getElementById('filtreStatut').value
-            };
-        }
-
-        function filtrerSubset(etat, exclure = []) {
-            return toutesLesDonnees.filter(d => {
-                if (!exclure.includes('REGION') && etat.reg !== 'TOUS' && d.region !== etat.reg) return false;
-                if (!exclure.includes('CENTRE') && etat.centre !== 'TOUS' && d.site !== etat.centre) return false;
-                if (!exclure.includes('TEMPS') && !correspondFiltreTemporel(d.dateISO, etat.dateSpec, etat.dateDebut, etat.dateFin)) return false;
-                if (!exclure.includes('TYPE') && etat.typeCtrl !== 'TOUS' && d.typeControle !== etat.typeCtrl) return false;
-                if (!exclure.includes('PROCESSUS') && etat.proc !== 'TOUS' && d.processus !== etat.proc) return false;
-                if (!exclure.includes('CONTROLE') && etat.ctrl !== 'TOUS' && d.controle !== etat.ctrl) return false;
-                if (!exclure.includes('PC') && etat.pc !== 'TOUS' && d.pc !== etat.pc) return false;
-                if (!exclure.includes('STATUT') && etat.statut !== 'TOUS' && d.statut !== etat.statut) return false;
-                return true;
-            });
-        }
-
-        function remplirSelectOptions(selectEl, valeursUniques, libelleTous, formatterFn = null) {
-            const valActuelle = selectEl.value;
-            selectEl.innerHTML = `<option value="TOUS">${libelleTous}</option>`;
-            valeursUniques.forEach(v => {
-                const txt = formatterFn ? formatterFn(v) : v;
-                selectEl.innerHTML += `<option value="${v}">${txt}</option>`;
-            });
-            if (valeursUniques.includes(valActuelle)) {
-                selectEl.value = valActuelle;
-                return valActuelle;
-            } else {
-                selectEl.value = 'TOUS';
-                return 'TOUS';
-            }
-        }
-
-        function actualiserFiltresDynamiquesEtAnalyse() {
-            const etat = lireEtatFiltres();
-            const isCtrl = currentUser && currentUser.role === "CONTROLEUR";
-            const ctrlReg = isCtrl ? normaliserRegion(currentUser.region_code) : 'TOUS';
-
-            const selReg = document.getElementById('filtreRegion');
-            const regionsBDD = [...new Set([...LISTE_10_REGIONS, ...toutesLesDonnees.map(d => d.region).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'fr'));
-            if (niveauActif === 'NATIONAL') {
-                remplirSelectOptions(selReg, regionsBDD, '-- Verrouillé (National) --');
-                selReg.value = 'TOUS';
-                etat.reg = 'TOUS';
-            } else if (isCtrl) {
-                remplirSelectOptions(selReg, [ctrlReg], '-- Région affectée --');
-                selReg.value = ctrlReg;
-                etat.reg = ctrlReg;
-            } else {
-                etat.reg = remplirSelectOptions(selReg, regionsBDD, '-- Toutes les régions --');
-            }
-
-            const selCentre = document.getElementById('filtreCentre');
-            if (niveauActif === 'CENTRE') {
-                const baseCentres = etat.reg !== 'TOUS'
-                    ? toutesLesDonnees.filter(d => d.region === etat.reg)
-                    : toutesLesDonnees;
-                const centresBDD = [...new Set(baseCentres.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-                etat.centre = remplirSelectOptions(selCentre, centresBDD, '-- Tous les centres --');
-            } else {
-                remplirSelectOptions(selCentre, [], '-- Verrouillé --');
-                selCentre.value = 'TOUS';
-                etat.centre = 'TOUS';
-            }
-
-            const baseDates = filtrerSubset(etat, ['TEMPS']);
-            const datesAsc = [...new Set(baseDates.map(d => d.dateISO).filter(Boolean))].sort();
-            const datesDesc = [...datesAsc].reverse();
-
-            etat.dateSpec = remplirSelectOptions(document.getElementById('filtreDate'), datesDesc, '-- Toutes les dates --', formaterDateFR);
-            etat.dateDebut = remplirSelectOptions(document.getElementById('filtreDateDebut'), datesAsc, '-- Date début --', formaterDateFR);
-            etat.dateFin = remplirSelectOptions(document.getElementById('filtreDateFin'), datesDesc, '-- Date fin --', formaterDateFR);
-
-            const baseTypes = filtrerSubset(etat, ['TYPE']);
-            const typesBDD = [...new Set(baseTypes.map(d => d.typeControle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            etat.typeCtrl = remplirSelectOptions(document.getElementById('filtreType'), typesBDD, '-- Tous les types --');
-
-            const baseProcs = filtrerSubset(etat, ['PROCESSUS']);
-            const procsBDD = [...new Set(baseProcs.map(d => d.processus).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            etat.proc = remplirSelectOptions(document.getElementById('filtreProcessus'), procsBDD, '-- Tous les processus --');
-
-            const baseCtrls = filtrerSubset(etat, ['CONTROLE']);
-            const ctrlsBDD = [...new Set(baseCtrls.map(d => d.controle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            etat.ctrl = remplirSelectOptions(document.getElementById('filtreControle'), ctrlsBDD, '-- Tous les contrôles --');
-
-            const basePCs = filtrerSubset(etat, ['PC']);
-            const pcsBDD = [...new Set(basePCs.map(d => d.pc).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
-            etat.pc = remplirSelectOptions(document.getElementById('filtrePC'), pcsBDD, '-- Tous les PC --');
-
-            const baseStatuts = filtrerSubset(etat, ['STATUT']);
-            const ordreStatuts = ['EN_COURS', 'CLOTURE', 'NON_CLOTURE'];
-            const statutsSet = new Set(baseStatuts.map(d => d.statut).filter(Boolean));
-            const statutsBDD = [
-                ...ordreStatuts.filter(s => statutsSet.has(s)),
-                ...[...statutsSet].filter(s => !ordreStatuts.includes(s))
-            ];
-            etat.statut = remplirSelectOptions(document.getElementById('filtreStatut'), statutsBDD, '-- Tous les statuts --', libelleStatut);
-
-            actualiserAnalyse(etat);
-        }
-
-        window.onFilterChange = function(source) {
-            if (source === 'REGION') {
-                document.getElementById('filtreCentre').value = 'TOUS';
-            } else if (source === 'CENTRE') {
-                const centreVal = document.getElementById('filtreCentre').value;
-                if (centreVal !== 'TOUS' && document.getElementById('filtreRegion').value === 'TOUS') {
-                    const match = toutesLesDonnees.find(d => d.site === centreVal);
-                    if (match && match.region) {
-                        document.getElementById('filtreRegion').value = match.region;
-                    }
-                }
-            } else if (source === 'DATE') {
-                if (document.getElementById('filtreDate').value !== 'TOUS') {
-                    document.getElementById('filtreDateDebut').value = 'TOUS';
-                    document.getElementById('filtreDateFin').value = 'TOUS';
-                }
-            } else if (source === 'DEBUT' || source === 'FIN') {
-                if (document.getElementById('filtreDateDebut').value !== 'TOUS' || document.getElementById('filtreDateFin').value !== 'TOUS') {
-                    document.getElementById('filtreDate').value = 'TOUS';
-                }
-            }
-
-            actualiserFiltresDynamiquesEtAnalyse();
-        };
-
-        window.changerNiveau = function(nouveauNiveau) {
-            niveauActif = nouveauNiveau;
-
-            if (!currentUser || currentUser.role !== "CONTROLEUR") {
-                document.getElementById('filtreRegion').value = 'TOUS';
-            }
-            document.getElementById('filtreCentre').value = 'TOUS';
-
-            appliquerEtatNiveau();
-            actualiserFiltresDynamiquesEtAnalyse();
-        };
-
-        function appliquerEtatNiveau() {
-            const isCtrl = currentUser && currentUser.role === "CONTROLEUR";
-            document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
-            document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
-            document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
-
-            const selReg = document.getElementById('filtreRegion');
-            const selCentre = document.getElementById('filtreCentre');
-            const grpReg = document.getElementById('grpRegion');
-            const grpCentre = document.getElementById('grpCentre');
-
-            if (niveauActif === 'NATIONAL') {
-                selReg.disabled = true;
-                selCentre.disabled = true;
-                grpReg.classList.add('is-locked');
-                grpCentre.classList.add('is-locked');
-                selReg.classList.remove('highlight-focus');
-                selCentre.classList.remove('highlight-focus');
-            } else if (niveauActif === 'REGIONAL') {
-                selReg.disabled = isCtrl;
-                selCentre.disabled = true;
-                grpReg.classList.toggle('is-locked', isCtrl);
-                grpCentre.classList.add('is-locked');
-                selReg.classList.toggle('highlight-focus', !isCtrl);
-                selCentre.classList.remove('highlight-focus');
-            } else {
-                selReg.disabled = isCtrl;
-                selCentre.disabled = false;
-                grpReg.classList.toggle('is-locked', isCtrl);
-                grpCentre.classList.remove('is-locked');
-                selReg.classList.remove('highlight-focus');
-                selCentre.classList.add('highlight-focus');
-            }
-        }
-
-        window.reinitialiserFiltresTDB = function() {
-            if (!currentUser || currentUser.role !== "CONTROLEUR") {
-                document.getElementById('filtreRegion').value = 'TOUS';
-            }
-            document.getElementById('filtreCentre').value = 'TOUS';
-            document.getElementById('filtreDate').value = 'TOUS';
-            document.getElementById('filtreDateDebut').value = 'TOUS';
-            document.getElementById('filtreDateFin').value = 'TOUS';
-            document.getElementById('filtreType').value = 'TOUS';
-            document.getElementById('filtreProcessus').value = 'TOUS';
-            document.getElementById('filtreControle').value = 'TOUS';
-            document.getElementById('filtrePC').value = 'TOUS';
-            document.getElementById('filtreStatut').value = 'TOUS';
-            appliquerEtatNiveau();
-            actualiserFiltresDynamiquesEtAnalyse();
-        };
-
-        window.viderTDB = function() {
-            toutesLesDonnees = [];
-            toutesLesMissions = [];
-            dernieresDonneesFiltrees = [];
-            exportClassementPrincipal = [];
-            exportClassementSecondaire = [];
-            exportCouvertureDetail = [];
-            derniersTypes = [];
-            derniersProcessus = [];
-            window.reinitialiserFiltresTDB();
-        };
-
-        function actualiserAnalyse(etatParam = null) {
-            const etat = etatParam || lireEtatFiltres();
-            const { reg, centre, dateSpec, dateDebut, dateFin, proc, ctrl, pc } = etat;
-
-            document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
-            document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', dateDebut !== 'TOUS');
-            document.getElementById('filtreDateFin').classList.toggle('highlight-focus', dateFin !== 'TOUS');
-            document.getElementById('filtreProcessus').classList.toggle('highlight-focus', proc !== 'TOUS');
-            document.getElementById('filtreControle').classList.toggle('highlight-focus', ctrl !== 'TOUS');
-            document.getElementById('filtrePC').classList.toggle('highlight-focus', pc !== 'TOUS');
-
-            const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
-            const scopeEl = document.getElementById('scopeIndicator');
-            if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}`;
-            } else if (niveauActif === 'REGIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (10)' : reg} · ${infoTemps}`;
-            } else {
-                const nomCentre = centre === 'TOUS' ? 'Tous les centres' : centre;
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} · ${infoTemps}`;
-            }
-
-            const donneesFiltrees = filtrerSubset(etat, []);
-            dernieresDonneesFiltrees = donneesFiltrees;
-
-            calculerEtAfficherKPIs(donneesFiltrees, etat);
-            genererDescriptionOnglet(donneesFiltrees, etat);
-            calculerBenchmarkEtSynthese(donneesFiltrees, etat);
-            genererAlertesAutomatiques(donneesFiltrees);
-            construireCouvertureEtClassementCharts(donneesFiltrees, etat);
-            construireTableauxSelonNiveau(donneesFiltrees, reg, centre);
-            afficherTableDetaillee(donneesFiltrees);
-            construireGraphiquesSelonNiveau(donneesFiltrees, reg, centre);
-        }
-
-        function calculerEtAfficherKPIs(donnees, etat) {
-            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
-            const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
-            const regionsUniques = new Set(donnees.map(d => d.region).filter(Boolean));
-            const procsUniques = new Set(donnees.map(d => d.processus).filter(Boolean));
-            const pcsUniques = new Set(donnees.map(d => d.pc).filter(Boolean));
-            const ops = compterFCetFV(donnees);
-
-            const missionsFiltrees = toutesLesMissions.filter(m => {
-                if (reg !== 'TOUS' && normaliserRegion(m.region) !== reg) return false;
-                if (niveauActif === 'CENTRE' && centre !== 'TOUS' && String(m.entite || '') !== centre) return false;
-                const mISO = normaliserDateISO(m.date);
-                if (!correspondFiltreTemporel(mISO, dateSpec, dateDebut, dateFin)) return false;
-                return true;
+            // Tri chronologique croissant : de la date la plus ancienne à la plus récente
+            lignesUnifiees.sort((a, b) => {
+                const cmpDate = a.dateISO.localeCompare(b.dateISO);
+                if (cmpDate !== 0) return cmpDate;
+                if (a.isSuivi !== b.isSuivi) return a.isSuivi ? 1 : -1;
+                return 0;
             });
 
-            document.getElementById('kpiVolume').textContent = donnees.length;
-            if (niveauActif === 'CENTRE') {
-                document.getElementById('lblKpiVolume').textContent = 'Constats du Centre';
-                document.getElementById('subKpiVolume').textContent = `${procsUniques.size} processus · ${pcsUniques.size} PC contrôlé(s)`;
-            } else if (niveauActif === 'REGIONAL') {
-                document.getElementById('lblKpiVolume').textContent = 'Contrôles & Vérifications (Région)';
-                document.getElementById('kpiVolume').textContent = `${ops.nbControlesFC} FC · ${ops.nbVerificationsFV} FV`;
-                document.getElementById('subKpiVolume').textContent = `${donnees.length} constat(s) · ${sitesUniques.size} centre(s)`;
-            } else {
-                document.getElementById('lblKpiVolume').textContent = 'Contrôles & Vérifications (National)';
-                document.getElementById('kpiVolume').textContent = `${ops.nbControlesFC} FC · ${ops.nbVerificationsFV} FV`;
-                document.getElementById('subKpiVolume').textContent = `${donnees.length} constat(s) · ${regionsUniques.size}/${LISTE_10_REGIONS.length} régions`;
-            }
+            mettreAJourCompteursOptions(lignesUnifiees);
 
-            const tcGlobal = calculerTCPondere(donnees);
-            const tcFC = calculerTCPondere(donnees.filter(d => d.source === 'FC'));
-            const tcFV = calculerTCPondere(donnees.filter(d => d.source === 'FV'));
+            const lignesAffichees = lignesUnifiees.filter(l => {
+                const matchDate = (filtreDateActif === 'TOUS') || (l.dateCtrlVerif === filtreDateActif);
+                const matchRegion = (filtreRegionActif === 'TOUS') || (l.region === filtreRegionActif);
+                const matchSite = (filtreSiteActif === 'TOUS') || (l.entite === filtreSiteActif);
+                const matchProcessus = (filtreProcessusActif === 'TOUS') || (l.processus === filtreProcessusActif);
+                const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
+                const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
+                return matchDate && matchRegion && matchSite && matchProcessus && matchStatut && matchType;
+            });
 
-            document.getElementById('kpiTcGlobal').textContent = tcGlobal.toFixed(1) + ' %';
-            document.getElementById('subKpiTcGlobal').textContent = `FC : ${tcFC.toFixed(1)}% · Encaisses : ${tcFV.toFixed(1)}%`;
+            dernieresLignesAffichees = lignesAffichees;
+            totalBadge.innerText = lignesAffichees.length;
 
-            const nbClotures = donnees.filter(d => d.statut === 'CLOTURE').length;
-            const nbNonClotures = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
-            const tauxCloture = donnees.length > 0 ? (nbClotures / donnees.length) * 100 : 0;
-
-            document.getElementById('kpiTauxCloture').textContent = tauxCloture.toFixed(1) + ' %';
-            document.getElementById('subKpiCloture').textContent = `${nbClotures} clôturé(s) / ${donnees.length} constat(s)`;
-
-            const totalKO = donnees.reduce((acc, d) => acc + d.ko, 0);
-            const nbSuivis = donnees.filter(d => d.isSuivi).length;
-            document.getElementById('kpiTotalKO').textContent = totalKO;
-            document.getElementById('subKpiKO').textContent = `${nbNonClotures} non clôturé(s) · ${nbSuivis} suivi(s)`;
-
-            if (niveauActif === 'CENTRE') {
-                document.getElementById('lblKpiCouverture').textContent = 'Évolution du Centre';
-                const evo = calculerEvolutionTC(donnees);
-                document.getElementById('kpiCouverture').textContent = evo.texte;
-                document.getElementById('subKpiCouverture').textContent = `${missionsFiltrees.length} mission(s) sur le site`;
+            if (lignesAffichees.length === 0) {
+                const aucunFiltre = (
+                    filtreDateActif === 'TOUS' &&
+                    (filtreRegionActif === 'TOUS' || Boolean(restrictedReg)) &&
+                    filtreSiteActif === 'TOUS' &&
+                    filtreProcessusActif === 'TOUS' &&
+                    filtreStatutActif === 'TOUS' &&
+                    filtreTypeActif === 'TOUS'
+                );
+                const msgVide = aucunFiltre
+                    ? 'Aucun constat enregistré dans la BDD.'
+                    : 'Aucun constat ne correspond aux critères sélectionnés.';
+                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
 
-            if (niveauActif === 'REGIONAL') {
-                document.getElementById('lblKpiCouverture').textContent = 'Taux Couverture Régional';
-                if (reg !== 'TOUS') {
-                    const cov = calculerCouvertureRegion(reg, donnees);
-                    document.getElementById('kpiCouverture').textContent = cov.tauxCouverture.toFixed(1) + ' %';
-                    document.getElementById('subKpiCouverture').textContent = `${cov.centresTouches} / ${cov.totalCentres} centres touchés (${reg})`;
-                } else {
-                    const covAll = (sitesUniques.size / TOTAL_CENTRES_NATIONAL) * 100;
-                    document.getElementById('kpiCouverture').textContent = covAll.toFixed(1) + ' %';
-                    document.getElementById('subKpiCouverture').textContent = `${sitesUniques.size} / ${TOTAL_CENTRES_NATIONAL} centres (10 régions)`;
-                }
-                return;
-            }
-
-            document.getElementById('lblKpiCouverture').textContent = 'Taux Couverture National (Régions)';
-            const nbRegionsTouchees = LISTE_10_REGIONS.filter(r => regionsUniques.has(r)).length;
-            const tauxCouvNationalRegions = (nbRegionsTouchees / LISTE_10_REGIONS.length) * 100;
-            document.getElementById('kpiCouverture').textContent = tauxCouvNationalRegions.toFixed(1) + ' %';
-            document.getElementById('subKpiCouverture').textContent = `${nbRegionsTouchees} / ${LISTE_10_REGIONS.length} régions touchées`;
-        }
-
-        function genererDescriptionOnglet(donnees, etat) {
-            const { reg, centre } = etat;
-            const titreEl = document.getElementById('titreDescriptionOnglet');
-            const bodyEl = document.getElementById('contenuDescriptionOnglet');
-
-            const tcGlobal = calculerTCPondere(donnees);
-            const nbClot = donnees.filter(d => d.statut === 'CLOTURE').length;
-            const nbEnCours = donnees.filter(d => d.statut === 'EN_COURS').length;
-            const nbNonClot = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
-            const totalKO = donnees.reduce((a, b) => a + b.ko, 0);
-            const totalEch = donnees.reduce((a, b) => a + b.ech, 0);
-            const totalOK = donnees.reduce((a, b) => a + b.ok, 0);
-            const ops = compterFCetFV(donnees);
-
-            const pctClot = donnees.length > 0 ? ((nbClot / donnees.length) * 100).toFixed(1) : '0.0';
-            const pctEnCours = donnees.length > 0 ? ((nbEnCours / donnees.length) * 100).toFixed(1) : '0.0';
-            const pctNonClot = donnees.length > 0 ? ((nbNonClot / donnees.length) * 100).toFixed(1) : '0.0';
-
-            if (niveauActif === 'CENTRE') {
-                const nomCentre = centre === 'TOUS' ? 'l’ensemble des centres filtrés' : `le centre <strong>${centre}</strong>`;
-                const procs = new Set(donnees.map(d => d.processus).filter(Boolean));
-                const pcs = new Set(donnees.map(d => d.pc).filter(Boolean));
-                titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau Centre / Site`;
-
-                if (donnees.length === 0) {
-                    bodyEl.innerHTML = `Aucune donnée enregistrée pour ${nomCentre} sur les critères sélectionnés.`;
-                    return;
-                }
-
-                const mapProc = {};
-                donnees.forEach(d => {
-                    if (!mapProc[d.processus]) mapProc[d.processus] = [];
-                    mapProc[d.processus].push(d);
-                });
-                const procsTries = Object.entries(mapProc)
-                    .map(([p, items]) => ({ p, tc: calculerTCPondere(items), ko: items.reduce((a, b) => a + b.ko, 0) }))
-                    .sort((a, b) => a.tc - b.tc);
-                const pireProc = procsTries[0];
-                const meilleurProc = procsTries[procsTries.length - 1];
-
-                bodyEl.innerHTML = `
-                    <p>L'analyse détaillée de ${nomCentre} porte sur <span class="desc-chip">${donnees.length} constat(s)</span> répartis sur <span class="desc-chip">${procs.size} processus</span> et <span class="desc-chip">${pcs.size} point(s) de contrôle</span> (totalisant <span class="desc-chip">${totalEch} unités échantillonnées</span> : ${totalOK} OK et ${totalKO} KO).</p>
-                    <ul>
-                        <li><strong>Niveau de conformité :</strong> Le taux de conformité pondéré du centre s'établit à <span class="desc-chip">${tcGlobal.toFixed(1)}%</span>. ${pireProc ? `Le processus le plus sensible est <strong>${pireProc.p}</strong> (<span class="desc-chip">${pireProc.tc.toFixed(1)}%</span>, ${pireProc.ko} KO)` : ''}${meilleurProc && procsTries.length > 1 ? `, tandis que le meilleur score est atteint sur <strong>${meilleurProc.p}</strong> (<span class="desc-chip">${meilleurProc.tc.toFixed(1)}%</span>).` : '.'}</li>
-                        <li><strong>État d'avancement des constats :</strong> <span class="desc-chip">${nbClot} (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> sont en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> demeurent non clôturés.</li>
-                    </ul>
-                `;
-            } else if (niveauActif === 'REGIONAL') {
-                titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau Régional`;
-
-                const regionsCibles = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
-                const detailsRegions = regionsCibles.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    const covR = calculerCouvertureRegion(r, itemsR);
-                    const opsR = compterFCetFV(itemsR);
-                    return {
-                        region: r,
-                        ...covR,
-                        ...opsR,
-                        totalConstats: itemsR.length,
-                        tc: calculerTCPondere(itemsR)
-                    };
-                });
-
-                const totalCentresPerim = detailsRegions.reduce((s, x) => s + x.totalCentres, 0);
-                const totalTouchesPerim = detailsRegions.reduce((s, x) => s + x.centresTouches, 0);
-                const tauxCouvPerim = totalCentresPerim > 0 ? (totalTouchesPerim / totalCentresPerim) * 100 : 0;
-
-                const resumeParRegion = detailsRegions.map(r =>
-                    `<strong>${r.region}</strong> : <span class="desc-chip">${r.tauxCouverture.toFixed(1)}%</span> (${r.centresTouches}/${r.totalCentres} centres, ${r.nbControlesFC} FC, ${r.nbVerificationsFV} FV)`
-                ).join(' · ');
-
-                bodyEl.innerHTML = `
-                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${reg}</strong>`}), le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
-                    <ul>
-                        <li><strong>Couverture et interventions par région :</strong> ${resumeParRegion}.</li>
-                        <li><strong>Conformité & remédiation régionale :</strong> Le taux de conformité pondéré atteint <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
-                    </ul>
-                `;
-            } else {
-                titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau National (Approche Régionale)`;
-
-                const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
-                const regionsToucheesList = LISTE_10_REGIONS.filter(r => regionsToucheesSet.has(r));
-                const regionsRestantes = LISTE_10_REGIONS.filter(r => !regionsToucheesSet.has(r));
-                const tauxCouvNationalReg = (regionsToucheesList.length / LISTE_10_REGIONS.length) * 100;
-
-                bodyEl.innerHTML = `
-                    <p>À l'échelle nationale, le taux de couverture territoriale s'élève à <span class="desc-chip">${tauxCouvNationalReg.toFixed(1)}%</span> avec <span class="desc-chip">${regionsToucheesList.length} région(s) touchée(s) sur ${LISTE_10_REGIONS.length}</span>.</p>
-                    <ul>
-                        <li><strong>Couverture régionale :</strong> Régions touchées (<span class="desc-chip">${regionsToucheesList.length}</span>) : <strong>${regionsToucheesList.length > 0 ? regionsToucheesList.join(', ') : 'Aucune'}</strong>. Régions non touchées (<span class="desc-chip">${regionsRestantes.length}</span>) : <strong>${regionsRestantes.length > 0 ? regionsRestantes.join(', ') : 'Aucune (100% couvertes)'}</strong>.</li>
-                        <li><strong>Volume national des contrôles & vérifications :</strong> <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> (${ops.constatsFC} constats) et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> (${ops.constatsFV} constats) ont été réalisés, totalisant <span class="desc-chip">${donnees.length} constat(s)</span>.</li>
-                        <li><strong>Conformité & clôture nationale :</strong> Le taux de conformité pondéré national est de <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
-                    </ul>
-                `;
-            }
-        }
-
-        function calculerBenchmarkEtSynthese(donneesFiltrees, etat) {
-            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
-            const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
-
-            const tcSelection = calculerTCPondere(donneesFiltrees);
-            const baseRegion = reg !== 'TOUS' ? baseTransverse.filter(d => d.region === reg) : baseTransverse;
-            const tcRegion = calculerTCPondere(baseRegion);
-            const tcNational = calculerTCPondere(baseTransverse);
-
-            const lbl1 = (niveauActif === 'CENTRE' && centre !== 'TOUS')
-                ? `Centre : ${centre}`
-                : (reg !== 'TOUS' ? `Région : ${reg}` : 'Périmètre National Sélectionné');
-            const lbl2 = reg !== 'TOUS' ? `Moyenne Régionale (${reg})` : 'Moyenne Régionale Globale';
-
-            document.getElementById('benchLabel1').textContent = lbl1;
-            document.getElementById('benchVal1').textContent = tcSelection.toFixed(1) + ' %';
-            document.getElementById('benchBar1').style.width = Math.min(100, tcSelection) + '%';
-
-            document.getElementById('benchLabel2').textContent = lbl2;
-            document.getElementById('benchVal2').textContent = tcRegion.toFixed(1) + ' %';
-            document.getElementById('benchBar2').style.width = Math.min(100, tcRegion) + '%';
-
-            document.getElementById('benchVal3').textContent = tcNational.toFixed(1) + ' %';
-            document.getElementById('benchBar3').style.width = Math.min(100, tcNational) + '%';
-
-            const badgeRang = document.getElementById('badgeRang');
-            if (niveauActif === 'CENTRE' && centre !== 'TOUS') {
-                const mapSitesReg = {};
-                baseRegion.forEach(d => {
-                    if (!mapSitesReg[d.site]) mapSitesReg[d.site] = [];
-                    mapSitesReg[d.site].push(d);
-                });
-                const clReg = Object.entries(mapSitesReg)
-                    .map(([s, items]) => ({ site: s, tc: calculerTCPondere(items) }))
-                    .sort((a, b) => b.tc - a.tc);
-                const idx = clReg.findIndex(x => x.site === centre);
-                if (idx !== -1) {
-                    badgeRang.style.display = 'inline-block';
-                    badgeRang.textContent = `Rang Régional : ${idx + 1}e / ${clReg.length}`;
-                } else {
-                    badgeRang.style.display = 'none';
-                }
-            } else if (niveauActif === 'REGIONAL' && reg !== 'TOUS') {
-                const mapRegs = {};
-                baseTransverse.forEach(d => {
-                    if (!mapRegs[d.region]) mapRegs[d.region] = [];
-                    mapRegs[d.region].push(d);
-                });
-                const clRegs = Object.entries(mapRegs)
-                    .map(([r, items]) => ({ region: r, tc: calculerTCPondere(items) }))
-                    .sort((a, b) => b.tc - a.tc);
-                const idx = clRegs.findIndex(x => x.region === reg);
-                if (idx !== -1) {
-                    badgeRang.style.display = 'inline-block';
-                    badgeRang.textContent = `Rang National : ${idx + 1}e / ${clRegs.length}`;
-                } else {
-                    badgeRang.style.display = 'none';
-                }
-            } else {
-                badgeRang.style.display = 'none';
-            }
-
-            const box = document.getElementById('syntheseDecisionnelleBox');
-            if (donneesFiltrees.length === 0) {
-                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée correspondante dans la BDD pour cette combinaison de filtres.`;
-                return;
-            }
-
-            const ecartNat = tcSelection - tcNational;
-            const signeEcart = ecartNat >= 0 ? `+${ecartNat.toFixed(1)}` : ecartNat.toFixed(1);
-            const totalKO = donneesFiltrees.reduce((a, b) => a + b.ko, 0);
-            const nonClot = donneesFiltrees.filter(d => d.statut === 'NON_CLOTURE').length;
-
-            const procMap = {};
-            donneesFiltrees.forEach(d => {
-                if (!procMap[d.processus]) procMap[d.processus] = [];
-                procMap[d.processus].push(d);
-            });
-            const pireProc = Object.entries(procMap)
-                .map(([p, list]) => ({ p, tc: calculerTCPondere(list), ko: list.reduce((a, b) => a + b.ko, 0) }))
-                .sort((a, b) => a.tc - b.tc)[0];
-
-            box.innerHTML = `
-                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle (${libelleFiltreTemporel(dateSpec, dateDebut, dateFin)}) :</strong><br>
-                Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
-                (soit <strong>${signeEcart} pts</strong> vs moyenne nationale ${tcNational.toFixed(1)}%).
-                On relève <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} non clôturé(s)</strong>.
-                ${pireProc ? `Le processus le plus sensible est <strong>« ${pireProc.p} »</strong> (TC : ${pireProc.tc.toFixed(1)}%, ${pireProc.ko} KO).` : ''}
-            `;
-        }
-
-        function genererAlertesAutomatiques(donnees) {
-            const ul = document.getElementById('alertesAutomatiquesList');
-            ul.innerHTML = '';
-
-            if (donnees.length === 0) {
-                ul.innerHTML = `<li class="alert-item alert-warning"><i class="fa-solid fa-circle-info"></i> Aucune donnée sélectionnée pour évaluer les seuils d'alerte.</li>`;
-                return;
-            }
-
-            const alertes = [];
-
-            if (niveauActif === 'CENTRE') {
-                const mapProc = {};
-                donnees.forEach(d => {
-                    if (!mapProc[d.processus]) mapProc[d.processus] = [];
-                    mapProc[d.processus].push(d);
-                });
-                const procsSensibles = Object.entries(mapProc)
-                    .map(([p, items]) => ({ p, tc: calculerTCPondere(items), ko: items.reduce((a, b) => a + b.ko, 0) }))
-                    .filter(x => x.tc < SEUIL_ALERTE_TC)
-                    .sort((a, b) => a.tc - b.tc);
-
-                if (procsSensibles.length > 0) {
-                    const top3 = procsSensibles.slice(0, 3).map(x => `<b>${x.p}</b> (${x.tc.toFixed(1)}%, ${x.ko} KO)`).join(', ');
-                    alertes.push({
-                        type: 'alert-critical',
-                        icon: 'fa-diagram-project',
-                        text: `<b>${procsSensibles.length} processus sous ${SEUIL_ALERTE_TC}% dans ce centre :</b> ${top3}.`
-                    });
-                }
-            } else if (niveauActif === 'REGIONAL') {
-                const mapSites = {};
-                donnees.forEach(d => {
-                    if (!mapSites[d.site]) mapSites[d.site] = { region: d.region, items: [] };
-                    mapSites[d.site].items.push(d);
-                });
-
-                const sitesSensibles = Object.entries(mapSites)
-                    .map(([site, obj]) => ({
-                        site,
-                        region: obj.region,
-                        tc: calculerTCPondere(obj.items),
-                        ko: obj.items.reduce((a, b) => a + b.ko, 0)
-                    }))
-                    .filter(s => s.tc < SEUIL_ALERTE_TC)
-                    .sort((a, b) => a.tc - b.tc);
-
-                if (sitesSensibles.length > 0) {
-                    const top3 = sitesSensibles.slice(0, 3).map(s => `<b>${s.site}</b> (${s.region} : ${s.tc.toFixed(1)}%)`).join(', ');
-                    alertes.push({
-                        type: 'alert-critical',
-                        icon: 'fa-building-circle-exclamation',
-                        text: `<b>${sitesSensibles.length} centre(s) sous le seuil de ${SEUIL_ALERTE_TC}% :</b> ${top3}.`
-                    });
-                }
-            } else {
-                const regionsSensibles = LISTE_10_REGIONS.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    return {
-                        region: r,
-                        nb: itemsR.length,
-                        tc: calculerTCPondere(itemsR),
-                        ko: itemsR.reduce((a, b) => a + b.ko, 0)
-                    };
-                }).filter(r => r.nb > 0 && r.tc < SEUIL_ALERTE_TC).sort((a, b) => a.tc - b.tc);
-
-                if (regionsSensibles.length > 0) {
-                    const top3 = regionsSensibles.slice(0, 3).map(r => `<b>${r.region}</b> (${r.tc.toFixed(1)}%, ${r.ko} KO)`).join(', ');
-                    alertes.push({
-                        type: 'alert-critical',
-                        icon: 'fa-map-location-dot',
-                        text: `<b>${regionsSensibles.length} région(s) sous le seuil de ${SEUIL_ALERTE_TC}% :</b> ${top3}.`
-                    });
-                }
-            }
-
-            const nonClotures = donnees.filter(d => d.statut === 'NON_CLOTURE');
-            if (nonClotures.length > 0) {
-                alertes.push({
-                    type: 'alert-critical',
-                    icon: 'fa-clock-rotate-left',
-                    text: `<b>${nonClotures.length} constat(s) au statut « Non clôturé »</b> nécessitent une action corrective prioritaire.`
-                });
-            }
-
-            const procKO = {};
-            donnees.forEach(d => {
-                if (d.ko > 0) procKO[d.processus] = (procKO[d.processus] || 0) + d.ko;
-            });
-            const topProc = Object.entries(procKO).sort((a, b) => b[1] - a[1])[0];
-            if (topProc) {
-                alertes.push({
-                    type: 'alert-warning',
-                    icon: 'fa-triangle-exclamation',
-                    text: `<b>Concentration des anomalies :</b> le processus « ${topProc[0]} » cumule <b>${topProc[1]} KO</b>.`
-                });
-            }
-
-            const enCours = donnees.filter(d => d.statut === 'EN_COURS');
-            if (enCours.length > 0) {
-                alertes.push({
-                    type: 'alert-warning',
-                    icon: 'fa-hourglass-half',
-                    text: `<b>${enCours.length} constat(s) « En cours »</b> en attente de validation ou de mission de suivi.`
-                });
-            }
-
-            if (alertes.length === 0) {
-                alertes.push({
-                    type: 'alert-ok',
-                    icon: 'fa-circle-check',
-                    text: `<b>Situation maîtrisée :</b> Aucune anomalie critique sous le seuil de ${SEUIL_ALERTE_TC}%.`
-                });
-            }
-
-            alertes.slice(0, 4).forEach(al => {
-                ul.innerHTML += `<li class="alert-item ${al.type}"><i class="fa-solid ${al.icon}" style="margin-top:2px;"></i><span>${al.text}</span></li>`;
-            });
-        }
-
-        function formaterBadgesListe(listeNoms, classeCss, texteVide = 'Aucun') {
-            if (!listeNoms || listeNoms.length === 0) {
-                return `<span style="color:var(--text-muted); font-style:italic; font-size:0.74rem;">${texteVide}</span>`;
-            }
-            return `<div class="tag-list">${listeNoms.map(n => `<span class="${classeCss}">${n}</span>`).join('')}</div>`;
-        }
-
-        function construireCouvertureEtClassementCharts(donnees, etat) {
-            const section = document.getElementById('sectionCouvertureEtClassementCharts');
-            if (chartCouvertureInst) chartCouvertureInst.destroy();
-            if (chartClassementRegionInst) chartClassementRegionInst.destroy();
-            if (chartClassementCentreInst) chartClassementCentreInst.destroy();
-
-            exportCouvertureDetail = [];
-
-            if (niveauActif === 'CENTRE') {
-                section.style.display = 'none';
-                return;
-            }
-
-            section.style.display = 'block';
-            const { reg } = etat;
-            const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
-
-            const classementRegionsData = LISTE_10_REGIONS.map(r => {
-                const itemsR = baseTransverse.filter(d => d.region === r);
-                return {
-                    region: r,
-                    nb: itemsR.length,
-                    tc: parseFloat(calculerTCPondere(itemsR).toFixed(1))
-                };
-            }).sort((a, b) => b.tc - a.tc || b.nb - a.nb);
-
-            const mapCentres = {};
-            donnees.forEach(d => {
-                if (!d.site) return;
-                if (!mapCentres[d.site]) mapCentres[d.site] = [];
-                mapCentres[d.site].push(d);
-            });
-            const classementCentresData = Object.entries(mapCentres)
-                .map(([site, items]) => ({
-                    site,
-                    nb: items.length,
-                    tc: parseFloat(calculerTCPondere(items).toFixed(1))
-                }))
-                .sort((a, b) => b.tc - a.tc || b.nb - a.nb);
-
-            const theadCov = document.getElementById('theadTableCouvertureDetail');
-            const tbodyCov = document.getElementById('tbodyTableCouvertureDetail');
-            tbodyCov.innerHTML = '';
-
-            if (niveauActif === 'REGIONAL') {
-                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
-                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture des Sites (${nomReg})`;
-                document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)`;
-                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement des Centres (${nomReg} — TC %)`;
-
-                document.getElementById('titreTableCouvertureDetail').innerHTML = `
-                    <span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture Régional : Sites Touchés & Sites Non Touchés (${nomReg})</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Distinction des centres touchés par contrôle (FC), par vérification (FV) et restants à couvrir</span>`;
-
-                theadCov.innerHTML = `
-                    <tr>
-                        <th>Région</th>
-                        <th class="num-center">Taux Couverture</th>
-                        <th class="num-center">Touchés / Total</th>
-                        <th>Noms des Sites Touchés par contrôle</th>
-                        <th>Noms des Sites Touchés par vérification</th>
-                        <th>Noms des Sites Non Touchés</th>
-                    </tr>`;
-
-                const regsCibles = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
-                const detailsCov = regsCibles.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    return { region: r, ...calculerCouvertureRegion(r, itemsR) };
-                }).sort((a, b) => b.tauxCouverture - a.tauxCouverture);
-
-                detailsCov.forEach(item => {
-                    exportCouvertureDetail.push({
-                        "Région": item.region,
-                        "Taux Couverture (%)": Number(item.tauxCouverture.toFixed(1)),
-                        "Sites Touchés (Nb)": item.centresTouches,
-                        "Total Sites Référentiel": item.totalCentres,
-                        "Noms des Sites Touchés par contrôle": item.sitesTouchesControleList.join(', ') || 'Aucun',
-                        "Noms des Sites Touchés par vérification": item.sitesTouchesVerificationList.join(', ') || 'Aucun',
-                        "Noms des Sites Non Touchés": item.sitesNonTouchesList.join(', ') || 'Aucun'
-                    });
-
-                    tbodyCov.innerHTML += `
-                        <tr>
-                            <td><b>${item.region}</b></td>
-                            <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
-                            <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres}</td>
-                            <td>${formaterBadgesListe(item.sitesTouchesControleList, 'tag-touche', 'Aucun site touché par contrôle')}</td>
-                            <td>${formaterBadgesListe(item.sitesTouchesVerificationList, 'tag-touche-verif', 'Aucun site touché par vérification')}</td>
-                            <td>${formaterBadgesListe(item.sitesNonTouchesList, 'tag-non-touche', 'Tous les sites couverts')}</td>
-                        </tr>`;
-                });
-
-                chartCouvertureInst = new Chart(document.getElementById('chartCouverture').getContext('2d'), {
-                    type: 'bar',
-                    data: {
-                        labels: detailsCov.map(d => d.region),
-                        datasets: [
-                            {
-                                label: 'Sites Touchés',
-                                data: detailsCov.map(d => d.centresTouches),
-                                backgroundColor: '#10B981',
-                                borderRadius: 4
-                            },
-                            {
-                                label: 'Sites Non Touchés',
-                                data: detailsCov.map(d => d.sitesNonTouchesList.length),
-                                backgroundColor: '#CBD5E1',
-                                borderRadius: 4
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            x: { stacked: true },
-                            y: { stacked: true, beginAtZero: true }
-                        },
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-
-            } else {
-                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-pie"></i> Couverture Nationale des Régions (10 Régions)`;
-                document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement National des Régions (TC %)`;
-                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement National des Centres / Sites (TC %)`;
-
-                document.getElementById('titreTableCouvertureDetail').innerHTML = `
-                    <span><i class="fa-solid fa-globe"></i> Tableau de Couverture National : Régions Touchées & Régions Non Touchées</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Approche exclusivement régionale sur les 10 régions (détail des sites disponible dans l'onglet Régional)</span>`;
-
-                theadCov.innerHTML = `
-                    <tr>
-                        <th>Périmètre</th>
-                        <th class="num-center">Taux Couverture</th>
-                        <th class="num-center">Régions Touchées / Total</th>
-                        <th>Noms des Régions Touchées</th>
-                        <th>Noms des Régions Non Touchées</th>
-                    </tr>`;
-
-                const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
-                const regionsToucheesList = LISTE_10_REGIONS.filter(r => regionsToucheesSet.has(r));
-                const regionsNonToucheesList = LISTE_10_REGIONS.filter(r => !regionsToucheesSet.has(r));
-                const tauxCouvRegNat = (regionsToucheesList.length / LISTE_10_REGIONS.length) * 100;
-
-                exportCouvertureDetail.push({
-                    "Périmètre": "RÉSEAU NATIONAL (10 RÉGIONS)",
-                    "Taux Couverture (%)": Number(tauxCouvRegNat.toFixed(1)),
-                    "Régions Touchées (Nb)": regionsToucheesList.length,
-                    "Total Régions": LISTE_10_REGIONS.length,
-                    "Noms des Régions Touchées": regionsToucheesList.join(', ') || 'Aucune',
-                    "Noms des Régions Non Touchées": regionsNonToucheesList.join(', ') || 'Aucune'
-                });
-
-                tbodyCov.innerHTML = `
-                    <tr style="background:#EFF6FF;">
-                        <td><b style="color:var(--primary-blue);"><i class="fa-solid fa-globe"></i> RÉSEAU NATIONAL (10 RÉGIONS)</b></td>
-                        <td class="num-center"><span class="pill pill-cov">${tauxCouvRegNat.toFixed(1)}%</span></td>
-                        <td class="num-center"><b>${regionsToucheesList.length}</b> / ${LISTE_10_REGIONS.length} régions</td>
-                        <td>${formaterBadgesListe(regionsToucheesList, 'tag-touche', 'Aucune région touchée')}</td>
-                        <td>${formaterBadgesListe(regionsNonToucheesList, 'tag-non-touche', 'Toutes les régions couvertes (10/10)')}</td>
-                    </tr>`;
-
-                chartCouvertureInst = new Chart(document.getElementById('chartCouverture').getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: [
-                            `Régions Touchées (${regionsToucheesList.length})`,
-                            `Régions Non Touchées (${regionsNonToucheesList.length})`
-                        ],
-                        datasets: [{
-                            data: [regionsToucheesList.length, regionsNonToucheesList.length],
-                            backgroundColor: ['#10B981', '#EF4444'],
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
-            }
-
-            chartClassementRegionInst = new Chart(document.getElementById('chartClassementRegion').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: classementRegionsData.map(r => r.region),
-                    datasets: [{
-                        label: 'TC Pondéré (%)',
-                        data: classementRegionsData.map(r => r.tc),
-                        backgroundColor: classementRegionsData.map(r => {
-                            if (niveauActif === 'REGIONAL' && reg !== 'TOUS' && r.region === reg) return '#EAAA00';
-                            if (r.nb === 0) return '#CBD5E1';
-                            return r.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#003366';
-                        }),
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            const topCentres = classementCentresData.slice(0, 12);
-            chartClassementCentreInst = new Chart(document.getElementById('chartClassementCentre').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: topCentres.length > 0 ? topCentres.map(c => c.site) : ['Aucun centre'],
-                    datasets: [{
-                        label: 'TC Pondéré (%)',
-                        data: topCentres.length > 0 ? topCentres.map(c => c.tc) : [0],
-                        backgroundColor: topCentres.map(c => c.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#0284C7'),
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        function construireTableauxSelonNiveau(donnees, reg, centre) {
-            const titreP = document.getElementById('titreTableClassementPrincipal');
-            const theadP = document.getElementById('theadClassementPrincipal');
-            const tbodyP = document.getElementById('tbodyClassementPrincipal');
-
-            const titreS = document.getElementById('titreTableSecondaire');
-            const theadS = document.getElementById('theadTableSecondaire');
-            const tbodyS = document.getElementById('tbodyTableSecondaire');
-
-            exportClassementPrincipal = [];
-            exportClassementSecondaire = [];
-
-            if (niveauActif === 'CENTRE') {
-                const nomCentre = centre === 'TOUS' ? 'Tous les centres (BDD)' : centre;
-                titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement des Processus, Contrôles & Points de Contrôle (PC) — Centre : ${nomCentre}</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Analyse détaillée intra-centre</span>`;
-
-                theadP.innerHTML = `
-                    <tr>
-                        <th class="num-center">Rang</th>
-                        <th>Processus</th>
-                        <th>Contrôle</th>
-                        <th>Point de Contrôle (PC)</th>
-                        <th class="num-center">Constats</th>
-                        <th class="num-center">Ech</th>
-                        <th class="num-center">OK</th>
-                        <th class="num-center">KO</th>
-                        <th class="num-center">TC (%)</th>
-                        <th class="num-center">Évolution TC</th>
-                        <th class="num-center">Criticité</th>
-                    </tr>`;
-
-                const mapIntraCentre = {};
-                donnees.forEach(d => {
-                    const cle = `${d.processus}|||${d.controle}|||${d.pc}`;
-                    if (!mapIntraCentre[cle]) mapIntraCentre[cle] = { processus: d.processus, controle: d.controle, pc: d.pc, items: [] };
-                    mapIntraCentre[cle].items.push(d);
-                });
-
-                const rowsCentre = Object.values(mapIntraCentre).map(g => {
-                    const ech = g.items.reduce((a, b) => a + b.ech, 0);
-                    const ok = g.items.reduce((a, b) => a + b.ok, 0);
-                    const ko = g.items.reduce((a, b) => a + b.ko, 0);
-                    const tc = calculerTCPondere(g.items);
-                    const evo = calculerEvolutionTC(g.items);
-                    return { ...g, nb: g.items.length, ech, ok, ko, tc, evo, risque: qualifierRisque(tc, ko) };
-                }).sort((a, b) => b.tc - a.tc || a.ko - b.ko);
-
-                tbodyP.innerHTML = '';
-                if (rowsCentre.length === 0) {
-                    tbodyP.innerHTML = `<tr><td colspan="11" class="num-center" style="padding:18px; color:var(--text-muted);">Aucune donnée pour ce centre.</td></tr>`;
-                } else {
-                    rowsCentre.forEach((r, i) => {
-                        exportClassementPrincipal.push({
-                            "Rang": i + 1, "Centre": nomCentre, "Processus": r.processus, "Contrôle": r.controle,
-                            "Point de Contrôle (PC)": r.pc, "Constats": r.nb, "Ech": r.ech, "OK": r.ok, "KO": r.ko,
-                            "TC (%)": Number(r.tc.toFixed(1)), "Évolution": r.evo.texte, "Criticité": r.risque.label
-                        });
-                        tbodyP.innerHTML += `
-                            <tr>
-                                <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.processus}</b></td>
-                                <td>${r.controle || 'N/A'}</td>
-                                <td>${r.pc || 'N/A'}</td>
-                                <td class="num-center">${r.nb}</td>
-                                <td class="num-center">${r.ech}</td>
-                                <td class="num-center" style="color:var(--success); font-weight:700;">${r.ok}</td>
-                                <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
-                                <td class="num-center"><b>${r.tc.toFixed(1)}%</b></td>
-                                <td class="num-center">${r.evo.html}</td>
-                                <td class="num-center"><span class="pill ${r.risque.cls}">${r.risque.label}</span></td>
-                            </tr>`;
-                    });
-                }
-
-                titreS.innerHTML = `<span><i class="fa-solid fa-diagram-project"></i> Performance par Processus dans le Centre (${nomCentre})</span>`;
-                theadS.innerHTML = `
-                    <tr>
-                        <th class="num-center">Rang</th>
-                        <th>Processus</th>
-                        <th class="num-center">PCs</th>
-                        <th class="num-center">Constats</th>
-                        <th class="num-center">KO</th>
-                        <th class="num-center">TC (%)</th>
-                        <th class="num-center">Clôture</th>
-                    </tr>`;
-
-                const mapProcC = {};
-                donnees.forEach(d => {
-                    if (!mapProcC[d.processus]) mapProcC[d.processus] = { items: [], pcs: new Set() };
-                    mapProcC[d.processus].items.push(d);
-                    if (d.pc) mapProcC[d.processus].pcs.add(d.pc);
-                });
-                const rowsProcC = Object.entries(mapProcC).map(([p, obj]) => {
-                    const tc = calculerTCPondere(obj.items);
-                    const ko = obj.items.reduce((a, b) => a + b.ko, 0);
-                    const clot = obj.items.filter(x => x.statut === 'CLOTURE').length;
-                    return { p, nbPc: obj.pcs.size, nb: obj.items.length, ko, tc, tauxClot: (clot / obj.items.length) * 100 };
-                }).sort((a, b) => b.tc - a.tc);
-
-                tbodyS.innerHTML = '';
-                if (rowsProcC.length === 0) {
-                    tbodyS.innerHTML = `<tr><td colspan="7" class="num-center" style="color:var(--text-muted);">Aucun processus.</td></tr>`;
-                } else {
-                    rowsProcC.forEach((r, i) => {
-                        exportClassementSecondaire.push({
-                            "Rang": i + 1, "Processus": r.p, "PCs": r.nbPc, "Constats": r.nb, "KO": r.ko, "TC (%)": Number(r.tc.toFixed(1))
-                        });
-                        tbodyS.innerHTML += `
-                            <tr>
-                                <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.p}</b></td>
-                                <td class="num-center">${r.nbPc}</td>
-                                <td class="num-center">${r.nb}</td>
-                                <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
-                                <td class="num-center"><b>${r.tc.toFixed(1)}%</b></td>
-                                <td class="num-center">${r.tauxClot.toFixed(0)}%</td>
-                            </tr>`;
-                    });
-                }
-
-            } else if (niveauActif === 'REGIONAL') {
-                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
-                titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Centres / Sites — Région : ${nomReg}</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Contrôles (FC), Vérifications (FV) & performance des centres</span>`;
-
-                theadP.innerHTML = `
-                    <tr>
-                        <th class="num-center">Rang</th>
-                        <th>Centre / Site</th>
-                        <th>Région</th>
-                        <th class="num-center">Contrôles (FC)</th>
-                        <th class="num-center">Vérifications (FV)</th>
-                        <th class="num-center">Processus</th>
-                        <th class="num-center">Constats</th>
-                        <th class="num-center">Ech</th>
-                        <th class="num-center">OK</th>
-                        <th class="num-center">KO</th>
-                        <th class="num-center">TC (%)</th>
-                        <th class="num-center">Évolution TC</th>
-                        <th class="num-center">Clôture</th>
-                        <th class="num-center">Niveau Risque</th>
-                    </tr>`;
-
-                const mapCentresReg = {};
-                donnees.forEach(d => {
-                    if (!mapCentresReg[d.site]) mapCentresReg[d.site] = { site: d.site, region: d.region, items: [], procs: new Set() };
-                    mapCentresReg[d.site].items.push(d);
-                    mapCentresReg[d.site].procs.add(d.processus);
-                });
-
-                const rowsCentresReg = Object.values(mapCentresReg).map(g => {
-                    const ech = g.items.reduce((a, b) => a + b.ech, 0);
-                    const ok = g.items.reduce((a, b) => a + b.ok, 0);
-                    const ko = g.items.reduce((a, b) => a + b.ko, 0);
-                    const tc = calculerTCPondere(g.items);
-                    const evo = calculerEvolutionTC(g.items);
-                    const ops = compterFCetFV(g.items);
-                    const clot = g.items.filter(x => x.statut === 'CLOTURE').length;
-                    const tauxClot = g.items.length > 0 ? (clot / g.items.length) * 100 : 0;
-                    return { ...g, ...ops, nbProc: g.procs.size, nb: g.items.length, ech, ok, ko, tc, evo, tauxClot, risque: qualifierRisque(tc, ko) };
-                }).sort((a, b) => b.tc - a.tc || a.ko - b.ko);
-
-                tbodyP.innerHTML = '';
-                if (rowsCentresReg.length === 0) {
-                    tbodyP.innerHTML = `<tr><td colspan="14" class="num-center" style="padding:18px; color:var(--text-muted);">Aucun centre contrôlé pour cette région.</td></tr>`;
-                } else {
-                    rowsCentresReg.forEach((r, i) => {
-                        exportClassementPrincipal.push({
-                            "Rang": i + 1, "Région": r.region || nomReg, "Centre / Site": r.site,
-                            "Nb Contrôles (FC)": r.nbControlesFC, "Nb Vérifications (FV)": r.nbVerificationsFV,
-                            "Processus": r.nbProc, "Constats": r.nb, "Ech": r.ech, "OK": r.ok, "KO": r.ko,
-                            "TC (%)": Number(r.tc.toFixed(1)), "Évolution": r.evo.texte, "Clôture (%)": Number(r.tauxClot.toFixed(1)),
-                            "Niveau Risque": r.risque.label
-                        });
-                        tbodyP.innerHTML += `
-                            <tr>
-                                <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.site}</b></td>
-                                <td>${r.region}</td>
-                                <td class="num-center"><span class="pill pill-them">${r.nbControlesFC} (${r.constatsFC} PC)</span></td>
-                                <td class="num-center"><span class="pill pill-verif">${r.nbVerificationsFV} (${r.constatsFV} PC)</span></td>
-                                <td class="num-center">${r.nbProc}</td>
-                                <td class="num-center">${r.nb}</td>
-                                <td class="num-center">${r.ech}</td>
-                                <td class="num-center" style="color:var(--success); font-weight:700;">${r.ok}</td>
-                                <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
-                                <td class="num-center"><b>${r.tc.toFixed(1)}%</b></td>
-                                <td class="num-center">${r.evo.html}</td>
-                                <td class="num-center">${r.tauxClot.toFixed(0)}%</td>
-                                <td class="num-center"><span class="pill ${r.risque.cls}">${r.risque.label}</span></td>
-                            </tr>`;
-                    });
-                }
-
-                titreS.innerHTML = `<span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture & Interventions par Région</span>`;
-                theadS.innerHTML = `
-                    <tr>
-                        <th>Région</th>
-                        <th class="num-center">Centres Touchés</th>
-                        <th class="num-center">Couverture (%)</th>
-                        <th class="num-center">FC</th>
-                        <th class="num-center">FV</th>
-                        <th class="num-center">TC (%)</th>
-                    </tr>`;
-
-                const regsAffichees = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
-                const rowsCouvReg = regsAffichees.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    const cov = calculerCouvertureRegion(r, itemsR);
-                    const ops = compterFCetFV(itemsR);
-                    const tc = calculerTCPondere(itemsR);
-                    return { region: r, ...cov, ...ops, tc, nb: itemsR.length };
-                }).sort((a, b) => b.tauxCouverture - a.tauxCouverture);
-
-                tbodyS.innerHTML = '';
-                rowsCouvReg.forEach(r => {
-                    exportClassementSecondaire.push({
-                        "Région": r.region, "Centres Touchés": `${r.centresTouches}/${r.totalCentres}`,
-                        "Taux Couverture (%)": Number(r.tauxCouverture.toFixed(1)),
-                        "Nb Contrôles (FC)": r.nbControlesFC, "Nb Vérifications (FV)": r.nbVerificationsFV,
-                        "TC (%)": Number(r.tc.toFixed(1))
-                    });
-                    tbodyS.innerHTML += `
-                        <tr>
-                            <td><b>${r.region}</b></td>
-                            <td class="num-center">${r.centresTouches} / ${r.totalCentres}</td>
-                            <td class="num-center"><span class="pill pill-cov">${r.tauxCouverture.toFixed(1)}%</span></td>
-                            <td class="num-center">${r.nbControlesFC}</td>
-                            <td class="num-center">${r.nbVerificationsFV}</td>
-                            <td class="num-center"><b>${r.nb > 0 ? r.tc.toFixed(1) + '%' : '--'}</b></td>
-                        </tr>`;
-                });
-
-            } else {
-                titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Régions (Réseau National)</span>
-                    <span style="font-size:0.75rem; color:var(--text-muted);">Statut régional (Touchée / Non touchée), Contrôles (FC), Vérifications (FV) & conformité</span>`;
-
-                theadP.innerHTML = `
-                    <tr>
-                        <th class="num-center">Rang</th>
-                        <th>Région Postale</th>
-                        <th class="num-center">Statut Couverture</th>
-                        <th class="num-center">Contrôles (FC)</th>
-                        <th class="num-center">Vérifications (FV)</th>
-                        <th class="num-center">Constats</th>
-                        <th class="num-center">Ech</th>
-                        <th class="num-center">OK</th>
-                        <th class="num-center">KO</th>
-                        <th class="num-center">TC (%)</th>
-                        <th class="num-center">Évolution TC</th>
-                        <th class="num-center">Clôture</th>
-                        <th class="num-center">Niveau Risque</th>
-                    </tr>`;
-
-                const rowsRegs = LISTE_10_REGIONS.map(r => {
-                    const itemsR = donnees.filter(d => d.region === r);
-                    const ops = compterFCetFV(itemsR);
-                    const ech = itemsR.reduce((a, b) => a + b.ech, 0);
-                    const ok = itemsR.reduce((a, b) => a + b.ok, 0);
-                    const ko = itemsR.reduce((a, b) => a + b.ko, 0);
-                    const tc = calculerTCPondere(itemsR);
-                    const evo = calculerEvolutionTC(itemsR);
-                    const clot = itemsR.filter(x => x.statut === 'CLOTURE').length;
-                    const tauxClot = itemsR.length > 0 ? (clot / itemsR.length) * 100 : 0;
-                    const estTouchee = itemsR.length > 0;
-                    return {
-                        region: r, estTouchee, ...ops, nb: itemsR.length,
-                        ech, ok, ko, tc, evo, tauxClot,
-                        risque: estTouchee ? qualifierRisque(tc, ko) : { label: 'Non contrôlée', cls: 'pill-modere' }
-                    };
-                }).sort((a, b) => b.nb - a.nb || b.tc - a.tc);
-
-                tbodyP.innerHTML = '';
-                rowsRegs.forEach((r, i) => {
-                    const statutCouvTxt = r.estTouchee ? 'Touchée' : 'Non touchée';
-                    const statutCouvCls = r.estTouchee ? 'pill-faible' : 'pill-critique';
-                    exportClassementPrincipal.push({
-                        "Rang": i + 1, "Région": r.region,
-                        "Statut Couverture": statutCouvTxt,
-                        "Nb Contrôles (FC)": r.nbControlesFC, "Nb Vérifications (FV)": r.nbVerificationsFV,
-                        "Constats": r.nb, "Ech": r.ech, "OK": r.ok, "KO": r.ko,
-                        "TC (%)": Number(r.tc.toFixed(1)), "Évolution": r.evo.texte,
-                        "Clôture (%)": Number(r.tauxClot.toFixed(1)), "Niveau Risque": r.risque.label
-                    });
-                    tbodyP.innerHTML += `
-                        <tr>
-                            <td class="num-center"><b>#${i + 1}</b></td>
-                            <td><b>${r.region}</b></td>
-                            <td class="num-center"><span class="pill ${statutCouvCls}">${statutCouvTxt}</span></td>
-                            <td class="num-center"><span class="pill pill-them">${r.nbControlesFC} (${r.constatsFC} PC)</span></td>
-                            <td class="num-center"><span class="pill pill-verif">${r.nbVerificationsFV} (${r.constatsFV} PC)</span></td>
-                            <td class="num-center">${r.nb}</td>
-                            <td class="num-center">${r.ech}</td>
-                            <td class="num-center" style="color:var(--success); font-weight:700;">${r.ok}</td>
-                            <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
-                            <td class="num-center"><b>${r.nb > 0 ? r.tc.toFixed(1) + '%' : '--'}</b></td>
-                            <td class="num-center">${r.evo.html}</td>
-                            <td class="num-center">${r.nb > 0 ? r.tauxClot.toFixed(0) + '%' : '--'}</td>
-                            <td class="num-center"><span class="pill ${r.risque.cls}">${r.risque.label}</span></td>
-                        </tr>`;
-                });
-
-                titreS.innerHTML = `<span><i class="fa-solid fa-building-columns"></i> Classement & Évolution des Centres / Sites (National)</span>`;
-                theadS.innerHTML = `
-                    <tr>
-                        <th class="num-center">Rang</th>
-                        <th>Centre / Site</th>
-                        <th>Région</th>
-                        <th class="num-center">Constats</th>
-                        <th class="num-center">KO</th>
-                        <th class="num-center">TC (%)</th>
-                        <th class="num-center">Évolution TC</th>
-                        <th class="num-center">Risque</th>
-                    </tr>`;
-
-                const mapSitesNat = {};
-                donnees.forEach(d => {
-                    const cle = `${d.site}|||${d.region}`;
-                    if (!mapSitesNat[cle]) mapSitesNat[cle] = { site: d.site, region: d.region, items: [] };
-                    mapSitesNat[cle].items.push(d);
-                });
-
-                const rowsSitesNat = Object.values(mapSitesNat).map(g => {
-                    const ko = g.items.reduce((a, b) => a + b.ko, 0);
-                    const tc = calculerTCPondere(g.items);
-                    const evo = calculerEvolutionTC(g.items);
-                    return { site: g.site, region: g.region, nb: g.items.length, ko, tc, evo, risque: qualifierRisque(tc, ko) };
-                }).sort((a, b) => b.tc - a.tc || a.ko - b.ko);
-
-                tbodyS.innerHTML = '';
-                if (rowsSitesNat.length === 0) {
-                    tbodyS.innerHTML = `<tr><td colspan="8" class="num-center" style="color:var(--text-muted);">Aucun centre contrôlé.</td></tr>`;
-                } else {
-                    rowsSitesNat.forEach((r, i) => {
-                        exportClassementSecondaire.push({
-                            "Rang": i + 1, "Centre / Site": r.site, "Région": r.region, "Constats": r.nb,
-                            "KO": r.ko, "TC (%)": Number(r.tc.toFixed(1)), "Évolution": r.evo.texte, "Risque": r.risque.label
-                        });
-                        tbodyS.innerHTML += `
-                            <tr>
-                                <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.site}</b></td>
-                                <td><span style="font-size:0.75rem; font-weight:700; color:var(--primary-blue);">${r.region}</span></td>
-                                <td class="num-center">${r.nb}</td>
-                                <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
-                                <td class="num-center"><b>${r.tc.toFixed(1)}%</b></td>
-                                <td class="num-center">${r.evo.html}</td>
-                                <td class="num-center"><span class="pill ${r.risque.cls}">${r.risque.label}</span></td>
-                            </tr>`;
-                    });
-                }
-            }
-
-            const typesPresents = [...new Set(donnees.map(d => d.typeControle).filter(Boolean))];
-            const typesData = typesPresents.map(t => {
-                const items = donnees.filter(d => d.typeControle === t);
-                return {
-                    type: t,
-                    nb: items.length,
-                    ech: items.reduce((a, b) => a + b.ech, 0),
-                    ok: items.reduce((a, b) => a + b.ok, 0),
-                    ko: items.reduce((a, b) => a + b.ko, 0),
-                    tc: calculerTCPondere(items)
-                };
-            });
-            derniersTypes = typesData;
-
-            const tbodyType = document.getElementById('tbodyTypeControle');
-            tbodyType.innerHTML = '';
-            if (typesData.length === 0) {
-                tbodyType.innerHTML = `<tr><td colspan="6" class="num-center" style="color:var(--text-muted);">Aucun type de contrôle.</td></tr>`;
-            } else {
-                typesData.forEach(t => {
-                    const pillCls = t.type === 'Thématique' ? 'pill-them' : (t.type === 'Systématique' ? 'pill-syst' : 'pill-verif');
-                    tbodyType.innerHTML += `
-                        <tr>
-                            <td><span class="pill ${pillCls}">${t.type}</span></td>
-                            <td class="num-center">${t.nb}</td>
-                            <td class="num-center">${t.ech}</td>
-                            <td class="num-center" style="color:var(--success); font-weight:700;">${t.ok}</td>
-                            <td class="num-center" style="color:var(--danger); font-weight:700;">${t.ko}</td>
-                            <td class="num-center"><b>${t.tc.toFixed(1)}%</b></td>
-                        </tr>`;
-                });
-            }
-
-            const mapProc = {};
-            donnees.forEach(d => {
-                const cle = niveauActif === 'CENTRE' ? `${d.processus} — ${d.pc || 'N/A'}` : d.processus;
-                if (!mapProc[cle]) mapProc[cle] = [];
-                mapProc[cle].push(d);
-            });
-            const procList = Object.entries(mapProc).map(([proc, items]) => ({
-                processus: proc,
-                nb: items.length,
-                ko: items.reduce((a, b) => a + b.ko, 0),
-                tc: calculerTCPondere(items)
-            })).sort((a, b) => a.tc - b.tc || b.ko - a.ko);
-            derniersProcessus = procList;
-
-            const tbodyProc = document.getElementById('tbodyProcessusSensibles');
-            tbodyProc.innerHTML = '';
-            if (procList.length === 0) {
-                tbodyProc.innerHTML = `<tr><td colspan="4" class="num-center" style="color:var(--text-muted);">Aucun processus.</td></tr>`;
-            } else {
-                procList.slice(0, 6).forEach(p => {
-                    tbodyProc.innerHTML += `
-                        <tr>
-                            <td><b>${p.processus}</b></td>
-                            <td class="num-center">${p.nb}</td>
-                            <td class="num-center" style="color:var(--danger); font-weight:700;">${p.ko}</td>
-                            <td class="num-center"><b>${p.tc.toFixed(1)}%</b></td>
-                        </tr>`;
-                });
-            }
-        }
-
-        function afficherTableDetaillee(donnees) {
-            const tbody = document.getElementById('tdbTableBody');
-            document.getElementById('countConstatsTable').textContent = donnees.length;
-            tbody.innerHTML = '';
-
-            if (donnees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères.</td></tr>';
-                return;
-            }
-
-            const tries = [...donnees].sort((a, b) => b.dateISO.localeCompare(a.dateISO));
-            tries.forEach(c => {
-                const stCls = c.statut === 'CLOTURE' ? 'pill-faible' : (c.statut === 'NON_CLOTURE' ? 'pill-critique' : 'pill-modere');
-                const tpCls = c.typeControle === 'Thématique' ? 'pill-them' : (c.typeControle === 'Systématique' ? 'pill-syst' : 'pill-verif');
-                const tags = `${c.isModifie ? ' <span class="pill pill-eleve">Modifié</span>' : ''}${c.isSuivi ? ' <span class="pill pill-them">Suivi</span>' : ''}`;
+            lignesAffichees.forEach(ligne => {
+                const modifieTagHtml = ligne.isModifie
+                    ? `<br><span class="badge-modifie-tag" title="Ligne modifiée"><i class="fa-solid fa-pen"></i> Modifié</span>`
+                    : '';
+                const suiviTagHtml = ligne.isSuivi
+                    ? `<br><span class="badge-suivi-tag" title="Ligne issue d'un suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
+                    : '';
 
                 tbody.innerHTML += `
-                    <tr>
-                        <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${c.dateFR}</td>
-                        <td><b>${c.region}</b></td>
-                        <td>${c.site}</td>
-                        <td><b>${c.processus}</b></td>
-                        <td>${c.controle || 'N/A'}</td>
-                        <td>${c.pc || 'N/A'}</td>
-                        <td class="num-center">${c.ech}</td>
-                        <td class="num-center" style="color:var(--success); font-weight:700;">${c.ok}</td>
-                        <td class="num-center" style="color:var(--danger); font-weight:700;">${c.ko}</td>
-                        <td class="num-center"><b>${c.tc.toFixed(1)}%</b></td>
-                        <td><span class="pill ${stCls}">${libelleStatut(c.statut)}</span></td>
-                        <td><span class="pill ${tpCls}">${c.typeControle}</span>${tags}</td>
-                        <td>${c.constat}</td>
+                    <tr class="${ligne.typeInfo.rowClass}">
+                        <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${ligne.dateCtrlVerif}</td>
+                        <td class="col-region"><b>${ligne.region}</b></td>
+                        <td class="col-centre">${ligne.entite}</td>
+                        <td class="col-processus">${ligne.processus}</td>
+                        <td class="col-risque">${ligne.risque}</td>
+                        <td class="col-controle">${ligne.controle}</td>
+                        <td class="col-pc">${ligne.pc}</td>
+                        <td class="col-num">${ligne.pop}</td>
+                        <td class="col-num">${ligne.ech}</td>
+                        <td class="col-num"><span style="color:var(--success);font-weight:bold;">${ligne.ok}</span></td>
+                        <td class="col-num"><span style="color:var(--danger);font-weight:bold;">${ligne.ko}</span></td>
+                        <td class="col-tc"><b>${ligne.tc.toFixed(1)}%</b></td>
+                        <td class="col-constat">${ligne.constat}</td>
+                        <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
+                        <td class="col-badge">
+                            <span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span>
+                            ${modifieTagHtml}
+                            ${suiviTagHtml}
+                        </td>
                     </tr>`;
             });
         }
 
-        function construireGraphiquesSelonNiveau(donnees, reg, centre) {
-            if (chartComparatifInst) chartComparatifInst.destroy();
-            if (chartProcessusInst) chartProcessusInst.destroy();
-            if (chartStatutsInst) chartStatutsInst.destroy();
-            if (chartEvolutionInst) chartEvolutionInst.destroy();
-
-            const mapG1 = {};
-            if (niveauActif === 'NATIONAL') {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Taux de Conformité par Région (%)`;
-                donnees.forEach(d => {
-                    if (!mapG1[d.region]) mapG1[d.region] = [];
-                    mapG1[d.region].push(d);
-                });
-            } else if (niveauActif === 'REGIONAL') {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres de la Région ${reg === 'TOUS' ? '' : reg} (%)`;
-                donnees.forEach(d => {
-                    if (!mapG1[d.site]) mapG1[d.site] = [];
-                    mapG1[d.site].push(d);
-                });
-            } else {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Taux de Conformité par Processus — ${centre === 'TOUS' ? 'Centre' : centre} (%)`;
-                donnees.forEach(d => {
-                    if (!mapG1[d.processus]) mapG1[d.processus] = [];
-                    mapG1[d.processus].push(d);
-                });
-            }
-
-            const entriesG1 = Object.entries(mapG1)
-                .map(([k, list]) => ({ label: k, tc: parseFloat(calculerTCPondere(list).toFixed(1)) }))
-                .sort((a, b) => b.tc - a.tc);
-
-            chartComparatifInst = new Chart(document.getElementById('chartComparatif').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: entriesG1.length > 0 ? entriesG1.map(e => e.label) : ['Aucune donnée'],
-                    datasets: [{
-                        label: 'Taux de Conformité (%)',
-                        data: entriesG1.length > 0 ? entriesG1.map(e => e.tc) : [0],
-                        backgroundColor: entriesG1.map(e => e.tc < SEUIL_ALERTE_TC ? '#EF4444' : '#003366'),
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            const mapG2 = {};
-            if (niveauActif === 'CENTRE') {
-                document.getElementById('titreChart2').innerHTML = `<i class="fa-solid fa-crosshairs"></i> Taux de Conformité (%) par Point de Contrôle (PC) du Centre`;
-                donnees.forEach(d => {
-                    const cle = d.pc || d.controle || 'N/A';
-                    if (!mapG2[cle]) mapG2[cle] = [];
-                    mapG2[cle].push(d);
-                });
-            } else {
-                document.getElementById('titreChart2').innerHTML = `<i class="fa-solid fa-diagram-project"></i> Taux de Conformité (%) par Processus (Points Faibles)`;
-                donnees.forEach(d => {
-                    if (!mapG2[d.processus]) mapG2[d.processus] = [];
-                    mapG2[d.processus].push(d);
-                });
-            }
-
-            const entriesG2 = Object.entries(mapG2)
-                .map(([p, list]) => ({ label: p, tc: parseFloat(calculerTCPondere(list).toFixed(1)) }))
-                .sort((a, b) => a.tc - b.tc);
-
-            chartProcessusInst = new Chart(document.getElementById('chartProcessus').getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: entriesG2.length > 0 ? entriesG2.map(e => e.label) : ['Aucune donnée'],
-                    datasets: [{
-                        label: 'TC (%)',
-                        data: entriesG2.length > 0 ? entriesG2.map(e => e.tc) : [0],
-                        backgroundColor: entriesG2.map(e => e.tc < SEUIL_ALERTE_TC ? '#F59E0B' : '#0284C7'),
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { x: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-
-            const nbEnCours = donnees.filter(d => d.statut === 'EN_COURS').length;
-            const nbCloture = donnees.filter(d => d.statut === 'CLOTURE').length;
-            const nbNonCloture = donnees.filter(d => d.statut === 'NON_CLOTURE').length;
-
-            chartStatutsInst = new Chart(document.getElementById('chartStatuts').getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Clôturé', 'En cours', 'Non clôturé'],
-                    datasets: [{
-                        data: [nbCloture, nbEnCours, nbNonCloture],
-                        backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-
-            const mapEvo = {};
-            donnees.forEach(d => {
-                const cleDate = d.dateISO || '9999-99-99';
-                if (!mapEvo[cleDate]) mapEvo[cleDate] = [];
-                mapEvo[cleDate].push(d);
-            });
-            const datesTriees = Object.keys(mapEvo).sort();
-            const labelsEvo = datesTriees.map(iso => iso === '9999-99-99' ? 'Sans date' : formaterDateFR(iso));
-            const tcSeries = datesTriees.map(iso => parseFloat(calculerTCPondere(mapEvo[iso]).toFixed(1)));
-            const koSeries = datesTriees.map(iso => mapEvo[iso].reduce((a, b) => a + b.ko, 0));
-
-            chartEvolutionInst = new Chart(document.getElementById('chartEvolution').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: labelsEvo.length > 0 ? labelsEvo : ['Aucune date'],
-                    datasets: [
-                        {
-                            label: 'Taux de Conformité (%)',
-                            data: tcSeries.length > 0 ? tcSeries : [0],
-                            borderColor: '#003366',
-                            backgroundColor: 'rgba(0, 51, 102, 0.12)',
-                            fill: true,
-                            tension: 0.3,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Anomalies (KO)',
-                            data: koSeries.length > 0 ? koSeries : [0],
-                            borderColor: '#EF4444',
-                            backgroundColor: '#EF4444',
-                            borderDash: [5, 4],
-                            tension: 0.25,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { type: 'linear', position: 'left', beginAtZero: true, max: 100, title: { display: true, text: 'TC (%)' } },
-                        y1: { type: 'linear', position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, title: { display: true, text: 'Nb KO' } }
-                    },
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
-
-        window.exporterExcelTDB = function() {
-            if (typeof XLSX === 'undefined') {
-                alert("La bibliothèque Excel (SheetJS) n'est pas chargée.");
+        function exporterExcelBDD() {
+            if (!dernieresLignesAffichees || dernieresLignesAffichees.length === 0) {
+                alert("Aucune donnée à exporter dans la table actuelle.");
                 return;
             }
 
-            const dateSpec = document.getElementById('filtreDate').value;
-            const dateDebut = document.getElementById('filtreDateDebut').value;
-            const dateFin = document.getElementById('filtreDateFin').value;
+            const lignesExcel = dernieresLignesAffichees.map(l => {
+                const tags = [];
+                if (l.isModifie) tags.push('Modifié');
+                if (l.isSuivi) tags.push('Suivi');
+                const suffixeType = tags.length > 0 ? ` (${tags.join(' - ')})` : '';
+                return {
+                    "Date contrôle / vérif.": l.dateCtrlVerif,
+                    "Région": l.region,
+                    "Centre / Entité": l.entite,
+                    "Processus": l.processus,
+                    "Risque": l.risque,
+                    "Contrôle": l.controle,
+                    "PC": l.pc,
+                    "Pop": l.pop,
+                    "Ech": l.ech,
+                    "OK": l.ok,
+                    "KO": l.ko,
+                    "TC (%)": Number(l.tc.toFixed(1)),
+                    "Constat": l.constat,
+                    "Statut constat": l.statutInfo.label,
+                    "Type de contrôle": `${l.typeInfo.label}${suffixeType}`
+                };
+            });
 
+            const ws = XLSX.utils.json_to_sheet(lignesExcel);
             const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BDD_Constats");
+            XLSX.writeFile(wb, `FCI_BDD_Constats_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
 
-            const kpiRows = [
-                { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
-                { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
-                { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateSpec, dateDebut, dateFin) },
-                { "Indicateur": document.getElementById('lblKpiVolume').textContent, "Valeur": document.getElementById('kpiVolume').textContent },
-                { "Indicateur": "Détail Volume", "Valeur": document.getElementById('subKpiVolume').textContent },
-                { "Indicateur": "Taux de Conformité Pondéré (%)", "Valeur": document.getElementById('kpiTcGlobal').textContent },
-                { "Indicateur": "Détail TC (FC / Encaisses)", "Valeur": document.getElementById('subKpiTcGlobal').textContent },
-                { "Indicateur": "Taux de Clôture des Constats", "Valeur": document.getElementById('kpiTauxCloture').textContent },
-                { "Indicateur": "Total Anomalies (KO)", "Valeur": document.getElementById('kpiTotalKO').textContent },
-                { "Indicateur": document.getElementById('lblKpiCouverture').textContent, "Valeur": document.getElementById('kpiCouverture').textContent },
-                { "Indicateur": "Détail Couverture", "Valeur": document.getElementById('subKpiCouverture').textContent }
-            ];
-            const wsKPI = XLSX.utils.json_to_sheet(kpiRows);
-            wsKPI['!cols'] = [{ wch: 36 }, { wch: 52 }];
-            XLSX.utils.book_append_sheet(wb, wsKPI, "1_Synthese_KPIs");
-
-            const wsClass1 = XLSX.utils.json_to_sheet(exportClassementPrincipal.length > 0 ? exportClassementPrincipal : [{ "Info": "Aucune donnée" }]);
-            XLSX.utils.book_append_sheet(wb, wsClass1, "2_Classement_Principal");
-
-            const wsClass2 = XLSX.utils.json_to_sheet(exportClassementSecondaire.length > 0 ? exportClassementSecondaire : [{ "Info": "Aucune donnée" }]);
-            XLSX.utils.book_append_sheet(wb, wsClass2, "3_Classement_Secondaire");
-
-            if (exportCouvertureDetail.length > 0) {
-                const wsCov = XLSX.utils.json_to_sheet(exportCouvertureDetail);
-                XLSX.utils.book_append_sheet(wb, wsCov, "4_Couverture_Detail");
+        function configurerTokenDepuisBDD() {
+            if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
+            const token = FCIDatabase.configurerGitHubToken();
+            if (token) {
+                alert("✅ Token GitHub enregistré localement sur ce poste.");
             }
+        }
 
-            const rowsDetail = dernieresDonneesFiltrees.map(c => ({
-                "Date": c.dateFR,
-                "Source": c.source,
-                "Région": c.region,
-                "Centre / Site": c.site,
-                "Type de Contrôle": c.typeControle,
-                "Processus": c.processus,
-                "Contrôle": c.controle || 'N/A',
-                "Point de Contrôle (PC)": c.pc || 'N/A',
-                "Pop": c.pop,
-                "Ech": c.ech,
-                "OK": c.ok,
-                "KO": c.ko,
-                "TC (%)": Number(c.tc.toFixed(1)),
-                "Statut": libelleStatut(c.statut),
-                "Suivi": c.isSuivi ? "Oui" : "Non",
-                "Modifié": c.isModifie ? "Oui" : "Non",
-                "Constat / Remarques": c.constat
-            }));
-            const wsDetail = XLSX.utils.json_to_sheet(rowsDetail.length > 0 ? rowsDetail : [{ "Info": "Aucun constat" }]);
-            XLSX.utils.book_append_sheet(wb, wsDetail, "5_Detail_Constats");
+        async function synchroniserArchivesGitHub() {
+            if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
+            const btn = document.getElementById('btnSyncGitHubBDD');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...';
 
-            const dateStr = new Date().toISOString().slice(0, 10);
-            XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${niveauActif}_${dateStr}.xlsx`);
-        };
+            try {
+                const resultat = await FCIDatabase.restaurerDepuisGitHub();
+                reinitialiserFiltresBDD();
+                alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
+            } catch (err) {
+                alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
+        }
 
-        window.imprimerPDF = function() {
-            window.print();
-        };
+        function viderTouteLaBDD() {
+            if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
+            else localStorage.removeItem('fci_database');
+            reinitialiserFiltresBDD();
+        }
 
-        window.exporterBDDTDB = function() {
+        function exporterBDDAction() {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
                 FCIDatabase.exporterBDD();
                 return;
             }
-            const db = lireDB();
+            const db = lireBDDLocaleSecurisee();
             const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -2855,10 +933,7 @@
             a.download = `FCI_BDD_Backup_${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-        };
-
-        // Initialisation immédiate après authentification
-        chargerEtPreparerDonnees();
+        }
     </script>
 </body>
 </html>
