@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
+    <!-- Protection de session FCI -->
+    <script src="fci-auth.js"></script>
     <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -102,7 +104,7 @@
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
@@ -135,11 +137,8 @@
                 </li>
             </ul>
         </div>
-        <div>
-            <div id="fci-sidebar-user-slot"></div>
-            <div class="sidebar-footer">
-                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-            </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
@@ -229,29 +228,16 @@
         </div>
     </main>
 
-    <!-- Inclusion du script Auth & BDD Centralisée -->
-    <script type="module" src="fci-auth.js"></script>
-    <script type="module" src="fci-db-manager.js"></script>
+    <!-- Inclusion du script BDD Centralisée -->
+    <script src="fci-db-manager.js"></script>
 
-    <script type="module">
-        import { initFCISessionGuard } from "./fci-auth.js";
-        import { syncFromFirestoreToLocal } from "./fci-db-manager.js";
-
+    <script>
         let bddData = [];
         let filteredData = [];
         let selectedPoints = new Set();
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
-        const currentUser = await initFCISessionGuard();
-        await syncFromFirestoreToLocal(currentUser);
-
-        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
-        const userBox = document.getElementById("fci-auth-sidebar-box");
-        const slot = document.getElementById("fci-sidebar-user-slot");
-        if (userBox && slot) {
-            slot.appendChild(userBox);
-        }
+        document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
 
         function getItemVal(item, keys) {
             for (let k of keys) {
@@ -308,7 +294,7 @@
             });
         }
 
-        window.onProcessusChange = function() {
+        function onProcessusChange() {
             const proc = document.getElementById('select-processus').value;
             const selectRisque = document.getElementById('select-risque');
             const selectControle = document.getElementById('select-controle');
@@ -337,9 +323,9 @@
                 opt.value = r; opt.textContent = r;
                 selectRisque.appendChild(opt);
             });
-        };
+        }
 
-        window.onRisqueChange = function() {
+        function onRisqueChange() {
             const proc = document.getElementById('select-processus').value;
             const risque = document.getElementById('select-risque').value;
             const selectControle = document.getElementById('select-controle');
@@ -363,25 +349,25 @@
                 opt.value = c; opt.textContent = c;
                 selectControle.appendChild(opt);
             });
-        };
+        }
 
-        window.onControleChange = function() {
+        function onControleChange() {
             const proc = document.getElementById('select-processus').value;
             const risque = document.getElementById('select-risque').value;
             const controle = document.getElementById('select-controle').value;
             let items = bddData.filter(d => getItemVal(d, ['Processus']) === proc && getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque);
             if (controle) items = items.filter(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle']) === controle);
             document.getElementById('btn-count').textContent = items.length;
-        };
+        }
 
-        window.reinitialiserFiltres = function() {
+        function reinitialiserFiltres() {
             document.getElementById('select-processus').value = "";
-            window.onProcessusChange();
+            onProcessusChange();
             filteredData = [];
             afficherTableau();
-        };
+        }
 
-        window.appliquerFiltre = function() {
+        function appliquerFiltre() {
             const proc = document.getElementById('select-processus').value;
             const risque = document.getElementById('select-risque').value;
             const controle = document.getElementById('select-controle').value;
@@ -397,7 +383,7 @@
                 return true;
             });
             afficherTableau();
-        };
+        }
 
         function afficherTableau() {
             const tbody = document.getElementById('table-body');
@@ -435,7 +421,7 @@
             mettreAJourCompteurSelection();
         }
 
-        window.toggleSelectPoint = function(index, cb) {
+        function toggleSelectPoint(index, cb) {
             const itemStr = JSON.stringify(filteredData[index]);
             if (cb.checked) {
                 selectedPoints.add(itemStr);
@@ -445,22 +431,22 @@
                 cb.closest('tr').classList.remove('selected-row');
             }
             mettreAJourCompteurSelection();
-        };
+        }
 
-        window.selectionnerTout = function() {
+        function selectionnerTout() {
             filteredData.forEach(item => selectedPoints.add(JSON.stringify(item)));
             afficherTableau();
-        };
+        }
 
-        window.deselectionnerTout = function() {
+        function deselectionnerTout() {
             filteredData.forEach(item => selectedPoints.delete(JSON.stringify(item)));
             afficherTableau();
-        };
+        }
 
-        window.toggleMasterCheckbox = function(masterCb) {
-            if (masterCb.checked) window.selectionnerTout();
-            else window.deselectionnerTout();
-        };
+        function toggleMasterCheckbox(masterCb) {
+            if (masterCb.checked) selectionnerTout();
+            else deselectionnerTout();
+        }
 
         function mettreAJourCompteurSelection() {
             const count = selectedPoints.size;
@@ -479,16 +465,16 @@
             }
         }
 
-        window.exporterExcel = function() {
+        function exporterExcel() {
             if (selectedPoints.size === 0) { alert("Veuillez sélectionner au moins un point."); return; }
             const dataToExport = Array.from(selectedPoints).map(item => JSON.parse(item));
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Points de Contrôle");
             XLSX.writeFile(workbook, "FCI_Points_Controle_Selectionnes.xlsx");
-        };
+        }
 
-        window.redirigerVersPlanification = function() {
+        function redirigerVersPlanification() {
             if (selectedPoints.size === 0) {
                 alert("Veuillez sélectionner au moins un point de contrôle avant de passer à la Planification.");
                 return;
@@ -496,9 +482,7 @@
             const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
             localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(dataToSave));
             window.location.href = "Planification.html";
-        };
-
-        await chargerBDD();
+        }
     </script>
 </body>
 </html>
