@@ -1,1384 +1,1783 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>4. Vérification Encaisses (FV) — FCI v1.0 | Barid Al-Maghrib</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --primary-blue: #003366;
-      --dark-blue: #002244;
-      --accent-gold: #EAAA00;
-      --bg-light: #f1f5f9;
-      --border-color: #cbd5e1;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --dark-blue: #002244;
+            --accent-gold: #EAAA00;
+            --bg-light: #F4F6F9;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --info: #3B82F6;
+            --sidebar-width: 250px;
+        }
 
-    body {
-      display: flex;
-      min-height: 100vh;
-      background: var(--bg-light);
-      color: var(--text-main);
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
 
-    /* Barre latérale fixe */
-    .sidebar {
-      width: 265px;
-      background: var(--primary-blue);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
-    }
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
+            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15); overflow-y: auto;
+        }
 
-    .sidebar-header {
-      padding: 20px 18px;
-      background: var(--dark-blue);
-      border-bottom: 3px solid var(--accent-gold);
-    }
+        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
 
-    .sidebar-header .org-tag {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      color: var(--accent-gold);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+            border-left: 4px solid transparent; transition: all 0.2s;
+        }
+        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
+        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
 
-    .sidebar-header h2 {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.3;
-    }
+        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
+        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
 
-    .sidebar-header small {
-      display: block;
-      font-size: 11px;
-      color: #cbd5e1;
-      margin-top: 4px;
-    }
+        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
 
-    .sidebar-nav {
-      padding: 14px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      overflow-y: auto;
-    }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
 
-    .sidebar-nav a {
-      color: #e2e8f0;
-      text-decoration: none;
-      padding: 10px 12px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 18px; background: var(--card-bg); padding: 18px 22px;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 12px;
+        }
 
-    .sidebar-nav a:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-    }
+        .page-title h1 { font-size: 1.32rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title p { font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; }
 
-    .sidebar-nav a.active {
-      background: rgba(234, 170, 0, 0.18);
-      color: var(--accent-gold);
-      font-weight: 700;
-      border-left: 3px solid var(--accent-gold);
-    }
+        .header-actions-wrapper { display: flex; align-items: center; justify-content: flex-end; }
+        .header-actions-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; align-items: center; }
+        .header-actions-row .btn { padding: 7px 10px; font-size: 0.78rem; gap: 5px; }
 
-    /* Contenu principal */
-    .main-content {
-      margin-left: 265px;
-      flex: 1;
-      padding: 24px;
-      max-width: calc(100vw - 265px);
-      display: flex;
-      flex-direction: column;
-    }
+        .bdd-badge-total { background-color: #DEF7EC; color: #03543F; font-size: 0.78rem; font-weight: 700; padding: 6px 10px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+        .bdd-badge-error { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
 
-    .topbar {
-      background: #ffffff;
-      padding: 18px 22px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border-left: 5px solid var(--accent-gold);
-    }
+        .saisie-line-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-blue);
+            margin-bottom: 14px;
+        }
+        .section-line-label {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary-blue);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .single-row-saisie-fv {
+            display: grid;
+            grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.9fr;
+            gap: 10px;
+            align-items: end;
+        }
 
-    .topbar h1 {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
+        .modif-line-card {
+            background-color: #FFFBEB;
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid #FDE68A;
+            border-left: 4px solid var(--accent-gold);
+            margin-bottom: 14px;
+        }
+        .single-row-modif-fv {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.45fr 1.45fr auto;
+            gap: 12px;
+            align-items: end;
+        }
 
-    .topbar p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+        .suivi-summary-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .suivi-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 13px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .suivi-box .s-label { font-size: 0.76rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+        .suivi-box .s-val { font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); }
 
-    .btn {
-      padding: 9px 14px;
-      border-radius: 7px;
-      border: none;
-      font-size: 12.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 22px; border: 1px solid var(--border-color); margin-bottom: 22px; }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--primary-blue); margin-bottom: 18px; border-bottom: 2px solid #F1F5F9; padding-bottom: 10px; }
 
-    .btn:hover { opacity: 0.92; }
-    .btn:active { transform: scale(0.99); }
-    .btn-primary { background: var(--primary-blue); color: #ffffff; }
-    .btn-gold { background: var(--accent-gold); color: var(--dark-blue); }
-    .btn-success { background: #15803d; color: #ffffff; }
-    .btn-outline { background: #ffffff; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
-    .btn-danger { background: #dc2626; color: #ffffff; }
-    .btn-warning { background: #d97706; color: #ffffff; }
-    .btn-sm { padding: 5px 8px; font-size: 11px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+        .metrics-statut-row {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 0.8fr 1.15fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .form-group label { font-size: 0.74rem; font-weight: 700; color: var(--primary-blue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .form-control { padding: 8px 11px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 0.84rem; outline: none; background-color: #FFF; font-weight: 600; transition: border-color 0.2s, background-color 0.2s; }
+        .form-control:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .form-control.filter-active { border: 2px solid var(--accent-gold); background-color: #FFFDF5; color: var(--primary-blue); font-weight: 700; }
 
-    /* KPIs */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
+        .date-bdd-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #EFF6FF;
+            color: var(--primary-blue);
+            border: 1px solid #93C5FD;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+        .date-modified-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #60A5FA;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.73rem;
+            font-weight: 800;
+        }
 
-    .kpi-card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 14px 18px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      border-top: 3px solid var(--primary-blue);
-    }
+        .imported-meta-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin-bottom: 12px;
+            font-size: 0.78rem;
+        }
+        .imported-chip {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+        .imported-chip strong { color: var(--primary-blue); }
 
-    .kpi-card.gold { border-top-color: var(--accent-gold); }
-    .kpi-card.danger { border-top-color: #dc2626; }
-    .kpi-card.success { border-top-color: #16a34a; }
-    .kpi-card .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
-    .kpi-card .kpi-value { font-size: 20px; font-weight: 700; color: var(--dark-blue); margin-top: 4px; }
+        .statut-select-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; font-weight: 800 !important; }
+        .statut-select-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; font-weight: 800 !important; }
+        .statut-select-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; font-weight: 800 !important; }
 
-    /* Cartes & Formulaires */
-    .card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 18px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 15px; margin-bottom: 22px; }
+        .kpi-card { background: var(--card-bg); padding: 16px 18px; border-radius: 8px; display: flex; align-items: center; gap: 14px; border: 1px solid var(--border-color); }
+        .kpi-icon { width: 44px; height: 44px; border-radius: 8px; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .kpi-info h3 { font-size: 1.25rem; color: var(--primary-blue); font-weight: 800; }
+        .kpi-info p { font-size: 0.76rem; color: var(--text-muted); font-weight: 600; }
 
-    .card-title {
-      font-size: 14.5px;
-      font-weight: 700;
-      color: var(--dark-blue);
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+        .selection-box { background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px; padding: 18px; margin-top: 10px; }
+        .pc-preview { background: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid var(--accent-gold); padding: 14px; border-radius: 6px; margin-top: 14px; }
+        .toolbar { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 13px;
-    }
+        .pc-card { background: #FFFFFF; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; overflow: hidden; }
+        .pc-card-header { background: var(--primary-blue); color: #FFFFFF; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+        .pc-card-body { padding: 20px; }
 
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
+        .constat-box { background: #F8FAFC; border-radius: 8px; border: 1px solid var(--border-color); padding: 18px; margin-bottom: 18px; }
+        .constat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; flex-wrap: wrap; gap: 8px; }
 
-    .form-field.span-2 { grid-column: span 2; }
-    .form-field.span-4 { grid-column: span 4; }
+        .conformity-badge { font-size: 0.85rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #D97706; }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-    .form-field label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
+        .summary-card { background: var(--dark-blue); color: #FFFFFF; border-radius: 8px; padding: 25px; display: flex; flex-direction: column; gap: 18px; margin-top: 30px; }
+        .summary-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px; }
 
-    .form-field input,
-    .form-field select,
-    .form-field textarea {
-      width: 100%;
-      padding: 8px 11px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 12.5px;
-      text-align: left;
-      outline: none;
-      background: #ffffff;
-    }
+        .badge-avis-global { font-size: 1.05rem; font-weight: 800; padding: 8px 18px; border-radius: 8px; text-transform: uppercase; }
+        .avis-non-satisfaisante { background-color: var(--danger); color: #FFF; }
+        .avis-satisfaisante { background-color: var(--warning); color: #FFF; }
+        .avis-bonne { background-color: var(--info); color: #FFF; }
+        .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
-    .form-field input:focus,
-    .form-field select:focus,
-    .form-field textarea:focus {
-      border-color: var(--primary-blue);
-    }
+        .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
+        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
+        .btn-outline { background-color: transparent; border-color: var(--border-color); color: var(--text-dark); }
+        .btn-warning { background-color: #FFEDD5; color: #C2410C; border-color: #FB923C; }
+        .btn-warning:hover { background-color: #FED7AA; }
+        .btn-suivi { background-color: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
+        .btn-suivi:hover { background-color: #BFDBFE; }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
+        .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+        .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
 
-    .form-field input[readonly],
-    .form-field select:disabled {
-      background: #f1f5f9;
-      color: #475569;
-      cursor: not-allowed;
-    }
+        @media (max-width: 1280px) {
+            .single-row-saisie-fv { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+            .single-row-modif-fv { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+            .metrics-statut-row { grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); }
+        }
 
-    /* Section Billetage & Rapprochement Comptable */
-    .cash-layout {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 18px;
-      margin-top: 14px;
-    }
-
-    .billetage-box {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 14px;
-      background: #f8fafc;
-    }
-
-    .billetage-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .denom-row {
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 7px 9px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .denom-row span {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--primary-blue);
-    }
-
-    .denom-row input {
-      width: 100%;
-      padding: 5px 7px;
-      border: 1px solid #cbd5e1;
-      border-radius: 5px;
-      font-size: 12.5px;
-      text-align: left;
-    }
-
-    .reconciliation-box {
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 16px;
-      background: #ffffff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .summary-line {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: #f8fafc;
-      font-size: 12.5px;
-    }
-
-    .summary-line strong {
-      font-size: 14px;
-      color: var(--dark-blue);
-    }
-
-    .ecart-banner {
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-weight: 700;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13.5px;
-    }
-
-    .ecart-ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .ecart-excedent { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-    .ecart-deficit { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-
-    /* Tableaux */
-    .table-wrapper {
-      overflow-x: auto;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-
-    th {
-      background: var(--primary-blue);
-      color: #ffffff;
-      text-align: left;
-      padding: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 9px 10px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: top;
-    }
-
-    tr:hover td { background: #f8fafc; }
-
-    td select,
-    td input {
-      width: 100%;
-      padding: 6px 8px;
-      border: 1px solid #cbd5e1;
-      border-radius: 5px;
-      font-size: 12px;
-      text-align: left;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 10.5px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .b-equilibre { background: #dcfce7; color: #166534; }
-    .b-excedent { background: #dbeafe; color: #1e40af; }
-    .b-deficit { background: #fee2e2; color: #991b1b; }
-    .b-ouvert { background: #fef3c7; color: #92400e; }
-    .b-cloture { background: #dcfce7; color: #166534; }
-
-    .filters-bar {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto;
-      gap: 10px;
-      margin-bottom: 14px;
-      align-items: center;
-    }
-
-    .filters-bar input,
-    .filters-bar select {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 12px;
-      background: #ffffff;
-    }
-
-    /* Modal édition / suivi */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 20, 45, 0.55);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal-backdrop.open { display: flex; }
-
-    .modal-box {
-      background: #ffffff;
-      width: 100%;
-      max-width: 650px;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
-    }
-
-    .modal-header {
-      background: var(--primary-blue);
-      color: #ffffff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid var(--accent-gold);
-    }
-
-    .modal-body {
-      padding: 18px 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 13px;
-    }
-
-    .modal-footer {
-      padding: 12px 20px;
-      background: #f8fafc;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .status-toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--dark-blue);
-      color: #ffffff;
-      padding: 11px 16px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      font-weight: 600;
-      border-left: 4px solid var(--accent-gold);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      display: none;
-      z-index: 1200;
-    }
-
-    footer.app-footer {
-      margin-top: auto;
-      padding-top: 14px;
-      text-align: center;
-      font-size: 11.5px;
-      color: var(--text-muted);
-    }
-
-    @media (max-width: 1150px) {
-      .form-grid { grid-template-columns: repeat(2, 1fr); }
-      .cash-layout { grid-template-columns: 1fr; }
-      .filters-bar { grid-template-columns: 1fr 1fr; }
-    }
-  </style>
+        @media print {
+            .sidebar, .header-actions-wrapper, .modif-line-card { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Barre latérale fixe -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="org-tag">Barid Al-Maghrib</div>
-      <h2>Fiche de Contrôle Intelligente</h2>
-      <small>Direction Contrôle Générale • FCI v1.0</small>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="index.html"><i class="fas fa-book"></i> 1. Référentiel de contrôle</a>
-      <a href="Planification.html"><i class="fas fa-calendar-alt"></i> 2. Planification</a>
-      <a href="FicheControle.html"><i class="fas fa-clipboard-check"></i> 3. Fiche de Contrôle (FC)</a>
-      <a href="FicheEncaisses.html" class="active"><i class="fas fa-coins"></i> 4. Vérification Encaisses</a>
-      <a href="BDD.html"><i class="fas fa-database"></i> 5. Base de Données (BDD)</a>
-      <a href="TDB.html"><i class="fas fa-chart-line"></i> 6. Analyse & Pilotage</a>
-    </nav>
-  </aside>
-
-  <!-- Contenu principal -->
-  <main class="main-content">
-    <div class="topbar">
-      <div>
-        <h1>4. Fiche de Vérification des Encaisses (FV)</h1>
-        <p>Arrêté physique inopiné des caisses, billetage MAD, rapprochement comptable & contrôle des valeurs</p>
-      </div>
-      <div>
-        <button type="button" id="btnExportFVExcel" class="btn btn-success">
-          <i class="fas fa-file-excel"></i> Exporter FV Excel
-        </button>
-      </div>
-    </div>
-
-    <!-- KPIs Encaisses -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Vérifications réalisées (FV)</div>
-        <div class="kpi-value" id="kpiFvTotal">0</div>
-      </div>
-      <div class="kpi-card success">
-        <div class="kpi-label">Caisses équilibrées</div>
-        <div class="kpi-value" id="kpiFvEquilibre">0</div>
-      </div>
-      <div class="kpi-card danger">
-        <div class="kpi-label">Caisses avec écart</div>
-        <div class="kpi-value" id="kpiFvEcartCount">0</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-label">Cumul écarts nets (MAD)</div>
-        <div class="kpi-value" id="kpiFvCumulEcart">0,00 DH</div>
-      </div>
-    </div>
-
-    <!-- Bloc 1 : Saisie d'un arrêté de caisse -->
-    <div class="card">
-      <div class="card-title">
-        <span><i class="fas fa-cash-register"></i> Nouvel arrêté de vérification d'encaisse</span>
-        <span id="fvNumeroBadge" style="font-size:12px;color:var(--primary-blue);background:#eff6ff;padding:3px 10px;border-radius:6px;"></span>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-field">
-          <label for="fvMissionSelect">N° Mission (Planification)</label>
-          <select id="fvMissionSelect">
-            <option value="">-- Saisie libre / Inopinée --</option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="fvRegion">Région Postale *</label>
-          <select id="fvRegion" required>
-            <option value="">-- Sélectionner --</option>
-            <option value="CASA">Casablanca (CASA)</option>
-            <option value="SETTAT">Settat (SETTAT)</option>
-            <option value="RABAT">Rabat (RABAT)</option>
-            <option value="TANGER">Tanger (TANGER)</option>
-            <option value="MARRAKECH">Marrakech (MARRAKECH)</option>
-            <option value="AGADIR">Agadir (AGADIR)</option>
-            <option value="FES">Fès (FES)</option>
-            <option value="MEKNES">Meknès (MEKNES)</option>
-            <option value="LAAYOUNE">Laâyoune (LAAYOUNE)</option>
-            <option value="OUJEDA">Oujda (OUJEDA)</option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="fvSite">Site / Agence / Bureau *</label>
-          <input type="text" id="fvSite" placeholder="Ex: Agence Rabat Agdal" required />
-        </div>
-
-        <div class="form-field">
-          <label for="fvDate">Date & Heure arrêté *</label>
-          <input type="date" id="fvDate" required />
-        </div>
-
-        <div class="form-field">
-          <label for="fvCaisse">Caisse / Guichet contrôlé *</label>
-          <input type="text" id="fvCaisse" placeholder="Ex: Caisse Principale / Guichet 02" required />
-        </div>
-
-        <div class="form-field">
-          <label for="fvCaissier">Nom & Matricule du Caissier / Chef d'agence *</label>
-          <input type="text" id="fvCaissier" placeholder="Ex: M. Alami (Mat. 14520)" required />
-        </div>
-
-        <div class="form-field">
-          <label for="fvControleur">Contrôleur vérificateur</label>
-          <input type="text" id="fvControleur" readonly />
-        </div>
-
-        <div class="form-field">
-          <label for="fvSoldeComptable">Solde Comptable / Système (DH) *</label>
-          <input type="number" step="0.01" id="fvSoldeComptable" value="0" placeholder="0.00" required />
-        </div>
-      </div>
-
-      <!-- Billetage détaillé + Rapprochement -->
-      <div class="cash-layout">
-        <div class="billetage-box">
-          <div style="font-size:13px;font-weight:700;color:var(--dark-blue);display:flex;justify-content:space-between;">
-            <span><i class="fas fa-money-bill-wave"></i> Détail du Billetage Physique (Nombre de coupures / pièces)</span>
-            <button type="button" id="btnResetBilletage" class="btn btn-outline btn-sm">Remettre à 0</button>
-          </div>
-
-          <div class="billetage-grid">
-            <div class="denom-row">
-              <span>Billets 200 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="200" value="0" />
+    <aside class="sidebar" id="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
             </div>
-            <div class="denom-row">
-              <span>Billets 100 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="100" value="0" />
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li class="active"><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+            </ul>
+        </div>
+        <div>
+            <div id="fci-sidebar-user-slot"></div>
+            <div class="sidebar-footer">
+                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
             </div>
-            <div class="denom-row">
-              <span>Billets 50 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="50" value="0" />
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-title">
+                <h1><i class="fa-solid fa-vault" style="color: var(--accent-gold);"></i> Feuille 4 : Fiche de la vérification des encaisses (FV)</h1>
+                <p>Division Contrôle Permanent — Direction Contrôle Générale (Barid Al-Maghrib)</p>
             </div>
-            <div class="denom-row">
-              <span>Billets 20 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="20" value="0" />
+
+            <div class="header-actions-wrapper">
+                <div class="header-actions-row">
+                    <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
+                    <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
+                    <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
+                    <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
+                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour uniquement le(s) point(s) de contrôle modifié(s) dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
+                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi uniquement pour le(s) PC modifié(s)"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                    <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()" title="Supprime la ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                    <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
+                    <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
+                </div>
             </div>
-            <div class="denom-row">
-              <span>Pièces 10 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="10" value="0" />
+        </header>
+
+        <section class="saisie-line-card">
+            <div class="section-line-label">
+                <span><i class="fa-solid fa-circle-info"></i> Espace Saisie de la Vérification</span>
+                <span style="margin-left:auto;" id="headerDateVerifBadge"></span>
             </div>
-            <div class="denom-row">
-              <span>Pièces 5 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="5" value="0" />
+            <form autocomplete="off" onsubmit="return false;">
+                <div class="single-row-saisie-fv">
+                    <div class="form-group">
+                        <label>Région *</label>
+                        <select class="form-control" id="regionSite" autocomplete="off" onchange="onRegionEncaisseChange()">
+                            <option value="">-- Région --</option>
+                            <option value="MARRAKECH">MARRAKECH</option>
+                            <option value="AGADIR">AGADIR</option>
+                            <option value="CASA">CASA</option>
+                            <option value="SETTAT">SETTAT</option>
+                            <option value="RABAT">RABAT</option>
+                            <option value="TANGER">TANGER</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
+                            <option value="FES">FES</option>
+                            <option value="MEKNES">MEKNES</option>
+                            <option value="OUEJDA">OUEJDA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Centre *</label>
+                        <select class="form-control" id="nomSite" autocomplete="off" disabled>
+                            <option value="">-- Région requise --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date vérification *</label>
+                        <input type="date" class="form-control" id="dateVerification" autocomplete="off" onchange="onDateVerificationChange()">
+                    </div>
+                    <div class="form-group">
+                        <label>Date début vérif. *</label>
+                        <input type="date" class="form-control" id="periodeDebut" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Date fin vérif. *</label>
+                        <input type="date" class="form-control" id="periodeFin" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label>Contrôleur *</label>
+                        <input type="text" class="form-control" id="nomControleur" name="fci_fv_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du contrôleur">
+                    </div>
+                    <div class="form-group">
+                        <label>Vérification *</label>
+                        <select class="form-control" id="typeControle" autocomplete="off">
+                            <option value="Vérification" selected>Vérification</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; max-width: 340px;">
+                    <div class="form-group">
+                        <label>Chef de centre / Responsable du site (Facultatif)</label>
+                        <input type="text" class="form-control" id="nomResponsable" name="fci_fv_resp_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du chef de centre">
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section class="modif-line-card">
+            <div class="section-line-label" style="color:#92400E;">
+                <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD Encaisses)
+                <span id="bddCountInfoFV" style="background:#FEF3C7; color:#92400E; border:1px solid #F59E0B; padding:2px 8px; border-radius:10px; font-size:0.72rem; text-transform:none;"></span>
+                <span id="searchEncaisseStatus" style="margin-left:auto; color:var(--primary-blue); font-weight:700; text-transform:none;"></span>
             </div>
-            <div class="denom-row">
-              <span>Pièces 2 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="2" value="0" />
+            <div class="single-row-modif-fv">
+                <div class="form-group">
+                    <label for="filterFvBddDate">Date de contrôle (jj/mm/aaaa)</label>
+                    <select id="filterFvBddDate" class="form-control" onchange="onFilterFvBDDChange('DATE')">
+                        <option value="">-- Toutes les dates --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterFvBddRegion">Région</label>
+                    <select id="filterFvBddRegion" class="form-control" onchange="onFilterFvBDDChange('REGION')">
+                        <option value="">-- Toutes les régions --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterFvBddSite">Site vérifié</label>
+                    <select id="filterFvBddSite" class="form-control" onchange="onFilterFvBDDChange('SITE')">
+                        <option value="">-- Tous les sites --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterFvBddProcessus">Processus vérifié</label>
+                    <select id="filterFvBddProcessus" class="form-control" onchange="onFilterFvBDDChange('PROCESSUS')">
+                        <option value="">-- Tous les processus --</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:6px; align-items:flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltresBDDFV()" title="Réinitialiser les listes"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+                    <button type="button" class="btn btn-primary" onclick="trouverFicheEncaisseBDD()"><i class="fa-solid fa-search"></i> Charger depuis BDD</button>
+                </div>
             </div>
-            <div class="denom-row">
-              <span>Pièces 1 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="1" value="0" />
+        </section>
+
+        <div class="suivi-summary-strip">
+            <div class="suivi-box" style="border-left: 4px solid var(--primary-blue);">
+                <span class="s-label">Taux moyen de conformité</span>
+                <span class="s-val" id="suivi-taux-moyen">0.0 %</span>
             </div>
-            <div class="denom-row">
-              <span>Pièces 0,50 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="0.5" value="0" />
+            <div class="suivi-box" style="border-left: 4px solid var(--warning);">
+                <span class="s-label">Constats en cours</span>
+                <span class="s-val" id="suivi-count-encours" style="color: #D97706;">0</span>
             </div>
-            <div class="denom-row">
-              <span>Pièces 0,20 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="0.2" value="0" />
+            <div class="suivi-box" style="border-left: 4px solid var(--success);">
+                <span class="s-label">Clôturé</span>
+                <span class="s-val" id="suivi-count-cloture" style="color: var(--success);">0</span>
             </div>
-            <div class="denom-row">
-              <span>Pièces 0,10 DH</span>
-              <input type="number" min="0" step="1" class="denom-input" data-val="0.1" value="0" />
+            <div class="suivi-box" style="border-left: 4px solid var(--danger);">
+                <span class="s-label">Non clôturé</span>
+                <span class="s-val" id="suivi-count-noncloture" style="color: var(--danger);">0</span>
             </div>
-            <div class="denom-row">
-              <span>Valeurs / Timbres / Chèques (DH)</span>
-              <input type="number" min="0" step="0.01" id="fvAutresValeurs" value="0" />
-            </div>
-          </div>
         </div>
 
-        <div class="reconciliation-box">
-          <div style="font-size:13px;font-weight:700;color:var(--dark-blue);">
-            <i class="fas fa-balance-scale"></i> Synthèse du Rapprochement
-          </div>
-
-          <div class="summary-line">
-            <span>Total Numéraire (Billets + Pièces) :</span>
-            <strong id="dispTotalNumeraire">0,00 DH</strong>
-          </div>
-          <div class="summary-line">
-            <span>Autres Valeurs / Timbres / Chèques :</span>
-            <strong id="dispAutresValeurs">0,00 DH</strong>
-          </div>
-          <div class="summary-line" style="background:#eff6ff;border:1px solid #bfdbfe;">
-            <span><strong>Encaisse Physique Constatée :</strong></span>
-            <strong id="dispTotalPhysique" style="color:var(--primary-blue);font-size:15px;">0,00 DH</strong>
-          </div>
-          <div class="summary-line">
-            <span>Solde Comptable / Système :</span>
-            <strong id="dispSoldeComptable">0,00 DH</strong>
-          </div>
-
-          <div id="ecartBanner" class="ecart-banner ecart-ok">
-            <span id="ecartLabel">Écart de caisse (Équilibré) :</span>
-            <span id="dispEcartMontant">0,00 DH</span>
-          </div>
-
-          <div class="form-field">
-            <label for="fvJustification">Justification de l'écart / Observations de sécurité</label>
-            <textarea id="fvJustification" rows="2" placeholder="Explication du caissier, PV d'écart, respect du plafond d'encaisse..."></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Points de contrôle qualité liés aux encaisses -->
-      <div style="margin-top:18px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <span style="font-size:13px;font-weight:700;color:var(--dark-blue);">
-            <i class="fas fa-shield-alt"></i> Vérifications complémentaires de sécurité & conformité caisse
-          </span>
-          <button type="button" id="btnLoadEncaissePC" class="btn btn-gold btn-sm">
-            <i class="fas fa-sync"></i> Charger PC Encaisses du Référentiel
-          </button>
+        <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div><div class="kpi-info"><h3 id="kpi-proc">0</h3><p>Processus</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="kpi-info"><h3 id="kpi-risque">0</h3><p>Risques</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="kpi-info"><h3 id="kpi-controle">0</h3><p>Contrôles</p></div></div>
+            <div class="kpi-card"><div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div><div class="kpi-info"><h3 id="kpi-pc">0</h3><p>PC affichés</p></div></div>
+            <div class="kpi-card" style="border-left: 4px solid var(--accent-gold);"><div class="kpi-icon" style="background: rgba(234, 170, 0, 0.15); color: var(--primary-blue);"><i class="fa-solid fa-percent"></i></div><div class="kpi-info"><h3 id="kpi-taux-moyen">0 %</h3><p>Taux Moyen Centre</p></div></div>
         </div>
 
-        <div class="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:120px;">Code PC</th>
-                <th>Point de vérification caisse / coffre</th>
-                <th style="width:170px;">Résultat</th>
-                <th>Observation</th>
-              </tr>
-            </thead>
-            <tbody id="fvChecksBody"></tbody>
-          </table>
+        <section class="card">
+            <h2 class="card-title"><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</h2>
+            <div class="selection-box">
+                <div class="form-grid">
+                    <div class="form-group"><label>1. Processus</label><select class="form-control" id="selectProcessus" onchange="onProcessusChange()"><option value="">-- Chargement du JSON... --</option></select></div>
+                    <div class="form-group"><label>2. Intitulé du risque</label><select class="form-control" id="selectRisque" onchange="onRisqueChange()" disabled><option value="">-- Choisir un risque --</option></select></div>
+                    <div class="form-group"><label>3. Intitulé de contrôle</label><select class="form-control" id="selectControle" onchange="onControleChange()" disabled><option value="">-- Choisir un contrôle --</option></select></div>
+                </div>
+                <div class="pc-preview" id="pcPreviewBox" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <div><strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE SÉLECTIONNÉ :</strong><p id="pcPreviewText" style="margin-top: 5px;"></p></div>
+                        <button type="button" class="btn btn-primary" onclick="addSelectedPointControl()"><i class="fa-solid fa-plus"></i> Ajouter ce point</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="toolbar">
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Tout sélectionner</button>
+                <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Tout désélectionner</button>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-blue);"><span id="selectedCountDisplay">0</span> point(s) sélectionné(s)</div>
         </div>
-      </div>
 
-      <div style="margin-top:16px;display:flex;justify-content:flex-end;">
-        <button type="button" id="btnArchiverFV" class="btn btn-primary">
-          <i class="fas fa-save"></i> Enregistrer & Archiver la Vérification Encaisse
-        </button>
-      </div>
-    </div>
+        <div id="pointsEvaluationsContainer"></div>
 
-    <!-- Bloc 2 : Historique & Suivi des Vérifications d'Encaisses -->
-    <div class="card">
-      <div class="card-title">
-        <span><i class="fas fa-history"></i> Historique des Vérifications d'Encaisses (FV)</span>
-        <span id="fvScopeBadge" style="font-size:11.5px;color:var(--text-muted);font-weight:600;"></span>
-      </div>
+        <section class="summary-card" id="summaryCard" style="display: none;">
+            <div class="summary-top">
+                <div class="summary-info">
+                    <i class="fa-solid fa-chart-pie" style="font-size: 2rem; color: var(--accent-gold);"></i>
+                    <div><h3>TAUX MOYEN DU CENTRE : <span id="globalRateDisplay">0 %</span></h3><p style="font-size: 0.85rem; color: #CBD5E1; margin-top: 4px;">Pondération globale calculée sur l'ensemble des constats d'encaisses.</p></div>
+                </div>
+                <div><span class="badge-avis-global" id="globalAvisBadge">---</span></div>
+            </div>
+            <div class="center-description">
+                <strong style="display: block; color: var(--accent-gold); margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;"><i class="fa-solid fa-file-contract"></i> Description & Niveau de Maîtrise :</strong>
+                <p id="centerDescriptionText">Chargement...</p>
+            </div>
+        </section>
+    </main>
 
-      <div class="filters-bar">
-        <input type="text" id="fvSearch" placeholder="Rechercher N° FV, site, caisse, caissier, contrôleur..." />
-        <select id="fvFilterRegion">
-          <option value="">Toutes les régions</option>
-          <option value="CASA">Casablanca</option>
-          <option value="SETTAT">Settat</option>
-          <option value="RABAT">Rabat</option>
-          <option value="TANGER">Tanger</option>
-          <option value="MARRAKECH">Marrakech</option>
-          <option value="AGADIR">Agadir</option>
-          <option value="FES">Fès</option>
-          <option value="MEKNES">Meknès</option>
-          <option value="LAAYOUNE">Laâyoune</option>
-          <option value="OUJEDA">Oujda</option>
-        </select>
-        <select id="fvFilterSite">
-          <option value="">Tous les sites</option>
-        </select>
-        <select id="fvFilterResultat">
-          <option value="">Tous les résultats</option>
-          <option value="Équilibré">Équilibré</option>
-          <option value="Excédent">Excédent</option>
-          <option value="Déficit">Déficit</option>
-        </select>
-        <select id="fvFilterSuivi">
-          <option value="">Tous statuts suivi</option>
-          <option value="Ouvert">Ouvert (À régulariser)</option>
-          <option value="Clôturé">Clôturé / Régularisé</option>
-        </select>
-        <button type="button" id="btnResetFvFilters" class="btn btn-outline" title="Réinitialiser">
-          <i class="fas fa-undo"></i>
-        </button>
-      </div>
+    <!-- Scripts Firebase Auth & BDD Centralisée -->
+    <script type="module" src="fci-auth.js"></script>
+    <script type="module" src="fci-db-manager.js"></script>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Réf. FV / Date</th>
-              <th>Région & Site</th>
-              <th>Caisse & Caissier</th>
-              <th>Physique (DH)</th>
-              <th>Comptable (DH)</th>
-              <th>Écart (DH)</th>
-              <th>Statut Suivi</th>
-              <th>Contrôleur</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="fvHistoryBody">
-            <tr>
-              <td colspan="9" style="text-align:center;padding:24px;color:#64748b;">
-                <i class="fas fa-spinner fa-spin"></i> Chargement des vérifications d'encaisses...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <script type="module">
+        import { initFCISessionGuard } from "./fci-auth.js";
+        import { syncFromFirestoreToLocal, upsertFCIRecord, deleteFCIRecord } from "./fci-db-manager.js";
 
-    <footer class="app-footer">
-      Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027 — Barid Al-Maghrib • Direction Contrôle Générale
-    </footer>
-  </main>
+        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
+        const currentUser = await initFCISessionGuard();
+        await syncFromFirestoreToLocal(currentUser);
 
-  <!-- Modal Modification / Suivi de régularisation d'encaisse -->
-  <div class="modal-backdrop" id="fvModal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="fvModalTitle">Modifier / Suivre la Vérification d'Encaisse</h3>
-        <button type="button" id="btnCloseFvModal" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;">&times;</button>
-      </div>
-      <form id="fvModalForm">
-        <input type="hidden" id="mFvDocId" />
-        <div class="modal-body">
-          <div class="form-field">
-            <label>Réf. FV</label>
-            <input type="text" id="mFvNum" readonly />
-          </div>
-          <div class="form-field">
-            <label>Site / Région</label>
-            <input type="text" id="mFvSite" readonly />
-          </div>
-          <div class="form-field">
-            <label for="mFvPhysique">Encaisse Physique Constatée (DH) *</label>
-            <input type="number" step="0.01" id="mFvPhysique" required />
-          </div>
-          <div class="form-field">
-            <label for="mFvComptable">Solde Comptable / Système (DH) *</label>
-            <input type="number" step="0.01" id="mFvComptable" required />
-          </div>
-          <div class="form-field">
-            <label for="mFvStatutSuivi">Statut de suivi / régularisation *</label>
-            <select id="mFvStatutSuivi" required>
-              <option value="Ouvert">Ouvert (À régulariser)</option>
-              <option value="Clôturé">Clôturé / Régularisé</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label for="mFvDateRegularisation">Date de régularisation</label>
-            <input type="date" id="mFvDateRegularisation" />
-          </div>
-          <div class="form-field span-2">
-            <label for="mFvJustification">Justification / Pièce comptable de régularisation</label>
-            <textarea id="mFvJustification" rows="3"></textarea>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="btnCancelFvModal" class="btn btn-outline">Annuler</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
+        const userBox = document.getElementById("fci-auth-sidebar-box");
+        const slot = document.getElementById("fci-sidebar-user-slot");
+        if (userBox && slot) {
+            slot.appendChild(userBox);
+        }
 
-  <div class="status-toast" id="statusToast"></div>
-
-  <!-- Scripts Firebase Auth & Database Manager -->
-  <script type="module" src="fci-auth.js"></script>
-  <script type="module" src="fci-db-manager.js"></script>
-  <script type="module">
-    import { initFCISessionGuard, db } from "./fci-auth.js";
-    import {
-      syncFromFirestoreToLocal,
-      upsertFCIRecord,
-      deleteFCIRecord
-    } from "./fci-db-manager.js";
-    import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const DEFAULT_CASH_CHECKS = [
-      { code: "ENC-01", libelle: "Arrêté physique inopiné effectué en présence du détenteur de la caisse", resultat: "Conforme", obs: "" },
-      { code: "ENC-02", libelle: "Respect du plafond d'encaisse autorisé et fréquence des versements", resultat: "Conforme", obs: "" },
-      { code: "ENC-03", libelle: "Sécurité physique du coffre-fort, clés et combinaisons", resultat: "Conforme", obs: "" },
-      { code: "ENC-04", libelle: "Absence de bons provisoires, chèques impayés non régularisés ou valeurs personnelles", resultat: "Conforme", obs: "" }
-    ];
-
-    let currentUser = null;
-    let planifications = [];
-    let referentielEncaisses = [];
-    let fvRecords = [];
-    let activeChecks = JSON.parse(JSON.stringify(DEFAULT_CASH_CHECKS));
-
-    function showToast(msg) {
-      const t = document.getElementById("statusToast");
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3200);
-    }
-
-    function formatMAD(num) {
-      return Number(num || 0).toLocaleString("fr-FR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }) + " DH";
-    }
-
-    function normalizeRegionCode(code) {
-      const c = String(code || "").trim().toUpperCase();
-      if (c === "OUJDA") return "OUJEDA";
-      if (c === "LAYOUNE") return "LAAYOUNE";
-      if (c === "CASABLANCA") return "CASA";
-      return c;
-    }
-
-    function generateFvNumber() {
-      const y = new Date().getFullYear();
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return `FV-${y}-${rand}`;
-    }
-
-    // 1. Initialisation de la session
-    currentUser = await initFCISessionGuard();
-    document.getElementById("fvControleur").value = `${currentUser.username} — ${currentUser.nom_complet}`;
-    document.getElementById("fvDate").value = new Date().toISOString().slice(0, 10);
-    document.getElementById("fvNumeroBadge").textContent = generateFvNumber();
-
-    if (currentUser.role === "CONTROLEUR") {
-      const reg = normalizeRegionCode(currentUser.region_code);
-      document.getElementById("fvRegion").value = reg;
-      document.getElementById("fvRegion").disabled = true;
-      document.getElementById("fvFilterRegion").value = reg;
-      document.getElementById("fvFilterRegion").disabled = true;
-      document.getElementById("fvScopeBadge").textContent = `Périmètre : Mes vérifications (${currentUser.username})`;
-    } else {
-      document.getElementById("fvScopeBadge").textContent = `Périmètre : Vue consolidée Division`;
-    }
-
-    // 2. Calcul automatique du billetage et de l'écart
-    function recalculateCash() {
-      let numeraire = 0;
-      document.querySelectorAll(".denom-input").forEach(inp => {
-        const denom = parseFloat(inp.dataset.val || "0");
-        const qty = parseFloat(inp.value || "0");
-        if (qty > 0) numeraire += denom * qty;
-      });
-
-      const autres = parseFloat(document.getElementById("fvAutresValeurs").value || "0");
-      const physique = Math.round((numeraire + autres) * 100) / 100;
-      const comptable = Math.round(parseFloat(document.getElementById("fvSoldeComptable").value || "0") * 100) / 100;
-      const ecart = Math.round((physique - comptable) * 100) / 100;
-
-      document.getElementById("dispTotalNumeraire").textContent = formatMAD(numeraire);
-      document.getElementById("dispAutresValeurs").textContent = formatMAD(autres);
-      document.getElementById("dispTotalPhysique").textContent = formatMAD(physique);
-      document.getElementById("dispSoldeComptable").textContent = formatMAD(comptable);
-      document.getElementById("dispEcartMontant").textContent = (ecart > 0 ? "+" : "") + formatMAD(ecart);
-
-      const banner = document.getElementById("ecartBanner");
-      const label = document.getElementById("ecartLabel");
-      banner.className = "ecart-banner";
-
-      if (Math.abs(ecart) < 0.01) {
-        banner.classList.add("ecart-ok");
-        label.textContent = "Écart de caisse (Équilibré) :";
-      } else if (ecart > 0) {
-        banner.classList.add("ecart-excedent");
-        label.textContent = "Écart de caisse (Excédent) :";
-      } else {
-        banner.classList.add("ecart-deficit");
-        label.textContent = "Écart de caisse (Déficit / Manquant) :";
-      }
-
-      return { numeraire, autres, physique, comptable, ecart };
-    }
-
-    document.querySelectorAll(".denom-input").forEach(inp => inp.addEventListener("input", recalculateCash));
-    document.getElementById("fvAutresValeurs").addEventListener("input", recalculateCash);
-    document.getElementById("fvSoldeComptable").addEventListener("input", recalculateCash);
-
-    document.getElementById("btnResetBilletage").addEventListener("click", () => {
-      document.querySelectorAll(".denom-input").forEach(inp => { inp.value = "0"; });
-      document.getElementById("fvAutresValeurs").value = "0";
-      recalculateCash();
-    });
-
-    // 3. Grille des points de contrôle d'encaisse
-    function renderCashChecks() {
-      const tbody = document.getElementById("fvChecksBody");
-      tbody.innerHTML = activeChecks.map((c, idx) => `
-        <tr>
-          <td><strong>${c.code}</strong></td>
-          <td>${c.libelle}</td>
-          <td>
-            <select onchange="window.updateFvCheck(${idx}, 'resultat', this.value)">
-              <option value="Conforme" ${c.resultat === "Conforme" ? "selected" : ""}>Conforme</option>
-              <option value="Non conforme" ${c.resultat === "Non conforme" ? "selected" : ""}>Non conforme</option>
-              <option value="Non applicable" ${c.resultat === "Non applicable" ? "selected" : ""}>Non applicable</option>
-            </select>
-          </td>
-          <td>
-            <input type="text" placeholder="Observation..." value="${c.obs || ""}" onchange="window.updateFvCheck(${idx}, 'obs', this.value)" />
-          </td>
-        </tr>
-      `).join("");
-    }
-
-    window.updateFvCheck = (idx, field, val) => {
-      if (activeChecks[idx]) activeChecks[idx][field] = val;
-    };
-
-    document.getElementById("btnLoadEncaissePC").addEventListener("click", () => {
-      if (referentielEncaisses.length === 0) {
-        showToast("Aucun point spécifique « Vérification Encaisses » trouvé dans le référentiel ; grille standard conservée.");
-        return;
-      }
-      activeChecks = referentielEncaisses.map(r => ({
-        code: r.code,
-        libelle: r.libelle,
-        resultat: "Conforme",
-        obs: ""
-      }));
-      renderCashChecks();
-      showToast(`${activeChecks.length} point(s) d'encaisse chargés depuis le référentiel.`);
-    });
-
-    // 4. Chargement initial Firestore
-    async function initData() {
-      const localDb = await syncFromFirestoreToLocal(currentUser);
-      planifications = localDb.planifications || [];
-      fvRecords = (localDb.encaisses || []).sort((a, b) =>
-        String(b.date_controle || b.date_creation || "").localeCompare(String(a.date_controle || a.date_creation || ""))
-      );
-
-      const refSnap = await getDocs(collection(db, "fci_referentiel"));
-      referentielEncaisses = refSnap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(r => r.type === "Vérification Encaisses");
-
-      populateMissionsDropdown();
-      populateFilterSites();
-      renderCashChecks();
-      updateKPIs();
-      renderHistoryTable();
-    }
-
-    function populateMissionsDropdown() {
-      const sel = document.getElementById("fvMissionSelect");
-      const cashPlans = planifications.filter(p =>
-        p.type_mission === "Vérification Encaisses" || p.type_mission === "Mission Mixte (FC + Encaisses)"
-      );
-      sel.innerHTML = '<option value="">-- Saisie libre / Inopinée --</option>' +
-        cashPlans.map(p =>
-          `<option value="${p.firestore_id || p.record_uid}">${p.code_mission} | ${normalizeRegionCode(p.region)} - ${p.site} (${p.date_debut})</option>`
-        ).join("");
-    }
-
-    document.getElementById("fvMissionSelect").addEventListener("change", (e) => {
-      const m = planifications.find(p => (p.firestore_id || p.record_uid) === e.target.value);
-      if (!m) return;
-      if (currentUser.role !== "CONTROLEUR") {
-        document.getElementById("fvRegion").value = normalizeRegionCode(m.region);
-      }
-      document.getElementById("fvSite").value = m.site || "";
-      if (m.date_debut) document.getElementById("fvDate").value = m.date_debut;
-    });
-
-    function populateFilterSites() {
-      const sel = document.getElementById("fvFilterSite");
-      const reg = document.getElementById("fvFilterRegion").value;
-      const list = reg ? fvRecords.filter(r => normalizeRegionCode(r.region) === reg) : fvRecords;
-      const sites = [...new Set(list.map(r => r.site).filter(Boolean))].sort();
-      const prev = sel.value;
-      sel.innerHTML = '<option value="">Tous les sites</option>' +
-        sites.map(s => `<option value="${s}">${s}</option>`).join("");
-      if (sites.includes(prev)) sel.value = prev;
-    }
-
-    // 5. Enregistrement & Archivage en BDD Firestore
-    document.getElementById("btnArchiverFV").addEventListener("click", async () => {
-      const region = normalizeRegionCode(document.getElementById("fvRegion").value);
-      const site = document.getElementById("fvSite").value.trim();
-      const dateCtrl = document.getElementById("fvDate").value;
-      const caisse = document.getElementById("fvCaisse").value.trim();
-      const caissier = document.getElementById("fvCaissier").value.trim();
-      const justification = document.getElementById("fvJustification").value.trim();
-      const missionSel = document.getElementById("fvMissionSelect");
-      const codeMission = missionSel.value ? missionSel.options[missionSel.selectedIndex].text.split("|")[0].trim() : "INOPINEE";
-      const numeroFv = document.getElementById("fvNumeroBadge").textContent;
-
-      if (!region || !site || !dateCtrl || !caisse || !caissier) {
-        showToast("Veuillez remplir la région, le site, la date, la caisse et le nom du caissier.");
-        return;
-      }
-
-      const calc = recalculateCash();
-      let qualifEcart = "Équilibré";
-      if (calc.ecart > 0.009) qualifEcart = "Excédent";
-      if (calc.ecart < -0.009) qualifEcart = "Déficit";
-
-      const hasNonConformCheck = activeChecks.some(c => c.resultat === "Non conforme");
-      const isClean = qualifEcart === "Équilibré" && !hasNonConformCheck;
-
-      const billetageDetail = {};
-      document.querySelectorAll(".denom-input").forEach(inp => {
-        billetageDetail[`d_${inp.dataset.val}`] = parseInt(inp.value || "0", 10);
-      });
-
-      const btn = document.getElementById("btnArchiverFV");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Archivage...';
-
-      try {
-        const recordPayload = {
-          source_module: "FV",
-          type_fiche: "FV",
-          type_controle: "Vérification Encaisses",
-          numero_fiche: numeroFv,
-          code_mission: codeMission,
-          region,
-          site,
-          date_controle: dateCtrl,
-          caisse,
-          caissier,
-          montant_numeraire: calc.numeraire,
-          montant_autres_valeurs: calc.autres,
-          montant_physique: calc.physique,
-          montant_comptable: calc.comptable,
-          montant_ecart: calc.ecart,
-          qualification_ecart: qualifEcart,
-          evaluation: isClean ? "Conforme" : "Non conforme",
-          constat: justification || `Arrêté ${caisse} : ${qualifEcart} (${formatMAD(calc.ecart)})`,
-          recommandation: isClean ? "" : "Régularisation comptable et justification de l'écart d'encaisse",
-          statut_suivi: isClean ? "Clôturé" : "Ouvert",
-          billetage: billetageDetail,
-          points_verification: activeChecks
+        const CENTRES_PAR_REGION = {
+            "MARRAKECH": [
+                "MARRAKECH CTD",
+                "MARRAKECH CM",
+                "MARRAKECH SYBA CD",
+                "AGENCE MESSAGERIE GUELIZ MARRAKECH",
+                "ESSAOUIRA CCC",
+                "SAFI CD",
+                "SAFI CM",
+                "EL KELAA DES SERAGHNAS CCC",
+                "OUARZAZATE CCC",
+                "TINEGIR CLD",
+                "BENGUERIR CLD",
+                "EL YOUSSOUFIA CLD",
+                "SERVICE OPERATION REGIONAL MARRAKECH",
+                "SERVICE SUPPORT REGIONAL MARRAKECH"
+            ],
+            "AGADIR": [
+                "AGADIR CTD",
+                "AGADIR CM",
+                "AGADIR AM",
+                "INEZEGANE CD",
+                "AIT MELLOUL CD",
+                "OULED TAIMA CLD",
+                "TAROUDANT CCC",
+                "TIZNIT CCC",
+                "GUELMIM CCC",
+                "TANTAN CLD",
+                "SERVICE OPERATION REGIONAL AGADIR",
+                "SERVICE SUPPORT REGIONAL AGADIR"
+            ],
+            "CASA": [
+                "PNC",
+                "CNA",
+                "CASA COMPLEXE MOHAMMED 5 CD",
+                "CASA HAY HASSANI CD",
+                "CASA HAY MESSALA CD",
+                "CASA HAY MOHAMMADI CD",
+                "CASA BONDANG CTD",
+                "CASA EL AZZHAR CD",
+                "CASA SIDI MOUMEN CD",
+                "CASA SIDI OUTHMANE CD",
+                "BOUSSKOURA CD",
+                "AIN HARROUDA CLD",
+                "TIT MELLILCLD",
+                "AGENCE MESSAGERIE AVENUE DES FAR",
+                "CPX",
+                "CASA SOUKRATE AM",
+                "AIN SEBAA PLAGE AM",
+                "MOHAMMADIA CCC",
+                "MOHAMMADIA AM",
+                "BEN SLIMANE CLD",
+                "BOUZNIKA CLD",
+                "DAR BOUAZZA CLD",
+                "AGENCE COURRIER CASA BONDANG",
+                "CASA BONDANG CM",
+                "SERVICE OPERATION REGIONAL CASA",
+                "SERVICE SUPPORT REGIONAL CASA"
+            ],
+            "SETTAT": [
+                "BENI MELLAL CCC",
+                "BERRECHID CCC",
+                "LHOURIBGA CCC",
+                "SETTAT CCC",
+                "SETTAT CD",
+                "EL JADIDA CM",
+                "EL JADIDA CD",
+                "DEROUA OULED ZIANE CLD",
+                "OUED ZEM CLD",
+                "FKIH BEN SALEH CLD",
+                "SOUK SEBT OULED NEMA CLD",
+                "KASBAT TADLA CLD",
+                "SERVICE OPERATION REGIONAL SETTAT",
+                "SERVICE SUPPORT REGIONAL SETTAT"
+            ],
+            "RABAT": [
+                "RABAT CM",
+                "RABAT CTD",
+                "RABAT IRRFANE",
+                "TEMARA CD",
+                "TEMARA AM",
+                "KENITRA CD",
+                "KENITRA AM",
+                "KENITRA CM",
+                "SALE AM",
+                "SALE CD",
+                "SALE EL JADIDA CD",
+                "SALE EL JADIDA CM",
+                "SOUK LARBAA DU GHARB CLD",
+                "SIDI SLIMANE CLD",
+                "OUAZZANE CLD",
+                "SIDI KACEM CD",
+                "TIFFELT CLD",
+                "KHEMISSAT CD",
+                "SERVICE OPERATION REGIONAL RABAT",
+                "SERVICE SUPPORT REGIONAL RABAT"
+            ],
+            "TANGER": [
+                "TANGER AM",
+                "TANGER CM",
+                "TANGER CD",
+                "TETOUAN CD",
+                "TETOUAN AM",
+                "TETOUAN CCC",
+                "KSAR LAKBIR CD",
+                "ARACHE CCC",
+                "SERVICE OPERATION REGIONAL TANGER",
+                "SERVICE SUPPORT REGIONAL TANGER"
+            ],
+            "LAAYOUNE": [
+                "DAKHLA AM",
+                "DAKHLA CLD",
+                "ESSEMARA CLD",
+                "LAAYOUNE CCC",
+                "LAAYOUNE AM",
+                "LAAYOUNE AM PORT (En cours de création)",
+                "BOUJDOUR AM (En cours de création)",
+                "GUERGURATE AM (En cours de création)",
+                "SERVICE OPERATION REGIONAL LAAYOUNE",
+                "SERVICE SUPPORT REGIONAL LAAYOUNE"
+            ],
+            "FES": [
+                "FES AM",
+                "FES CM",
+                "FES CTD",
+                "EL HOUCEIMA CLD",
+                "SEFFROU CLD",
+                "TAZA CLD",
+                "TAZA CM",
+                "GUERCIF CLD",
+                "SERVICE OPERATION REGIONAL FES",
+                "SERVICE SUPPORT REGIONAL FES"
+            ],
+            "MEKNES": [
+                "MEKNES CD",
+                "MEKNES AM",
+                "MEKNES CM",
+                "AZEROU CLD",
+                "MIDELT CLD",
+                "ERRACHIDIA CD",
+                "SERVICE OPERATION REGIONAL MEKNES",
+                "SERVICE SUPPORT REGIONAL MEKNES"
+            ],
+            "OUEJDA": [
+                "OUEJDA CD",
+                "OUEJDA AM",
+                "OUEJDA CM",
+                "BERKANE CD",
+                "BERKANE AM",
+                "NADOR CD",
+                "NADOR AM",
+                "NADOR CM",
+                "TAOURIRTE CLD",
+                "SERVICE OPERATION REGIONAL OUJEDA",
+                "SERVICE SUPPORT REGIONAL OUJEDA"
+            ]
         };
 
-        const saved = await upsertFCIRecord(recordPayload, "FV");
-        fvRecords.unshift(saved);
+        let rawJsonData = [];
+        let addedPoints = [];
+        let currentMissionId = "";
+        let loadedEncaisseIds = [];
 
-        // Réinitialisation du formulaire pour la prochaine caisse
-        document.getElementById("fvNumeroBadge").textContent = generateFvNumber();
-        document.getElementById("fvCaisse").value = "";
-        document.getElementById("fvCaissier").value = "";
-        document.getElementById("fvSoldeComptable").value = "0";
-        document.getElementById("fvJustification").value = "";
-        document.querySelectorAll(".denom-input").forEach(inp => { inp.value = "0"; });
-        document.getElementById("fvAutresValeurs").value = "0";
-        recalculateCash();
+        function lireDBSecurisee() {
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
+            try {
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
+                    const loaded = FCIDatabase.getDB();
+                    if (loaded && typeof loaded === 'object') db = loaded;
+                } else {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                }
+            } catch (e) {
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                } catch (err) {}
+            }
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            return db;
+        }
 
-        populateFilterSites();
-        updateKPIs();
-        renderHistoryTable();
-        showToast(`Vérification ${numeroFv} archivée avec succès.`);
-      } catch (err) {
-        showToast("Erreur lors de l'enregistrement : " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Enregistrer & Archiver la Vérification Encaisse';
-      }
-    });
+        function sauvegarderDBSecurisee(db) {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
+                FCIDatabase.saveDB(db);
+            } else {
+                localStorage.setItem('fci_database', JSON.stringify(db));
+            }
+        }
 
-    // 6. Modification & Suivi de régularisation
-    const fvModal = document.getElementById("fvModal");
+        function normaliserRegion(val) {
+            let reg = String(val || '').toUpperCase().trim();
+            if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+            if (reg === 'CASABLANCA') reg = 'CASA';
+            return reg;
+        }
 
-    window.openFvModal = (docId) => {
-      const rec = fvRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!rec) return;
+        function getAccessibleEncaisses(db) {
+            const all = db.constatsEncaisses || [];
+            if (currentUser && currentUser.role === "CONTROLEUR") {
+                return all.filter(c => !c.cree_par_id || c.cree_par_id === currentUser.username);
+            }
+            return all;
+        }
 
-      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez modifier que vos propres vérifications.");
-        return;
-      }
+        function applyUserRoleDefaultsFV() {
+            const regionEl = document.getElementById('regionSite');
+            const ctrlInput = document.getElementById('nomControleur');
+            const respInput = document.getElementById('nomResponsable');
 
-      document.getElementById("mFvDocId").value = docId;
-      document.getElementById("mFvNum").value = rec.numero_fiche || "";
-      document.getElementById("mFvSite").value = `${normalizeRegionCode(rec.region)} • ${rec.site} (${rec.caisse || ""})`;
-      document.getElementById("mFvPhysique").value = rec.montant_physique ?? 0;
-      document.getElementById("mFvComptable").value = rec.montant_comptable ?? 0;
-      document.getElementById("mFvStatutSuivi").value = rec.statut_suivi || "Ouvert";
-      document.getElementById("mFvDateRegularisation").value = rec.date_cloture || "";
-      document.getElementById("mFvJustification").value = rec.constat || "";
+            if (currentUser && currentUser.role === "CONTROLEUR") {
+                const userReg = normaliserRegion(currentUser.region_code);
+                regionEl.value = CENTRES_PAR_REGION[userReg] ? userReg : "";
+                regionEl.disabled = true;
+                window.onRegionEncaisseChange('');
+                ctrlInput.removeAttribute('readonly');
+                ctrlInput.value = currentUser.nom || currentUser.username || '';
+            } else {
+                regionEl.value = '';
+                regionEl.disabled = false;
+                window.onRegionEncaisseChange('');
+                ctrlInput.value = '';
+                ctrlInput.setAttribute('readonly', 'readonly');
+            }
+            respInput.value = '';
+            respInput.setAttribute('readonly', 'readonly');
+        }
 
-      fvModal.classList.add("open");
-    };
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined && item[k] !== null) return String(item[k]).trim();
+            }
+            return '';
+        }
 
-    document.getElementById("btnCloseFvModal").addEventListener("click", () => fvModal.classList.remove("open"));
-    document.getElementById("btnCancelFvModal").addEventListener("click", () => fvModal.classList.remove("open"));
+        function formatDateToISO(val) {
+            if (!val || val === '-' || val === '--') return '';
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return str;
+        }
 
-    document.getElementById("fvModalForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const docId = document.getElementById("mFvDocId").value;
-      const existing = fvRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!existing) return;
+        function formatDateToJJMMAAAA(val) {
+            if (!val || val === '-' || val === '--') return '';
+            let str = String(val).trim();
+            if (str.includes('T')) str = str.split('T')[0];
+            if (str.includes('-')) {
+                const parts = str.split('-');
+                if (parts.length === 3) return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+            }
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 3) return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+            }
+            return str;
+        }
 
-      const physique = Math.round(parseFloat(document.getElementById("mFvPhysique").value || "0") * 100) / 100;
-      const comptable = Math.round(parseFloat(document.getElementById("mFvComptable").value || "0") * 100) / 100;
-      const ecart = Math.round((physique - comptable) * 100) / 100;
+        function libelleStatutFV(code) {
+            if (code === 'CLOTURE') return '🟢 Clôturé';
+            if (code === 'NON_CLOTURE') return '🔴 Non clôturé';
+            return '🟡 En cours';
+        }
 
-      let qualifEcart = "Équilibré";
-      if (ecart > 0.009) qualifEcart = "Excédent";
-      if (ecart < -0.009) qualifEcart = "Déficit";
+        function getEncaisseDateFR(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return formatDateToJJMMAAAA(c.date || c.dateVerification || c.date_controle || m.date || m.dateVerification || '');
+        }
 
-      const updated = {
-        ...existing,
-        montant_physique: physique,
-        montant_comptable: comptable,
-        montant_ecart: ecart,
-        qualification_ecart: qualifEcart,
-        evaluation: qualifEcart === "Équilibré" ? "Conforme" : "Non conforme",
-        statut_suivi: document.getElementById("mFvStatutSuivi").value,
-        date_cloture: document.getElementById("mFvDateRegularisation").value,
-        constat: document.getElementById("mFvJustification").value.trim()
-      };
+        function getEncaisseRegion(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return normaliserRegion(c.region || m.region || '');
+        }
 
-      const saved = await upsertFCIRecord(updated, "FV");
-      const idx = fvRecords.findIndex(r => (r.firestore_id || r.record_uid) === docId);
-      if (idx >= 0) fvRecords[idx] = saved;
+        function getEncaisseSite(c, mapMissions = {}) {
+            if (!c) return '';
+            const m = mapMissions[c.idMission] || {};
+            return String(c.site || c.entite || c.centre || m.entite || m.site || '').trim();
+        }
 
-      fvModal.classList.remove("open");
-      updateKPIs();
-      renderHistoryTable();
-      showToast(`Vérification ${saved.numero_fiche} mise à jour.`);
-    });
+        function getEncaisseProcessus(c) {
+            if (!c) return 'Vérification des encaisses';
+            const p = String(c.processus || c.Processus || '').trim();
+            return p || 'Vérification des encaisses';
+        }
 
-    window.deleteFvRecord = async (docId, numFv) => {
-      const rec = fvRecords.find(r => (r.firestore_id || r.record_uid) === docId);
-      if (!rec) return;
+        function updateHeaderDateVerifBadge() {
+            const badge = document.getElementById('headerDateVerifBadge');
+            const dateInput = document.getElementById('dateVerification');
+            if (!badge || !dateInput) return;
+            const dateFR = formatDateToJJMMAAAA(dateInput.value);
+            badge.innerHTML = dateFR
+                ? `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de vérification : ${dateFR}</span>`
+                : '';
+        }
 
-      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez supprimer que vos propres enregistrements.");
-        return;
-      }
+        window.onDateVerificationChange = function() {
+            updateHeaderDateVerifBadge();
+            const dateFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+            addedPoints.forEach(p => {
+                p.dateVerification = dateFR;
+                p.constats.forEach(c => { c.dateVerification = dateFR; });
+            });
+            renderPoints();
+        };
 
-      await deleteFCIRecord(docId);
-      fvRecords = fvRecords.filter(r => (r.firestore_id || r.record_uid) !== docId);
-      populateFilterSites();
-      updateKPIs();
-      renderHistoryTable();
-      showToast(`Vérification ${numFv} supprimée.`);
-    };
+        window.updateConstatDate = function(pIndex, cIndex, valISO) {
+            const dateFR = formatDateToJJMMAAAA(valISO);
+            addedPoints[pIndex].constats[cIndex].dateVerification = dateFR;
+            if (cIndex === 0) addedPoints[pIndex].dateVerification = dateFR;
+            renderPoints();
+        };
 
-    // 7. KPIs & Rendu du tableau historique
-    function updateKPIs() {
-      document.getElementById("kpiFvTotal").textContent = fvRecords.length;
-      document.getElementById("kpiFvEquilibre").textContent = fvRecords.filter(r => r.qualification_ecart === "Équilibré").length;
-      document.getElementById("kpiFvEcartCount").textContent = fvRecords.filter(r => r.qualification_ecart !== "Équilibré").length;
-      const cumul = fvRecords.reduce((acc, r) => acc + Number(r.montant_ecart || 0), 0);
-      document.getElementById("kpiFvCumulEcart").textContent = (cumul > 0 ? "+" : "") + formatMAD(cumul);
-    }
+        window.onRegionEncaisseChange = function(sitePreselectionne = '') {
+            const region = document.getElementById('regionSite').value;
+            const siteSelect = document.getElementById('nomSite');
+            siteSelect.innerHTML = '';
 
-    function getEcartBadge(qualif, montant) {
-      const txt = (montant > 0 ? "+" : "") + formatMAD(montant);
-      if (qualif === "Excédent") return `<span class="badge b-excedent">${txt} (Excédent)</span>`;
-      if (qualif === "Déficit") return `<span class="badge b-deficit">${txt} (Déficit)</span>`;
-      return `<span class="badge b-equilibre">0,00 DH (Équilibré)</span>`;
-    }
+            if (!region || !CENTRES_PAR_REGION[region]) {
+                siteSelect.innerHTML = '<option value="">-- Région requise --</option>';
+                siteSelect.disabled = true;
+                return;
+            }
 
-    function renderHistoryTable() {
-      const q = document.getElementById("fvSearch").value.trim().toLowerCase();
-      const fReg = document.getElementById("fvFilterRegion").value;
-      const fSite = document.getElementById("fvFilterSite").value;
-      const fRes = document.getElementById("fvFilterResultat").value;
-      const fSuivi = document.getElementById("fvFilterSuivi").value;
+            siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                siteSelect.appendChild(opt);
+            });
 
-      const filtered = fvRecords.filter(r => {
-        const matchText = !q ||
-          String(r.numero_fiche || "").toLowerCase().includes(q) ||
-          String(r.site || "").toLowerCase().includes(q) ||
-          String(r.caisse || "").toLowerCase().includes(q) ||
-          String(r.caissier || "").toLowerCase().includes(q) ||
-          String(r.cree_par_id || "").toLowerCase().includes(q);
-        const matchReg = !fReg || normalizeRegionCode(r.region) === fReg;
-        const matchSite = !fSite || r.site === fSite;
-        const matchRes = !fRes || r.qualification_ecart === fRes;
-        const matchSuivi = !fSuivi || r.statut_suivi === fSuivi;
-        return matchText && matchReg && matchSite && matchRes && matchSuivi;
-      });
+            if (sitePreselectionne && !CENTRES_PAR_REGION[region].includes(sitePreselectionne)) {
+                const opt = document.createElement('option');
+                opt.value = sitePreselectionne;
+                opt.textContent = sitePreselectionne;
+                siteSelect.appendChild(opt);
+            }
 
-      const tbody = document.getElementById("fvHistoryBody");
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="9" style="text-align:center;padding:24px;color:#64748b;">
-              Aucune vérification d'encaisse trouvée.
-            </td>
-          </tr>`;
-        return;
-      }
+            siteSelect.disabled = false;
+            if (sitePreselectionne) siteSelect.value = sitePreselectionne;
+        };
 
-      tbody.innerHTML = filtered.map(r => {
-        const docId = r.firestore_id || r.record_uid;
-        const canEdit = currentUser.role === "ADMIN" || r.cree_par_id === currentUser.username;
-        return `
-          <tr>
-            <td style="white-space:nowrap;">
-              <strong>${r.numero_fiche || "-"}</strong>
-              <div style="font-size:11px;color:#64748b;">${r.date_controle || "-"}</div>
-            </td>
-            <td>
-              <strong>${normalizeRegionCode(r.region)}</strong>
-              <div style="font-size:11.5px;">${r.site || "-"}</div>
-            </td>
-            <td>
-              <div style="font-weight:600;">${r.caisse || "-"}</div>
-              <div style="font-size:11px;color:#64748b;">${r.caissier || ""}</div>
-            </td>
-            <td style="white-space:nowrap;font-weight:600;">${formatMAD(r.montant_physique)}</td>
-            <td style="white-space:nowrap;">${formatMAD(r.montant_comptable)}</td>
-            <td style="white-space:nowrap;">${getEcartBadge(r.qualification_ecart, r.montant_ecart)}</td>
-            <td>
-              <span class="badge ${r.statut_suivi === "Clôturé" ? "b-cloture" : "b-ouvert"}">
-                ${r.statut_suivi || "Ouvert"}
-              </span>
-            </td>
-            <td style="white-space:nowrap;">
-              <strong>${r.cree_par_id || "-"}</strong>
-              <div style="font-size:11px;color:#64748b;">${r.cree_par_nom || ""}</div>
-            </td>
-            <td style="white-space:nowrap;">
-              ${canEdit ? `
-                <button type="button" class="btn btn-primary btn-sm" onclick="window.openFvModal('${docId}')" title="Modifier / Suivre">
-                  <i class="fas fa-edit"></i> Modifier / Suivi
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteFvRecord('${docId}', '${String(r.numero_fiche || "").replace(/'/g, "\\'")}')" title="Supprimer">
-                  <i class="fas fa-trash"></i>
-                </button>
-              ` : `<span style="font-size:11px;color:#94a3b8;"><i class="fas fa-eye"></i> Lecture seule</span>`}
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
+        function trouverRegionDuSite(siteName) {
+            if (!siteName) return '';
+            for (const [reg, centres] of Object.entries(CENTRES_PAR_REGION)) {
+                if (centres.includes(siteName)) return reg;
+            }
+            return '';
+        }
 
-    // 8. Export Excel
-    document.getElementById("btnExportFVExcel").addEventListener("click", () => {
-      const rows = fvRecords.map(r => ({
-        "N° Fiche FV": r.numero_fiche,
-        "N° Mission": r.code_mission,
-        "Date Arrêté": r.date_controle,
-        "Région": normalizeRegionCode(r.region),
-        "Site / Agence": r.site,
-        "Caisse / Guichet": r.caisse,
-        "Caissier": r.caissier,
-        "Encaisse Physique (DH)": Number(r.montant_physique || 0),
-        "Solde Comptable (DH)": Number(r.montant_comptable || 0),
-        "Écart (DH)": Number(r.montant_ecart || 0),
-        "Qualification": r.qualification_ecart,
-        "Statut Suivi": r.statut_suivi,
-        "Observations": r.constat || "",
-        "Contrôleur": `${r.cree_par_id || ""} - ${r.cree_par_nom || ""}`
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Verification_Encaisses_FV");
-      XLSX.writeFile(wb, `Verification_Encaisses_FV_BaridAlMaghrib_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    });
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fci_database') {
+                remplirFiltresEncaissesBDD();
+            }
+        });
 
-    // Écouteurs de filtres
-    document.getElementById("fvSearch").addEventListener("input", renderHistoryTable);
-    document.getElementById("fvFilterRegion").addEventListener("change", () => {
-      populateFilterSites();
-      renderHistoryTable();
-    });
-    document.getElementById("fvFilterSite").addEventListener("change", renderHistoryTable);
-    document.getElementById("fvFilterResultat").addEventListener("change", renderHistoryTable);
-    document.getElementById("fvFilterSuivi").addEventListener("change", renderHistoryTable);
-    document.getElementById("btnResetFvFilters").addEventListener("click", () => {
-      document.getElementById("fvSearch").value = "";
-      if (currentUser.role !== "CONTROLEUR") {
-        document.getElementById("fvFilterRegion").value = "";
-      }
-      populateFilterSites();
-      document.getElementById("fvFilterSite").value = "";
-      document.getElementById("fvFilterResultat").value = "";
-      document.getElementById("fvFilterSuivi").value = "";
-      renderHistoryTable();
-    });
+        window.reinitialiserFiltresBDDFV = function() {
+            const selDate = document.getElementById('filterFvBddDate');
+            const selReg = document.getElementById('filterFvBddRegion');
+            const selSite = document.getElementById('filterFvBddSite');
+            const selProc = document.getElementById('filterFvBddProcessus');
+            if (selDate) selDate.value = '';
+            if (selReg) selReg.value = '';
+            if (selSite) selSite.value = '';
+            if (selProc) selProc.value = '';
+            remplirFiltresEncaissesBDD();
+            if (!addedPoints || addedPoints.length === 0) {
+                const statusEl = document.getElementById('searchEncaisseStatus');
+                if (statusEl) statusEl.innerText = '';
+            }
+        };
 
-    await initData();
-  </script>
+        function remplirFiltresEncaissesBDD() {
+            const db = lireDBSecurisee();
+            const encaisses = getAccessibleEncaisses(db);
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const badgeCount = document.getElementById('bddCountInfoFV');
+            if (badgeCount) {
+                badgeCount.innerText = `${encaisses.length} constat(s) FV en BDD`;
+            }
+
+            const selDate = document.getElementById('filterFvBddDate');
+            const selReg = document.getElementById('filterFvBddRegion');
+            const selSite = document.getElementById('filterFvBddSite');
+            const selProc = document.getElementById('filterFvBddProcessus');
+            if (!selDate || !selReg || !selSite || !selProc) return;
+
+            let valDate = selDate.value;
+            let valReg = selReg.value;
+            let valSite = selSite.value;
+            let valProc = selProc.value;
+
+            const dates = [...new Set(
+                encaisses
+                    .filter(c =>
+                        (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                        (!valProc || getEncaisseProcessus(c) === valProc)
+                    )
+                    .map(c => getEncaisseDateFR(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
+
+            if (valDate && !dates.includes(valDate)) {
+                valDate = '';
+            }
+
+            const regions = [...new Set(
+                encaisses
+                    .filter(c =>
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                        (!valProc || getEncaisseProcessus(c) === valProc)
+                    )
+                    .map(c => getEncaisseRegion(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valReg && !regions.includes(valReg)) {
+                valReg = '';
+            }
+
+            const sites = [...new Set(
+                encaisses
+                    .filter(c =>
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                        (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
+                        (!valProc || getEncaisseProcessus(c) === valProc)
+                    )
+                    .map(c => getEncaisseSite(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valSite && !sites.includes(valSite)) {
+                valSite = '';
+            }
+
+            const procs = [...new Set(
+                encaisses
+                    .filter(c =>
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                        (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite)
+                    )
+                    .map(c => getEncaisseProcessus(c))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+
+            if (valProc && !procs.includes(valProc)) {
+                valProc = '';
+            }
+
+            selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
+                dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
+
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+
+            selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
+                sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
+
+            selProc.innerHTML = `<option value="">-- Tous les processus (${procs.length}) --</option>` +
+                procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
+
+            selDate.classList.toggle('filter-active', Boolean(valDate));
+            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selSite.classList.toggle('filter-active', Boolean(valSite));
+            selProc.classList.toggle('filter-active', Boolean(valProc));
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
+                const nbCorrespondants = encaisses.filter(c =>
+                    (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                    (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
+                    (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                    (!valProc || getEncaisseProcessus(c) === valProc)
+                ).length;
+                statusEl.innerText = `${nbCorrespondants} constat(s) correspondant(s) en BDD`;
+            }
+        }
+
+        window.onFilterFvBDDChange = function(source = '') {
+            if (source === 'DATE') {
+                document.getElementById('filterFvBddRegion').value = '';
+                document.getElementById('filterFvBddSite').value = '';
+                document.getElementById('filterFvBddProcessus').value = '';
+            } else if (source === 'REGION') {
+                document.getElementById('filterFvBddSite').value = '';
+                document.getElementById('filterFvBddProcessus').value = '';
+            } else if (source === 'SITE') {
+                document.getElementById('filterFvBddProcessus').value = '';
+            }
+            remplirFiltresEncaissesBDD();
+        };
+
+        function resetDateField() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('dateVerification');
+            if (dateInput) dateInput.value = today;
+            updateHeaderDateVerifBadge();
+        }
+
+        async function chargerReferentielJSON() {
+            const badge = document.getElementById('bddStatusBadge');
+            const procSelect = document.getElementById('selectProcessus');
+            const filesToTry = [
+                './Encaisses.json?v=' + Date.now(),
+                './encaisses.json?v=' + Date.now(),
+                './referentiel.json?v=' + Date.now(),
+                './Referentiel.json?v=' + Date.now()
+            ];
+
+            let loaded = false;
+            for (const path of filesToTry) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            rawJsonData = data;
+                            initCascadeSelects();
+                            badge.classList.remove('bdd-badge-error');
+                            badge.innerHTML = `<i class="fa-solid fa-database"></i> BDD (<strong>${rawJsonData.length}</strong> PC)`;
+                            loaded = true;
+                            break;
+                        }
+                    }
+                } catch (error) {}
+            }
+
+            if (!loaded) {
+                badge.classList.add('bdd-badge-error');
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Encaisses.json introuvable`;
+                procSelect.innerHTML = '<option value="">-- Fichier Encaisses.json non trouvé --</option>';
+            }
+        }
+
+        function initCascadeSelects() {
+            const procSelect = document.getElementById('selectProcessus');
+            const processes = [...new Set(rawJsonData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean);
+            procSelect.innerHTML = '<option value="">-- Choisir un processus --</option>';
+            processes.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.textContent = p;
+                procSelect.appendChild(opt);
+            });
+        }
+
+        window.onProcessusChange = function() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risqueSelect = document.getElementById('selectRisque');
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            risqueSelect.innerHTML = '<option value="">-- Choisir un risque --</option>';
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+            ctrlSelect.disabled = true;
+
+            if (!proc) { risqueSelect.disabled = true; return; }
+
+            const risques = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc).map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean);
+            risques.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r;
+                opt.textContent = r;
+                risqueSelect.appendChild(opt);
+            });
+            risqueSelect.disabled = false;
+        };
+
+        window.onRisqueChange = function() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrlSelect = document.getElementById('selectControle');
+            document.getElementById('pcPreviewBox').style.display = 'none';
+
+            ctrlSelect.innerHTML = '<option value="">-- Choisir un contrôle --</option>';
+            if (!risque) { ctrlSelect.disabled = true; return; }
+
+            const controles = [...new Set(rawJsonData.filter(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque).map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean);
+            controles.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                ctrlSelect.appendChild(opt);
+            });
+            ctrlSelect.disabled = false;
+        };
+
+        window.onControleChange = function() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+            if (!ctrl) { document.getElementById('pcPreviewBox').style.display = 'none'; return; }
+
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
+            if (item) {
+                document.getElementById('pcPreviewText').innerText = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
+                document.getElementById('pcPreviewBox').style.display = 'block';
+            }
+        };
+
+        window.addSelectedPointControl = function() {
+            const proc = document.getElementById('selectProcessus').value;
+            const risque = document.getElementById('selectRisque').value;
+            const ctrl = document.getElementById('selectControle').value;
+            const item = rawJsonData.find(i => getItemVal(i, ['Processus']) === proc && getItemVal(i, ['Intitulé du risque', 'Intitulé risque']) === risque && getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle']) === ctrl);
+
+            if (!item) return;
+
+            const dateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+
+            addedPoints.push({
+                id: Date.now(),
+                selected: true,
+                dateVerification: dateVerifFR,
+                processus: getItemVal(item, ['Processus']),
+                risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
+                controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
+                constats: [{ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' }]
+            });
+
+            renderPoints();
+            document.getElementById('selectProcessus').value = '';
+            window.onProcessusChange();
+        };
+
+        function getStatutSelectClass(statut) {
+            if (statut === 'CLOTURE') return 'statut-select-CLOTURE';
+            if (statut === 'NON_CLOTURE') return 'statut-select-NON_CLOTURE';
+            return 'statut-select-EN_COURS';
+        }
+
+        function getSnapshotConstat(c) {
+            return JSON.stringify({
+                date: formatDateToISO(c.dateVerification),
+                statut: c.statut || 'EN_COURS',
+                pop: Number(c.population) || 0,
+                ech: Number(c.echantillon) || 0,
+                ok: Number(c.ok) || 0,
+                ko: Number(c.ko) || 0,
+                constat: String(c.constatText || '').trim(),
+                reco: String(c.recoText || '').trim(),
+                avis: String(c.avisText || '').trim()
+            });
+        }
+
+        function renderPoints() {
+            const container = document.getElementById('pointsEvaluationsContainer');
+            container.innerHTML = '';
+            const defaultDateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+
+            addedPoints.forEach((point, pIndex) => {
+                const card = document.createElement('div');
+                card.className = 'pc-card';
+                const datePointFR = formatDateToJJMMAAAA(point.dateVerification) || defaultDateVerifFR;
+
+                let constatsHTML = '';
+                point.constats.forEach((c, cIndex) => {
+                    const statutVal = c.statut || 'EN_COURS';
+                    const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
+                    const dateConstatFR = formatDateToJJMMAAAA(c.dateVerification) || datePointFR;
+                    const dateConstatISO = formatDateToISO(dateConstatFR);
+
+                    const estModifieDepuisChargement = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+                    const badgeEtatLigne = estModifieDepuisChargement
+                        ? `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`
+                        : (c._bddIdEncaisse ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>` : '');
+
+                    constatsHTML += `
+                        <div class="constat-box">
+                            <div class="constat-header">
+                                <strong style="font-size: 0.85rem; color: var(--primary-blue);"><i class="fa-solid fa-pen-to-square"></i> Constat #${cIndex + 1}</strong>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span>TC (%) :</span>
+                                    <span class="conformity-badge ${badgeClass}">${c.rate.toFixed(1)} %</span>
+                                    ${point.constats.length > 1 ? `<button type="button" class="btn-danger-icon" title="Supprimer" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="imported-meta-strip">
+                                <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateConstatFR || '--'}</span>
+                                <span class="imported-chip">Pop : <strong>${c.population}</strong></span>
+                                <span class="imported-chip">Ech : <strong>${c.echantillon}</strong></span>
+                                <span class="imported-chip">OK : <strong style="color:var(--success);">${c.ok}</strong></span>
+                                <span class="imported-chip">KO : <strong style="color:var(--danger);">${c.ko}</strong></span>
+                                <span class="imported-chip">TC : <strong>${c.rate.toFixed(1)} %</strong></span>
+                                <span class="imported-chip">Statut : <strong>${libelleStatutFV(statutVal)}</strong></span>
+                                ${badgeEtatLigne}
+                            </div>
+
+                            <div class="metrics-statut-row">
+                                <div class="form-group">
+                                    <label>Date *</label>
+                                    <input type="date" class="form-control" value="${dateConstatISO}" onchange="updateConstatDate(${pIndex}, ${cIndex}, this.value)" style="background:#EFF6FF; color:var(--primary-blue); font-weight:800;">
+                                </div>
+                                <div class="form-group"><label>Pop.</label><input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)"></div>
+                                <div class="form-group"><label>Ech.</label><input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
+                                <div class="form-group"><label>OK</label><input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
+                                <div class="form-group"><label>KO</label><input type="number" min="0" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;"></div>
+                                <div class="form-group">
+                                    <label>Statut constat *</label>
+                                    <select class="form-control ${getStatutSelectClass(statutVal)}" onchange="updateConstatStatut(${pIndex}, ${cIndex}, this.value)">
+                                        <option value="EN_COURS" ${statutVal === 'EN_COURS' ? 'selected' : ''}>🟡 En cours</option>
+                                        <option value="CLOTURE" ${statutVal === 'CLOTURE' ? 'selected' : ''}>🟢 Clôturé</option>
+                                        <option value="NON_CLOTURE" ${statutVal === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Non clôturé</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label>Constat / Anomalie observée *</label>
+                                <textarea class="form-control" rows="2" placeholder="Description du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Recommandation *</label>
+                                    <textarea class="form-control" rows="2" placeholder="Recommandations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Avis du chef de centre / responsable (Facultatif)</label>
+                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="pc-card-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" ${point.selected ? 'checked' : ''} style="transform: scale(1.2); cursor: pointer;" onchange="togglePointSelect(${pIndex}, this.checked)">
+                            <h4><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> ${point.processus} &gt; ${point.risque}</h4>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            ${datePointFR ? `<span style="background:rgba(255,255,255,0.16); padding:4px 10px; border-radius:12px; font-size:0.76rem; font-weight:700;"><i class="fa-regular fa-calendar"></i> Date vérif. : ${datePointFR}</span>` : ''}
+                            <button type="button" class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
+                        </div>
+                    </div>
+                    <div class="pc-card-body">
+                        <div style="background: #F1F5F9; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid var(--primary-blue);">
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">CONTRÔLE :</strong> ${point.controle}<br>
+                            <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
+                            <p style="font-size: 0.9rem; margin-top: 4px; white-space: pre-line;">${point.pointDeControle}</p>
+                        </div>
+                        ${constatsHTML}
+                        <button type="button" class="btn btn-outline" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="addConstatToPoint(${pIndex})">
+                            <i class="fa-solid fa-plus"></i> Ajouter un autre constat à ce point
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            updateKpisAndSummary();
+        }
+
+        window.togglePointSelect = function(pIndex, isChecked) { addedPoints[pIndex].selected = isChecked; updateKpisAndSummary(); };
+        window.selectAllPoints = function() { addedPoints.forEach(p => p.selected = true); renderPoints(); };
+        window.deselectAllPoints = function() { addedPoints.forEach(p => p.selected = false); renderPoints(); };
+
+        window.updateConstatStatut = function(pIndex, cIndex, statutVal) {
+            addedPoints[pIndex].constats[cIndex].statut = statutVal;
+            renderPoints();
+        };
+
+        window.updateConstatNumbers = function(pIndex, cIndex, field, value) {
+            const val = parseInt(value) || 0;
+            const c = addedPoints[pIndex].constats[cIndex];
+            c[field] = val;
+
+            if (c.echantillon > c.population && c.population > 0) {
+                alert("⚠️ L'échantillon doit être toujours <= à la population.");
+                c.echantillon = 0;
+            }
+
+            if (c.echantillon > 0) {
+                if (c.ok > c.echantillon) c.ok = c.echantillon;
+                c.ko = Math.max(0, c.echantillon - c.ok);
+                c.rate = (c.ok / c.echantillon) * 100;
+            } else { c.ko = 0; c.rate = 100; }
+            renderPoints();
+        };
+
+        window.updateConstatText = function(pIndex, cIndex, field, value) {
+            addedPoints[pIndex].constats[cIndex][field] = value;
+            renderPoints();
+        };
+
+        window.addConstatToPoint = function(pIndex) {
+            const dateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+            addedPoints[pIndex].constats.push({ dateVerification: dateVerifFR, statut: 'EN_COURS', population: 0, echantillon: 0, ok: 0, ko: 0, rate: 100, constatText: '', recoText: '', avisText: '' });
+            renderPoints();
+        };
+        window.removeConstat = function(pIndex, cIndex) { addedPoints[pIndex].constats.splice(cIndex, 1); renderPoints(); };
+        window.removePoint = function(pIndex) { addedPoints.splice(pIndex, 1); renderPoints(); };
+
+        function updateKpisAndSummary() {
+            const activePoints = addedPoints.filter(p => p.selected);
+            const procs = new Set(activePoints.map(p => p.processus)).size;
+            const risques = new Set(activePoints.map(p => p.risque)).size;
+            const controles = new Set(activePoints.map(p => p.controle)).size;
+
+            let totalRates = 0, count = 0;
+            let countEnCours = 0, countCloture = 0, countNonCloture = 0;
+
+            activePoints.forEach(p => {
+                p.constats.forEach(c => {
+                    totalRates += c.rate;
+                    count++;
+                    const st = c.statut || 'EN_COURS';
+                    if (st === 'CLOTURE') countCloture++;
+                    else if (st === 'NON_CLOTURE') countNonCloture++;
+                    else countEnCours++;
+                });
+            });
+
+            const globalRate = count > 0 ? (totalRates / count) : 0;
+            const globalRateStr = count > 0 ? globalRate.toFixed(1) + ' %' : '0.0 %';
+
+            document.getElementById('suivi-taux-moyen').innerText = globalRateStr;
+            document.getElementById('suivi-count-encours').innerText = countEnCours;
+            document.getElementById('suivi-count-cloture').innerText = countCloture;
+            document.getElementById('suivi-count-noncloture').innerText = countNonCloture;
+
+            document.getElementById('kpi-proc').innerText = procs;
+            document.getElementById('kpi-risque').innerText = risques;
+            document.getElementById('kpi-controle').innerText = controles;
+            document.getElementById('kpi-pc').innerText = activePoints.length;
+            document.getElementById('kpi-taux-moyen').innerText = globalRateStr;
+            document.getElementById('selectedCountDisplay').innerText = activePoints.length;
+
+            const summaryCard = document.getElementById('summaryCard');
+            if (activePoints.length === 0) { summaryCard.style.display = 'none'; return; }
+
+            document.getElementById('globalRateDisplay').innerText = globalRateStr;
+            const badge = document.getElementById('globalAvisBadge');
+            const desc = document.getElementById('centerDescriptionText');
+            badge.className = 'badge-avis-global ';
+
+            if (globalRate < 60) {
+                badge.innerText = 'Gestion non satisfaisante'; badge.classList.add('avis-non-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque critique :</strong> Le centre présente d'importantes défaillances. Un plan d'action immédiat est requis.`;
+            } else if (globalRate < 80) {
+                badge.innerText = 'Gestion satisfaisante'; badge.classList.add('avis-satisfaisante');
+                desc.innerHTML = `<strong>Niveau de risque modéré :</strong> Exigences d'encaissement globalement respectées.`;
+            } else if (globalRate < 95) {
+                badge.innerText = 'Bonne gestion'; badge.classList.add('avis-bonne');
+                desc.innerHTML = `<strong>Niveau de risque maîtrisé :</strong> Élevé niveau de conformité des caisses.`;
+            } else {
+                badge.innerText = 'Très bonne gestion'; badge.classList.add('avis-tres-bonne');
+                desc.innerHTML = `<strong>Niveau de maîtrise fort :</strong> Excellente tenue des caisses.`;
+            }
+
+            summaryCard.style.display = 'flex';
+        }
+
+        window.clearForm = function() {
+            addedPoints = [];
+            currentMissionId = "";
+            loadedEncaisseIds = [];
+            applyUserRoleDefaultsFV();
+            document.getElementById('periodeDebut').value = '';
+            document.getElementById('periodeFin').value = '';
+            document.getElementById('selectProcessus').value = '';
+            window.onProcessusChange();
+            resetDateField();
+            renderPoints();
+            localStorage.removeItem('fci_fiche_verification_encaisses');
+            document.getElementById('searchEncaisseStatus').innerText = '';
+            window.reinitialiserFiltresBDDFV();
+        };
+
+        function validateCohérenceEchantillon() {
+            for (let p of addedPoints) {
+                for (let c of p.constats) {
+                    if (c.echantillon > c.population && c.population > 0) {
+                        alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être <= à la population (${c.population}).`);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
+            const region = document.getElementById('regionSite').value;
+            const site = document.getElementById('nomSite').value;
+            const controleur = document.getElementById('nomControleur').value.trim();
+            const responsable = document.getElementById('nomResponsable').value.trim();
+            const typeControle = document.getElementById('typeControle').value || "Vérification";
+            const dateVerifGlobaleISO = document.getElementById('dateVerification').value.slice(0, 10);
+            const periodeDebut = document.getElementById('periodeDebut').value;
+            const periodeFin = document.getElementById('periodeFin').value;
+            const activePoints = addedPoints.filter(p => p.selected);
+            const timestampSuivi = Date.now();
+            const lot = [];
+
+            activePoints.forEach((p, pIdx) => {
+                p.constats.forEach((c, cIdx) => {
+                    const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
+                    const estModifie = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+
+                    if ((mode === 'MODIFIER' || mode === 'SUIVI') && c._initialSnapshot && !estModifie) {
+                        return;
+                    }
+
+                    const estSuivi = (mode === 'SUIVI') ? true : Boolean(c._isSuivi);
+                    const estMarqueModifie = (mode === 'MODIFIER')
+                        ? true
+                        : (mode === 'SUIVI' ? false : Boolean(c._isModifie));
+
+                    lot.push({
+                        idEncaisse: mode === 'SUIVI'
+                            ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
+                            : (c._bddIdEncaisse || `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`),
+                        idMission: idMission,
+                        typeControle: typeControle,
+                        region: region,
+                        site: site,
+                        entite: site,
+                        controleur: controleur,
+                        responsable: responsable,
+                        date: dateConstatISO,
+                        dateVerification: dateConstatISO,
+                        dateDebut: periodeDebut,
+                        dateFin: periodeFin,
+                        processus: p.processus || "Gestion des Encaisses",
+                        risque: p.risque || "Risque Encaisses",
+                        controle: p.controle || "Vérification physique",
+                        pc: p.pointDeControle || `Contrôle site: ${site}`,
+                        pop: c.population || 0,
+                        ech: c.echantillon || 0,
+                        ok: c.ok || 0,
+                        ko: c.ko || 0,
+                        tc: parseFloat(c.rate) || 0,
+                        statut: c.statut || 'EN_COURS',
+                        constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
+                        recommandation: c.recoText || '--',
+                        avisResponsable: c.avisText || '--',
+                        isModifie: estMarqueModifie,
+                        modifie: estMarqueModifie,
+                        isSuivi: estSuivi,
+                        suivi: estSuivi,
+                        cree_par_id: currentUser ? currentUser.username : '',
+                        cree_par_nom: currentUser ? currentUser.nom : ''
+                    });
+                });
+            });
+
+            return lot;
+        }
+
+        async function syncEncaissesVersFirestore(lotEncaisses) {
+            for (const item of lotEncaisses) {
+                const tc = Number(item.tc || 0);
+                const evalLabel = tc >= 100 ? "Conforme" : (tc > 0 ? "Partiellement conforme" : "Non conforme");
+                const statutLabel = item.statut === "CLOTURE" ? "Clôturé" : (item.statut === "NON_CLOTURE" ? "Ouvert" : "En cours");
+
+                await upsertFCIRecord({
+                    record_uid: item.idEncaisse,
+                    numero_fiche: item.idEncaisse,
+                    code_mission: item.idMission,
+                    date_controle: formatDateToISO(item.dateVerification || item.date),
+                    region: item.region,
+                    site: item.site || item.entite,
+                    type_controle: item.typeControle || "Vérification",
+                    processus: item.processus,
+                    code_pc: item.controle,
+                    libelle_pc: item.pc,
+                    evaluation: evalLabel,
+                    taux_conformite: tc,
+                    constat: item.constat,
+                    recommandation: item.recommandation,
+                    statut_suivi: statutLabel,
+                    is_followup: Boolean(item.isSuivi)
+                }, "FV");
+            }
+        }
+
+        window.archiverFicheEncaisse = async function() {
+            if (!validateCohérenceEchantillon()) return;
+
+            const region = document.getElementById('regionSite').value;
+            const site = document.getElementById('nomSite').value;
+            const controleur = document.getElementById('nomControleur').value.trim();
+
+            if (!region || !site || !controleur) {
+                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                return;
+            }
+
+            const activePoints = addedPoints.filter(p => p.selected);
+            if (activePoints.length === 0) {
+                alert("Veuillez sélectionner au moins un point de contrôle.");
+                return;
+            }
+
+            const btn = document.getElementById('btnArchiverFV');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
+
+            try {
+                const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
+                const lotConstatsFV = construireLotConstatsFV(idMission, 'ARCHIVE');
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                    await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
+                } else {
+                    const db = lireDBSecurisee();
+                    db.constatsEncaisses = [...(db.constatsEncaisses || []), ...lotConstatsFV];
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncEncaissesVersFirestore(lotConstatsFV);
+
+                window.clearForm();
+                remplirFiltresEncaissesBDD();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
+        };
+
+        window.trouverFicheEncaisseBDD = function() {
+            const fDateFR = document.getElementById('filterFvBddDate').value;
+            const fReg = document.getElementById('filterFvBddRegion').value;
+            const fSite = document.getElementById('filterFvBddSite').value;
+            const fProc = document.getElementById('filterFvBddProcessus').value;
+
+            if (!fDateFR && !fReg && !fSite && !fProc) {
+                alert("Veuillez sélectionner au moins un critère (Date, Région, Site ou Processus) dans la BDD.");
+                return;
+            }
+
+            const db = lireDBSecurisee();
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const constatsFV = getAccessibleEncaisses(db).filter(c =>
+                (!fDateFR || getEncaisseDateFR(c, mapMissions) === fDateFR) &&
+                (!fReg || getEncaisseRegion(c, mapMissions) === fReg) &&
+                (!fSite || getEncaisseSite(c, mapMissions) === fSite) &&
+                (!fProc || getEncaisseProcessus(c) === fProc)
+            );
+
+            if (constatsFV.length === 0) {
+                alert("Aucune fiche de vérification correspondante dans la BDD pour ces critères.");
+                return;
+            }
+
+            const sample = constatsFV[0];
+            currentMissionId = sample.idMission || ("MIS-ENC-" + Date.now());
+            loadedEncaisseIds = constatsFV.map(c => c.idEncaisse).filter(Boolean);
+
+            const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification);
+            const dateVerifJJMMAAAA = getEncaisseDateFR(sample, mapMissions);
+
+            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date initiale : ${dateVerifJJMMAAAA}`;
+
+            document.getElementById('dateVerification').value = dateVerifISO;
+            updateHeaderDateVerifBadge();
+            if (sample.dateDebut) document.getElementById('periodeDebut').value = formatDateToISO(sample.dateDebut);
+            if (sample.dateFin) document.getElementById('periodeFin').value = formatDateToISO(sample.dateFin);
+
+            const siteVal = getEncaisseSite(sample, mapMissions);
+            let regVal = (currentUser && currentUser.role === "CONTROLEUR")
+                ? normaliserRegion(currentUser.region_code)
+                : normaliserRegion(sample.region || trouverRegionDuSite(siteVal));
+            document.getElementById('regionSite').value = regVal;
+            window.onRegionEncaisseChange(siteVal);
+
+            const ctrlInput = document.getElementById('nomControleur');
+            const respInput = document.getElementById('nomResponsable');
+            ctrlInput.removeAttribute('readonly');
+            respInput.removeAttribute('readonly');
+            ctrlInput.value = sample.controleur || '';
+            respInput.value = sample.responsable || '';
+
+            addedPoints = constatsFV.map((c, idx) => {
+                const dLigne = getEncaisseDateFR(c, mapMissions) || dateVerifJJMMAAAA;
+                const constatObj = {
+                    _bddIdEncaisse: c.idEncaisse,
+                    _initialDate: dLigne,
+                    _isModifie: Boolean(c.isModifie || c.modifie),
+                    _isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idEncaisse || '').toUpperCase().includes('SUIVI')),
+                    dateVerification: dLigne,
+                    statut: c.statut || 'EN_COURS',
+                    population: c.pop,
+                    echantillon: c.ech,
+                    ok: c.ok,
+                    ko: c.ko,
+                    rate: parseFloat(c.tc) || 0,
+                    constatText: c.constat || '',
+                    recoText: c.recommandation || '',
+                    avisText: c.avisResponsable || ''
+                };
+                constatObj._initialSnapshot = getSnapshotConstat(constatObj);
+                return {
+                    id: Date.now() + idx,
+                    selected: true,
+                    dateVerification: dLigne,
+                    processus: getEncaisseProcessus(c),
+                    risque: c.risque,
+                    controle: c.controle,
+                    pointDeControle: c.pc,
+                    constats: [constatObj]
+                };
+            });
+
+            renderPoints();
+        };
+
+        window.modifierFicheEncaisse = async function() {
+            if (!addedPoints || addedPoints.length === 0) {
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à modifier.");
+                return;
+            }
+
+            if (!validateCohérenceEchantillon()) return;
+
+            const region = document.getElementById('regionSite').value;
+            const site = document.getElementById('nomSite').value;
+            const controleur = document.getElementById('nomControleur').value.trim();
+            if (!region || !site || !controleur) {
+                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                return;
+            }
+
+            const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
+            const lotMisAJour = construireLotConstatsFV(idMission, 'MODIFIER');
+
+            if (lotMisAJour.length === 0) {
+                alert("⚠️ Aucune modification détectée sur les points de contrôle.\nModifiez d'abord le(s) point(s) de contrôle concerné(s) (date, statut, constat, chiffres...) avant de cliquer sur Modifier.");
+                return;
+            }
+
+            const btn = document.getElementById('btnModifierFV');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
+
+            try {
+                const db = lireDBSecurisee();
+                const listeExistante = db.constatsEncaisses || [];
+
+                lotMisAJour.forEach(itemMaj => {
+                    const idxExistant = listeExistante.findIndex(e =>
+                        (itemMaj.idEncaisse && e.idEncaisse === itemMaj.idEncaisse) ||
+                        (e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle)
+                    );
+                    if (idxExistant !== -1) {
+                        listeExistante[idxExistant] = {
+                            ...listeExistante[idxExistant],
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        };
+                    } else {
+                        listeExistante.push({
+                            ...itemMaj,
+                            isModifie: true,
+                            modifie: true,
+                            dateModification: new Date().toISOString()
+                        });
+                    }
+                });
+
+                db.constatsEncaisses = listeExistante;
+                sauvegarderDBSecurisee(db);
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                    await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncEncaissesVersFirestore(lotMisAJour);
+
+                window.clearForm();
+                remplirFiltresEncaissesBDD();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
+        };
+
+        window.suiviFicheEncaisse = async function() {
+            if (!addedPoints || addedPoints.length === 0) {
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD pour créer un suivi.");
+                return;
+            }
+
+            if (!validateCohérenceEchantillon()) return;
+
+            const region = document.getElementById('regionSite').value;
+            const site = document.getElementById('nomSite').value;
+            const controleur = document.getElementById('nomControleur').value.trim();
+            if (!region || !site || !controleur) {
+                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                return;
+            }
+
+            const idMissionSuivi = "MIS-ENC-SUIVI-" + Date.now();
+            const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, 'SUIVI');
+
+            if (nouvellesLignesSuivi.length === 0) {
+                alert("⚠️ Aucune modification détectée.\nEffectuez d'abord vos modifications (date, statut, constat, chiffres...) avant de cliquer sur Suivi : la ligne initiale sera conservée intacte et une nouvelle ligne de suivi sera ajoutée dans la BDD.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSuiviFV');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+
+            try {
+                const db = lireDBSecurisee();
+                db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
+                sauvegarderDBSecurisee(db);
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
+                    await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
+                    sauvegarderDBSecurisee(db);
+                }
+
+                await syncEncaissesVersFirestore(nouvellesLignesSuivi);
+
+                window.clearForm();
+                remplirFiltresEncaissesBDD();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
+            }
+        };
+
+        window.supprimerFicheEncaisse = async function() {
+            if (!addedPoints || addedPoints.length === 0) {
+                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à supprimer.");
+                return;
+            }
+
+            const db = lireDBSecurisee();
+            const idsPointsCharges = addedPoints
+                .flatMap(p => p.constats.map(c => c._bddIdEncaisse))
+                .filter(Boolean);
+            const idsToDelete = new Set([...(loadedEncaisseIds || []), ...idsPointsCharges]);
+
+            if (idsToDelete.size > 0) {
+                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
+                for (const idToDel of idsToDelete) {
+                    await deleteFCIRecord(idToDel);
+                }
+            } else if (currentMissionId) {
+                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
+            }
+            sauvegarderDBSecurisee(db);
+
+            window.clearForm();
+            remplirFiltresEncaissesBDD();
+        };
+
+        window.exportToExcel = function() {
+            if (!validateCohérenceEchantillon()) return;
+            const activePoints = addedPoints.filter(p => p.selected);
+            if (activePoints.length === 0) { alert("Veuillez cocher au moins un point avant d'exporter."); return; }
+            XLSX.writeFile(XLSX.utils.json_to_sheet(activePoints), "Fiche_Encaisses_Export.xlsx");
+        };
+
+        // Initialisation immédiate après authentification
+        resetDateField();
+        applyUserRoleDefaultsFV();
+        remplirFiltresEncaissesBDD();
+        chargerReferentielJSON();
+    </script>
 </body>
 </html>
