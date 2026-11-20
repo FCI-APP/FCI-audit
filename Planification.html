@@ -1,934 +1,742 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2. Planification — FCI v1.0 | Barid Al-Maghrib</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --primary-blue: #003366;
-      --dark-blue: #002244;
-      --accent-gold: #EAAA00;
-      --bg-light: #f1f5f9;
-      --border-color: #cbd5e1;
-      --text-main: #1e293b;
-      --text-muted: #64748b;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI - Planification de la Mission de Contrôle</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #003366;
+            --blue-dark: #002244;
+            --accent-gold: #EAAA00;
+            --bg-light: #F4F6F9;
+            --text-dark: #2C3E50;
+            --white: #FFFFFF;
+            --border-color: #E2E8F0;
+            --danger: #E74C3C;
+            --sidebar-width: 250px;
+        }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-    }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
 
-    body {
-      display: flex;
-      min-height: 100vh;
-      background: var(--bg-light);
-      color: var(--text-main);
-    }
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: var(--white);
+            display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.15); justify-content: space-between; overflow-y: auto;
+        }
 
-    /* Barre latérale fixe */
-    .sidebar {
-      width: 265px;
-      background: var(--primary-blue);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      z-index: 100;
-      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
-    }
+        .sidebar-brand { padding: 20px 15px; text-align: center; border-bottom: 2px solid var(--accent-gold); background-color: var(--blue-dark); }
+        .sidebar-brand h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: var(--white); line-height: 1.4; }
 
-    .sidebar-header {
-      padding: 20px 18px;
-      background: var(--dark-blue);
-      border-bottom: 3px solid var(--accent-gold);
-    }
+        .sidebar-menu { list-style: none; margin-top: 10px; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255,255,255,0.85); text-decoration: none; font-size: 0.88rem; font-weight: 600;
+        }
+        .sidebar-menu li.active a, .sidebar-menu li a:hover {
+            background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left: 4px solid var(--accent-gold);
+        }
 
-    .sidebar-header .org-tag {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.6px;
-      color: var(--accent-gold);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
+        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+        .badge-active { background: var(--accent-gold); color: var(--blue-dark); }
 
-    .sidebar-header h2 {
-      font-size: 15px;
-      font-weight: 700;
-      line-height: 1.3;
-    }
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
 
-    .sidebar-header small {
-      display: block;
-      font-size: 11px;
-      color: #cbd5e1;
-      margin-top: 4px;
-    }
+        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100% - var(--sidebar-width)); }
 
-    .sidebar-nav {
-      padding: 14px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      overflow-y: auto;
-    }
+        .top-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;
+            background: var(--white); padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary-blue); flex-wrap: wrap; gap: 12px;
+        }
+        .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    .sidebar-nav a {
-      color: #e2e8f0;
-      text-decoration: none;
-      padding: 10px 12px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s;
-    }
+        .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
+        .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
 
-    .sidebar-nav a:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #ffffff;
-    }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; background-color: #FFF; }
+        .form-group select:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
 
-    .sidebar-nav a.active {
-      background: rgba(234, 170, 0, 0.18);
-      color: var(--accent-gold);
-      font-weight: 700;
-      border-left: 3px solid var(--accent-gold);
-    }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
+        .kpi-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(0, 51, 102, 0.08); color: var(--primary-blue); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .kpi-info h3 { font-size: 1.3rem; color: var(--primary-blue); font-weight: 800; }
 
-    /* Contenu principal */
-    .main-content {
-      margin-left: 265px;
-      flex: 1;
-      padding: 24px;
-      max-width: calc(100vw - 265px);
-    }
+        .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 
-    .topbar {
-      background: #ffffff;
-      padding: 18px 22px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border-left: 5px solid var(--primary-blue);
-    }
+        .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
+        .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
+        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
+        .btn-refresh:hover { background-color: #BAE6FD; }
+        .btn-excel { background-color: #ECFDF5; color: #065F46; border-color: #A7F3D0; }
+        .btn-print { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
+        .btn-danger-outline { background-color: #FFFFFF; color: var(--danger); border-color: #FCA5A5; }
 
-    .topbar h1 {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
+        .processus-block { background: var(--white); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); overflow: hidden; }
+        .processus-header { background-color: var(--primary-blue); color: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
 
-    .topbar p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
+        th { background-color: rgba(0, 51, 102, 0.03); color: var(--primary-blue); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
+        tr.row-selected { background-color: #FEFCE8; }
 
-    .actions-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+        .empty-state { text-align: center; padding: 50px 20px; background: var(--white); border-radius: 8px; border: 2px dashed var(--border-color); }
+        .action-bar { display: flex; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
 
-    .btn {
-      padding: 9px 14px;
-      border-radius: 7px;
-      border: none;
-      font-size: 12.5px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-
-    .btn:hover { opacity: 0.92; }
-    .btn:active { transform: scale(0.99); }
-    .btn-primary { background: var(--primary-blue); color: #ffffff; }
-    .btn-gold { background: var(--accent-gold); color: var(--dark-blue); }
-    .btn-success { background: #15803d; color: #ffffff; }
-    .btn-outline { background: #ffffff; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
-    .btn-danger { background: #dc2626; color: #ffffff; }
-    .btn-sm { padding: 5px 9px; font-size: 11.5px; }
-
-    /* KPIs */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-
-    .kpi-card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 15px 18px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      border-top: 3px solid var(--primary-blue);
-    }
-
-    .kpi-card.gold { border-top-color: var(--accent-gold); }
-    .kpi-card .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
-    .kpi-card .kpi-value { font-size: 22px; font-weight: 700; color: var(--dark-blue); margin-top: 4px; }
-
-    /* Formulaire de planification */
-    .card {
-      background: #ffffff;
-      border-radius: 10px;
-      padding: 18px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .card-title {
-      font-size: 14.5px;
-      font-weight: 700;
-      color: var(--dark-blue);
-      margin-bottom: 14px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #e2e8f0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-    }
-
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .form-field.span-2 { grid-column: span 2; }
-    .form-field.span-4 { grid-column: span 4; }
-
-    .form-field label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--dark-blue);
-    }
-
-    .form-field input,
-    .form-field select,
-    .form-field textarea {
-      width: 100%;
-      padding: 9px 11px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 13px;
-      text-align: left;
-      outline: none;
-      background: #ffffff;
-    }
-
-    .form-field input:focus,
-    .form-field select:focus,
-    .form-field textarea:focus {
-      border-color: var(--primary-blue);
-    }
-
-    .form-field input[readonly],
-    .form-field select:disabled {
-      background: #f1f5f9;
-      color: #475569;
-      cursor: not-allowed;
-    }
-
-    .form-actions {
-      margin-top: 16px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    /* Filtres et Tableau */
-    .filters-bar {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr auto;
-      gap: 10px;
-      margin-bottom: 14px;
-      align-items: center;
-    }
-
-    .filters-bar input,
-    .filters-bar select {
-      width: 100%;
-      padding: 8px 11px;
-      border: 1px solid var(--border-color);
-      border-radius: 7px;
-      font-size: 12.5px;
-      background: #ffffff;
-    }
-
-    .table-wrapper {
-      overflow-x: auto;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-    }
-
-    th {
-      background: var(--primary-blue);
-      color: #ffffff;
-      text-align: left;
-      padding: 11px 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #e2e8f0;
-      vertical-align: middle;
-    }
-
-    tr:hover td { background: #f8fafc; }
-
-    /* Badges Statuts & Types */
-    .badge {
-      display: inline-block;
-      padding: 3px 9px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .st-planifiee { background: #dbeafe; color: #1e40af; }
-    .st-encours { background: #fef3c7; color: #92400e; }
-    .st-realisee { background: #dcfce7; color: #166534; }
-    .st-reportee { background: #fee2e2; color: #991b1b; }
-
-    .type-pill {
-      background: #f1f5f9;
-      color: var(--dark-blue);
-      border: 1px solid #cbd5e1;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .status-toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--dark-blue);
-      color: #ffffff;
-      padding: 11px 16px;
-      border-radius: 8px;
-      font-size: 12.5px;
-      font-weight: 600;
-      border-left: 4px solid var(--accent-gold);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      display: none;
-      z-index: 1200;
-    }
-
-    @media (max-width: 1100px) {
-      .form-grid { grid-template-columns: repeat(2, 1fr); }
-      .form-field.span-4 { grid-column: span 2; }
-      .filters-bar { grid-template-columns: 1fr 1fr; }
-    }
-  </style>
+        @media print {
+            .sidebar, .toolbar, .action-bar, .top-header button, .processus-header button, th:last-child, td:last-child { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+            .card, .processus-block { border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 15px !important; }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- Barre latérale fixe -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="org-tag">Barid Al-Maghrib</div>
-      <h2>Fiche de Contrôle Intelligente</h2>
-      <small>Direction Contrôle Générale • FCI v1.0</small>
-    </div>
-    <nav class="sidebar-nav">
-      <a href="index.html"><i class="fas fa-book"></i> 1. Référentiel de contrôle</a>
-      <a href="Planification.html" class="active"><i class="fas fa-calendar-alt"></i> 2. Planification</a>
-      <a href="FicheControle.html"><i class="fas fa-clipboard-check"></i> 3. Fiche de Contrôle (FC)</a>
-      <a href="FicheEncaisses.html"><i class="fas fa-coins"></i> 4. Vérification Encaisses</a>
-      <a href="BDD.html"><i class="fas fa-database"></i> 5. Base de Données (BDD)</a>
-      <a href="TDB.html"><i class="fas fa-chart-line"></i> 6. Analyse & Pilotage</a>
-    </nav>
-  </aside>
+    <aside class="sidebar" id="sidebar">
+        <div>
+            <div class="sidebar-brand">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><span>1. Référentiel</span><span class="badge-status badge-active">Actif</span></a></li>
+                <li class="active"><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-active">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
+            </ul>
+        </div>
+        <div>
+            <div id="fci-sidebar-user-slot"></div>
+            <div class="sidebar-footer">
+                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+            </div>
+        </div>
+    </aside>
 
-  <!-- Contenu principal -->
-  <main class="main-content">
-    <div class="topbar">
-      <div>
-        <h1>2. Planification des Missions de Contrôle</h1>
-        <p>Programmation opérationnelle par région, site et type d'intervention — Division Contrôle Permanent</p>
-      </div>
-      <div class="actions-group">
-        <button type="button" id="btnExportPlanExcel" class="btn btn-success">
-          <i class="fas fa-file-excel"></i> Exporter Planning Excel
-        </button>
-      </div>
-    </div>
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1>Planification de la mission de contrôle</h1>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
+            </div>
+            <div>
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="window.location.reload()" title="Actualiser la page">
+                    <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+                </button>
+            </div>
+        </header>
 
-    <!-- Indicateurs synthétiques -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Total missions planifiées</div>
-        <div class="kpi-value" id="kpiPlanTotal">0</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-label">Planifiées (À réaliser)</div>
-        <div class="kpi-value" id="kpiPlanPlanned">0</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">En cours d'exécution</div>
-        <div class="kpi-value" id="kpiPlanInProgress">0</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-label">Réalisées / Clôturées</div>
-        <div class="kpi-value" id="kpiPlanDone">0</div>
-      </div>
-    </div>
-
-    <!-- Formulaire de création / modification d'une mission -->
-    <div class="card">
-      <div class="card-title">
-        <span id="formHeaderTitle"><i class="fas fa-calendar-plus"></i> Programmer une nouvelle mission</span>
-        <span id="missionCodeBadge" style="font-size:12px;color:var(--primary-blue);background:#eff6ff;padding:3px 10px;border-radius:6px;"></span>
-      </div>
-
-      <form id="planificationForm">
-        <input type="hidden" id="editMissionDocId" />
-        <div class="form-grid">
-          <div class="form-field">
-            <label for="pCodeMission">N° Mission</label>
-            <input type="text" id="pCodeMission" readonly />
-          </div>
-
-          <div class="form-field">
-            <label for="pRegion">Région Postale *</label>
-            <select id="pRegion" required>
-              <option value="">-- Sélectionner une région --</option>
-              <option value="CASA">Casablanca (CASA)</option>
-              <option value="SETTAT">Settat (SETTAT)</option>
-              <option value="RABAT">Rabat (RABAT)</option>
-              <option value="TANGER">Tanger (TANGER)</option>
-              <option value="MARRAKECH">Marrakech (MARRAKECH)</option>
-              <option value="AGADIR">Agadir (AGADIR)</option>
-              <option value="FES">Fès (FES)</option>
-              <option value="MEKNES">Meknès (MEKNES)</option>
-              <option value="LAAYOUNE">Laâyoune (LAAYOUNE)</option>
-              <option value="OUJEDA">Oujda (OUJEDA)</option>
-            </select>
-          </div>
-
-          <div class="form-field span-2">
-            <label for="pSite">Centre / Site / Agence à contrôler *</label>
-            <input type="text" id="pSite" list="sitesDatalist" placeholder="Choisir dans la liste ou saisir le nom du site..." required />
-            <datalist id="sitesDatalist"></datalist>
-          </div>
-
-          <div class="form-field">
-            <label for="pTypeMission">Nature de l'intervention *</label>
-            <select id="pTypeMission" required>
-              <option value="Contrôle Systématique">Contrôle Systématique</option>
-              <option value="Contrôle Thématique">Contrôle Thématique</option>
-              <option value="Vérification Encaisses">Vérification Encaisses</option>
-              <option value="Mission Mixte (FC + Encaisses)">Mission Mixte (FC + Encaisses)</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="pDateDebut">Date de début prévue *</label>
-            <input type="date" id="pDateDebut" required />
-          </div>
-
-          <div class="form-field">
-            <label for="pDateFin">Date de fin prévue *</label>
-            <input type="date" id="pDateFin" required />
-          </div>
-
-          <div class="form-field">
-            <label for="pStatut">Statut de la mission *</label>
-            <select id="pStatut" required>
-              <option value="Planifiée">Planifiée</option>
-              <option value="En cours">En cours</option>
-              <option value="Réalisée">Réalisée</option>
-              <option value="Reportée">Reportée</option>
-            </select>
-          </div>
-
-          <div class="form-field span-2">
-            <label for="pControleur">Contrôleur affecté</label>
-            <input type="text" id="pControleur" readonly />
-          </div>
-
-          <div class="form-field span-2">
-            <label for="pObjet">Objet / Thématique / Observations</label>
-            <input type="text" id="pObjet" placeholder="Ex: Vérification inopinée des encaisses et contrôle guichet..." />
-          </div>
+        <div class="kpi-row">
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-diagram-project"></i></div>
+                <div class="kpi-info"><h3 id="kpi-proc-count">0</h3><p>Processus cochés</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="kpi-info"><h3 id="kpi-risque-count">0</h3><p>Risques cochés</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div class="kpi-info"><h3 id="kpi-controle-count">0</h3><p>Contrôles cochés</p></div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon"><i class="fa-solid fa-list-check"></i></div>
+                <div class="kpi-info"><h3 id="kpi-pc-count">0</h3><p>PC sélectionnés (FC)</p></div>
+            </div>
         </div>
 
-        <div class="form-actions">
-          <button type="button" id="btnResetForm" class="btn btn-outline">
-            <i class="fas fa-times"></i> Réinitialiser
-          </button>
-          <button type="submit" class="btn btn-primary" id="btnSaveMission">
-            <i class="fas fa-save"></i> Enregistrer la planification
-          </button>
+        <section class="card">
+            <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</div>
+            <form autocomplete="off" onsubmit="return false;">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="audit-region">Région *</label>
+                        <select id="audit-region" autocomplete="off" onchange="onRegionChangePlanif()">
+                            <option value="">-- Sélectionner une région --</option>
+                            <option value="MARRAKECH">MARRAKECH</option>
+                            <option value="AGADIR">AGADIR</option>
+                            <option value="CASA">CASA</option>
+                            <option value="SETTAT">SETTAT</option>
+                            <option value="RABAT">RABAT</option>
+                            <option value="TANGER">TANGER</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
+                            <option value="FES">FES</option>
+                            <option value="MEKNES">MEKNES</option>
+                            <option value="OUEJDA">OUEJDA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-entite">Entité / Agence Auditée *</label>
+                        <select id="audit-entite" autocomplete="off" disabled>
+                            <option value="">-- Choisir d'abord une région --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-type-controle">Type de Contrôle *</label>
+                        <select id="audit-type-controle" autocomplete="off">
+                            <option value="">-- Sélectionner le type --</option>
+                            <option value="Thématique">Thématique</option>
+                            <option value="Systématique">Systématique</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-date-debut">Début de la période du contrôle *</label>
+                        <input type="date" id="audit-date-debut" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-date-fin">Fin de la période du contrôle *</label>
+                        <input type="date" id="audit-date-fin" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
+                        <input type="text" id="audit-controleurs" name="fci_planif_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Saisir le nom du contrôleur">
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <div class="toolbar">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
+                <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
+                <button type="button" class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button type="button" class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
+                <button type="button" class="btn btn-excel" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
+            </div>
         </div>
-      </form>
-    </div>
 
-    <!-- Tableau de suivi des planifications -->
-    <div class="card">
-      <div class="card-title">
-        <span><i class="fas fa-list-ul"></i> Programme des missions enregistrées</span>
-        <span id="scopeInfoBadge" style="font-size:11.5px;color:var(--text-muted);font-weight:600;"></span>
-      </div>
+        <section id="planification-container"></section>
 
-      <div class="filters-bar">
-        <input type="text" id="filterSearch" placeholder="Rechercher N° mission, site, contrôleur, objet..." />
-        <select id="filterRegion">
-          <option value="">Toutes les régions</option>
-          <option value="CASA">Casablanca</option>
-          <option value="SETTAT">Settat</option>
-          <option value="RABAT">Rabat</option>
-          <option value="TANGER">Tanger</option>
-          <option value="MARRAKECH">Marrakech</option>
-          <option value="AGADIR">Agadir</option>
-          <option value="FES">Fès</option>
-          <option value="MEKNES">Meknès</option>
-          <option value="LAAYOUNE">Laâyoune</option>
-          <option value="OUJEDA">Oujda</option>
-        </select>
-        <select id="filterType">
-          <option value="">Toutes natures</option>
-          <option value="Contrôle Systématique">Contrôle Systématique</option>
-          <option value="Contrôle Thématique">Contrôle Thématique</option>
-          <option value="Vérification Encaisses">Vérification Encaisses</option>
-          <option value="Mission Mixte (FC + Encaisses)">Mission Mixte</option>
-        </select>
-        <select id="filterStatut">
-          <option value="">Tous les statuts</option>
-          <option value="Planifiée">Planifiée</option>
-          <option value="En cours">En cours</option>
-          <option value="Réalisée">Réalisée</option>
-          <option value="Reportée">Reportée</option>
-        </select>
-        <input type="month" id="filterMonth" title="Filtrer par mois" />
-        <button type="button" id="btnClearFilters" class="btn btn-outline" title="Effacer les filtres">
-          <i class="fas fa-undo"></i>
-        </button>
-      </div>
+        <div class="action-bar">
+            <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
+        </div>
+    </main>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>N° Mission</th>
-              <th>Région</th>
-              <th>Site / Centre</th>
-              <th>Nature</th>
-              <th>Période prévue</th>
-              <th>Contrôleur</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="planificationTableBody">
-            <tr>
-              <td colspan="8" style="text-align:center;padding:24px;color:#64748b;">
-                <i class="fas fa-spinner fa-spin"></i> Chargement du planning...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
+    <!-- Scripts Firebase Auth & BDD Centralisée -->
+    <script type="module" src="fci-auth.js"></script>
+    <script type="module" src="fci-db-manager.js"></script>
 
-  <div class="status-toast" id="statusToast"></div>
+    <script type="module">
+        import { initFCISessionGuard } from "./fci-auth.js";
+        import { syncFromFirestoreToLocal, upsertFCIRecord } from "./fci-db-manager.js";
 
-  <!-- Scripts Firebase Auth & Database Manager -->
-  <script type="module" src="fci-auth.js"></script>
-  <script type="module" src="fci-db-manager.js"></script>
-  <script type="module">
-    import { initFCISessionGuard } from "./fci-auth.js";
-    import {
-      syncFromFirestoreToLocal,
-      upsertFCIPlanification,
-      getLocalDatabase,
-      saveLocalDatabase
-    } from "./fci-db-manager.js";
-    import { db } from "./fci-auth.js";
-    import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
+        const currentUser = await initFCISessionGuard();
+        await syncFromFirestoreToLocal(currentUser);
 
-    // Référentiel des sites principaux par région postale
-    const SITES_PAR_REGION = {
-      CASA: [
-        "Casablanca Principal", "Centre de Tri Casablanca", "Agence Casa Anfa",
-        "Agence Casa Maarif", "Agence Casa Hay Hassani", "Agence Casa Ain Sebaa",
-        "Agence Mohammedia", "Agence El Jadida", "Service Appui Régional Casa"
-      ],
-      SETTAT: [
-        "Settat Principal", "Agence Berrechid", "Agence Khouribga",
-        "Agence Beni Mellal", "Agence Fquih Ben Salah", "Agence Ben Ahmed",
-        "Service Appui Régional Settat"
-      ],
-      RABAT: [
-        "Rabat Principal", "Centre de Tri Rabat", "Agence Rabat Agdal",
-        "Agence Rabat Hassan", "Agence Salé Médina", "Agence Témara",
-        "Agence Kénitra", "Service Appui Régional Rabat"
-      ],
-      TANGER: [
-        "Tanger Principal", "Centre de Tri Tanger", "Agence Tanger Boukhalef",
-        "Agence Tétouan", "Agence Larache", "Agence Al Hoceima",
-        "Service Appui Régional Tanger"
-      ],
-      MARRAKECH: [
-        "Marrakech Principal (Guéliz)", "Centre de Tri Marrakech", "Agence Marrakech Médina",
-        "Agence Marrakech M'Hamid", "Agence Safi", "Agence Essaouira",
-        "Agence El Kelaâ des Sraghna", "Service Appui Régional Marrakech"
-      ],
-      AGADIR: [
-        "Agadir Principal", "Centre de Tri Agadir", "Agence Inezgane",
-        "Agence Taroudant", "Agence Tiznit", "Agence Guelmim",
-        "Agence Ouarzazate", "Service Appui Régional Agadir"
-      ],
-      FES: [
-        "Fès Principal", "Centre de Tri Fès", "Agence Fès Atlas",
-        "Agence Taza", "Agence Sefrou", "Agence Taounate",
-        "Service Appui Régional Fès"
-      ],
-      MEKNES: [
-        "Meknès Principal", "Agence Meknès Hamria", "Agence Ifrane",
-        "Agence Khénifra", "Agence Errachidia", "Agence Midelt",
-        "Service Appui Régional Meknès"
-      ],
-      LAAYOUNE: [
-        "Laâyoune Principal", "Agence Dakhla", "Agence Smara",
-        "Agence Boujdour", "Agence Tan-Tan", "Service Appui Régional Laâyoune"
-      ],
-      OUJEDA: [
-        "Oujda Principal", "Centre de Tri Oujda", "Agence Nador",
-        "Agence Berkane", "Agence Taourirt", "Agence Guercif",
-        "Service Appui Régional Oujda"
-      ]
-    };
+        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
+        const userBox = document.getElementById("fci-auth-sidebar-box");
+        const slot = document.getElementById("fci-sidebar-user-slot");
+        if (userBox && slot) {
+            slot.appendChild(userBox);
+        }
 
-    let currentUser = null;
-    let planifications = [];
+        const CENTRES_PAR_REGION = {
+            "MARRAKECH": [
+                "MARRAKECH CTD",
+                "MARRAKECH CM",
+                "MARRAKECH SYBA CD",
+                "AGENCE MESSAGERIE GUELIZ MARRAKECH",
+                "ESSAOUIRA CCC",
+                "SAFI CD",
+                "SAFI CM",
+                "EL KELAA DES SERAGHNAS CCC",
+                "OUARZAZATE CCC",
+                "TINEGIR CLD",
+                "BENGUERIR CLD",
+                "EL YOUSSOUFIA CLD",
+                "SERVICE OPERATION REGIONAL MARRAKECH",
+                "SERVICE SUPPORT REGIONAL MARRAKECH"
+            ],
+            "AGADIR": [
+                "AGADIR CTD",
+                "AGADIR CM",
+                "AGADIR AM",
+                "INEZEGANE CD",
+                "AIT MELLOUL CD",
+                "OULED TAIMA CLD",
+                "TAROUDANT CCC",
+                "TIZNIT CCC",
+                "GUELMIM CCC",
+                "TANTAN CLD",
+                "SERVICE OPERATION REGIONAL AGADIR",
+                "SERVICE SUPPORT REGIONAL AGADIR"
+            ],
+            "CASA": [
+                "PNC",
+                "CNA",
+                "CASA COMPLEXE MOHAMMED 5 CD ",
+                "CASA HAY HASSANI CD",
+                "CASA HAY MESSALA CD",
+                "CASA HAY MOHAMMADI CD",
+                "CASA BONDANG CTD",
+                "CASA EL AZZHAR CD",
+                "CASA SIDI MOUMEN CD ",
+                "CASA SIDI OUTHMANE CD",
+                "BOUSSKOURA CD",
+                "AIN HARROUDA CLD",
+                "TIT MELLILCLD",
+                "AGENCE MESSAGERIE AVENUE DES FAR ",
+                "CPX",
+                "CASA SOUKRATE AM",
+                "AIN SEBAA PLAGE AM",
+                "MOHAMMADIA CCC",
+                "MOHAMMADIA AM",
+                "BEN SLIMANE CLD",
+                "BOUZNIKA CLD",
+                "DAR BOUAZZA CLD",
+                "AGENCE COURRIER CASA BONDANG",
+                "CASA BONDANG CM",
+                "SERVICE OPERATION REGIONAL CASA",
+                "SERVICE SUPPORT REGIONAL CASA"
+            ],
+            "SETTAT": [
+                "BENI MELLAL CCC",
+                "BERRECHID CCC",
+                "LHOURIBGA CCC",
+                "SETTAT CCC",
+                "SETTAT CD",
+                "EL JADIDA CM",
+                "EL JADIDA CD",
+                "DEROUA OULED ZIANE CLD",
+                "OUED ZEM CLD",
+                "FKIH BEN SALEH CLD",
+                "SOUK SEBT OULED NEMA CLD",
+                "KASBAT TADLA CLD",
+                "SERVICE OPERATION REGIONAL SETTAT",
+                "SERVICE SUPPORT REGIONAL SETTAT"
+            ],
+            "RABAT": [
+                "RABAT CM",
+                "RABAT CTD",
+                "RABAT IRRFANE",
+                "TEMARA CD",
+                "TEMARA AM",
+                "KENITRA CD",
+                "KENITRA AM",
+                "KENITRA CM",
+                "SALE AM",
+                "SALE CD",
+                "SALE EL JADIDA CD",
+                "SALE EL JADIDA CM",
+                "SOUK LARBAA DU GHARB CLD",
+                "SIDI SLIMANE CLD",
+                "OUAZZANE CLD",
+                "SIDI KACEM CD",
+                "TIFFELT CLD",
+                "KHEMISSAT CD",
+                "SERVICE OPERATION REGIONAL RABAT",
+                "SERVICE SUPPORT REGIONAL RABAT"
+            ],
+            "TANGER": [
+                "TANGER AM",
+                "TANGER CM",
+                "TANGER CD",
+                "TETOUAN CD",
+                "TETOUAN AM",
+                "TETOUAN CCC",
+                "KSAR LAKBIR CD",
+                "ARACHE CCC",
+                "SERVICE OPERATION REGIONAL TANGER",
+                "SERVICE SUPPORT REGIONAL TANGER"
+            ],
+            "LAAYOUNE": [
+                "DAKHLA AM",
+                "DAKHLA CLD",
+                "ESSEMARA CLD",
+                "LAAYOUNE CCC",
+                "LAAYOUNE AM",
+                "LAAYOUNE AM PORT (En cours de création)",
+                "BOUJDOUR AM (En cours de création)",
+                "GUERGURATE AM (En cours de création)",
+                "SERVICE OPERATION REGIONAL LAAYOUNE",
+                "SERVICE SUPPORT REGIONAL LAAYOUNE"
+            ],
+            "FES": [
+                "FES AM",
+                "FES CM",
+                "FES CTD",
+                "EL HOUCEIMA CLD",
+                "SEFFROU CLD",
+                "TAZA CLD",
+                "TAZA CM",
+                "GUERCIF CLD",
+                "SERVICE OPERATION REGIONAL FES",
+                "SERVICE SUPPORT REGIONAL FES"
+            ],
+            "MEKNES": [
+                "MEKNES CD",
+                "MEKNES AM",
+                "MEKNES CM",
+                "AZEROU CLD",
+                "MIDELT CLD",
+                "ERRACHIDIA CD",
+                "SERVICE OPERATION REGIONAL MEKNES",
+                "SERVICE SUPPORT REGIONAL MEKNES"
+            ],
+            "OUEJDA": [
+                "OUEJDA CD",
+                "OUEJDA AM",
+                "OUEJDA CM",
+                "BERKANE CD",
+                "BERKANE AM",
+                "NADOR CD",
+                "NADOR AM",
+                "NADOR CM",
+                "TAOURIRTE CLD",
+                "SERVICE OPERATION REGIONAL OUJEDA",
+                "SERVICE SUPPORT REGIONAL OUJEDA"
+            ]
+        };
 
-    function showToast(msg) {
-      const t = document.getElementById("statusToast");
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => { t.style.display = "none"; }, 3200);
-    }
+        let selectedData = [];
+        let checkedKeys = new Set();
+        const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-    function generateMissionCode() {
-      const year = new Date().getFullYear();
-      const rand = Math.floor(1000 + Math.random() * 9000);
-      return `MIS-${year}-${rand}`;
-    }
+        function normalizePlanifRegionCode(code) {
+            const c = String(code || "").trim().toUpperCase();
+            if (c === "OUJEDA" || c === "OUJDA") return "OUEJDA";
+            if (c === "LAYOUNE") return "LAAYOUNE";
+            if (c === "CASABLANCA") return "CASA";
+            return c;
+        }
 
-    function normalizeRegionCode(code) {
-      const c = String(code || "").trim().toUpperCase();
-      if (c === "OUJDA") return "OUJEDA";
-      if (c === "LAYOUNE") return "LAAYOUNE";
-      if (c === "CASABLANCA") return "CASA";
-      return c;
-    }
+        function getItemVal(item, keys) {
+            for (let k of keys) {
+                if (item && item[k] !== undefined) return item[k];
+            }
+            return '';
+        }
 
-    function populateSitesDatalist(regionCode) {
-      const list = SITES_PAR_REGION[normalizeRegionCode(regionCode)] || [];
-      const datalist = document.getElementById("sitesDatalist");
-      datalist.innerHTML = list.map(s => `<option value="${s}"></option>`).join("");
-    }
+        window.addEventListener('storage', (e) => {
+            if (e.key === PLANIFICATION_PC_KEY) {
+                loadPlanificationData();
+            }
+        });
 
-    function resetFormToNew() {
-      document.getElementById("planificationForm").reset();
-      document.getElementById("editMissionDocId").value = "";
-      const code = generateMissionCode();
-      document.getElementById("pCodeMission").value = code;
-      document.getElementById("missionCodeBadge").textContent = code;
-      document.getElementById("formHeaderTitle").innerHTML = '<i class="fas fa-calendar-plus"></i> Programmer une nouvelle mission';
-      document.getElementById("pControleur").value = `${currentUser.username} — ${currentUser.nom_complet}`;
+        window.onRegionChangePlanif = function() {
+            const region = document.getElementById('audit-region').value;
+            const entiteSelect = document.getElementById('audit-entite');
 
-      if (currentUser.role === "CONTROLEUR") {
-        const reg = normalizeRegionCode(currentUser.region_code);
-        document.getElementById("pRegion").value = reg;
-        document.getElementById("pRegion").disabled = true;
-        populateSitesDatalist(reg);
-      } else {
-        document.getElementById("pRegion").disabled = false;
-      }
-    }
+            if (!region || !CENTRES_PAR_REGION[region]) {
+                entiteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
+                entiteSelect.disabled = true;
+                return;
+            }
 
-    // 1. Initialisation de la session et chargement des données Firestore
-    currentUser = await initFCISessionGuard();
+            const centres = CENTRES_PAR_REGION[region];
+            entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
+                centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            entiteSelect.disabled = false;
+        };
 
-    if (currentUser.role === "CONTROLEUR") {
-      const reg = normalizeRegionCode(currentUser.region_code);
-      document.getElementById("filterRegion").value = reg;
-      document.getElementById("filterRegion").disabled = true;
-      document.getElementById("scopeInfoBadge").textContent = `Périmètre : Mes missions (${currentUser.username} • ${currentUser.region})`;
-    } else {
-      document.getElementById("scopeInfoBadge").textContent = `Périmètre : Vue globale Division Contrôle Permanent`;
-    }
+        function initFormDefaults() {
+            const today = new Date().toISOString().split('T')[0];
+            const regionEl = document.getElementById('audit-region');
+            const ctrlInput = document.getElementById('audit-controleurs');
 
-    resetFormToNew();
+            if (currentUser && currentUser.role === "CONTROLEUR") {
+                const userReg = normalizePlanifRegionCode(currentUser.region_code);
+                regionEl.value = CENTRES_PAR_REGION[userReg] ? userReg : "";
+                regionEl.disabled = true;
+                window.onRegionChangePlanif();
+                ctrlInput.value = currentUser.nom || currentUser.username || "";
+                ctrlInput.removeAttribute('readonly');
+            } else {
+                regionEl.value = "";
+                regionEl.disabled = false;
+                window.onRegionChangePlanif();
+                ctrlInput.value = "";
+                ctrlInput.setAttribute('readonly', 'readonly');
+            }
 
-    const localDb = await syncFromFirestoreToLocal(currentUser);
-    planifications = (localDb.planifications || []).sort((a, b) =>
-      String(b.date_debut || "").localeCompare(String(a.date_debut || ""))
-    );
-    updateKPIs();
-    renderTable();
+            document.getElementById('audit-type-controle').value = "";
+            document.getElementById('audit-date-debut').value = today;
+            document.getElementById('audit-date-fin').value = today;
+        }
 
-    // 2. Mise à jour des sites lors du changement de région
-    document.getElementById("pRegion").addEventListener("change", (e) => {
-      populateSitesDatalist(e.target.value);
-    });
+        function getPointKey(item) {
+            const p = getItemVal(item, ['Processus']);
+            const r = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
+            const c = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
+            const pc = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
+            return `${p}__${r}__${c}__${pc}`;
+        }
 
-    // 3. Enregistrement d'une planification
-    document.getElementById("planificationForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+        function loadPlanificationData() {
+            const rawData = localStorage.getItem(PLANIFICATION_PC_KEY);
+            if (rawData) {
+                try {
+                    selectedData = JSON.parse(rawData);
+                    checkedKeys = new Set(selectedData.map(getPointKey));
+                } catch (e) {
+                    selectedData = []; checkedKeys.clear();
+                }
+            } else {
+                selectedData = [];
+                checkedKeys.clear();
+            }
+            renderPlanification();
+        }
 
-      const dateDebut = document.getElementById("pDateDebut").value;
-      const dateFin = document.getElementById("pDateFin").value;
-      if (dateFin < dateDebut) {
-        showToast("Erreur : la date de fin ne peut pas être antérieure à la date de début.");
-        return;
-      }
+        function renderPlanification() {
+            const container = document.getElementById('planification-container');
+            container.innerHTML = '';
 
-      const existingDocId = document.getElementById("editMissionDocId").value;
-      const existingObj = planifications.find(p => (p.firestore_id || p.record_uid) === existingDocId) || {};
-      const regionCode = normalizeRegionCode(document.getElementById("pRegion").value);
+            if (!selectedData || selectedData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 15px;"></i>
+                        <h3>Aucun point de contrôle dans la planification</h3>
+                        <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer.</p>
+                    </div>
+                `;
+                updateKPIs(0, 0, 0, 0);
+                return;
+            }
 
-      const payload = {
-        ...existingObj,
-        code_mission: document.getElementById("pCodeMission").value.trim(),
-        region: regionCode,
-        site: document.getElementById("pSite").value.trim(),
-        type_mission: document.getElementById("pTypeMission").value,
-        date_debut: dateDebut,
-        date_fin: dateFin,
-        statut: document.getElementById("pStatut").value,
-        objet: document.getElementById("pObjet").value.trim(),
-        controleur_id: existingObj.controleur_id || currentUser.username,
-        controleur_nom: existingObj.controleur_nom || currentUser.nom_complet
-      };
+            const groupedData = selectedData.reduce((acc, item) => {
+                const proc = getItemVal(item, ['Processus']) || "Processus Non Spécifié";
+                if (!acc[proc]) acc[proc] = [];
+                acc[proc].push(item);
+                return acc;
+            }, {});
 
-      const saved = await upsertFCIPlanification(payload);
+            Object.keys(groupedData).forEach(procName => {
+                const items = groupedData[procName];
+                const procBlock = document.createElement('div');
+                procBlock.className = 'processus-block';
 
-      const idx = planifications.findIndex(p => (p.firestore_id || p.record_uid) === (saved.firestore_id || saved.record_uid));
-      if (idx >= 0) {
-        planifications[idx] = saved;
-      } else {
-        planifications.unshift(saved);
-      }
+                const allProcChecked = items.every(item => checkedKeys.has(getPointKey(item)));
 
-      updateKPIs();
-      renderTable();
-      resetFormToNew();
-      showToast(`Mission ${saved.code_mission} enregistrée et synchronisée.`);
-    });
+                let rowsHtml = items.map(item => {
+                    const key = getPointKey(item);
+                    const isChecked = checkedKeys.has(key);
+                    const globalIdx = selectedData.findIndex(d => getPointKey(d) === key);
 
-    document.getElementById("btnResetForm").addEventListener("click", resetFormToNew);
+                    const pVal = getItemVal(item, ['Processus']);
+                    const rVal = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
+                    const cVal = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
+                    const pcVal = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
 
-    // 4. Édition & Suppression
-    window.editMission = (docId) => {
-      const m = planifications.find(p => (p.firestore_id || p.record_uid) === docId);
-      if (!m) return;
+                    return `
+                        <tr class="${isChecked ? 'row-selected' : ''}">
+                            <td style="width: 4%; text-align: center;">
+                                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="togglePointCheckbox('${escapeJsString(key)}', this.checked)">
+                            </td>
+                            <td style="width: 20%; font-weight:700; color:var(--primary-blue);">${escapeHtml(pVal || '-')}</td>
+                            <td style="width: 25%;"><strong>${escapeHtml(rVal || '-')}</strong></td>
+                            <td style="width: 23%;">${escapeHtml(cVal || '-')}</td>
+                            <td style="width: 23%;">${escapeHtml(pcVal || '-')}</td>
+                            <td style="width: 5%; text-align: center;">
+                                <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="removePoint(${globalIdx})">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
 
-      if (currentUser.role === "CONTROLEUR" && m.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez modifier que vos propres missions.");
-        return;
-      }
+                procBlock.innerHTML = `
+                    <div class="processus-header">
+                        <h3>
+                            <input type="checkbox" ${allProcChecked ? 'checked' : ''} onchange="toggleProcessusCheckboxes('${escapeJsString(procName)}', this.checked)" style="margin-right: 8px;">
+                            <i class="fa-solid fa-gears"></i> ${escapeHtml(procName)} (${items.length} PC)
+                        </h3>
+                        <button type="button" style="background:rgba(231,76,60,0.2); color:#FF8A80; border:1px solid rgba(231,76,60,0.4); padding:4px 8px; border-radius:4px; cursor:pointer;" onclick="removeProcessus('${escapeJsString(procName)}')">
+                            <i class="fa-solid fa-trash"></i> Retirer le Processus
+                        </button>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="text-align: center;">✓</th>
+                                    <th>Processus</th>
+                                    <th>Intitulé du Risque</th>
+                                    <th>Intitulé du Contrôle</th>
+                                    <th>Point de Contrôle</th>
+                                    <th style="text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                `;
+                container.appendChild(procBlock);
+            });
 
-      document.getElementById("editMissionDocId").value = docId;
-      document.getElementById("pCodeMission").value = m.code_mission || "";
-      document.getElementById("missionCodeBadge").textContent = m.code_mission || "";
-      document.getElementById("formHeaderTitle").innerHTML = `<i class="fas fa-edit"></i> Modifier la mission ${m.code_mission}`;
+            recalculateKPIs();
+        }
 
-      const reg = normalizeRegionCode(m.region);
-      document.getElementById("pRegion").value = reg;
-      populateSitesDatalist(reg);
-      document.getElementById("pSite").value = m.site || "";
-      document.getElementById("pTypeMission").value = m.type_mission || "Contrôle Systématique";
-      document.getElementById("pDateDebut").value = m.date_debut || "";
-      document.getElementById("pDateFin").value = m.date_fin || "";
-      document.getElementById("pStatut").value = m.statut || "Planifiée";
-      document.getElementById("pObjet").value = m.objet || "";
-      document.getElementById("pControleur").value = `${m.controleur_id || m.cree_par_id} — ${m.controleur_nom || m.cree_par_nom}`;
+        function recalculateKPIs() {
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            const activeProcSet = new Set(activeItems.map(i => getItemVal(i, ['Processus'])));
+            const activeRisqueSet = new Set(activeItems.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])));
+            const activeControleSet = new Set(activeItems.map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])));
+            updateKPIs(activeProcSet.size, activeRisqueSet.size, activeControleSet.size, activeItems.length);
+        }
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+        function updateKPIs(p, r, c, pc) {
+            document.getElementById('kpi-proc-count').innerText = p;
+            document.getElementById('kpi-risque-count').innerText = r;
+            document.getElementById('kpi-controle-count').innerText = c;
+            document.getElementById('kpi-pc-count').innerText = pc;
+        }
 
-    window.deleteMission = async (docId, codeMission) => {
-      const m = planifications.find(p => (p.firestore_id || p.record_uid) === docId);
-      if (!m) return;
+        window.togglePointCheckbox = function(key, isChecked) {
+            if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
+            renderPlanification();
+        };
 
-      if (currentUser.role === "CONTROLEUR" && m.cree_par_id !== currentUser.username) {
-        showToast("Accès refusé : vous ne pouvez supprimer que vos propres missions.");
-        return;
-      }
+        window.toggleProcessusCheckboxes = function(procName, isChecked) {
+            selectedData.forEach(item => {
+                if (getItemVal(item, ['Processus']) === procName) {
+                    const key = getPointKey(item);
+                    if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
+                }
+            });
+            renderPlanification();
+        };
 
-      await deleteDoc(doc(db, "fci_planifications", docId));
-      planifications = planifications.filter(p => (p.firestore_id || p.record_uid) !== docId);
+        window.selectAllPoints = function() { checkedKeys = new Set(selectedData.map(getPointKey)); renderPlanification(); };
+        window.deselectAllPoints = function() { checkedKeys.clear(); renderPlanification(); };
 
-      const currentLocal = getLocalDatabase();
-      currentLocal.planifications = planifications;
-      saveLocalDatabase(currentLocal);
+        window.removePoint = function(index) {
+            if (index >= 0 && index < selectedData.length) {
+                checkedKeys.delete(getPointKey(selectedData[index]));
+                selectedData.splice(index, 1);
+                saveAndRefresh();
+            }
+        };
 
-      updateKPIs();
-      renderTable();
-      showToast(`Mission ${codeMission} supprimée.`);
-    };
+        window.removeProcessus = function(procName) {
+            selectedData = selectedData.filter(item => {
+                if (getItemVal(item, ['Processus']) === procName) {
+                    checkedKeys.delete(getPointKey(item)); return false;
+                }
+                return true;
+            });
+            saveAndRefresh();
+        };
 
-    // 5. KPIs & Rendu du tableau
-    function updateKPIs() {
-      document.getElementById("kpiPlanTotal").textContent = planifications.length;
-      document.getElementById("kpiPlanPlanned").textContent = planifications.filter(p => p.statut === "Planifiée").length;
-      document.getElementById("kpiPlanInProgress").textContent = planifications.filter(p => p.statut === "En cours").length;
-      document.getElementById("kpiPlanDone").textContent = planifications.filter(p => p.statut === "Réalisée").length;
-    }
+        window.viderPlanification = function() { 
+            selectedData = []; 
+            checkedKeys.clear(); 
+            initFormDefaults();
+            saveAndRefresh(); 
+        };
 
-    function getStatusBadge(statut) {
-      if (statut === "En cours") return '<span class="badge st-encours">En cours</span>';
-      if (statut === "Réalisée") return '<span class="badge st-realisee">Réalisée</span>';
-      if (statut === "Reportée") return '<span class="badge st-reportee">Reportée</span>';
-      return '<span class="badge st-planifiee">Planifiée</span>';
-    }
+        function saveAndRefresh() {
+            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
+            renderPlanification();
+        }
 
-    function renderTable() {
-      const q = document.getElementById("filterSearch").value.trim().toLowerCase();
-      const fReg = document.getElementById("filterRegion").value;
-      const fType = document.getElementById("filterType").value;
-      const fStat = document.getElementById("filterStatut").value;
-      const fMonth = document.getElementById("filterMonth").value;
+        window.exportToExcel = function() {
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            if (!activeItems || activeItems.length === 0) { alert("Aucun point coché à exporter."); return; }
+            const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
+            const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+            const rows = [headers.map(h => `"${h}"`).join(';'), ...activeItems.map(item => [escapeCSV(getItemVal(item, ['Processus'])), escapeCSV(getItemVal(item, ['Intitulé du risque', 'Intitulé risque'])), escapeCSV(getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle'])), escapeCSV(getItemVal(item, ['Points de contrôle', 'Point de contrôle']))].join(';'))];
+            const csvContent = '\uFEFF' + rows.join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a'); link.href = url; link.download = `Planification_Mission_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+        };
 
-      const filtered = planifications.filter(m => {
-        const matchText = !q ||
-          String(m.code_mission || "").toLowerCase().includes(q) ||
-          String(m.site || "").toLowerCase().includes(q) ||
-          String(m.controleur_id || "").toLowerCase().includes(q) ||
-          String(m.controleur_nom || "").toLowerCase().includes(q) ||
-          String(m.objet || "").toLowerCase().includes(q);
-        const matchReg = !fReg || normalizeRegionCode(m.region) === fReg;
-        const matchType = !fType || m.type_mission === fType;
-        const matchStat = !fStat || m.statut === fStat;
-        const matchMonth = !fMonth || String(m.date_debut || "").startsWith(fMonth);
-        return matchText && matchReg && matchType && matchStat && matchMonth;
-      });
+        window.lancerFicheControle = async function() {
+            const region = document.getElementById('audit-region').value;
+            const entite = document.getElementById('audit-entite').value;
+            const typeControle = document.getElementById('audit-type-controle').value;
+            const dateDebut = document.getElementById('audit-date-debut').value;
+            const dateFin = document.getElementById('audit-date-fin').value;
+            const controleurs = document.getElementById('audit-controleurs').value.trim();
 
-      const tbody = document.getElementById("planificationTableBody");
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="8" style="text-align:center;padding:24px;color:#64748b;">
-              Aucune mission planifiée ne correspond aux critères sélectionnés.
-            </td>
-          </tr>`;
-        return;
-      }
+            if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
+                alert("Veuillez remplir l'ensemble des informations de la mission (Région, Centre, Type de contrôle, Dates et Contrôleurs) avant de continuer.");
+                return;
+            }
 
-      tbody.innerHTML = filtered.map(m => {
-        const docId = m.firestore_id || m.record_uid;
-        const canEdit = currentUser.role === "ADMIN" || m.cree_par_id === currentUser.username;
-        return `
-          <tr>
-            <td><strong>${m.code_mission || "-"}</strong></td>
-            <td><strong>${normalizeRegionCode(m.region)}</strong></td>
-            <td>
-              <div style="font-weight:600;">${m.site || "-"}</div>
-              ${m.objet ? `<div style="font-size:11px;color:#64748b;">${m.objet}</div>` : ""}
-            </td>
-            <td><span class="type-pill">${m.type_mission || "-"}</span></td>
-            <td style="white-space:nowrap;">${m.date_debut || "-"} <i class="fas fa-arrow-right" style="font-size:10px;color:#94a3b8;"></i> ${m.date_fin || "-"}</td>
-            <td>
-              <div style="font-weight:600;">${m.controleur_id || m.cree_par_id || "-"}</div>
-              <div style="font-size:11px;color:#64748b;">${m.controleur_nom || m.cree_par_nom || ""}</div>
-            </td>
-            <td>${getStatusBadge(m.statut)}</td>
-            <td style="white-space:nowrap;">
-              ${canEdit ? `
-                <button type="button" class="btn btn-primary btn-sm" onclick="window.editMission('${docId}')" title="Modifier">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteMission('${docId}', '${String(m.code_mission || "").replace(/'/g, "\\'")}')" title="Supprimer">
-                  <i class="fas fa-trash"></i>
-                </button>
-              ` : `<span style="font-size:11px;color:#94a3b8;"><i class="fas fa-eye"></i> Lecture seule</span>`}
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            if (!activeItems || activeItems.length === 0) {
+                alert("Veuillez cocher au moins un point de contrôle.");
+                return;
+            }
 
-    // 6. Export Excel
-    document.getElementById("btnExportPlanExcel").addEventListener("click", () => {
-      const rows = planifications.map(m => ({
-        "N° Mission": m.code_mission,
-        "Région": normalizeRegionCode(m.region),
-        "Site / Centre": m.site,
-        "Nature": m.type_mission,
-        "Date Début": m.date_debut,
-        "Date Fin": m.date_fin,
-        "Statut": m.statut,
-        "Identifiant Contrôleur": m.controleur_id || m.cree_par_id,
-        "Nom Contrôleur": m.controleur_nom || m.cree_par_nom,
-        "Objet / Observations": m.objet || ""
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Planification_FCI");
-      XLSX.writeFile(wb, `Planification_FCI_BaridAlMaghrib_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    });
+            const btn = document.getElementById('btnLancerFC');
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement mission...';
+            }
 
-    // Écouteurs filtres
-    document.getElementById("filterSearch").addEventListener("input", renderTable);
-    document.getElementById("filterRegion").addEventListener("change", renderTable);
-    document.getElementById("filterType").addEventListener("change", renderTable);
-    document.getElementById("filterStatut").addEventListener("change", renderTable);
-    document.getElementById("filterMonth").addEventListener("change", renderTable);
-    document.getElementById("btnClearFilters").addEventListener("click", () => {
-      document.getElementById("filterSearch").value = "";
-      if (currentUser.role !== "CONTROLEUR") {
-        document.getElementById("filterRegion").value = "";
-      }
-      document.getElementById("filterType").value = "";
-      document.getElementById("filterStatut").value = "";
-      document.getElementById("filterMonth").value = "";
-      renderTable();
-    });
-  </script>
+            try {
+                const idMission = "MIS-" + Date.now();
+                const activeCampaign = {
+                    metadata: {
+                        idMission,
+                        region,
+                        entite,
+                        typeControle,
+                        dateDebutControle: dateDebut,
+                        dateFinControle: dateFin,
+                        controleurs,
+                        cree_par_id: currentUser.username,
+                        cree_par_nom: currentUser.nom,
+                        createdAt: new Date().toISOString()
+                    },
+                    pointsControle: activeItems
+                };
+
+                const missionPayload = {
+                    idMission: idMission,
+                    region: region,
+                    typeControle: typeControle,
+                    date: new Date().toISOString().slice(0, 10),
+                    dateDebut: dateDebut,
+                    dateFin: dateFin,
+                    entite: entite,
+                    controleur: controleurs,
+                    pointsSelectionnes: activeItems
+                };
+
+                if (window.FCIDatabase && typeof window.FCIDatabase.enregistrerMission === "function") {
+                    await window.FCIDatabase.enregistrerMission(missionPayload, true);
+                } else {
+                    const localDb = JSON.parse(localStorage.getItem("fci_database") || '{"missions":[],"bdd":[]}');
+                    localDb.missions = localDb.missions || [];
+                    localDb.missions.push({ ...missionPayload, cree_par_id: currentUser.username, cree_par_nom: currentUser.nom });
+                    localStorage.setItem("fci_database", JSON.stringify(localDb));
+                }
+
+                localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
+                window.viderPlanification();
+                window.location.href = 'FicheControle.html';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOriginal;
+                }
+            }
+        };
+
+        function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
+        function escapeJsString(str) { return str ? String(str).replace(/'/g, "\\'") : ''; }
+
+        // Initialisation immédiate après authentification
+        initFormDefaults();
+        loadPlanificationData();
+    </script>
 </body>
 </html>
