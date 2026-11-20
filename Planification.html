@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - Planification de la Mission de Contrôle</title>
+    <!-- Protection de session FCI -->
+    <script src="fci-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -23,7 +25,7 @@
         body { display: flex; background-color: var(--bg-light); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
 
         .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary-blue); color: var(--white);
+            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFF;
             display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0; z-index: 100;
             box-shadow: 2px 0 10px rgba(0,0,0,0.15); justify-content: space-between; overflow-y: auto;
         }
@@ -61,7 +63,7 @@
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; background-color: #FFF; }
-        .form-group select:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .form-group select:disabled { background-color: #F1F5F9; color: #475569; cursor: not-allowed; font-weight: 600; }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
@@ -99,7 +101,7 @@
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div>
             <div class="sidebar-brand">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
@@ -113,11 +115,8 @@
                 <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
             </ul>
         </div>
-        <div>
-            <div id="fci-sidebar-user-slot"></div>
-            <div class="sidebar-footer">
-                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-            </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
@@ -222,25 +221,9 @@
         </div>
     </main>
 
-    <!-- Scripts Firebase Auth & BDD Centralisée -->
-    <script type="module" src="fci-auth.js"></script>
-    <script type="module" src="fci-db-manager.js"></script>
+    <script src="fci-db-manager.js"></script>
 
-    <script type="module">
-        import { initFCISessionGuard } from "./fci-auth.js";
-        import { syncFromFirestoreToLocal, upsertFCIRecord } from "./fci-db-manager.js";
-
-        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
-        const currentUser = await initFCISessionGuard();
-        await syncFromFirestoreToLocal(currentUser);
-
-        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
-        const userBox = document.getElementById("fci-auth-sidebar-box");
-        const slot = document.getElementById("fci-sidebar-user-slot");
-        if (userBox && slot) {
-            slot.appendChild(userBox);
-        }
-
+    <script>
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
                 "MARRAKECH CTD",
@@ -403,14 +386,6 @@
         let checkedKeys = new Set();
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
-        function normalizePlanifRegionCode(code) {
-            const c = String(code || "").trim().toUpperCase();
-            if (c === "OUJEDA" || c === "OUJDA") return "OUEJDA";
-            if (c === "LAYOUNE") return "LAAYOUNE";
-            if (c === "CASABLANCA") return "CASA";
-            return c;
-        }
-
         function getItemVal(item, keys) {
             for (let k of keys) {
                 if (item && item[k] !== undefined) return item[k];
@@ -418,13 +393,53 @@
             return '';
         }
 
+        function normalizeRegionOption(reg) {
+            if (!reg) return "";
+            const up = String(reg).trim().toUpperCase();
+            if (up === "OUJEDA") return "OUEJDA";
+            return up;
+        }
+
+        function applyUserScopePlanif(profile) {
+            if (!profile) return;
+            const regionSelect = document.getElementById('audit-region');
+            const ctrlInput = document.getElementById('audit-controleurs');
+
+            if (profile.region && profile.region !== "SIEGE") {
+                const targetReg = normalizeRegionOption(profile.region);
+                if (regionSelect && Array.from(regionSelect.options).some(o => o.value === targetReg)) {
+                    regionSelect.value = targetReg;
+                    regionSelect.disabled = true;
+                    onRegionChangePlanif();
+                }
+            }
+
+            if (ctrlInput && !ctrlInput.value.trim() && profile.nomComplet) {
+                ctrlInput.removeAttribute('readonly');
+                ctrlInput.value = profile.nomComplet;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initFormDefaults();
+            loadPlanificationData();
+            const cachedProfile = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (cachedProfile) {
+                applyUserScopePlanif(cachedProfile);
+            }
+        });
+
+        window.addEventListener('fci-auth-ready', (e) => {
+            applyUserScopePlanif(e.detail);
+        });
+
         window.addEventListener('storage', (e) => {
             if (e.key === PLANIFICATION_PC_KEY) {
                 loadPlanificationData();
             }
         });
 
-        window.onRegionChangePlanif = function() {
+        function onRegionChangePlanif() {
             const region = document.getElementById('audit-region').value;
             const entiteSelect = document.getElementById('audit-entite');
 
@@ -438,24 +453,28 @@
             entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
                 centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
             entiteSelect.disabled = false;
-        };
+        }
 
         function initFormDefaults() {
             const today = new Date().toISOString().split('T')[0];
-            const regionEl = document.getElementById('audit-region');
-            const ctrlInput = document.getElementById('audit-controleurs');
+            const cachedProfile = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            const regionSelect = document.getElementById('audit-region');
 
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                const userReg = normalizePlanifRegionCode(currentUser.region_code);
-                regionEl.value = CENTRES_PAR_REGION[userReg] ? userReg : "";
-                regionEl.disabled = true;
-                window.onRegionChangePlanif();
-                ctrlInput.value = currentUser.nom || currentUser.username || "";
-                ctrlInput.removeAttribute('readonly');
+            if (cachedProfile && cachedProfile.region && cachedProfile.region !== "SIEGE") {
+                regionSelect.value = normalizeRegionOption(cachedProfile.region);
+                regionSelect.disabled = true;
+                onRegionChangePlanif();
             } else {
-                regionEl.value = "";
-                regionEl.disabled = false;
-                window.onRegionChangePlanif();
+                regionSelect.disabled = false;
+                regionSelect.value = "";
+                onRegionChangePlanif();
+            }
+
+            const ctrlInput = document.getElementById('audit-controleurs');
+            if (cachedProfile && cachedProfile.nomComplet) {
+                ctrlInput.removeAttribute('readonly');
+                ctrlInput.value = cachedProfile.nomComplet;
+            } else {
                 ctrlInput.value = "";
                 ctrlInput.setAttribute('readonly', 'readonly');
             }
@@ -594,12 +613,12 @@
             document.getElementById('kpi-pc-count').innerText = pc;
         }
 
-        window.togglePointCheckbox = function(key, isChecked) {
+        function togglePointCheckbox(key, isChecked) {
             if (isChecked) checkedKeys.add(key); else checkedKeys.delete(key);
             renderPlanification();
-        };
+        }
 
-        window.toggleProcessusCheckboxes = function(procName, isChecked) {
+        function toggleProcessusCheckboxes(procName, isChecked) {
             selectedData.forEach(item => {
                 if (getItemVal(item, ['Processus']) === procName) {
                     const key = getPointKey(item);
@@ -607,20 +626,20 @@
                 }
             });
             renderPlanification();
-        };
+        }
 
-        window.selectAllPoints = function() { checkedKeys = new Set(selectedData.map(getPointKey)); renderPlanification(); };
-        window.deselectAllPoints = function() { checkedKeys.clear(); renderPlanification(); };
+        function selectAllPoints() { checkedKeys = new Set(selectedData.map(getPointKey)); renderPlanification(); }
+        function deselectAllPoints() { checkedKeys.clear(); renderPlanification(); }
 
-        window.removePoint = function(index) {
+        function removePoint(index) {
             if (index >= 0 && index < selectedData.length) {
                 checkedKeys.delete(getPointKey(selectedData[index]));
                 selectedData.splice(index, 1);
                 saveAndRefresh();
             }
-        };
+        }
 
-        window.removeProcessus = function(procName) {
+        function removeProcessus(procName) {
             selectedData = selectedData.filter(item => {
                 if (getItemVal(item, ['Processus']) === procName) {
                     checkedKeys.delete(getPointKey(item)); return false;
@@ -628,21 +647,21 @@
                 return true;
             });
             saveAndRefresh();
-        };
+        }
 
-        window.viderPlanification = function() { 
+        function viderPlanification() { 
             selectedData = []; 
             checkedKeys.clear(); 
             initFormDefaults();
             saveAndRefresh(); 
-        };
+        }
 
         function saveAndRefresh() {
             localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(selectedData));
             renderPlanification();
         }
 
-        window.exportToExcel = function() {
+        function exportToExcel() {
             const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
             if (!activeItems || activeItems.length === 0) { alert("Aucun point coché à exporter."); return; }
             const headers = ['Processus', 'Intitulé du risque', 'Intitulé Contrôle', 'Points de contrôle'];
@@ -653,9 +672,9 @@
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a'); link.href = url; link.download = `Planification_Mission_${new Date().toISOString().slice(0, 10)}.csv`;
             document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
-        };
+        }
 
-        window.lancerFicheControle = async function() {
+        async function lancerFicheControle() {
             const region = document.getElementById('audit-region').value;
             const entite = document.getElementById('audit-entite').value;
             const typeControle = document.getElementById('audit-type-controle').value;
@@ -682,6 +701,13 @@
             }
 
             try {
+                const currentUser = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+                const traceInfo = currentUser ? {
+                    creePar: currentUser.nomComplet || currentUser.identifiant,
+                    creeParId: currentUser.identifiant,
+                    creeParRole: currentUser.role
+                } : {};
+
                 const idMission = "MIS-" + Date.now();
                 const activeCampaign = {
                     metadata: {
@@ -692,14 +718,13 @@
                         dateDebutControle: dateDebut,
                         dateFinControle: dateFin,
                         controleurs,
-                        cree_par_id: currentUser.username,
-                        cree_par_nom: currentUser.nom,
+                        ...traceInfo,
                         createdAt: new Date().toISOString()
                     },
                     pointsControle: activeItems
                 };
 
-                const missionPayload = {
+                await FCIDatabase.enregistrerMission({
                     idMission: idMission,
                     region: region,
                     typeControle: typeControle,
@@ -708,20 +733,12 @@
                     dateFin: dateFin,
                     entite: entite,
                     controleur: controleurs,
+                    ...traceInfo,
                     pointsSelectionnes: activeItems
-                };
-
-                if (window.FCIDatabase && typeof window.FCIDatabase.enregistrerMission === "function") {
-                    await window.FCIDatabase.enregistrerMission(missionPayload, true);
-                } else {
-                    const localDb = JSON.parse(localStorage.getItem("fci_database") || '{"missions":[],"bdd":[]}');
-                    localDb.missions = localDb.missions || [];
-                    localDb.missions.push({ ...missionPayload, cree_par_id: currentUser.username, cree_par_nom: currentUser.nom });
-                    localStorage.setItem("fci_database", JSON.stringify(localDb));
-                }
+                }, true);
 
                 localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
-                window.viderPlanification();
+                viderPlanification();
                 window.location.href = 'FicheControle.html';
             } finally {
                 if (btn) {
@@ -729,14 +746,10 @@
                     btn.innerHTML = texteOriginal;
                 }
             }
-        };
+        }
 
         function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
         function escapeJsString(str) { return str ? String(str).replace(/'/g, "\\'") : ''; }
-
-        // Initialisation immédiate après authentification
-        initFormDefaults();
-        loadPlanificationData();
     </script>
 </body>
 </html>
