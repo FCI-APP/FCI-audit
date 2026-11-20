@@ -317,42 +317,42 @@
                 <div class="multi-filter-bar">
                     <div class="filter-select-group filter-date-theme">
                         <label for="selectFiltreDate"><i class="fa-regular fa-calendar-days"></i> Date de contrôle</label>
-                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre('DATE')">
                             <option value="TOUS">-- Toutes les dates --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-region-theme">
                         <label for="selectFiltreRegion"><i class="fa-solid fa-map-location-dot"></i> Région</label>
-                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre('REGION')">
                             <option value="TOUS">-- Toutes les régions --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-site-theme">
                         <label for="selectFiltreSite"><i class="fa-solid fa-building"></i> Site</label>
-                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre('SITE')">
                             <option value="TOUS">-- Tous les sites --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-processus-theme">
                         <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
-                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre('PROCESSUS')">
                             <option value="TOUS">-- Tous les processus --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-statut-theme">
                         <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut</label>
-                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre('STATUT')">
                             <option value="TOUS">-- Tous les statuts --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-type-theme">
                         <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle</label>
-                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre('TYPE')">
                             <option value="TOUS">-- Tous les types --</option>
                         </select>
                     </div>
@@ -517,14 +517,37 @@
             else if (filtreTypeActif === 'Vérification') selType.classList.add('select-type-Verification');
         }
 
-        function appliquerMultiFiltre() {
+        function appliquerMultiFiltre(sourceChange = null) {
             filtreDateActif = document.getElementById('selectFiltreDate').value;
             filtreRegionActif = document.getElementById('selectFiltreRegion').value;
             filtreSiteActif = document.getElementById('selectFiltreSite').value;
             filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
             filtreStatutActif = document.getElementById('selectFiltreStatut').value;
             filtreTypeActif = document.getElementById('selectFiltreType').value;
-            mettreAJourStylesSelectsFiltres();
+
+            // Réinitialisation en cascade des niveaux inférieurs lors d'un changement parent
+            if (sourceChange === 'DATE') {
+                filtreRegionActif = 'TOUS';
+                filtreSiteActif = 'TOUS';
+                filtreProcessusActif = 'TOUS';
+                filtreStatutActif = 'TOUS';
+                filtreTypeActif = 'TOUS';
+            } else if (sourceChange === 'REGION') {
+                filtreSiteActif = 'TOUS';
+                filtreProcessusActif = 'TOUS';
+                filtreStatutActif = 'TOUS';
+                filtreTypeActif = 'TOUS';
+            } else if (sourceChange === 'SITE') {
+                filtreProcessusActif = 'TOUS';
+                filtreStatutActif = 'TOUS';
+                filtreTypeActif = 'TOUS';
+            } else if (sourceChange === 'PROCESSUS') {
+                filtreStatutActif = 'TOUS';
+                filtreTypeActif = 'TOUS';
+            } else if (sourceChange === 'STATUT') {
+                filtreTypeActif = 'TOUS';
+            }
+
             chargerBDDEnVisuel();
         }
 
@@ -545,21 +568,32 @@
             chargerBDDEnVisuel();
         }
 
+        function filtrerSubsetBDD(lignesUnifiees, exclure = []) {
+            return lignesUnifiees.filter(l => {
+                if (!exclure.includes('DATE') && filtreDateActif !== 'TOUS' && l.dateCtrlVerif !== filtreDateActif) return false;
+                if (!exclure.includes('REGION') && filtreRegionActif !== 'TOUS' && l.region !== filtreRegionActif) return false;
+                if (!exclure.includes('SITE') && filtreSiteActif !== 'TOUS' && l.entite !== filtreSiteActif) return false;
+                if (!exclure.includes('PROCESSUS') && filtreProcessusActif !== 'TOUS' && l.processus !== filtreProcessusActif) return false;
+                if (!exclure.includes('STATUT') && filtreStatutActif !== 'TOUS' && l.statutInfo.code !== filtreStatutActif) return false;
+                if (!exclure.includes('TYPE') && filtreTypeActif !== 'TOUS' && l.typeInfo.label !== filtreTypeActif) return false;
+                return true;
+            });
+        }
+
         function peuplerSelectDynamique(selectEl, valeursUniques, valeurActive, libelleTous, formatterLabelFn = null) {
-            if (!selectEl) return;
-            const liste = [...valeursUniques];
-            if (valeurActive !== 'TOUS' && !liste.includes(valeurActive)) {
-                liste.unshift(valeurActive);
-            }
+            if (!selectEl) return 'TOUS';
+            const valeurFinale = (valeurActive !== 'TOUS' && valeursUniques.includes(valeurActive)) ? valeurActive : 'TOUS';
 
             let html = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">${libelleTous} (${valeursUniques.length})</option>`;
-            liste.forEach((val, idx) => {
+            valeursUniques.forEach((val, idx) => {
                 const c = getCouleurOptionIndex(idx);
                 const label = formatterLabelFn ? formatterLabelFn(val) : val;
-                const selected = val === valeurActive ? 'selected' : '';
+                const selected = val === valeurFinale ? 'selected' : '';
                 html += `<option value="${val}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${label}</option>`;
             });
             selectEl.innerHTML = html;
+            selectEl.value = valeurFinale;
+            return valeurFinale;
         }
 
         function mettreAJourCompteursOptions(lignesUnifiees) {
@@ -570,8 +604,10 @@
             const selStatut = document.getElementById('selectFiltreStatut');
             const selType = document.getElementById('selectFiltreType');
 
+            // 1. Dates disponibles (filtrées par tous les autres critères actifs sauf DATE)
+            const baseDates = filtrerSubsetBDD(lignesUnifiees, ['DATE']);
             const datesMap = new Map();
-            lignesUnifiees.forEach(l => {
+            baseDates.forEach(l => {
                 if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
                     datesMap.set(l.dateCtrlVerif, l.dateISO);
                 }
@@ -579,81 +615,98 @@
             const datesTriees = [...datesMap.entries()]
                 .sort((a, b) => a[1].localeCompare(b[1]))
                 .map(entry => entry[0]);
-            peuplerSelectDynamique(
+            filtreDateActif = peuplerSelectDynamique(
                 selDate,
                 datesTriees,
                 filtreDateActif,
                 'Toutes les dates',
-                (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
+                (d) => `📅 ${d} (${baseDates.filter(l => l.dateCtrlVerif === d).length})`
             );
 
+            // 2. Régions correspondant aux filtres actifs (notamment la Date choisie)
+            const baseRegions = filtrerSubsetBDD(lignesUnifiees, ['REGION']);
             const regionsTriees = [...new Set(
-                lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
+                baseRegions.map(l => l.region).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
-            peuplerSelectDynamique(
+            filtreRegionActif = peuplerSelectDynamique(
                 selRegion,
                 regionsTriees,
                 filtreRegionActif,
                 'Toutes les régions',
-                (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
+                (r) => `📍 ${r} (${baseRegions.filter(l => l.region === r).length})`
             );
 
-            const sourceSites = filtreRegionActif === 'TOUS'
-                ? lignesUnifiees
-                : lignesUnifiees.filter(l => l.region === filtreRegionActif);
+            // 3. Sites correspondant à la Date et à la Région choisies
+            const baseSites = filtrerSubsetBDD(lignesUnifiees, ['SITE']);
             const sitesTries = [...new Set(
-                sourceSites.map(l => l.entite).filter(v => v && v !== '--')
+                baseSites.map(l => l.entite).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
-            peuplerSelectDynamique(
+            filtreSiteActif = peuplerSelectDynamique(
                 selSite,
                 sitesTries,
                 filtreSiteActif,
                 'Tous les sites',
-                (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
+                (s) => `🏢 ${s} (${baseSites.filter(l => l.entite === s).length})`
             );
 
+            // 4. Processus correspondant aux sélections précédentes
+            const baseProcessus = filtrerSubsetBDD(lignesUnifiees, ['PROCESSUS']);
             const processusTries = [...new Set(
-                lignesUnifiees.map(l => l.processus).filter(v => v && v !== '--')
+                baseProcessus.map(l => l.processus).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
-            peuplerSelectDynamique(
+            filtreProcessusActif = peuplerSelectDynamique(
                 selProcessus,
                 processusTries,
                 filtreProcessusActif,
                 'Tous les processus',
-                (p) => `⚙️ ${p} (${lignesUnifiees.filter(l => l.processus === p).length})`
+                (p) => `⚙️ ${p} (${baseProcessus.filter(l => l.processus === p).length})`
             );
 
+            // 5. Statuts correspondant aux sélections précédentes
+            const baseStatuts = filtrerSubsetBDD(lignesUnifiees, ['STATUT']);
             const STATUTS_CONFIG = [
                 { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
                 { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
                 { code: 'NON_CLOTURE', label: '🔴 Non clôturé', bg: '#FEE2E2', color: '#991B1B' }
             ];
             const statutsPresents = STATUTS_CONFIG.filter(st =>
-                lignesUnifiees.some(l => l.statutInfo.code === st.code) || filtreStatutActif === st.code
+                baseStatuts.some(l => l.statutInfo.code === st.code)
             );
-            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${lignesUnifiees.length})</option>`;
+            if (filtreStatutActif !== 'TOUS' && !statutsPresents.some(st => st.code === filtreStatutActif)) {
+                filtreStatutActif = 'TOUS';
+            }
+            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${baseStatuts.length})</option>`;
             statutsPresents.forEach(st => {
-                const nb = lignesUnifiees.filter(l => l.statutInfo.code === st.code).length;
+                const nb = baseStatuts.filter(l => l.statutInfo.code === st.code).length;
                 const sel = filtreStatutActif === st.code ? 'selected' : '';
                 htmlStatut += `<option value="${st.code}" ${sel} style="background-color:${st.bg}; color:${st.color}; font-weight:700;">${st.label} (${nb})</option>`;
             });
             selStatut.innerHTML = htmlStatut;
+            selStatut.value = filtreStatutActif;
 
+            // 6. Types de contrôle correspondant aux sélections précédentes
+            const baseTypes = filtrerSubsetBDD(lignesUnifiees, ['TYPE']);
             const TYPES_CONFIG = [
                 { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
                 { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
                 { val: 'Vérification', label: '🟢 Vérification', bg: '#D1FAE5', color: '#065F46' }
             ];
             const typesPresents = TYPES_CONFIG.filter(tp =>
-                lignesUnifiees.some(l => l.typeInfo.label === tp.val) || filtreTypeActif === tp.val
+                baseTypes.some(l => l.typeInfo.label === tp.val)
             );
-            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${lignesUnifiees.length})</option>`;
+            if (filtreTypeActif !== 'TOUS' && !typesPresents.some(tp => tp.val === filtreTypeActif)) {
+                filtreTypeActif = 'TOUS';
+            }
+            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${baseTypes.length})</option>`;
             typesPresents.forEach(tp => {
-                const nb = lignesUnifiees.filter(l => l.typeInfo.label === tp.val).length;
+                const nb = baseTypes.filter(l => l.typeInfo.label === tp.val).length;
                 const sel = filtreTypeActif === tp.val ? 'selected' : '';
                 htmlType += `<option value="${tp.val}" ${sel} style="background-color:${tp.bg}; color:${tp.color}; font-weight:700;">${tp.label} (${nb})</option>`;
             });
             selType.innerHTML = htmlType;
+            selType.value = filtreTypeActif;
+
+            mettreAJourStylesSelectsFiltres();
         }
 
         function chargerBDDEnVisuel() {
@@ -747,15 +800,7 @@
 
             mettreAJourCompteursOptions(lignesUnifiees);
 
-            const lignesAffichees = lignesUnifiees.filter(l => {
-                const matchDate = (filtreDateActif === 'TOUS') || (l.dateCtrlVerif === filtreDateActif);
-                const matchRegion = (filtreRegionActif === 'TOUS') || (l.region === filtreRegionActif);
-                const matchSite = (filtreSiteActif === 'TOUS') || (l.entite === filtreSiteActif);
-                const matchProcessus = (filtreProcessusActif === 'TOUS') || (l.processus === filtreProcessusActif);
-                const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
-                const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
-                return matchDate && matchRegion && matchSite && matchProcessus && matchStatut && matchType;
-            });
+            const lignesAffichees = filtrerSubsetBDD(lignesUnifiees, []);
 
             dernieresLignesAffichees = lignesAffichees;
             totalBadge.innerText = lignesAffichees.length;
