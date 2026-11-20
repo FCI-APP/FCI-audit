@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — Fiche de contrôle intelligente (FCI)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="fci-auth.js"></script>
+  <style>
+    :root {
+      --navy: #003366;
+      --navy-dark: #002244;
+      --gold: #EAAA00;
+      --gold-hover: #d49800;
+      --bg: #f1f5f9;
+      --text: #1e293b;
+      --muted: #64748b;
+      --danger: #dc2626;
+      --border: #cbd5e1;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 55%, #0a4988 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      border-top: 5px solid var(--gold);
+    }
+
+    .login-header {
+      background: var(--navy);
+      color: #ffffff;
+      padding: 28px 30px 24px;
+      text-align: center;
+    }
+
+    .brand-badge {
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 14px;
+      border-radius: 14px;
+      background: rgba(234, 170, 0, 0.16);
+      border: 2px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--gold);
+    }
+
+    .login-header h1 {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+      margin-bottom: 6px;
+    }
+
+    .login-header p {
+      font-size: 12.5px;
+      color: rgba(255, 255, 255, 0.82);
+      font-weight: 500;
+    }
+
+    .login-body {
+      padding: 28px 30px 24px;
+    }
+
+    .error-box {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+      padding: 11px 13px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .error-box.visible {
+      display: flex;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 7px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper i.prefix-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 12px 42px 12px 40px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrapper input:focus {
+      outline: none;
+      border-color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.12);
+    }
+
+    .toggle-pwd {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 14px;
+    }
+
+    .toggle-pwd:hover {
+      color: var(--navy);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 10px;
+      background: var(--navy);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 6px;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--navy-dark);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .login-footer {
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .login-footer span {
+      color: var(--navy);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="brand-badge">
+        <i class="fas fa-shield-halved"></i>
+      </div>
+      <h1>Fiche de contrôle intelligente (FCI)</h1>
+      <p>Direction Contrôle Générale — Contrôle Permanent</p>
+    </div>
+
+    <div class="login-body">
+      <div id="errorBox" class="error-box" role="alert">
+        <i class="fas fa-circle-exclamation"></i>
+        <span id="errorText"></span>
+      </div>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="form-group">
+          <label for="identifiant">Identifiant utilisateur</label>
+          <div class="input-wrapper">
+            <i class="fas fa-user prefix-icon"></i>
+            <input
+              type="text"
+              id="identifiant"
+              name="identifiant"
+              placeholder="Ex. admin-siege"
+              required
+              autofocus
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <div class="input-wrapper">
+            <i class="fas fa-lock prefix-icon"></i>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              required
+            />
+            <button type="button" id="togglePwd" class="toggle-pwd" title="Afficher/Masquer">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn-submit">
+          <i class="fas fa-right-to-bracket"></i>
+          <span>Se connecter</span>
+        </button>
+      </form>
+    </div>
+
+    <div class="login-footer">
+      <span>FCI v1.0 © 2026 - 2027</span> — Accès réservé au personnel habilité
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById("loginForm");
+      const identifiantInput = document.getElementById("identifiant");
+      const passwordInput = document.getElementById("password");
+      const togglePwdBtn = document.getElementById("togglePwd");
+      const submitBtn = document.getElementById("submitBtn");
+      const errorBox = document.getElementById("errorBox");
+      const errorText = document.getElementById("errorText");
+
+      function showError(msg) {
+        errorText.textContent = msg;
+        errorBox.classList.add("visible");
+      }
+
+      function hideError() {
+        errorBox.classList.remove("visible");
+      }
+
+      function translateFirebaseError(err) {
+        const code = err && err.code ? err.code : "";
+        if (
+          code === "auth/invalid-credential" ||
+          code === "auth/user-not-found" ||
+          code === "auth/wrong-password" ||
+          code === "auth/invalid-email"
+        ) {
+          return "Identifiant ou mot de passe incorrect.";
+        }
+        if (code === "auth/too-many-requests") {
+          return "Trop de tentatives échouées. Réessayez dans quelques minutes.";
+        }
+        if (code === "auth/network-request-failed") {
+          return "Erreur réseau. Vérifiez votre connexion Internet.";
+        }
+        return err && err.message ? err.message : "Erreur de connexion.";
+      }
+
+      togglePwdBtn.addEventListener("click", () => {
+        const isPwd = passwordInput.type === "password";
+        passwordInput.type = isPwd ? "text" : "password";
+        togglePwdBtn.innerHTML = isPwd
+          ? '<i class="fas fa-eye-slash"></i>'
+          : '<i class="fas fa-eye"></i>';
+      });
+
+      // Si déjà connecté avec un profil valide, rediriger vers index.html
+      window.FCIAuth.ensureFirebaseReady().then(({ auth }) => {
+        auth.onAuthStateChanged((user) => {
+          if (user && window.FCIAuth.getCurrentUser()) {
+            window.location.replace("index.html");
+          }
+        });
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideError();
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Connexion en cours...</span>';
+
+        try {
+          await window.FCIAuth.login(identifiantInput.value, passwordInput.value);
+          window.location.replace("index.html");
+        } catch (err) {
+          showError(translateFirebaseError(err));
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="fas fa-right-to-bracket"></i><span>Se connecter</span>';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
