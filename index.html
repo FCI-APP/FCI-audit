@@ -1,486 +1,862 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
-    <!-- FontAwesome v6.4.0 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- SheetJS (xlsx) pour Export Excel -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Référentiel de contrôle — FCI v1.0 | Barid Al-Maghrib</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-blue: #003366;
+      --dark-blue: #002244;
+      --accent-gold: #EAAA00;
+      --bg-light: #f1f5f9;
+      --border-color: #cbd5e1;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
 
-    <style>
-        :root {
-            --primary: #003366;
-            --primary-dark: #002244;
-            --accent: #EAAA00;
-            --bg-body: #F4F6F9;
-            --bg-card: #FFFFFF;
-            --text-main: #2C3E50;
-            --text-muted: #6C757D;
-            --border-color: #E2E8F0;
-            --sidebar-width: 250px;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg-light);
+      color: var(--text-main);
+    }
 
-        /* SIDEBAR NAVIGATION */
-        .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
-            height: 100vh; display: flex; flex-direction: column; justify-content: space-between; z-index: 100;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.15);
-        }
+    /* Barre latérale fixe */
+    .sidebar {
+      width: 265px;
+      background: var(--primary-blue);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
+    }
 
-        .sidebar-header { padding: 20px 15px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
-        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #FFF; line-height: 1.4; }
-        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
+    .sidebar-header {
+      padding: 20px 18px;
+      background: var(--dark-blue);
+      border-bottom: 3px solid var(--accent-gold);
+    }
 
-        .sidebar-nav { list-style: none; padding: 10px 0; flex-grow: 1; }
-        .sidebar-nav li a {
-            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600; transition: all 0.2s;
-        }
-        .sidebar-nav li a:hover, .sidebar-nav li.active a {
-            background: rgba(234, 170, 0, 0.15); color: var(--accent); border-left: 4px solid var(--accent);
-        }
+    .sidebar-header .org-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
 
-        .badge-status { font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-        .badge-active { background: var(--accent); color: var(--primary-dark); }
+    .sidebar-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
 
-        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); line-height: 1.4; }
+    .sidebar-header small {
+      display: block;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
 
-        /* MAIN CONTENT */
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; width: calc(100vw - var(--sidebar-width)); }
+    .sidebar-nav {
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+    }
 
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 12px; }
-        .page-header h1 { font-size: 1.5rem; color: var(--primary); font-weight: 800; }
-        .page-header p { font-size: 0.85rem; color: var(--text-muted); }
+    .sidebar-nav a {
+      color: #e2e8f0;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
 
-        .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; width: 100%; }
-        .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
-        
-        .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 15px; width: 100%; }
-        .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-        .filter-group label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between; }
-        .filter-group select { 
-            width: 100%; max-width: 100%; padding: 9px; border: 1px solid var(--border-color); 
-            border-radius: 6px; font-size: 0.88rem; outline: none; background: #FFF; 
-            text-overflow: ellipsis; white-space: nowrap; overflow: hidden; 
-        }
+    .sidebar-nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
 
-        .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
-        .btn-refresh:hover { background-color: #BAE6FD; }
-        .btn-accent { background: var(--accent); color: var(--primary); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-excel { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
-        .btn-print { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .sidebar-nav a.active {
+      background: rgba(234, 170, 0, 0.18);
+      color: var(--accent-gold);
+      font-weight: 700;
+      border-left: 3px solid var(--accent-gold);
+    }
 
-        .table-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
-        .table-toolbar { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
-        .selection-count { background: #FEF3C7; color: #D97706; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; }
-        .table-container { max-height: 500px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-        th { background: var(--primary); color: #FFF; padding: 14px 16px; font-weight: 700; position: sticky; top: 0; z-index: 10; }
-        td { padding: 12px 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        tr.selected-row { background-color: #FEFCE8; }
+    /* Contenu principal */
+    .main-content {
+      margin-left: 265px;
+      flex: 1;
+      padding: 24px;
+      max-width: calc(100vw - 265px);
+    }
 
-        .empty-state { text-align: center; padding: 50px 20px; }
-        .table-footer { padding: 12px 20px; background: #F8FAFC; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-muted); }
+    .topbar {
+      background: #ffffff;
+      padding: 18px 22px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 5px solid var(--primary-blue);
+    }
 
-        @media print {
-            .sidebar, .filter-card, .table-toolbar button, .table-footer { display: none !important; }
-            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .table-container { max-height: none !important; overflow: visible !important; }
-            .table-card { border: none !important; box-shadow: none !important; }
-        }
-    </style>
+    .topbar h1 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--dark-blue);
+    }
+
+    .topbar p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 9px 14px;
+      border-radius: 7px;
+      border: none;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.92; }
+    .btn:active { transform: scale(0.99); }
+    .btn-primary { background: var(--primary-blue); color: #ffffff; }
+    .btn-gold { background: var(--accent-gold); color: var(--dark-blue); }
+    .btn-success { background: #15803d; color: #ffffff; }
+    .btn-outline { background: #ffffff; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
+    .btn-danger { background: #dc2626; color: #ffffff; }
+    .btn-sm { padding: 5px 9px; font-size: 11.5px; }
+
+    /* KPIs Référentiel */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 15px 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      border-top: 3px solid var(--primary-blue);
+    }
+
+    .kpi-card.gold { border-top-color: var(--accent-gold); }
+    .kpi-card .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+    .kpi-card .kpi-value { font-size: 22px; font-weight: 700; color: var(--dark-blue); margin-top: 4px; }
+
+    /* Barre de filtres */
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .filters-bar {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr auto;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .filters-bar input,
+    .filters-bar select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 7px;
+      font-size: 13px;
+      outline: none;
+      background: #ffffff;
+    }
+
+    .filters-bar input:focus,
+    .filters-bar select:focus {
+      border-color: var(--primary-blue);
+    }
+
+    /* Tableau Référentiel */
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    th {
+      background: var(--primary-blue);
+      color: #ffffff;
+      text-align: left;
+      padding: 11px 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+      line-height: 1.45;
+    }
+
+    tr:hover td { background: #f8fafc; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge-syst { background: #dbeafe; color: #1e40af; }
+    .badge-them { background: #fef3c7; color: #92400e; }
+    .badge-enc { background: #dcfce7; color: #166534; }
+    .badge-risk-high { background: #fee2e2; color: #991b1b; }
+    .badge-risk-med { background: #ffedd5; color: #9a3412; }
+    .badge-risk-low { background: #f1f5f9; color: #334155; }
+
+    .readonly-banner {
+      display: none;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e3a8a;
+      padding: 8px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .admin-only { display: none; }
+
+    /* Modal Ajout / Édition */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 20, 45, 0.55);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 640px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      background: var(--primary-blue);
+      color: #ffffff;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid var(--accent-gold);
+    }
+
+    .modal-header h3 { font-size: 15px; font-weight: 700; }
+
+    .modal-body {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field.full { grid-column: 1 / -1; }
+    .form-field label { font-size: 12px; font-weight: 700; color: var(--dark-blue); }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 9px 11px;
+      border: 1px solid var(--border-color);
+      border-radius: 7px;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--dark-blue);
+      color: #ffffff;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-left: 4px solid var(--accent-gold);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 1200;
+    }
+
+    @media (max-width: 1024px) {
+      .filters-bar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
-            </div>
-            <div class="sidebar-nav-title">Navigation Feuilles</div>
-            <ul class="sidebar-nav">
-                <li class="active">
-                    <a href="index.html">
-                        <span>1. Référentiel de contrôle</span>
-                        <span class="badge-status badge-active">Actif</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="Planification.html">
-                        <span>2. Planification</span>
-                        <span class="badge-status badge-active">Disponible</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-active">Disponible</span></a>
-                </li>
-                <li>
-                    <a href="FicheEncaisses.html"><span>4. Vérification Encaisses</span><span class="badge-status badge-active">Disponible</span></a>
-                </li>
-                <li>
-                    <a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-active">Disponible</span></a>
-                </li>
-                <li>
-                    <a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a>
-                </li>
-            </ul>
+  <!-- Barre latérale fixe -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="org-tag">Barid Al-Maghrib</div>
+      <h2>Fiche de Contrôle Intelligente</h2>
+      <small>Direction Contrôle Générale • FCI v1.0</small>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="active"><i class="fas fa-book"></i> 1. Référentiel de contrôle</a>
+      <a href="Planification.html"><i class="fas fa-calendar-alt"></i> 2. Planification</a>
+      <a href="FicheControle.html"><i class="fas fa-clipboard-check"></i> 3. Fiche de Contrôle (FC)</a>
+      <a href="FicheEncaisses.html"><i class="fas fa-coins"></i> 4. Vérification Encaisses</a>
+      <a href="BDD.html"><i class="fas fa-database"></i> 5. Base de Données (BDD)</a>
+      <a href="TDB.html"><i class="fas fa-chart-line"></i> 6. Analyse & Pilotage</a>
+    </nav>
+    <!-- Le panneau utilisateur (Profil, Admin Comptes, Changer MDP Admin, Déconnexion) est injecté ici par fci-auth.js -->
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1>1. Référentiel de Contrôle Permanent</h1>
+        <p>Catalogue des domaines, processus et points de contrôle — Division Contrôle Permanent</p>
+      </div>
+      <div class="actions-group">
+        <span id="readonlyBadge" class="readonly-banner">
+          <i class="fas fa-lock"></i> Mode Consultation (Lecture seule)
+        </span>
+        <button type="button" id="btnSeedFromJson" class="btn btn-outline admin-only" title="Charger referentiel.json dans Firestore">
+          <i class="fas fa-cloud-upload-alt"></i> Charger referentiel.json
+        </button>
+        <label for="excelImportInput" class="btn btn-outline admin-only" style="margin:0;">
+          <i class="fas fa-file-import"></i> Importer Excel
+        </label>
+        <input type="file" id="excelImportInput" accept=".xlsx,.xls" style="display:none;" />
+        <button type="button" id="btnExportExcel" class="btn btn-success">
+          <i class="fas fa-file-excel"></i> Exporter Excel
+        </button>
+        <button type="button" id="btnOpenAddModal" class="btn btn-gold admin-only">
+          <i class="fas fa-plus-circle"></i> Nouveau point de contrôle
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicateurs synthétiques -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total points de contrôle</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-label">Contrôle Systématique</div>
+        <div class="kpi-value" id="kpiSyst">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Contrôle Thématique</div>
+        <div class="kpi-value" id="kpiThem">0</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-label">Vérification Encaisses</div>
+        <div class="kpi-value" id="kpiEnc">0</div>
+      </div>
+    </div>
+
+    <!-- Filtres et Tableau -->
+    <div class="card">
+      <div class="filters-bar">
+        <input type="text" id="searchInput" placeholder="Rechercher par code, domaine, processus, libellé du point de contrôle..." />
+        <select id="filterType">
+          <option value="">Tous les types de contrôle</option>
+          <option value="Systématique">Systématique</option>
+          <option value="Thématique">Thématique</option>
+          <option value="Vérification Encaisses">Vérification Encaisses</option>
+        </select>
+        <select id="filterDomaine">
+          <option value="">Tous les domaines</option>
+        </select>
+        <select id="filterRisque">
+          <option value="">Tous les niveaux de risque</option>
+          <option value="Élevé">Risque Élevé</option>
+          <option value="Moyen">Risque Moyen</option>
+          <option value="Faible">Risque Faible</option>
+        </select>
+        <button type="button" id="btnResetFilters" class="btn btn-outline" title="Réinitialiser les filtres">
+          <i class="fas fa-undo"></i>
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Type</th>
+              <th>Domaine</th>
+              <th>Processus</th>
+              <th>Point de contrôle & Objectif</th>
+              <th>Risque</th>
+              <th>Périodicité</th>
+              <th class="admin-only">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="referentielTableBody">
+            <tr>
+              <td colspan="8" style="text-align:center;padding:24px;color:#64748b;">
+                <i class="fas fa-spinner fa-spin"></i> Chargement du référentiel sécurisé...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Ajout / Modification (Réservé ADMIN-AIT BABA) -->
+  <div class="modal-backdrop" id="pointModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Ajouter un point de contrôle</h3>
+        <button type="button" id="btnCloseModal" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;">&times;</button>
+      </div>
+      <form id="pointForm">
+        <input type="hidden" id="editDocId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label for="fCode">Code du point *</label>
+            <input type="text" id="fCode" placeholder="Ex: CP-GUICHET-01" required />
+          </div>
+          <div class="form-field">
+            <label for="fType">Type de contrôle *</label>
+            <select id="fType" required>
+              <option value="Systématique">Systématique</option>
+              <option value="Thématique">Thématique</option>
+              <option value="Vérification Encaisses">Vérification Encaisses</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fDomaine">Domaine *</label>
+            <input type="text" id="fDomaine" placeholder="Ex: Opérations Financières & Guichet" required />
+          </div>
+          <div class="form-field">
+            <label for="fProcessus">Processus *</label>
+            <input type="text" id="fProcessus" placeholder="Ex: Gestion des encaisses et arrêtés" required />
+          </div>
+          <div class="form-field full">
+            <label for="fLibelle">Libellé du point de contrôle *</label>
+            <textarea id="fLibelle" rows="3" placeholder="Description précise de la vérification à effectuer..." required></textarea>
+          </div>
+          <div class="form-field full">
+            <label for="fModeOperatoire">Mode opératoire / Pièces justificatives</label>
+            <textarea id="fModeOperatoire" rows="2" placeholder="Documents à vérifier, échantillonnage, seuils..."></textarea>
+          </div>
+          <div class="form-field">
+            <label for="fRisque">Niveau de risque</label>
+            <select id="fRisque">
+              <option value="Élevé">Élevé</option>
+              <option value="Moyen" selected>Moyen</option>
+              <option value="Faible">Faible</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="fPeriodicite">Périodicité recommandée</label>
+            <select id="fPeriodicite">
+              <option value="Mensuelle">Mensuelle</option>
+              <option value="Trimestrielle">Trimestrielle</option>
+              <option value="Semestrielle">Semestrielle</option>
+              <option value="Inopinée">Inopinée</option>
+            </select>
+          </div>
         </div>
-        <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+        <div class="modal-footer">
+          <button type="button" id="btnCancelModal" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
         </div>
-    </aside>
+      </form>
+    </div>
+  </div>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div>
-                <h1>Feuille 1 : Référentiel de contrôle</h1>
-                <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
-            </div>
-            <div class="btn-group" style="display:flex; align-items:center; gap:10px;">
-                <span class="selection-count" id="bdd-status">Chargement BDD...</span>
-                <button type="button" class="btn btn-refresh" onclick="window.location.reload()" title="Actualiser la page">
-                    <i class="fa-solid fa-arrows-rotate"></i> Actualiser
-                </button>
-            </div>
-        </div>
+  <div class="status-toast" id="statusToast"></div>
 
-        <div class="filter-card">
-            <div class="filter-title"><i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique</div>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label>1. Processus <span id="count-proc">0</span></label>
-                    <select id="select-processus" onchange="onProcessusChange()">
-                        <option value="">-- Sélectionner un Processus --</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>2. Intitulé du risque <span id="count-risque">0</span></label>
-                    <select id="select-risque" onchange="onRisqueChange()" disabled>
-                        <option value="">-- Choisir d'abord un Processus --</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>3. Intitulé contrôle <span id="count-controle">0</span></label>
-                    <select id="select-controle" onchange="onControleChange()" disabled>
-                        <option value="">-- Choisir d'abord un Risque --</option>
-                    </select>
-                </div>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 15px; flex-wrap: wrap; gap: 10px;">
-                <div style="font-size: 0.85rem; color: var(--text-muted);">Filtre actif : <strong id="filter-status-desc">Aucun processus sélectionné</strong></div>
-                <div style="display:flex; gap:10px;">
-                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
-                    <button type="button" class="btn btn-primary" onclick="appliquerFiltre()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC (<span id="btn-count">0</span> PC)</button>
-                </div>
-            </div>
-        </div>
+  <!-- Scripts Firebase Auth & Database Manager -->
+  <script type="module" src="fci-auth.js"></script>
+  <script type="module" src="fci-db-manager.js"></script>
+  <script type="module">
+    import { initFCISessionGuard, db, buildAuditMetadata, logAuditAction } from "./fci-auth.js";
+    import { getLocalDatabase, saveLocalDatabase } from "./fci-db-manager.js";
+    import {
+      collection,
+      getDocs,
+      doc,
+      setDoc,
+      deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        <div class="table-card">
-            <div class="table-toolbar">
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-outline" onclick="selectionnerTout()"><i class="fa-regular fa-square-check"></i> Sélectionner tout</button>
-                    <button type="button" class="btn btn-outline" onclick="deselectionnerTout()"><i class="fa-regular fa-square"></i> Désélectionner tout</button>
-                    <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
-                </div>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button type="button" class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
-                    <button type="button" class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
-                    <button type="button" class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
-                </div>
-            </div>
+    let currentUser = null;
+    let isAdmin = false;
+    let referentielList = [];
 
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px; text-align:center;"><input type="checkbox" id="master-checkbox" onchange="toggleMasterCheckbox(this)"></th>
-                            <th style="width:20%;">PROCESSUS</th>
-                            <th style="width:25%;">INTITULÉ DU RISQUE</th>
-                            <th style="width:25%;">INTITULÉ CONTRÔLE</th>
-                            <th style="width:30%;">POINTS DE CONTRÔLE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-                <div id="empty-state" class="empty-state">
-                    <i class="fa-solid fa-clipboard-list" style="font-size:2.5rem; color: var(--text-muted); margin-bottom:10px;"></i>
-                    <h3>Aucun point de contrôle affiché</h3>
-                    <p>Sélectionnez un Processus dans le formulaire ci-dessus puis cliquez sur [Afficher PC].</p>
-                </div>
-            </div>
+    function showToast(msg) {
+      const t = document.getElementById("statusToast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3200);
+    }
 
-            <div class="table-footer">
-                <div><span id="rendered-count">0</span> point(s) affiché(s)</div>
-                <div><span id="selected-footer-count">0</span> sélectionné(s) pour la Planification</div>
-            </div>
-        </div>
-    </main>
+    // 1. Vérification de session et droits
+    currentUser = await initFCISessionGuard();
+    isAdmin = currentUser.role === "ADMIN";
 
-    <!-- Inclusion du script BDD Centralisée -->
-    <script src="fci-db-manager.js"></script>
+    if (isAdmin) {
+      document.querySelectorAll(".admin-only").forEach(el => {
+        el.style.display = el.tagName === "TH" || el.tagName === "TD" ? "table-cell" : "inline-flex";
+      });
+    } else {
+      document.getElementById("readonlyBadge").style.display = "inline-flex";
+    }
 
-    <script>
-        let bddData = [];
-        let filteredData = [];
-        let selectedPoints = new Set();
-        const PLANIFICATION_PC_KEY = "fci_planification_pc";
+    // 2. Chargement du référentiel depuis Firestore (avec synchro localStorage)
+    async function loadReferentiel() {
+      const snap = await getDocs(collection(db, "fci_referentiel"));
+      referentielList = snap.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => String(a.code || "").localeCompare(String(b.code || "")));
 
-        document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
+      // Mise à jour du cache localStorage pour FicheControle.html & FicheEncaisses.html
+      const localDb = getLocalDatabase();
+      localDb.referentiel = referentielList;
+      saveLocalDatabase(localDb);
 
-        function getItemVal(item, keys) {
-            for (let k of keys) {
-                if (item && item[k] !== undefined) return item[k];
-            }
-            return '';
+      populateDomaineFilter();
+      updateKPIs();
+      renderTable();
+    }
+
+    function populateDomaineFilter() {
+      const select = document.getElementById("filterDomaine");
+      const currentVal = select.value;
+      const domaines = [...new Set(referentielList.map(r => r.domaine).filter(Boolean))].sort();
+      select.innerHTML = '<option value="">Tous les domaines</option>' +
+        domaines.map(d => `<option value="${d}">${d}</option>`).join("");
+      select.value = currentVal;
+    }
+
+    function updateKPIs() {
+      document.getElementById("kpiTotal").textContent = referentielList.length;
+      document.getElementById("kpiSyst").textContent = referentielList.filter(r => r.type === "Systématique").length;
+      document.getElementById("kpiThem").textContent = referentielList.filter(r => r.type === "Thématique").length;
+      document.getElementById("kpiEnc").textContent = referentielList.filter(r => r.type === "Vérification Encaisses").length;
+    }
+
+    function getTypeBadge(type) {
+      if (type === "Systématique") return '<span class="badge badge-syst">Systématique</span>';
+      if (type === "Thématique") return '<span class="badge badge-them">Thématique</span>';
+      return '<span class="badge badge-enc">Vérification Encaisses</span>';
+    }
+
+    function getRiskBadge(risque) {
+      if (risque === "Élevé") return '<span class="badge badge-risk-high">Élevé</span>';
+      if (risque === "Faible") return '<span class="badge badge-risk-low">Faible</span>';
+      return '<span class="badge badge-risk-med">Moyen</span>';
+    }
+
+    function renderTable() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const fType = document.getElementById("filterType").value;
+      const fDom = document.getElementById("filterDomaine").value;
+      const fRisk = document.getElementById("filterRisque").value;
+
+      const filtered = referentielList.filter(item => {
+        const matchText = !q ||
+          String(item.code || "").toLowerCase().includes(q) ||
+          String(item.domaine || "").toLowerCase().includes(q) ||
+          String(item.processus || "").toLowerCase().includes(q) ||
+          String(item.libelle || "").toLowerCase().includes(q);
+        const matchType = !fType || item.type === fType;
+        const matchDom = !fDom || item.domaine === fDom;
+        const matchRisk = !fRisk || item.risque === fRisk;
+        return matchText && matchType && matchDom && matchRisk;
+      });
+
+      const tbody = document.getElementById("referentielTableBody");
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${isAdmin ? 8 : 7}" style="text-align:center;padding:24px;color:#64748b;">
+              Aucun point de contrôle trouvé dans le référentiel.
+            </td>
+          </tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => `
+        <tr>
+          <td><strong>${item.code || "-"}</strong></td>
+          <td>${getTypeBadge(item.type)}</td>
+          <td>${item.domaine || "-"}</td>
+          <td>${item.processus || "-"}</td>
+          <td>
+            <div style="font-weight:600;color:#0f172a;">${item.libelle || "-"}</div>
+            ${item.mode_operatoire ? `<div style="font-size:11.5px;color:#64748b;margin-top:3px;"><i class="fas fa-info-circle"></i> ${item.mode_operatoire}</div>` : ""}
+          </td>
+          <td>${getRiskBadge(item.risque)}</td>
+          <td>${item.periodicite || "Mensuelle"}</td>
+          ${isAdmin ? `
+            <td style="white-space:nowrap;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="window.editRefPoint('${item.id}')" title="Modifier">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteRefPoint('${item.id}', '${String(item.code || "").replace(/'/g, "\\'")}')" title="Supprimer">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          ` : ""}
+        </tr>
+      `).join("");
+    }
+
+    // 3. Actions CRUD (Administrateur uniquement)
+    const modal = document.getElementById("pointModal");
+    const form = document.getElementById("pointForm");
+
+    document.getElementById("btnOpenAddModal").addEventListener("click", () => {
+      if (!isAdmin) return;
+      form.reset();
+      document.getElementById("editDocId").value = "";
+      document.getElementById("modalTitle").textContent = "Nouveau point de contrôle";
+      modal.classList.add("open");
+    });
+
+    document.getElementById("btnCloseModal").addEventListener("click", () => modal.classList.remove("open"));
+    document.getElementById("btnCancelModal").addEventListener("click", () => modal.classList.remove("open"));
+
+    window.editRefPoint = (id) => {
+      if (!isAdmin) return;
+      const item = referentielList.find(r => r.id === id);
+      if (!item) return;
+      document.getElementById("editDocId").value = item.id;
+      document.getElementById("fCode").value = item.code || "";
+      document.getElementById("fType").value = item.type || "Systématique";
+      document.getElementById("fDomaine").value = item.domaine || "";
+      document.getElementById("fProcessus").value = item.processus || "";
+      document.getElementById("fLibelle").value = item.libelle || "";
+      document.getElementById("fModeOperatoire").value = item.mode_operatoire || "";
+      document.getElementById("fRisque").value = item.risque || "Moyen";
+      document.getElementById("fPeriodicite").value = item.periodicite || "Mensuelle";
+      document.getElementById("modalTitle").textContent = `Modifier le point ${item.code}`;
+      modal.classList.add("open");
+    };
+
+    window.deleteRefPoint = async (id, code) => {
+      if (!isAdmin) return;
+      await deleteDoc(doc(db, "fci_referentiel", id));
+      await logAuditAction("SUPPRESSION_REFERENTIEL", { code, id });
+      showToast(`Point ${code} supprimé du référentiel.`);
+      await loadReferentiel();
+    };
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!isAdmin) return;
+
+      const existingId = document.getElementById("editDocId").value;
+      const code = document.getElementById("fCode").value.trim().toUpperCase();
+      const docId = existingId || code.replace(/[^A-Z0-9_-]/g, "_");
+
+      const existingObj = referentielList.find(r => r.id === docId) || null;
+      const payload = buildAuditMetadata({
+        ...(existingObj || {}),
+        code,
+        type: document.getElementById("fType").value,
+        domaine: document.getElementById("fDomaine").value.trim(),
+        processus: document.getElementById("fProcessus").value.trim(),
+        libelle: document.getElementById("fLibelle").value.trim(),
+        mode_operatoire: document.getElementById("fModeOperatoire").value.trim(),
+        risque: document.getElementById("fRisque").value,
+        periodicite: document.getElementById("fPeriodicite").value
+      });
+
+      await setDoc(doc(db, "fci_referentiel", docId), payload, { merge: true });
+      await logAuditAction(existingId ? "MODIFICATION_REFERENTIEL" : "AJOUT_REFERENTIEL", { code });
+
+      modal.classList.remove("open");
+      showToast(`Point ${code} enregistré avec succès.`);
+      await loadReferentiel();
+    });
+
+    // 4. Chargement initial depuis referentiel.json (Admin uniquement)
+    document.getElementById("btnSeedFromJson").addEventListener("click", async () => {
+      if (!isAdmin) return;
+      try {
+        showToast("Lecture de referentiel.json en cours...");
+        const resp = await fetch("./referentiel.json");
+        if (!resp.ok) throw new Error("Fichier referentiel.json introuvable à la racine.");
+        const rawData = await resp.json();
+        const items = Array.isArray(rawData) ? rawData : (rawData.referentiel || rawData.points || []);
+
+        let imported = 0;
+        for (let i = 0; i < items.length; i++) {
+          const row = items[i];
+          const code = String(row.code || row.Code || `REF-${String(i + 1).padStart(3, "0")}`).trim().toUpperCase();
+          const docId = code.replace(/[^A-Z0-9_-]/g, "_");
+          const payload = buildAuditMetadata({
+            code,
+            type: row.type || row.Type || "Systématique",
+            domaine: row.domaine || row.Domaine || "Général",
+            processus: row.processus || row.Processus || "Standard",
+            libelle: row.libelle || row.Libelle || row.point || row.intitule || "",
+            mode_operatoire: row.mode_operatoire || row.ModeOperatoire || "",
+            risque: row.risque || row.Risque || "Moyen",
+            periodicite: row.periodicite || row.Periodicite || "Mensuelle"
+          });
+          await setDoc(doc(db, "fci_referentiel", docId), payload, { merge: true });
+          imported++;
         }
+        await logAuditAction("IMPORT_JSON_REFERENTIEL", { total: imported });
+        showToast(`${imported} points de contrôle synchronisés dans Firestore.`);
+        await loadReferentiel();
+      } catch (err) {
+        showToast("Erreur import JSON : " + err.message);
+      }
+    });
 
-        async function chargerBDD() {
-            const statusBadge = document.getElementById('bdd-status');
+    // 5. Import Excel (.xlsx) (Admin uniquement)
+    document.getElementById("excelImportInput").addEventListener("change", async (e) => {
+      if (!isAdmin || !e.target.files.length) return;
+      const file = e.target.files[0];
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer, { type: "array" });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-            const dynamicFiles = [
-                './referentiel.json?v=' + Date.now(),
-                './referentiel_controle_redresse-vf_Référentiel Redressé.json?v=' + Date.now()
-            ];
+      let count = 0;
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const code = String(r.Code || r.code || `REF-${String(i + 1).padStart(3, "0")}`).trim().toUpperCase();
+        const docId = code.replace(/[^A-Z0-9_-]/g, "_");
+        const payload = buildAuditMetadata({
+          code,
+          type: r.Type || r.type || "Systématique",
+          domaine: r.Domaine || r.domaine || "Général",
+          processus: r.Processus || r.processus || "Standard",
+          libelle: r.Libelle || r["Point de contrôle"] || r.libelle || "",
+          mode_operatoire: r["Mode opératoire"] || r.mode_operatoire || "",
+          risque: r.Risque || r.risque || "Moyen",
+          periodicite: r.Périodicité || r.periodicite || "Mensuelle"
+        });
+        await setDoc(doc(db, "fci_referentiel", docId), payload, { merge: true });
+        count++;
+      }
+      await logAuditAction("IMPORT_EXCEL_REFERENTIEL", { fichier: file.name, total: count });
+      e.target.value = "";
+      showToast(`${count} points importés depuis Excel.`);
+      await loadReferentiel();
+    });
 
-            for (const path of dynamicFiles) {
-                try {
-                    const response = await fetch(path);
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (Array.isArray(data) && data.length > 0) {
-                            bddData = data;
-                            initialiserInterface(statusBadge);
-                            return;
-                        }
-                    }
-                } catch(e){}
-            }
+    // 6. Export Excel (.xlsx) (Tous profils)
+    document.getElementById("btnExportExcel").addEventListener("click", () => {
+      const exportRows = referentielList.map(r => ({
+        Code: r.code,
+        Type: r.type,
+        Domaine: r.domaine,
+        Processus: r.processus,
+        "Point de contrôle": r.libelle,
+        "Mode opératoire": r.mode_operatoire || "",
+        Risque: r.risque,
+        Périodicité: r.periodicite
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Referentiel_FCI");
+      XLSX.writeFile(wb, `Referentiel_FCI_BaridAlMaghrib_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    });
 
-            statusBadge.style.background = "#FDE8E8";
-            statusBadge.style.color = "#9B1C1C";
-            statusBadge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> referentiel.json introuvable`;
-        }
+    // Écouteurs de filtres
+    document.getElementById("searchInput").addEventListener("input", renderTable);
+    document.getElementById("filterType").addEventListener("change", renderTable);
+    document.getElementById("filterDomaine").addEventListener("change", renderTable);
+    document.getElementById("filterRisque").addEventListener("change", renderTable);
+    document.getElementById("btnResetFilters").addEventListener("click", () => {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("filterType").value = "";
+      document.getElementById("filterDomaine").value = "";
+      document.getElementById("filterRisque").value = "";
+      renderTable();
+    });
 
-        function initialiserInterface(statusBadge) {
-            statusBadge.style.background = "#DEF7EC";
-            statusBadge.style.color = "#03543F";
-            statusBadge.innerHTML = `BDD à jour (<strong id="total-pc-count">${bddData.length}</strong> PC)`;
-            document.getElementById('btn-count').textContent = bddData.length;
-            initialiserFiltres();
-            restaurerSelectionExistante();
-        }
-
-        function initialiserFiltres() {
-            const selectProc = document.getElementById('select-processus');
-            selectProc.innerHTML = '<option value="">-- Sélectionner un Processus --</option>';
-            const processusUniques = [...new Set(bddData.map(item => getItemVal(item, ['Processus'])))].filter(Boolean).sort();
-            document.getElementById('count-proc').textContent = processusUniques.length;
-            processusUniques.forEach(proc => {
-                const opt = document.createElement('option');
-                opt.value = proc; opt.textContent = proc;
-                selectProc.appendChild(opt);
-            });
-        }
-
-        function onProcessusChange() {
-            const proc = document.getElementById('select-processus').value;
-            const selectRisque = document.getElementById('select-risque');
-            const selectControle = document.getElementById('select-controle');
-            selectRisque.innerHTML = '<option value="">-- Sélectionner un Risque --</option>';
-            selectControle.innerHTML = '<option value="">-- Choisir d\'abord un Risque --</option>';
-            selectControle.disabled = true;
-
-            if (!proc) {
-                selectRisque.disabled = true;
-                document.getElementById('count-risque').textContent = "0";
-                document.getElementById('count-controle').textContent = "0";
-                document.getElementById('filter-status-desc').textContent = "Aucun processus sélectionné";
-                document.getElementById('btn-count').textContent = bddData.length;
-                return;
-            }
-
-            selectRisque.disabled = false;
-            const itemsProc = bddData.filter(d => getItemVal(d, ['Processus']) === proc);
-            const risquesUniques = [...new Set(itemsProc.map(d => getItemVal(d, ['Intitulé du risque', 'Intitulé risque'])))].filter(Boolean).sort();
-            document.getElementById('count-risque').textContent = risquesUniques.length;
-            document.getElementById('filter-status-desc').textContent = `Processus : ${proc}`;
-            document.getElementById('btn-count').textContent = itemsProc.length;
-
-            risquesUniques.forEach(r => {
-                const opt = document.createElement('option');
-                opt.value = r; opt.textContent = r;
-                selectRisque.appendChild(opt);
-            });
-        }
-
-        function onRisqueChange() {
-            const proc = document.getElementById('select-processus').value;
-            const risque = document.getElementById('select-risque').value;
-            const selectControle = document.getElementById('select-controle');
-            selectControle.innerHTML = '<option value="">-- Sélectionner un Contrôle --</option>';
-
-            if (!risque) {
-                selectControle.disabled = true;
-                document.getElementById('count-controle').textContent = "0";
-                return;
-            }
-
-            selectControle.disabled = false;
-            const itemsRisque = bddData.filter(d => getItemVal(d, ['Processus']) === proc && getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque);
-            const controlesUniques = [...new Set(itemsRisque.map(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle'])))].filter(Boolean).sort();
-            document.getElementById('count-controle').textContent = controlesUniques.length;
-            document.getElementById('filter-status-desc').textContent = `Processus : ${proc} > Risque : ${risque}`;
-            document.getElementById('btn-count').textContent = itemsRisque.length;
-
-            controlesUniques.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c; opt.textContent = c;
-                selectControle.appendChild(opt);
-            });
-        }
-
-        function onControleChange() {
-            const proc = document.getElementById('select-processus').value;
-            const risque = document.getElementById('select-risque').value;
-            const controle = document.getElementById('select-controle').value;
-            let items = bddData.filter(d => getItemVal(d, ['Processus']) === proc && getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque);
-            if (controle) items = items.filter(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle']) === controle);
-            document.getElementById('btn-count').textContent = items.length;
-        }
-
-        function reinitialiserFiltres() {
-            document.getElementById('select-processus').value = "";
-            onProcessusChange();
-            filteredData = [];
-            afficherTableau();
-        }
-
-        function appliquerFiltre() {
-            const proc = document.getElementById('select-processus').value;
-            const risque = document.getElementById('select-risque').value;
-            const controle = document.getElementById('select-controle').value;
-
-            filteredData = bddData.filter(item => {
-                const itemProc = getItemVal(item, ['Processus']);
-                const itemRisque = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
-                const itemCtrl = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
-
-                if (proc && itemProc !== proc) return false;
-                if (risque && itemRisque !== risque) return false;
-                if (controle && itemCtrl !== controle) return false;
-                return true;
-            });
-            afficherTableau();
-        }
-
-        function afficherTableau() {
-            const tbody = document.getElementById('table-body');
-            const emptyState = document.getElementById('empty-state');
-            tbody.innerHTML = '';
-
-            if (filteredData.length === 0) {
-                emptyState.style.display = 'block';
-                document.getElementById('rendered-count').textContent = '0';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-            document.getElementById('rendered-count').textContent = filteredData.length;
-
-            filteredData.forEach((item, index) => {
-                const tr = document.createElement('tr');
-                const isSelected = selectedPoints.has(JSON.stringify(item));
-                if (isSelected) tr.classList.add('selected-row');
-
-                const pName = getItemVal(item, ['Processus']);
-                const rName = getItemVal(item, ['Intitulé du risque', 'Intitulé risque']);
-                const cName = getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']);
-                const pcName = getItemVal(item, ['Points de contrôle', 'Point de contrôle']);
-
-                tr.innerHTML = `
-                    <td style="text-align:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelectPoint(${index}, this)"></td>
-                    <td><strong>${pName}</strong></td>
-                    <td>${rName}</td>
-                    <td>${cName}</td>
-                    <td>${pcName}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            mettreAJourCompteurSelection();
-        }
-
-        function toggleSelectPoint(index, cb) {
-            const itemStr = JSON.stringify(filteredData[index]);
-            if (cb.checked) {
-                selectedPoints.add(itemStr);
-                cb.closest('tr').classList.add('selected-row');
-            } else {
-                selectedPoints.delete(itemStr);
-                cb.closest('tr').classList.remove('selected-row');
-            }
-            mettreAJourCompteurSelection();
-        }
-
-        function selectionnerTout() {
-            filteredData.forEach(item => selectedPoints.add(JSON.stringify(item)));
-            afficherTableau();
-        }
-
-        function deselectionnerTout() {
-            filteredData.forEach(item => selectedPoints.delete(JSON.stringify(item)));
-            afficherTableau();
-        }
-
-        function toggleMasterCheckbox(masterCb) {
-            if (masterCb.checked) selectionnerTout();
-            else deselectionnerTout();
-        }
-
-        function mettreAJourCompteurSelection() {
-            const count = selectedPoints.size;
-            document.getElementById('selected-count').textContent = count;
-            document.getElementById('selected-footer-count').textContent = count;
-        }
-
-        function restaurerSelectionExistante() {
-            const saved = localStorage.getItem(PLANIFICATION_PC_KEY);
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    parsed.forEach(item => selectedPoints.add(JSON.stringify(item)));
-                    mettreAJourCompteurSelection();
-                } catch(e){}
-            }
-        }
-
-        function exporterExcel() {
-            if (selectedPoints.size === 0) { alert("Veuillez sélectionner au moins un point."); return; }
-            const dataToExport = Array.from(selectedPoints).map(item => JSON.parse(item));
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Points de Contrôle");
-            XLSX.writeFile(workbook, "FCI_Points_Controle_Selectionnes.xlsx");
-        }
-
-        function redirigerVersPlanification() {
-            if (selectedPoints.size === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle avant de passer à la Planification.");
-                return;
-            }
-            const dataToSave = Array.from(selectedPoints).map(item => JSON.parse(item));
-            localStorage.setItem(PLANIFICATION_PC_KEY, JSON.stringify(dataToSave));
-            window.location.href = "Planification.html";
-        }
-    </script>
+    await loadReferentiel();
+  </script>
 </body>
 </html>
