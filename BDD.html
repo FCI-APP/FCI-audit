@@ -1,942 +1,1104 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI v1.0 - Feuille 5 : Base de Données Centralisée (BDD)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. Base de Données (BDD) — FCI v1.0 | Barid Al-Maghrib</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --primary-blue: #003366;
+      --dark-blue: #002244;
+      --accent-gold: #EAAA00;
+      --bg-light: #f1f5f9;
+      --border-color: #cbd5e1;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+    }
 
-    <style>
-        :root {
-            --primary-blue: #003366;
-            --dark-blue: #002244;
-            --accent-gold: #EAAA00;
-            --bg-light: #F4F6F9;
-            --card-bg: #FFFFFF;
-            --text-dark: #1E293B;
-            --text-muted: #64748B;
-            --border-color: #E2E8F0;
-            --success: #10B981;
-            --danger: #EF4444;
-            --warning: #F59E0B;
-            --info: #3B82F6;
-            --sidebar-width: 250px;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; }
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg-light);
+      color: var(--text-main);
+    }
 
-        .sidebar {
-            width: var(--sidebar-width); background-color: var(--primary-blue); color: #FFFFFF; position: fixed;
-            top: 0; bottom: 0; left: 0; display: flex; flex-direction: column; justify-content: space-between;
-            z-index: 100; box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
-        }
+    /* Barre latérale fixe */
+    .sidebar {
+      width: 265px;
+      background: var(--primary-blue);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 100;
+      box-shadow: 4px 0 15px rgba(0, 0, 0, 0.12);
+    }
 
-        .sidebar-header { padding: 20px 15px; background-color: var(--dark-blue); text-align: center; border-bottom: 2px solid var(--accent-gold); }
-        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; color: #FFFFFF; line-height: 1.4; text-transform: uppercase; }
-        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+    .sidebar-header {
+      padding: 20px 18px;
+      background: var(--dark-blue);
+      border-bottom: 3px solid var(--accent-gold);
+    }
 
-        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
-        .sidebar-menu li a {
-            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8); text-decoration: none; font-size: 0.88rem; font-weight: 600;
-            border-left: 4px solid transparent; transition: all 0.2s;
-        }
-        .sidebar-menu li a:hover { background-color: rgba(255, 255, 255, 0.05); color: #FFFFFF; }
-        .sidebar-menu li.active a { background-color: rgba(234, 170, 0, 0.15); color: var(--accent-gold); border-left-color: var(--accent-gold); font-weight: 700; }
+    .sidebar-header .org-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
 
-        .badge-status { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 4px; text-transform: uppercase; }
-        .badge-actif { background-color: var(--accent-gold); color: var(--dark-blue); }
+    .sidebar-header h2 {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
 
-        .sidebar-footer { padding: 15px; background-color: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center; }
+    .sidebar-header small {
+      display: block;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-top: 4px;
+    }
 
-        .main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 30px; max-width: calc(100vw - var(--sidebar-width)); }
+    .sidebar-nav {
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      overflow-y: auto;
+    }
 
-        .page-header {
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
-            margin-bottom: 25px; background: var(--card-bg); padding: 20px 25px;
-            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
-        }
+    .sidebar-nav a {
+      color: #e2e8f0;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
-        .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    .sidebar-nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
 
-        .btn { padding: 9px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
-        .btn-primary { background-color: var(--primary-blue); color: #FFF; }
-        .btn-primary:hover { background-color: var(--dark-blue); }
-        .btn-refresh { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
-        .btn-refresh:hover { background-color: #BFDBFE; }
-        .btn-success { background-color: var(--success); color: #FFF; }
-        .btn-success:hover { background-color: #059669; }
-        .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
-        .btn-accent:hover { background-color: #d99b00; }
-        .btn-outline { background-color: #FFFFFF; color: var(--primary-blue); border: 1px solid #CBD5E1; }
-        .btn-outline:hover { background-color: #F1F5F9; }
-        .btn-neutral { background-color: #F1F5F9; color: var(--primary-blue); border: 1px solid #CBD5E1; }
-        .btn-neutral:hover { background-color: #E2E8F0; }
-        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
-        .btn-danger:hover { background-color: #FCA5A5; }
+    .sidebar-nav a.active {
+      background: rgba(234, 170, 0, 0.18);
+      color: var(--accent-gold);
+      font-weight: 700;
+      border-left: 3px solid var(--accent-gold);
+    }
 
-        .table-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 30px; }
-        .table-header-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; }
-        .table-card h3 { font-size: 1rem; color: var(--primary-blue); font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    /* Contenu principal */
+    .main-content {
+      margin-left: 265px;
+      flex: 1;
+      padding: 24px;
+      max-width: calc(100vw - 265px);
+      display: flex;
+      flex-direction: column;
+    }
 
-        .table-responsive-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-        }
+    .topbar {
+      background: #ffffff;
+      padding: 18px 22px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-left: 5px solid var(--primary-blue);
+    }
 
-        .multi-filter-bar {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(160px, 1fr));
-            gap: 10px;
-            align-items: end;
-            background: #F8FAFC;
-            padding: 12px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            width: 100%;
-        }
-        .filter-select-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            min-width: 0;
-        }
-        .filter-select-group label {
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .filter-dropdown {
-            padding: 7px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            border: 1px solid #CBD5E1;
-            outline: none;
-            cursor: pointer;
-            background-color: #FFFFFF;
-            color: var(--text-dark);
-            width: 100%;
-            transition: all 0.2s;
-        }
+    .topbar h1 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--dark-blue);
+    }
 
-        .filter-date-theme label { color: #1E40AF; }
-        .filter-date-theme .filter-dropdown { background-color: #EFF6FF; color: #1E3A8A; border-color: #93C5FD; }
+    .topbar p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
 
-        .filter-region-theme label { color: #6D28D9; }
-        .filter-region-theme .filter-dropdown { background-color: #F5F3FF; color: #5B21B6; border-color: #C4B5FD; }
+    .actions-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
 
-        .filter-site-theme label { color: #0F766E; }
-        .filter-site-theme .filter-dropdown { background-color: #F0FDFA; color: #115E59; border-color: #5EEAD4; }
+    .btn {
+      padding: 9px 14px;
+      border-radius: 7px;
+      border: none;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
 
-        .filter-processus-theme label { color: #B45309; }
-        .filter-processus-theme .filter-dropdown { background-color: #FFFBEB; color: #92400E; border-color: #FCD34D; }
+    .btn:hover { opacity: 0.92; }
+    .btn:active { transform: scale(0.99); }
+    .btn-primary { background: var(--primary-blue); color: #ffffff; }
+    .btn-gold { background: var(--accent-gold); color: var(--dark-blue); }
+    .btn-success { background: #15803d; color: #ffffff; }
+    .btn-pdf { background: #b91c1c; color: #ffffff; }
+    .btn-outline { background: #ffffff; color: var(--primary-blue); border: 1px solid var(--primary-blue); }
 
-        .filter-statut-theme label { color: #BE123C; }
-        .filter-statut-theme .filter-dropdown { background-color: #FFF1F2; color: #9F1239; border-color: #FDA4AF; }
+    /* Boutons d'action granulaires par ligne */
+    .action-icon-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11.5px;
+      transition: opacity 0.15s;
+    }
+    .action-icon-btn:hover { opacity: 0.85; }
+    .btn-edit-pen { background: #ea580c; }
+    .btn-followup-blue { background: #0284c7; }
+    .btn-del-red { background: #dc2626; }
 
-        .filter-type-theme label { color: #047857; }
-        .filter-type-theme .filter-dropdown { background-color: #ECFDF5; color: #065F46; border-color: #6EE7B7; }
+    /* KPIs BDD */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
 
-        .select-statut-EN_COURS { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #F59E0B !important; }
-        .select-statut-CLOTURE { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #10B981 !important; }
-        .select-statut-NON_CLOTURE { background-color: #FEE2E2 !important; color: #991B1B !important; border-color: #EF4444 !important; }
+    .kpi-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      border-top: 3px solid var(--primary-blue);
+    }
 
-        .select-type-Thematique { background-color: #DBEAFE !important; color: #1E40AF !important; border-color: #93C5FD !important; }
-        .select-type-Systematique { background-color: #FEF3C7 !important; color: #92400E !important; border-color: #FCD34D !important; }
-        .select-type-Verification { background-color: #D1FAE5 !important; color: #065F46 !important; border-color: #6EE7B7 !important; }
+    .kpi-card.gold { border-top-color: var(--accent-gold); }
+    .kpi-card.success { border-top-color: #16a34a; }
+    .kpi-card.danger { border-top-color: #dc2626; }
+    .kpi-card .kpi-label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+    .kpi-card .kpi-value { font-size: 21px; font-weight: 700; color: var(--dark-blue); margin-top: 4px; }
 
-        table.bdd-table {
-            width: 100%;
-            min-width: 1980px;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-            table-layout: auto;
-        }
-        table.bdd-table th, table.bdd-table td {
-            padding: 11px 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            border-right: 1px solid rgba(226, 232, 240, 0.55);
-            vertical-align: top;
-            line-height: 1.45;
-            word-break: normal;
-            overflow-wrap: break-word;
-        }
-        table.bdd-table th {
-            background-color: var(--primary-blue);
-            color: white;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 0.72rem;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
+    /* Carte principale & Filtres en cascade colorés */
+    .card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
 
-        .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
-        .col-region { width: 115px; min-width: 115px; white-space: nowrap; }
-        .col-centre { width: 175px; min-width: 175px; }
-        .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
-        .col-risque { width: 220px; min-width: 220px; }
-        .col-controle { width: 230px; min-width: 230px; }
-        .col-pc { width: 260px; min-width: 260px; }
-        .col-constat { width: 290px; min-width: 290px; background-color: rgba(248, 250, 252, 0.45); }
-        .col-num { width: 62px; min-width: 62px; text-align: center !important; white-space: nowrap; }
-        .col-tc { width: 78px; min-width: 78px; text-align: center !important; white-space: nowrap; }
-        .col-badge { width: 150px; min-width: 150px; text-align: center !important; white-space: nowrap; }
+    .card-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--dark-blue);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-        tr.row-thematique { background-color: #FFFFFF; }
-        tr.row-thematique:hover { background-color: #EFF6FF; }
+    .cascade-filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
 
-        tr.row-systematique { background-color: #FFFBEB; }
-        tr.row-systematique:hover { background-color: #FEF3C7; }
+    .filter-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
 
-        tr.row-verification { background-color: #ECFDF5; }
-        tr.row-verification:hover { background-color: #D1FAE5; }
+    .filter-box label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--dark-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
 
-        .badge-type {
-            display: inline-block; padding: 4px 9px; border-radius: 12px;
-            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
-        }
-        .badge-thematique { background-color: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
-        .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
-        .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
+    .filter-box select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1.5px solid #cbd5e1;
+      outline: none;
+      cursor: pointer;
+    }
 
-        /* Symbole Modifier (Stylo orange) sous Type de contrôle */
-        .badge-modifie-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 5px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.66rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            background-color: #FFEDD5;
-            color: #C2410C;
-            border: 1px solid #FB923C;
-        }
+    .filter-box select.f-date { background: #f8fafc; border-color: #94a3b8; color: #0f172a; }
+    .filter-box select.f-region { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
+    .filter-box select.f-site { background: #f0fdf4; border-color: #86efac; color: #14532d; }
+    .filter-box select.f-processus { background: #fefce8; border-color: #fde047; color: #713f12; }
+    .filter-box select.f-type { background: #faf5ff; border-color: #d8b4fe; color: #581c87; }
+    .filter-box select.f-statut { background: #fff1f2; border-color: #fda4af; color: #881337; }
+    .filter-box select.f-controleur { background: #f0f9ff; border-color: #7dd3fc; color: #0c4a6e; }
 
-        /* Symbole Suivi (Bleu) sous Type de contrôle */
-        .badge-suivi-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-top: 5px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.66rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            background-color: #DBEAFE;
-            color: #1D4ED8;
-            border: 1px solid #60A5FA;
-        }
+    .filter-box select:disabled {
+      opacity: 0.75;
+      cursor: not-allowed;
+    }
 
-        .badge-statut-constat {
-            display: inline-block; padding: 4px 10px; border-radius: 12px;
-            font-size: 0.72rem; font-weight: 800; text-transform: uppercase; white-space: nowrap;
-        }
-        .statut-encours { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
-        .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
-        .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
+    /* Tableau BDD */
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
 
-        @media (max-width: 1360px) {
-            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
 
-        @media print {
-            .sidebar, .header-actions-bdd, .multi-filter-bar { display: none !important; }
-            .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
-            .table-responsive-wrapper { overflow: visible !important; border: none !important; }
-            table.bdd-table { min-width: 100% !important; font-size: 0.7rem !important; }
-        }
-    </style>
+    th {
+      background: var(--primary-blue);
+      color: #ffffff;
+      text-align: left;
+      padding: 10px 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 9px 11px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+      line-height: 1.4;
+    }
+
+    tr:hover td { background: #f8fafc; }
+    tr.followup-row td { background: #f0f9ff; border-left: 3px solid #0284c7; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .b-fc { background: #dbeafe; color: #1e40af; }
+    .b-fv { background: #fef3c7; color: #92400e; }
+    .b-suivi-tag { background: #e0f2fe; color: #0369a1; }
+
+    .b-conforme { background: #dcfce7; color: #166534; }
+    .b-partiel { background: #fef3c7; color: #92400e; }
+    .b-nonconforme { background: #fee2e2; color: #991b1b; }
+
+    .b-ouvert { background: #fee2e2; color: #991b1b; }
+    .b-encours { background: #fef3c7; color: #92400e; }
+    .b-cloture { background: #dcfce7; color: #166534; }
+
+    /* Pied de tableau : Taux de conformité moyen */
+    tfoot td {
+      background: #f8fafc;
+      font-weight: 700;
+      padding: 11px 12px;
+      border-top: 2px solid var(--primary-blue);
+    }
+
+    .score-pill {
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #ffffff;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .score-green { background: #16a34a; }
+    .score-orange { background: #d97706; }
+    .score-red { background: #dc2626; }
+
+    /* Modal Modification / Suivi */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 20, 45, 0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 660px;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+      background: var(--primary-blue);
+      color: #ffffff;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid var(--accent-gold);
+    }
+
+    .modal-body {
+      padding: 18px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 13px;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-field.span-2 { grid-column: span 2; }
+
+    .form-field label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dark-blue);
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid var(--border-color);
+      border-radius: 7px;
+      font-size: 12.5px;
+      text-align: left;
+      outline: none;
+    }
+
+    .form-field input[readonly] {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .modal-footer {
+      padding: 12px 20px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .status-toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--dark-blue);
+      color: #ffffff;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-left: 4px solid var(--accent-gold);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      display: none;
+      z-index: 1200;
+    }
+
+    footer.app-footer {
+      margin-top: auto;
+      padding-top: 14px;
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    /* Impression PDF propre */
+    @media print {
+      .sidebar, .actions-group, .cascade-filters, .action-icon-btn, .status-toast {
+        display: none !important;
+      }
+      .main-content {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+      .card, .topbar {
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      body { background: #ffffff !important; }
+    }
+  </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
-            </div>
-            <div class="sidebar-nav-title">Navigation Feuilles</div>
-            <ul class="sidebar-menu">
-                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li class="active"><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Actif</span></a></li>
-                <li><a href="TDB.html"><span>6. Analyse & Pilotage</span><span class="badge-status badge-actif">Disponible</span></a></li>
-            </ul>
+  <!-- Barre latérale fixe -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="org-tag">Barid Al-Maghrib</div>
+      <h2>Fiche de Contrôle Intelligente</h2>
+      <small>Direction Contrôle Générale • FCI v1.0</small>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html"><i class="fas fa-book"></i> 1. Référentiel de contrôle</a>
+      <a href="Planification.html"><i class="fas fa-calendar-alt"></i> 2. Planification</a>
+      <a href="FicheControle.html"><i class="fas fa-clipboard-check"></i> 3. Fiche de Contrôle (FC)</a>
+      <a href="FicheEncaisses.html"><i class="fas fa-coins"></i> 4. Vérification Encaisses</a>
+      <a href="BDD.html" class="active"><i class="fas fa-database"></i> 5. Base de Données (BDD)</a>
+      <a href="TDB.html"><i class="fas fa-chart-line"></i> 6. Analyse & Pilotage</a>
+    </nav>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1>5. Base de Données Consolidée (BDD)</h1>
+        <p>Référentiel centralisé des contrôles thématiques, systématiques & vérifications d'encaisses</p>
+      </div>
+      <div class="actions-group">
+        <button type="button" id="btnExportBddExcel" class="btn btn-success">
+          <i class="fas fa-file-excel"></i> Exporter Excel (.xlsx)
+        </button>
+        <button type="button" id="btnPrintBddPdf" class="btn btn-pdf">
+          <i class="fas fa-file-pdf"></i> Imprimer / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Indicateurs synthétiques dynamiques (selon filtres actifs) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Enregistrements filtrés</div>
+        <div class="kpi-value" id="kpiBddTotal">0</div>
+      </div>
+      <div class="kpi-card success">
+        <div class="kpi-label">Conformes</div>
+        <div class="kpi-value" id="kpiBddConforme">0</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">Non conformes / Partiels</div>
+        <div class="kpi-value" id="kpiBddAnomalies">0</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-label">Suivis ouverts / En cours</div>
+        <div class="kpi-value" id="kpiBddOuverts">0</div>
+      </div>
+    </div>
+
+    <!-- Tableau BDD & Filtres en cascade -->
+    <div class="card">
+      <div class="card-title">
+        <span><i class="fas fa-filter"></i> Filtres multicritères en cascade & Exploitation BDD</span>
+        <span id="bddScopeBadge" style="font-size:11.5px;color:var(--text-muted);font-weight:600;"></span>
+      </div>
+
+      <div class="cascade-filters">
+        <div class="filter-box">
+          <label for="fDate">Date de contrôle</label>
+          <select id="fDate" class="f-date">
+            <option value="">Toutes les dates</option>
+          </select>
         </div>
-        <div class="sidebar-footer">
-            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+
+        <div class="filter-box">
+          <label for="fRegion">Région</label>
+          <select id="fRegion" class="f-region">
+            <option value="">Toutes les régions</option>
+          </select>
         </div>
-    </aside>
 
-    <main class="main-content">
-        <header class="page-header">
-            <div class="page-title">
-                <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
-            </div>
-            <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-                <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
-                <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
-                <button type="button" class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
-                <button type="button" class="btn btn-accent" onclick="exporterExcelBDD()"><i class="fa-solid fa-file-excel"></i> Télécharger fichier Excel</button>
-                <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
-                <button type="button" class="btn btn-primary" onclick="exporterBDDAction()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
-            </div>
-        </header>
-
-        <div class="table-card">
-            <div class="table-header-bar">
-                <h3>
-                    <i class="fa-solid fa-table-list"></i> Base de Données Unifiée des Constats (<span id="totalLignesBDD">0</span> ligne(s))
-                </h3>
-
-                <div class="multi-filter-bar">
-                    <div class="filter-select-group filter-date-theme">
-                        <label for="selectFiltreDate"><i class="fa-regular fa-calendar-days"></i> Date de contrôle</label>
-                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre('DATE')">
-                            <option value="TOUS">-- Toutes les dates --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-region-theme">
-                        <label for="selectFiltreRegion"><i class="fa-solid fa-map-location-dot"></i> Région</label>
-                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre('REGION')">
-                            <option value="TOUS">-- Toutes les régions --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-site-theme">
-                        <label for="selectFiltreSite"><i class="fa-solid fa-building"></i> Site</label>
-                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre('SITE')">
-                            <option value="TOUS">-- Tous les sites --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-processus-theme">
-                        <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
-                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre('PROCESSUS')">
-                            <option value="TOUS">-- Tous les processus --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-statut-theme">
-                        <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut</label>
-                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre('STATUT')">
-                            <option value="TOUS">-- Tous les statuts --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-type-theme">
-                        <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle</label>
-                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre('TYPE')">
-                            <option value="TOUS">-- Tous les types --</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="table-responsive-wrapper">
-                <table class="bdd-table">
-                    <thead>
-                        <tr>
-                            <th class="col-date">Date contrôle / vérif.</th>
-                            <th class="col-region">Région</th>
-                            <th class="col-centre">Centre / Entité</th>
-                            <th class="col-processus">Processus</th>
-                            <th class="col-risque">Risque</th>
-                            <th class="col-controle">Contrôle</th>
-                            <th class="col-pc">PC</th>
-                            <th class="col-num">Pop</th>
-                            <th class="col-num">Ech</th>
-                            <th class="col-num">OK</th>
-                            <th class="col-num">KO</th>
-                            <th class="col-tc">TC (%)</th>
-                            <th class="col-constat">Constat</th>
-                            <th class="col-badge">Statut constat</th>
-                            <th class="col-badge">Type de contrôle</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBDDUnifiee"></tbody>
-                </table>
-            </div>
+        <div class="filter-box">
+          <label for="fSite">Site / Centre</label>
+          <select id="fSite" class="f-site">
+            <option value="">Tous les sites</option>
+          </select>
         </div>
-    </main>
 
-    <script src="fci-db-manager.js"></script>
-    <script>
-        let filtreDateActif = 'TOUS';
-        let filtreRegionActif = 'TOUS';
-        let filtreSiteActif = 'TOUS';
-        let filtreProcessusActif = 'TOUS';
-        let filtreStatutActif = 'TOUS';
-        let filtreTypeActif = 'TOUS';
-        let dernieresLignesAffichees = [];
+        <div class="filter-box">
+          <label for="fProcessus">Processus / Caisse</label>
+          <select id="fProcessus" class="f-processus">
+            <option value="">Tous les processus</option>
+          </select>
+        </div>
 
-        const PALETTE_DYNAMIQUE = [
-            { bg: '#DBEAFE', text: '#1E40AF' },
-            { bg: '#F3E8FF', text: '#6B21A8' },
-            { bg: '#CCFBF1', text: '#115E59' },
-            { bg: '#FEF3C7', text: '#92400E' },
-            { bg: '#FCE7F3', text: '#9D174D' },
-            { bg: '#E0E7FF', text: '#3730A3' },
-            { bg: '#DCFCE7', text: '#166534' },
-            { bg: '#FFEDD5', text: '#9A3412' },
-            { bg: '#E0F2FE', text: '#075985' },
-            { bg: '#FAE8FF', text: '#86198F' }
-        ];
+        <div class="filter-box">
+          <label for="fType">Type de contrôle</label>
+          <select id="fType" class="f-type">
+            <option value="">Tous les types</option>
+          </select>
+        </div>
 
-        function getCouleurOptionIndex(index) {
-            return PALETTE_DYNAMIQUE[index % PALETTE_DYNAMIQUE.length];
+        <div class="filter-box">
+          <label for="fStatut">Statut Suivi</label>
+          <select id="fStatut" class="f-statut">
+            <option value="">Tous les statuts</option>
+          </select>
+        </div>
+
+        <div class="filter-box">
+          <label for="fControleur">Contrôleur</label>
+          <select id="fControleur" class="f-controleur">
+            <option value="">Tous les contrôleurs</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Réf. & Date</th>
+              <th>Région</th>
+              <th>Site / Centre</th>
+              <th>Type de contrôle</th>
+              <th>Processus / Code PC</th>
+              <th>Libellé / Détail Caisse</th>
+              <th>Évaluation</th>
+              <th>Constat & Recommandation</th>
+              <th>Statut Suivi</th>
+              <th>Traçabilité</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bddTableBody">
+            <tr>
+              <td colspan="11" style="text-align:center;padding:24px;color:#64748b;">
+                <i class="fas fa-spinner fa-spin"></i> Chargement de la base de données sécurisée...
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6" style="text-align:right;">Taux de conformité moyen sur la sélection affichée :</td>
+              <td colspan="5"><span id="bddAvgScore" class="score-pill score-green">0,0 %</span></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      Fiche de contrôle intelligente (FCI) v1.0 © 2026 - 2027 — Barid Al-Maghrib • Direction Contrôle Générale
+    </footer>
+  </main>
+
+  <!-- Modal Modification (ordre des champs : Date de contrôle, Région, Site, Processus...) -->
+  <div class="modal-backdrop" id="bddEditModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="bddModalTitle">Modifier l'enregistrement BDD</h3>
+        <button type="button" id="btnCloseBddModal" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;">&times;</button>
+      </div>
+      <form id="bddEditForm">
+        <input type="hidden" id="editDocId" />
+        <div class="modal-body">
+          <div class="form-field">
+            <label for="mDate">Date de contrôle *</label>
+            <input type="date" id="mDate" required />
+          </div>
+          <div class="form-field">
+            <label for="mRegion">Région *</label>
+            <select id="mRegion" required>
+              <option value="CASA">CASA</option>
+              <option value="SETTAT">SETTAT</option>
+              <option value="RABAT">RABAT</option>
+              <option value="TANGER">TANGER</option>
+              <option value="MARRAKECH">MARRAKECH</option>
+              <option value="AGADIR">AGADIR</option>
+              <option value="FES">FES</option>
+              <option value="MEKNES">MEKNES</option>
+              <option value="LAAYOUNE">LAAYOUNE</option>
+              <option value="OUJEDA">OUJEDA</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="mSite">Site / Centre *</label>
+            <input type="text" id="mSite" required />
+          </div>
+          <div class="form-field">
+            <label for="mProcessus">Processus / Caisse</label>
+            <input type="text" id="mProcessus" />
+          </div>
+          <div class="form-field">
+            <label for="mEvaluation">Évaluation *</label>
+            <select id="mEvaluation" required>
+              <option value="Conforme">Conforme</option>
+              <option value="Partiellement conforme">Partiellement conforme</option>
+              <option value="Non conforme">Non conforme</option>
+              <option value="Non applicable">Non applicable</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="mStatutSuivi">Statut Suivi *</label>
+            <select id="mStatutSuivi" required>
+              <option value="Ouvert">Ouvert</option>
+              <option value="En cours">En cours</option>
+              <option value="Clôturé">Clôturé</option>
+            </select>
+          </div>
+          <div class="form-field span-2">
+            <label for="mConstat">Constat / Justification</label>
+            <textarea id="mConstat" rows="2"></textarea>
+          </div>
+          <div class="form-field span-2">
+            <label for="mRecommandation">Recommandation / Action de suivi</label>
+            <textarea id="mRecommandation" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnCancelBddModal" class="btn btn-outline">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="status-toast" id="statusToast"></div>
+
+  <!-- Scripts Firebase Auth & Database Manager -->
+  <script type="module" src="fci-auth.js"></script>
+  <script type="module" src="fci-db-manager.js"></script>
+  <script type="module">
+    import { initFCISessionGuard } from "./fci-auth.js";
+    import {
+      syncFromFirestoreToLocal,
+      upsertFCIRecord,
+      deleteFCIRecord
+    } from "./fci-db-manager.js";
+
+    let currentUser = null;
+    let allRecords = [];
+    let filteredRecords = [];
+
+    function showToast(msg) {
+      const t = document.getElementById("statusToast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+
+    function normalizeRegionCode(code) {
+      const c = String(code || "").trim().toUpperCase();
+      if (c === "OUJDA") return "OUJEDA";
+      if (c === "LAYOUNE") return "LAAYOUNE";
+      if (c === "CASABLANCA") return "CASA";
+      return c;
+    }
+
+    function getProcessusLabel(r) {
+      if (r.source_module === "FV" || r.type_fiche === "FV") {
+        return r.caisse || "Vérification Encaisses";
+      }
+      return r.processus || r.domaine || "Général";
+    }
+
+    function getTypeLabel(r) {
+      if (r.source_module === "FV" || r.type_fiche === "FV") {
+        return "Vérification Encaisses";
+      }
+      return r.type_controle || "Systématique";
+    }
+
+    // 1. Initialisation de la session et chargement Firestore
+    currentUser = await initFCISessionGuard();
+
+    if (currentUser.role === "CONTROLEUR") {
+      document.getElementById("bddScopeBadge").textContent =
+        `Périmètre : Mes enregistrements uniquement (${currentUser.username} • ${currentUser.region})`;
+    } else {
+      document.getElementById("bddScopeBadge").textContent =
+        `Périmètre : Base nationale consolidée (10 Régions)`;
+    }
+
+    const localDb = await syncFromFirestoreToLocal(currentUser);
+    allRecords = (localDb.bdd || []).sort((a, b) =>
+      String(b.date_controle || b.date_creation || "").localeCompare(String(a.date_controle || a.date_creation || ""))
+    );
+
+    refreshCascadeFilters();
+    applyFiltersAndRender();
+
+    // 2. Filtres dynamiques en cascade
+    function getSelectedFilters() {
+      return {
+        date: document.getElementById("fDate").value,
+        region: document.getElementById("fRegion").value,
+        site: document.getElementById("fSite").value,
+        processus: document.getElementById("fProcessus").value,
+        type: document.getElementById("fType").value,
+        statut: document.getElementById("fStatut").value,
+        controleur: document.getElementById("fControleur").value
+      };
+    }
+
+    function matchesExcept(r, excludedKey, sel) {
+      if (excludedKey !== "date" && sel.date && r.date_controle !== sel.date) return false;
+      if (excludedKey !== "region" && sel.region && normalizeRegionCode(r.region) !== sel.region) return false;
+      if (excludedKey !== "site" && sel.site && r.site !== sel.site) return false;
+      if (excludedKey !== "processus" && sel.processus && getProcessusLabel(r) !== sel.processus) return false;
+      if (excludedKey !== "type" && sel.type && getTypeLabel(r) !== sel.type) return false;
+      if (excludedKey !== "statut" && sel.statut && (r.statut_suivi || "Ouvert") !== sel.statut) return false;
+      if (excludedKey !== "controleur" && sel.controleur && (r.cree_par_id || "") !== sel.controleur) return false;
+      return true;
+    }
+
+    function populateSelect(selectId, defaultLabel, values, currentVal) {
+      const el = document.getElementById(selectId);
+      const uniqueSorted = [...new Set(values.filter(Boolean))].sort();
+      el.innerHTML = `<option value="">${defaultLabel}</option>` +
+        uniqueSorted.map(v => `<option value="${v}">${v}</option>`).join("");
+      if (uniqueSorted.includes(currentVal)) {
+        el.value = currentVal;
+      } else {
+        el.value = "";
+      }
+    }
+
+    function refreshCascadeFilters() {
+      const sel = getSelectedFilters();
+
+      populateSelect(
+        "fDate",
+        "Toutes les dates",
+        allRecords.filter(r => matchesExcept(r, "date", sel)).map(r => r.date_controle),
+        sel.date
+      );
+      populateSelect(
+        "fRegion",
+        "Toutes les régions",
+        allRecords.filter(r => matchesExcept(r, "region", sel)).map(r => normalizeRegionCode(r.region)),
+        sel.region
+      );
+      populateSelect(
+        "fSite",
+        "Tous les sites",
+        allRecords.filter(r => matchesExcept(r, "site", sel)).map(r => r.site),
+        sel.site
+      );
+      populateSelect(
+        "fProcessus",
+        "Tous les processus",
+        allRecords.filter(r => matchesExcept(r, "processus", sel)).map(r => getProcessusLabel(r)),
+        sel.processus
+      );
+      populateSelect(
+        "fType",
+        "Tous les types",
+        allRecords.filter(r => matchesExcept(r, "type", sel)).map(r => getTypeLabel(r)),
+        sel.type
+      );
+      populateSelect(
+        "fStatut",
+        "Tous les statuts",
+        allRecords.filter(r => matchesExcept(r, "statut", sel)).map(r => r.statut_suivi || "Ouvert"),
+        sel.statut
+      );
+      populateSelect(
+        "fControleur",
+        "Tous les contrôleurs",
+        allRecords.filter(r => matchesExcept(r, "controleur", sel)).map(r => r.cree_par_id),
+        sel.controleur
+      );
+
+      if (currentUser.role === "CONTROLEUR") {
+        const regEl = document.getElementById("fRegion");
+        const userReg = normalizeRegionCode(currentUser.region_code);
+        if ([...regEl.options].some(o => o.value === userReg)) {
+          regEl.value = userReg;
         }
+        regEl.disabled = true;
+      }
+    }
 
-        function lireBDDLocaleSecurisee() {
-            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                return FCIDatabase.getDB();
-            }
-            try {
-                const raw = localStorage.getItem('fci_database');
-                return raw ? JSON.parse(raw) : { missions: [], constatsControle: [], constatsEncaisses: [] };
-            } catch (e) {
-                return { missions: [], constatsControle: [], constatsEncaisses: [] };
-            }
-        }
+    function applyFiltersAndRender() {
+      const sel = getSelectedFilters();
+      filteredRecords = allRecords.filter(r => matchesExcept(r, "", sel));
+      updateKPIsAndFooter();
+      renderBddTable();
+    }
 
-        function formaterDateBDD(valeurBrute) {
-            if (!valeurBrute) return '--';
-            let str = String(valeurBrute).trim();
-            if (!str || str === '--' || str === '-') return '--';
-            if (str.includes('T')) str = str.split('T')[0];
-            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-                const [y, m, d] = str.split('-');
-                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
-            }
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
-                const [d, m, y] = str.split('/');
-                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`;
-            }
-            return str;
-        }
+    function updateKPIsAndFooter() {
+      const total = filteredRecords.length;
+      const conformes = filteredRecords.filter(r => r.evaluation === "Conforme").length;
+      const anomalies = filteredRecords.filter(r =>
+        r.evaluation === "Non conforme" || r.evaluation === "Partiellement conforme"
+      ).length;
+      const ouverts = filteredRecords.filter(r =>
+        (r.statut_suivi || "Ouvert") === "Ouvert" || r.statut_suivi === "En cours"
+      ).length;
 
-        function dateVersISOComparable(valeurBrute) {
-            if (!valeurBrute) return '9999-12-31';
-            let str = String(valeurBrute).trim();
-            if (str.includes('T')) str = str.split('T')[0];
-            if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
-                const [d, m, y] = str.split('/');
-                return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-            }
-            return '9999-12-31';
-        }
+      document.getElementById("kpiBddTotal").textContent = total;
+      document.getElementById("kpiBddConforme").textContent = conformes;
+      document.getElementById("kpiBddAnomalies").textContent = anomalies;
+      document.getElementById("kpiBddOuverts").textContent = ouverts;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            chargerBDDEnVisuel();
-        });
+      // Calcul du taux de conformité moyen (hors N/A)
+      const evaluables = filteredRecords.filter(r => r.evaluation !== "Non applicable");
+      const score = evaluables.length > 0
+        ? (evaluables.filter(r => r.evaluation === "Conforme").length / evaluables.length) * 100
+        : 0;
 
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'fci_database') {
-                chargerBDDEnVisuel();
-            }
-        });
+      const pill = document.getElementById("bddAvgScore");
+      pill.textContent = score.toFixed(1).replace(".", ",") + " %";
+      pill.className = "score-pill " + (score >= 80 ? "score-green" : score >= 50 ? "score-orange" : "score-red");
+    }
 
-        function normaliserTypeControle(valeurBrute, sourceDefaut) {
-            const val = String(valeurBrute || '').trim().toLowerCase();
-            if (val.includes('syst')) {
-                return { label: 'Systématique', rowClass: 'row-systematique', badgeClass: 'badge-systematique' };
-            }
-            if (val.includes('vérif') || val.includes('verif')) {
-                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
-            }
-            if (val.includes('thém') || val.includes('them')) {
-                return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
-            }
-            if (sourceDefaut === 'FV') {
-                return { label: 'Vérification', rowClass: 'row-verification', badgeClass: 'badge-verification' };
-            }
-            return { label: 'Thématique', rowClass: 'row-thematique', badgeClass: 'badge-thematique' };
-        }
+    function renderBddTable() {
+      const tbody = document.getElementById("bddTableBody");
+      if (filteredRecords.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align:center;padding:24px;color:#64748b;">
+              Aucun enregistrement disponible pour cette sélection.
+            </td>
+          </tr>`;
+        return;
+      }
 
-        function normaliserStatutConstat(valeurBrute) {
-            const val = String(valeurBrute || '').trim().toUpperCase();
-            if (val === 'CLOTURE' || val === 'CLÔTURÉ' || val === 'CLOTURÉ') {
-                return { code: 'CLOTURE', label: 'Clôturé', badgeClass: 'statut-cloture' };
-            }
-            if (val === 'NON_CLOTURE' || val === 'NON CLÔTURÉ' || val === 'NON CLOTURE') {
-                return { code: 'NON_CLOTURE', label: 'Non clôturé', badgeClass: 'statut-noncloture' };
-            }
-            return { code: 'EN_COURS', label: 'En cours', badgeClass: 'statut-encours' };
-        }
+      tbody.innerHTML = filteredRecords.map(r => {
+        const docId = r.firestore_id || r.record_uid;
+        const isFV = r.source_module === "FV" || r.type_fiche === "FV";
+        const canEdit = currentUser.role === "ADMIN" || r.cree_par_id === currentUser.username;
 
-        function estLigneSuivi(item, idEnregistrement, idMission) {
-            if (item && (item.isSuivi === true || item.suivi === true)) return true;
-            const id1 = String(idEnregistrement || '').toUpperCase();
-            const id2 = String(idMission || '').toUpperCase();
-            return id1.includes('SUIVI') || id2.includes('SUIVI');
-        }
+        let evalBadge = '<span class="badge b-conforme">Conforme</span>';
+        if (r.evaluation === "Partiellement conforme") evalBadge = '<span class="badge b-partiel">Partiel</span>';
+        if (r.evaluation === "Non conforme") evalBadge = '<span class="badge b-nonconforme">Non conforme</span>';
+        if (r.evaluation === "Non applicable") evalBadge = '<span class="badge" style="background:#e2e8f0;color:#475569;">N/A</span>';
 
-        function estLigneModifiee(item) {
-            return Boolean(item && (item.isModifie === true || item.modifie === true));
-        }
+        const st = r.statut_suivi || "Ouvert";
+        let stBadge = '<span class="badge b-ouvert">Ouvert</span>';
+        if (st === "En cours") stBadge = '<span class="badge b-encours">En cours</span>';
+        if (st === "Clôturé") stBadge = '<span class="badge b-cloture">Clôturé</span>';
 
-        function mettreAJourStylesSelectsFiltres() {
-            const selStatut = document.getElementById('selectFiltreStatut');
-            const selType = document.getElementById('selectFiltreType');
+        const detailLibelle = isFV
+          ? `<strong>Caissier :</strong> ${r.caissier || "-"} | <strong>Physique :</strong> ${Number(r.montant_physique || 0).toFixed(2)} DH | <strong>Écart :</strong> ${Number(r.montant_ecart || 0).toFixed(2)} DH`
+          : (r.libelle_pc || "-");
 
-            selStatut.className = 'filter-dropdown';
-            if (filtreStatutActif === 'EN_COURS') selStatut.classList.add('select-statut-EN_COURS');
-            else if (filtreStatutActif === 'CLOTURE') selStatut.classList.add('select-statut-CLOTURE');
-            else if (filtreStatutActif === 'NON_CLOTURE') selStatut.classList.add('select-statut-NON_CLOTURE');
+        return `
+          <tr class="${r.is_followup ? "followup-row" : ""}">
+            <td style="white-space:nowrap;">
+              <strong>${r.numero_fiche || "-"}</strong>
+              ${r.is_followup ? '<div><span class="badge b-suivi-tag">Suivi</span></div>' : ""}
+              <div style="font-size:11px;color:#64748b;">${r.date_controle || "-"}</div>
+            </td>
+            <td><strong>${normalizeRegionCode(r.region)}</strong></td>
+            <td>${r.site || "-"}</td>
+            <td>
+              <span class="badge ${isFV ? "b-fv" : "b-fc"}">${getTypeLabel(r)}</span>
+            </td>
+            <td>
+              <div style="font-weight:600;">${getProcessusLabel(r)}</div>
+              ${!isFV && r.code_pc ? `<div style="font-size:11px;color:#003366;">${r.code_pc}</div>` : ""}
+            </td>
+            <td>${detailLibelle}</td>
+            <td>${evalBadge}</td>
+            <td>
+              ${r.constat ? `<div>${r.constat}</div>` : ""}
+              ${r.recommandation ? `<div style="color:#003366;font-size:11px;margin-top:2px;"><strong>Reco :</strong> ${r.recommandation}</div>` : ""}
+            </td>
+            <td>${stBadge}</td>
+            <td style="white-space:nowrap;">
+              <strong>${r.cree_par_id || "Système"}</strong>
+              <div style="font-size:10.5px;color:#64748b;">${r.cree_par_nom || ""}</div>
+            </td>
+            <td style="white-space:nowrap;">
+              ${canEdit ? `
+                <button type="button" class="action-icon-btn btn-edit-pen" onclick="window.openBddEdit('${docId}')" title="Modifier l'enregistrement">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button type="button" class="action-icon-btn btn-followup-blue" onclick="window.createBddFollowup('${docId}')" title="Créer une ligne de suivi">
+                  <i class="fas fa-sync-alt"></i>
+                </button>
+                <button type="button" class="action-icon-btn btn-del-red" onclick="window.deleteBddRow('${docId}')" title="Supprimer la ligne">
+                  <i class="fas fa-trash"></i>
+                </button>
+              ` : `<span style="font-size:11px;color:#94a3b8;"><i class="fas fa-eye"></i> Consultation</span>`}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
 
-            selType.className = 'filter-dropdown';
-            if (filtreTypeActif === 'Thématique') selType.classList.add('select-type-Thematique');
-            else if (filtreTypeActif === 'Systématique') selType.classList.add('select-type-Systematique');
-            else if (filtreTypeActif === 'Vérification') selType.classList.add('select-type-Verification');
-        }
+    // 3. Modification directe (sans pop-up de confirmation)
+    const bddModal = document.getElementById("bddEditModal");
 
-        function appliquerMultiFiltre(sourceChange = null) {
-            filtreDateActif = document.getElementById('selectFiltreDate').value;
-            filtreRegionActif = document.getElementById('selectFiltreRegion').value;
-            filtreSiteActif = document.getElementById('selectFiltreSite').value;
-            filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
-            filtreStatutActif = document.getElementById('selectFiltreStatut').value;
-            filtreTypeActif = document.getElementById('selectFiltreType').value;
+    window.openBddEdit = (docId) => {
+      const rec = allRecords.find(r => (r.firestore_id || r.record_uid) === docId);
+      if (!rec) return;
+      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) return;
 
-            // Réinitialisation en cascade des niveaux inférieurs lors d'un changement parent
-            if (sourceChange === 'DATE') {
-                filtreRegionActif = 'TOUS';
-                filtreSiteActif = 'TOUS';
-                filtreProcessusActif = 'TOUS';
-                filtreStatutActif = 'TOUS';
-                filtreTypeActif = 'TOUS';
-            } else if (sourceChange === 'REGION') {
-                filtreSiteActif = 'TOUS';
-                filtreProcessusActif = 'TOUS';
-                filtreStatutActif = 'TOUS';
-                filtreTypeActif = 'TOUS';
-            } else if (sourceChange === 'SITE') {
-                filtreProcessusActif = 'TOUS';
-                filtreStatutActif = 'TOUS';
-                filtreTypeActif = 'TOUS';
-            } else if (sourceChange === 'PROCESSUS') {
-                filtreStatutActif = 'TOUS';
-                filtreTypeActif = 'TOUS';
-            } else if (sourceChange === 'STATUT') {
-                filtreTypeActif = 'TOUS';
-            }
+      document.getElementById("editDocId").value = docId;
+      document.getElementById("bddModalTitle").textContent = `Modifier ${rec.numero_fiche || ""} (${rec.code_pc || rec.caisse || ""})`;
+      document.getElementById("mDate").value = rec.date_controle || "";
+      document.getElementById("mRegion").value = normalizeRegionCode(rec.region);
+      document.getElementById("mRegion").disabled = currentUser.role === "CONTROLEUR";
+      document.getElementById("mSite").value = rec.site || "";
+      document.getElementById("mProcessus").value = getProcessusLabel(rec);
+      document.getElementById("mEvaluation").value = rec.evaluation || "Conforme";
+      document.getElementById("mStatutSuivi").value = rec.statut_suivi || "Ouvert";
+      document.getElementById("mConstat").value = rec.constat || "";
+      document.getElementById("mRecommandation").value = rec.recommandation || "";
 
-            chargerBDDEnVisuel();
-        }
+      bddModal.classList.add("open");
+    };
 
-        function reinitialiserFiltresBDD() {
-            filtreDateActif = 'TOUS';
-            filtreRegionActif = 'TOUS';
-            filtreSiteActif = 'TOUS';
-            filtreProcessusActif = 'TOUS';
-            filtreStatutActif = 'TOUS';
-            filtreTypeActif = 'TOUS';
-            document.getElementById('selectFiltreDate').value = 'TOUS';
-            document.getElementById('selectFiltreRegion').value = 'TOUS';
-            document.getElementById('selectFiltreSite').value = 'TOUS';
-            document.getElementById('selectFiltreProcessus').value = 'TOUS';
-            document.getElementById('selectFiltreStatut').value = 'TOUS';
-            document.getElementById('selectFiltreType').value = 'TOUS';
-            mettreAJourStylesSelectsFiltres();
-            chargerBDDEnVisuel();
-        }
+    document.getElementById("btnCloseBddModal").addEventListener("click", () => bddModal.classList.remove("open"));
+    document.getElementById("btnCancelBddModal").addEventListener("click", () => bddModal.classList.remove("open"));
 
-        function filtrerSubsetBDD(lignesUnifiees, exclure = []) {
-            return lignesUnifiees.filter(l => {
-                if (!exclure.includes('DATE') && filtreDateActif !== 'TOUS' && l.dateCtrlVerif !== filtreDateActif) return false;
-                if (!exclure.includes('REGION') && filtreRegionActif !== 'TOUS' && l.region !== filtreRegionActif) return false;
-                if (!exclure.includes('SITE') && filtreSiteActif !== 'TOUS' && l.entite !== filtreSiteActif) return false;
-                if (!exclure.includes('PROCESSUS') && filtreProcessusActif !== 'TOUS' && l.processus !== filtreProcessusActif) return false;
-                if (!exclure.includes('STATUT') && filtreStatutActif !== 'TOUS' && l.statutInfo.code !== filtreStatutActif) return false;
-                if (!exclure.includes('TYPE') && filtreTypeActif !== 'TOUS' && l.typeInfo.label !== filtreTypeActif) return false;
-                return true;
-            });
-        }
+    document.getElementById("bddEditForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const docId = document.getElementById("editDocId").value;
+      const existing = allRecords.find(r => (r.firestore_id || r.record_uid) === docId);
+      if (!existing) return;
 
-        function peuplerSelectDynamique(selectEl, valeursUniques, valeurActive, libelleTous, formatterLabelFn = null) {
-            if (!selectEl) return 'TOUS';
-            const valeurFinale = (valeurActive !== 'TOUS' && valeursUniques.includes(valeurActive)) ? valeurActive : 'TOUS';
+      const isFV = existing.source_module === "FV" || existing.type_fiche === "FV";
+      const procVal = document.getElementById("mProcessus").value.trim();
 
-            let html = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">${libelleTous} (${valeursUniques.length})</option>`;
-            valeursUniques.forEach((val, idx) => {
-                const c = getCouleurOptionIndex(idx);
-                const label = formatterLabelFn ? formatterLabelFn(val) : val;
-                const selected = val === valeurFinale ? 'selected' : '';
-                html += `<option value="${val}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${label}</option>`;
-            });
-            selectEl.innerHTML = html;
-            selectEl.value = valeurFinale;
-            return valeurFinale;
-        }
+      const updated = {
+        ...existing,
+        date_controle: document.getElementById("mDate").value,
+        region: normalizeRegionCode(document.getElementById("mRegion").value),
+        site: document.getElementById("mSite").value.trim(),
+        ...(isFV ? { caisse: procVal } : { processus: procVal }),
+        evaluation: document.getElementById("mEvaluation").value,
+        statut_suivi: document.getElementById("mStatutSuivi").value,
+        constat: document.getElementById("mConstat").value.trim(),
+        recommandation: document.getElementById("mRecommandation").value.trim()
+      };
 
-        function mettreAJourCompteursOptions(lignesUnifiees) {
-            const selDate = document.getElementById('selectFiltreDate');
-            const selRegion = document.getElementById('selectFiltreRegion');
-            const selSite = document.getElementById('selectFiltreSite');
-            const selProcessus = document.getElementById('selectFiltreProcessus');
-            const selStatut = document.getElementById('selectFiltreStatut');
-            const selType = document.getElementById('selectFiltreType');
+      const saved = await upsertFCIRecord(updated, existing.source_module || "BDD");
+      const idx = allRecords.findIndex(r => (r.firestore_id || r.record_uid) === docId);
+      if (idx >= 0) allRecords[idx] = saved;
 
-            // 1. Dates disponibles (filtrées par tous les autres critères actifs sauf DATE)
-            const baseDates = filtrerSubsetBDD(lignesUnifiees, ['DATE']);
-            const datesMap = new Map();
-            baseDates.forEach(l => {
-                if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
-                    datesMap.set(l.dateCtrlVerif, l.dateISO);
-                }
-            });
-            const datesTriees = [...datesMap.entries()]
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .map(entry => entry[0]);
-            filtreDateActif = peuplerSelectDynamique(
-                selDate,
-                datesTriees,
-                filtreDateActif,
-                'Toutes les dates',
-                (d) => `📅 ${d} (${baseDates.filter(l => l.dateCtrlVerif === d).length})`
-            );
+      bddModal.classList.remove("open");
+      refreshCascadeFilters();
+      applyFiltersAndRender();
+      showToast("Enregistrement mis à jour.");
+    });
 
-            // 2. Régions correspondant aux filtres actifs (notamment la Date choisie)
-            const baseRegions = filtrerSubsetBDD(lignesUnifiees, ['REGION']);
-            const regionsTriees = [...new Set(
-                baseRegions.map(l => l.region).filter(v => v && v !== '--')
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
-            filtreRegionActif = peuplerSelectDynamique(
-                selRegion,
-                regionsTriees,
-                filtreRegionActif,
-                'Toutes les régions',
-                (r) => `📍 ${r} (${baseRegions.filter(l => l.region === r).length})`
-            );
+    // 4. Suivi : duplication instantanée de la ligne avec statut de suivi (sans pop-up)
+    window.createBddFollowup = async (docId) => {
+      const source = allRecords.find(r => (r.firestore_id || r.record_uid) === docId);
+      if (!source) return;
+      if (currentUser.role === "CONTROLEUR" && source.cree_par_id !== currentUser.username) return;
 
-            // 3. Sites correspondant à la Date et à la Région choisies
-            const baseSites = filtrerSubsetBDD(lignesUnifiees, ['SITE']);
-            const sitesTries = [...new Set(
-                baseSites.map(l => l.entite).filter(v => v && v !== '--')
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
-            filtreSiteActif = peuplerSelectDynamique(
-                selSite,
-                sitesTries,
-                filtreSiteActif,
-                'Tous les sites',
-                (s) => `🏢 ${s} (${baseSites.filter(l => l.entite === s).length})`
-            );
+      const copy = { ...source };
+      delete copy.firestore_id;
+      delete copy.record_uid;
+      delete copy.cree_par_id;
 
-            // 4. Processus correspondant aux sélections précédentes
-            const baseProcessus = filtrerSubsetBDD(lignesUnifiees, ['PROCESSUS']);
-            const processusTries = [...new Set(
-                baseProcessus.map(l => l.processus).filter(v => v && v !== '--')
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
-            filtreProcessusActif = peuplerSelectDynamique(
-                selProcessus,
-                processusTries,
-                filtreProcessusActif,
-                'Tous les processus',
-                (p) => `⚙️ ${p} (${baseProcessus.filter(l => l.processus === p).length})`
-            );
+      const followupPayload = {
+        ...copy,
+        date_controle: new Date().toISOString().slice(0, 10),
+        is_followup: true,
+        parent_record_id: docId,
+        statut_suivi: "En cours",
+        constat: `[Suivi du ${new Date().toLocaleDateString("fr-FR")}] ${source.constat || ""}`.trim()
+      };
 
-            // 5. Statuts correspondant aux sélections précédentes
-            const baseStatuts = filtrerSubsetBDD(lignesUnifiees, ['STATUT']);
-            const STATUTS_CONFIG = [
-                { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
-                { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
-                { code: 'NON_CLOTURE', label: '🔴 Non clôturé', bg: '#FEE2E2', color: '#991B1B' }
-            ];
-            const statutsPresents = STATUTS_CONFIG.filter(st =>
-                baseStatuts.some(l => l.statutInfo.code === st.code)
-            );
-            if (filtreStatutActif !== 'TOUS' && !statutsPresents.some(st => st.code === filtreStatutActif)) {
-                filtreStatutActif = 'TOUS';
-            }
-            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${baseStatuts.length})</option>`;
-            statutsPresents.forEach(st => {
-                const nb = baseStatuts.filter(l => l.statutInfo.code === st.code).length;
-                const sel = filtreStatutActif === st.code ? 'selected' : '';
-                htmlStatut += `<option value="${st.code}" ${sel} style="background-color:${st.bg}; color:${st.color}; font-weight:700;">${st.label} (${nb})</option>`;
-            });
-            selStatut.innerHTML = htmlStatut;
-            selStatut.value = filtreStatutActif;
+      const saved = await upsertFCIRecord(followupPayload, source.source_module || "BDD");
+      allRecords.unshift(saved);
+      refreshCascadeFilters();
+      applyFiltersAndRender();
+      showToast("Ligne de suivi ajoutée en BDD.");
+    };
 
-            // 6. Types de contrôle correspondant aux sélections précédentes
-            const baseTypes = filtrerSubsetBDD(lignesUnifiees, ['TYPE']);
-            const TYPES_CONFIG = [
-                { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
-                { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
-                { val: 'Vérification', label: '🟢 Vérification', bg: '#D1FAE5', color: '#065F46' }
-            ];
-            const typesPresents = TYPES_CONFIG.filter(tp =>
-                baseTypes.some(l => l.typeInfo.label === tp.val)
-            );
-            if (filtreTypeActif !== 'TOUS' && !typesPresents.some(tp => tp.val === filtreTypeActif)) {
-                filtreTypeActif = 'TOUS';
-            }
-            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${baseTypes.length})</option>`;
-            typesPresents.forEach(tp => {
-                const nb = baseTypes.filter(l => l.typeInfo.label === tp.val).length;
-                const sel = filtreTypeActif === tp.val ? 'selected' : '';
-                htmlType += `<option value="${tp.val}" ${sel} style="background-color:${tp.bg}; color:${tp.color}; font-weight:700;">${tp.label} (${nb})</option>`;
-            });
-            selType.innerHTML = htmlType;
-            selType.value = filtreTypeActif;
+    // 5. Suppression directe (sans pop-up de confirmation)
+    window.deleteBddRow = async (docId) => {
+      const rec = allRecords.find(r => (r.firestore_id || r.record_uid) === docId);
+      if (!rec) return;
+      if (currentUser.role === "CONTROLEUR" && rec.cree_par_id !== currentUser.username) return;
 
-            mettreAJourStylesSelectsFiltres();
-        }
+      await deleteFCIRecord(docId);
+      allRecords = allRecords.filter(r => (r.firestore_id || r.record_uid) !== docId);
+      refreshCascadeFilters();
+      applyFiltersAndRender();
+      showToast("Enregistrement supprimé de la BDD.");
+    };
 
-        function chargerBDDEnVisuel() {
-            const db = lireBDDLocaleSecurisee();
-            const tbody = document.getElementById('tableBDDUnifiee');
-            const totalBadge = document.getElementById('totalLignesBDD');
-            tbody.innerHTML = '';
+    // 6. Export Excel & Impression PDF
+    document.getElementById("btnExportBddExcel").addEventListener("click", () => {
+      const rows = filteredRecords.map(r => ({
+        "N° Fiche": r.numero_fiche || "",
+        "N° Mission": r.code_mission || "",
+        "Date Contrôle": r.date_controle || "",
+        "Région": normalizeRegionCode(r.region),
+        "Site / Centre": r.site || "",
+        "Type de Contrôle": getTypeLabel(r),
+        "Processus / Caisse": getProcessusLabel(r),
+        "Code PC": r.code_pc || "",
+        "Point de Contrôle / Détail": r.libelle_pc || `${r.caissier || ""} (Écart: ${Number(r.montant_ecart || 0).toFixed(2)} DH)`,
+        "Évaluation": r.evaluation || "",
+        "Constat": r.constat || "",
+        "Recommandation": r.recommandation || "",
+        "Statut Suivi": r.statut_suivi || "Ouvert",
+        "Contrôleur (ID)": r.cree_par_id || "",
+        "Contrôleur (Nom)": r.cree_par_nom || "",
+        "Dernière Modification": r.date_modification || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "BDD_FCI");
+      XLSX.writeFile(wb, `BDD_FCI_BaridAlMaghrib_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    });
 
-            const mapMissions = {};
-            (db.missions || []).forEach(m => {
-                if (m.idMission) mapMissions[m.idMission] = m;
-            });
+    document.getElementById("btnPrintBddPdf").addEventListener("click", () => {
+      window.print();
+    });
 
-            const mapConstatsFC = new Map();
-            (db.constatsControle || []).forEach((c, idx) => {
-                const key = c.idConstat || `FC-LEGACY-${c.idMission || ''}-${c.pc || ''}-${idx}`;
-                mapConstatsFC.set(key, c);
-            });
-
-            const mapConstatsFV = new Map();
-            (db.constatsEncaisses || []).forEach((e, idx) => {
-                const key = e.idEncaisse || `FV-LEGACY-${e.idMission || ''}-${e.pc || ''}-${idx}`;
-                mapConstatsFV.set(key, e);
-            });
-
-            const lignesUnifiees = [];
-
-            mapConstatsFC.forEach(c => {
-                const missionAssociee = mapMissions[c.idMission] || {};
-                const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
-                const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
-                const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
-                const isModifie = estLigneModifiee(c);
-                lignesUnifiees.push({
-                    dateISO: dateVersISOComparable(dateBrute),
-                    dateCtrlVerif: formaterDateBDD(dateBrute),
-                    region: c.region || missionAssociee.region || '--',
-                    entite: c.entite || c.site || missionAssociee.entite || '--',
-                    processus: c.processus || '--',
-                    risque: c.risque || '--',
-                    controle: c.controle || '--',
-                    pc: c.pc || '--',
-                    pop: c.pop || 0,
-                    ech: c.ech || 0,
-                    ok: c.ok || 0,
-                    ko: c.ko || 0,
-                    tc: parseFloat(c.tc || 0),
-                    constat: c.constat || '--',
-                    statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
-                    typeInfo: normaliserTypeControle(typeBrut, 'FC'),
-                    isSuivi: isSuivi,
-                    isModifie: isModifie
-                });
-            });
-
-            mapConstatsFV.forEach(e => {
-                const missionAssociee = mapMissions[e.idMission] || {};
-                const typeBrut = e.typeControle || 'Vérification';
-                const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
-                const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
-                const isModifie = estLigneModifiee(e);
-                lignesUnifiees.push({
-                    dateISO: dateVersISOComparable(dateBrute),
-                    dateCtrlVerif: formaterDateBDD(dateBrute),
-                    region: e.region || missionAssociee.region || '--',
-                    entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
-                    processus: e.processus || '--',
-                    risque: e.risque || '--',
-                    controle: e.controle || '--',
-                    pc: e.pc || '--',
-                    pop: e.pop || 0,
-                    ech: e.ech || 0,
-                    ok: e.ok || 0,
-                    ko: e.ko || 0,
-                    tc: parseFloat(e.tc || 0),
-                    constat: e.constat || '--',
-                    statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
-                    typeInfo: normaliserTypeControle(typeBrut, 'FV'),
-                    isSuivi: isSuivi,
-                    isModifie: isModifie
-                });
-            });
-
-            // Tri chronologique croissant : de la date la plus ancienne à la plus récente
-            lignesUnifiees.sort((a, b) => {
-                const cmpDate = a.dateISO.localeCompare(b.dateISO);
-                if (cmpDate !== 0) return cmpDate;
-                if (a.isSuivi !== b.isSuivi) return a.isSuivi ? 1 : -1;
-                return 0;
-            });
-
-            mettreAJourCompteursOptions(lignesUnifiees);
-
-            const lignesAffichees = filtrerSubsetBDD(lignesUnifiees, []);
-
-            dernieresLignesAffichees = lignesAffichees;
-            totalBadge.innerText = lignesAffichees.length;
-
-            if (lignesAffichees.length === 0) {
-                const aucunFiltre = (
-                    filtreDateActif === 'TOUS' &&
-                    filtreRegionActif === 'TOUS' &&
-                    filtreSiteActif === 'TOUS' &&
-                    filtreProcessusActif === 'TOUS' &&
-                    filtreStatutActif === 'TOUS' &&
-                    filtreTypeActif === 'TOUS'
-                );
-                const msgVide = aucunFiltre
-                    ? 'Aucun constat enregistré dans la BDD.'
-                    : 'Aucun constat ne correspond aux critères sélectionnés.';
-                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
-                return;
-            }
-
-            lignesAffichees.forEach(ligne => {
-                const modifieTagHtml = ligne.isModifie
-                    ? `<br><span class="badge-modifie-tag" title="Ligne modifiée"><i class="fa-solid fa-pen"></i> Modifié</span>`
-                    : '';
-                const suiviTagHtml = ligne.isSuivi
-                    ? `<br><span class="badge-suivi-tag" title="Ligne issue d'un suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
-                    : '';
-
-                tbody.innerHTML += `
-                    <tr class="${ligne.typeInfo.rowClass}">
-                        <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${ligne.dateCtrlVerif}</td>
-                        <td class="col-region"><b>${ligne.region}</b></td>
-                        <td class="col-centre">${ligne.entite}</td>
-                        <td class="col-processus">${ligne.processus}</td>
-                        <td class="col-risque">${ligne.risque}</td>
-                        <td class="col-controle">${ligne.controle}</td>
-                        <td class="col-pc">${ligne.pc}</td>
-                        <td class="col-num">${ligne.pop}</td>
-                        <td class="col-num">${ligne.ech}</td>
-                        <td class="col-num"><span style="color:var(--success);font-weight:bold;">${ligne.ok}</span></td>
-                        <td class="col-num"><span style="color:var(--danger);font-weight:bold;">${ligne.ko}</span></td>
-                        <td class="col-tc"><b>${ligne.tc.toFixed(1)}%</b></td>
-                        <td class="col-constat">${ligne.constat}</td>
-                        <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
-                        <td class="col-badge">
-                            <span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span>
-                            ${modifieTagHtml}
-                            ${suiviTagHtml}
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function exporterExcelBDD() {
-            if (!dernieresLignesAffichees || dernieresLignesAffichees.length === 0) {
-                alert("Aucune donnée à exporter dans la table actuelle.");
-                return;
-            }
-
-            const lignesExcel = dernieresLignesAffichees.map(l => {
-                const tags = [];
-                if (l.isModifie) tags.push('Modifié');
-                if (l.isSuivi) tags.push('Suivi');
-                const suffixeType = tags.length > 0 ? ` (${tags.join(' - ')})` : '';
-                return {
-                    "Date contrôle / vérif.": l.dateCtrlVerif,
-                    "Région": l.region,
-                    "Centre / Entité": l.entite,
-                    "Processus": l.processus,
-                    "Risque": l.risque,
-                    "Contrôle": l.controle,
-                    "PC": l.pc,
-                    "Pop": l.pop,
-                    "Ech": l.ech,
-                    "OK": l.ok,
-                    "KO": l.ko,
-                    "TC (%)": Number(l.tc.toFixed(1)),
-                    "Constat": l.constat,
-                    "Statut constat": l.statutInfo.label,
-                    "Type de contrôle": `${l.typeInfo.label}${suffixeType}`
-                };
-            });
-
-            const ws = XLSX.utils.json_to_sheet(lignesExcel);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "BDD_Constats");
-            XLSX.writeFile(wb, `FCI_BDD_Constats_${new Date().toISOString().slice(0, 10)}.xlsx`);
-        }
-
-        function configurerTokenDepuisBDD() {
-            if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
-            const token = FCIDatabase.configurerGitHubToken();
-            if (token) {
-                alert("✅ Token GitHub enregistré localement sur ce poste.");
-            }
-        }
-
-        async function synchroniserArchivesGitHub() {
-            if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
-            const btn = document.getElementById('btnSyncGitHubBDD');
-            const texteOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Synchronisation...';
-
-            try {
-                const resultat = await FCIDatabase.restaurerDepuisGitHub();
-                reinitialiserFiltresBDD();
-                alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
-            } catch (err) {
-                alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = texteOriginal;
-            }
-        }
-
-        function viderTouteLaBDD() {
-            if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
-            else localStorage.removeItem('fci_database');
-            reinitialiserFiltresBDD();
-        }
-
-        function exporterBDDAction() {
-            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
-                FCIDatabase.exporterBDD();
-                return;
-            }
-            const db = lireBDDLocaleSecurisee();
-            const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `FCI_BDD_Backup_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
+    // Écouteurs des 7 filtres en cascade
+    ["fDate", "fRegion", "fSite", "fProcessus", "fType", "fStatut", "fControleur"].forEach(id => {
+      document.getElementById(id).addEventListener("change", () => {
+        refreshCascadeFilters();
+        applyFiltersAndRender();
+      });
+    });
+  </script>
 </body>
 </html>
