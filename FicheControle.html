@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Fiche de Contrôle Terrain (FC)</title>
+    <!-- Protection de session FCI -->
+    <script src="fci-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -88,7 +90,7 @@
         .meta-item { display: flex; flex-direction: column; min-width: 0; }
         .meta-item span.label, .meta-item label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .input-date-ctrl { width: 100%; padding: 7px 9px; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 0.82rem; color: var(--primary); font-weight: 700; outline: none; background-color: #FFF; transition: border-color 0.2s, background-color 0.2s; }
-        .input-date-ctrl:disabled { background-color: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+        .input-date-ctrl:disabled { background-color: #F1F5F9; color: #475569; cursor: not-allowed; }
         .input-date-ctrl.filter-active { border: 2px solid var(--accent); background-color: #FFFDF5; }
 
         .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; white-space: nowrap; }
@@ -216,7 +218,7 @@
 </head>
 <body>
 
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div>
             <div class="sidebar-header">
                 <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
@@ -230,11 +232,8 @@
                 <li><a href="TDB.html"><span>6. Tableau de Bord (TDB)</span><span class="badge-status badge-active">Disponible</span></a></li>
             </ul>
         </div>
-        <div>
-            <div id="fci-sidebar-user-slot"></div>
-            <div class="sidebar-footer">
-                Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
-            </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
         </div>
     </aside>
 
@@ -299,25 +298,8 @@
         <div id="content-area"></div>
     </main>
 
-    <!-- Scripts Firebase Auth & BDD Centralisée -->
-    <script type="module" src="fci-auth.js"></script>
-    <script type="module" src="fci-db-manager.js"></script>
-
-    <script type="module">
-        import { initFCISessionGuard } from "./fci-auth.js";
-        import { syncFromFirestoreToLocal, upsertFCIRecord, deleteFCIRecord } from "./fci-db-manager.js";
-
-        // 1. Contrôle d'authentification obligatoire & synchronisation Firestore
-        const currentUser = await initFCISessionGuard();
-        await syncFromFirestoreToLocal(currentUser);
-
-        // Positionner le panneau utilisateur juste au-dessus du pied de page de la sidebar
-        const userBox = document.getElementById("fci-auth-sidebar-box");
-        const slot = document.getElementById("fci-sidebar-user-slot");
-        if (userBox && slot) {
-            slot.appendChild(userBox);
-        }
-
+    <script src="fci-db-manager.js"></script>
+    <script>
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
                 "MARRAKECH CTD",
@@ -478,8 +460,14 @@
         const LISTE_REGIONS = Object.keys(CENTRES_PAR_REGION);
         let missionData = null;
 
+        function getUserRegionRestriction() {
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (!u || !u.region || u.region === 'SIEGE') return '';
+            return normaliserRegion(u.region);
+        }
+
         function lireDBSecurisee() {
-            let db = { missions: [], constatsControle: [], constatsEncaisses: [], bdd: [] };
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
                     const loaded = FCIDatabase.getDB();
@@ -497,7 +485,6 @@
             if (!Array.isArray(db.missions)) db.missions = [];
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
-            if (!Array.isArray(db.bdd)) db.bdd = [];
             return db;
         }
 
@@ -512,8 +499,6 @@
         function normaliserRegion(val) {
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
-            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
-            if (reg === 'CASABLANCA') reg = 'CASA';
             return reg;
         }
 
@@ -599,6 +584,26 @@
             });
         }
 
+        document.addEventListener('DOMContentLoaded', () => {
+            chargerDonneesMission();
+            remplirFiltresBDD();
+        });
+
+        window.addEventListener('fci-auth-ready', () => {
+            if (missionData) {
+                const restrictedReg = getUserRegionRestriction();
+                if (restrictedReg && missionData.metadata) {
+                    missionData.metadata.region = restrictedReg;
+                }
+                const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+                if (u && u.nomComplet && missionData.metadata && !missionData.metadata.controleurs) {
+                    missionData.metadata.controleurs = u.nomComplet;
+                }
+                renderPage();
+            }
+            remplirFiltresBDD();
+        });
+
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
                 remplirFiltresBDD();
@@ -607,34 +612,31 @@
             }
         });
 
-        window.reinitialiserFiltresBDD = function() {
+        function reinitialiserFiltresBDD() {
+            const restrictedReg = getUserRegionRestriction();
             const selDate = document.getElementById('filterBddDate');
             const selReg = document.getElementById('filterBddRegion');
             const selSite = document.getElementById('filterBddSite');
             const selProc = document.getElementById('filterBddProcessus');
             if (selDate) selDate.value = '';
-            if (selReg) selReg.value = '';
+            if (selReg) selReg.value = restrictedReg || '';
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresBDD();
             if (!missionData) {
                 document.getElementById('searchStatus').innerText = '';
             }
-        };
-
-        function getAccessibleConstatsFC(db) {
-            const all = db.constatsControle || [];
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                return all.filter(c => !c.cree_par_id || c.cree_par_id === currentUser.username);
-            }
-            return all;
         }
 
         function remplirFiltresBDD() {
             const db = lireDBSecurisee();
-            const constats = getAccessibleConstatsFC(db);
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const restrictedReg = getUserRegionRestriction();
+            const constats = (db.constatsControle || []).filter(c =>
+                !restrictedReg || getConstatRegion(c, mapMissions) === restrictedReg
+            );
 
             const badgeCount = document.getElementById('bddCountInfo');
             if (badgeCount) {
@@ -648,7 +650,7 @@
             if (!selDate || !selReg || !selSite || !selProc) return;
 
             let valDate = selDate.value;
-            let valReg = selReg.value;
+            let valReg = restrictedReg || selReg.value;
             let valSite = selSite.value;
             let valProc = selProc.value;
 
@@ -663,20 +665,26 @@
                     .filter(Boolean)
             )].sort((a, b) => formatDateToISO(b).localeCompare(formatDateToISO(a)));
 
-            if (valDate && !dates.includes(valDate)) valDate = '';
+            if (valDate && !dates.includes(valDate)) {
+                valDate = '';
+            }
 
-            const regions = [...new Set(
-                constats
-                    .filter(c =>
-                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
-                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
-                        (!valProc || getConstatProcessus(c) === valProc)
-                    )
-                    .map(c => getConstatRegion(c, mapMissions))
-                    .filter(Boolean)
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            const regions = restrictedReg
+                ? [restrictedReg]
+                : [...new Set(
+                    constats
+                        .filter(c =>
+                            (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                            (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                            (!valProc || getConstatProcessus(c) === valProc)
+                        )
+                        .map(c => getConstatRegion(c, mapMissions))
+                        .filter(Boolean)
+                )].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            if (valReg && !regions.includes(valReg)) valReg = '';
+            if (valReg && !regions.includes(valReg)) {
+                valReg = restrictedReg || '';
+            }
 
             const sites = [...new Set(
                 constats
@@ -689,7 +697,9 @@
                     .filter(Boolean)
             )].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            if (valSite && !sites.includes(valSite)) valSite = '';
+            if (valSite && !sites.includes(valSite)) {
+                valSite = '';
+            }
 
             const procs = [...new Set(
                 constats
@@ -702,13 +712,21 @@
                     .filter(Boolean)
             )].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            if (valProc && !procs.includes(valProc)) valProc = '';
+            if (valProc && !procs.includes(valProc)) {
+                valProc = '';
+            }
 
             selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
-                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+            if (restrictedReg) {
+                selReg.innerHTML = `<option value="${restrictedReg}" selected>${restrictedReg}</option>`;
+                selReg.disabled = true;
+            } else {
+                selReg.disabled = false;
+                selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                    regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
+            }
 
             selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
@@ -717,12 +735,12 @@
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
 
             selDate.classList.toggle('filter-active', Boolean(valDate));
-            selReg.classList.toggle('filter-active', Boolean(valReg));
+            selReg.classList.toggle('filter-active', Boolean(valReg) && !restrictedReg);
             selSite.classList.toggle('filter-active', Boolean(valSite));
             selProc.classList.toggle('filter-active', Boolean(valProc));
 
             const statusEl = document.getElementById('searchStatus');
-            if (statusEl && (valDate || valReg || valSite || valProc)) {
+            if (statusEl && (valDate || (!restrictedReg && valReg) || valSite || valProc)) {
                 const nbCorrespondants = constats.filter(c =>
                     (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
                     (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
@@ -733,9 +751,10 @@
             }
         }
 
-        window.onFilterBDDChange = function(source = '') {
+        function onFilterBDDChange(source = '') {
+            const restrictedReg = getUserRegionRestriction();
             if (source === 'DATE') {
-                document.getElementById('filterBddRegion').value = '';
+                if (!restrictedReg) document.getElementById('filterBddRegion').value = '';
                 document.getElementById('filterBddSite').value = '';
                 document.getElementById('filterBddProcessus').value = '';
             } else if (source === 'REGION') {
@@ -745,7 +764,7 @@
                 document.getElementById('filterBddProcessus').value = '';
             }
             remplirFiltresBDD();
-        };
+        }
 
         function chargerDonneesMission() {
             const dataRaw = localStorage.getItem('fci_fiche_controle_active');
@@ -755,13 +774,16 @@
             if (!missionData.pointsControle || missionData.pointsControle.length === 0) { afficherEtatVide(); return; }
             if (!missionData.metadata) missionData.metadata = {};
 
-            if (currentUser && currentUser.role === "CONTROLEUR") {
-                missionData.metadata.region = normaliserRegion(currentUser.region_code);
-                if (!missionData.metadata.controleurs) {
-                    missionData.metadata.controleurs = currentUser.nom || currentUser.username || "";
-                }
+            const restrictedReg = getUserRegionRestriction();
+            if (restrictedReg) {
+                missionData.metadata.region = restrictedReg;
             } else if (missionData.metadata.region) {
                 missionData.metadata.region = normaliserRegion(missionData.metadata.region);
+            }
+
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (u && u.nomComplet && !missionData.metadata.controleurs) {
+                missionData.metadata.controleurs = u.nomComplet;
             }
 
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
@@ -798,12 +820,16 @@
             }
 
             const meta = missionData.metadata || {};
+            const restrictedReg = getUserRegionRestriction();
+            if (restrictedReg) {
+                meta.region = restrictedReg;
+            }
+
             const dateCtrlFR = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const dateCtrlISO = formatDateToISO(dateCtrlFR);
             const dateDebutISO = formatDateToISO(meta.periodeDebut);
             const dateFinISO = formatDateToISO(meta.periodeFin);
 
-            const isControleur = currentUser && currentUser.role === "CONTROLEUR";
             const regionActuelle = meta.region || '';
             const regionOptionsHtml = LISTE_REGIONS.map(r =>
                 `<option value="${r}" ${regionActuelle === r ? 'selected' : ''}>${r}</option>`
@@ -834,7 +860,7 @@
                     <div class="single-row-7">
                         <div class="meta-item">
                             <span class="label">Région *</span>
-                            <select class="input-date-ctrl" ${isControleur ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                            <select class="input-date-ctrl" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
                                 <option value="">-- Région --</option>
                                 ${regionOptionsHtml}
                             </select>
@@ -1030,14 +1056,15 @@
             contentArea.innerHTML = html;
         }
 
-        window.onRegionFCChange = function(nouvelleRegion) {
-            missionData.metadata.region = nouvelleRegion;
+        function onRegionFCChange(nouvelleRegion) {
+            const restrictedReg = getUserRegionRestriction();
+            missionData.metadata.region = restrictedReg || nouvelleRegion;
             missionData.metadata.entite = '';
             sauvegarderLocalement();
             renderPage();
-        };
+        }
 
-        window.mettreAJourMetadataDate = function(champ, val) {
+        function mettreAJourMetadataDate(champ, val) {
             const frDate = formatDateToFR(val);
             missionData.metadata[champ] = frDate;
             if (champ === 'dateControle' && Array.isArray(missionData.pointsControle)) {
@@ -1045,18 +1072,18 @@
             }
             sauvegarderLocalement();
             renderPage();
-        };
+        }
 
-        window.mettreAJourDatePoint = function(index, valISO) {
+        function mettreAJourDatePoint(index, valISO) {
             const frDate = formatDateToFR(valISO);
             missionData.pointsControle[index]._bddDateControle = frDate;
             sauvegarderLocalement();
             renderPage();
-        };
+        }
 
-        window.mettreAJourMetadata = function(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); renderPage(); };
+        function mettreAJourMetadata(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); renderPage(); }
 
-        window.mettreAJourCalcul = function(index, champ, valeur) {
+        function mettreAJourCalcul(index, champ, valeur) {
             const ev = missionData.pointsControle[index].eval;
             if (champ === 'statutConstat') ev.statutConstat = valeur;
             else ev[champ] = parseFloat(valeur) || 0;
@@ -1072,9 +1099,9 @@
                 ev.tauxConformite = ((ev.nombreOk / ev.echantillon) * 100).toFixed(2);
             } else { ev.nombreKo = 0; ev.tauxConformite = "0.00"; }
             sauvegarderLocalement(); renderPage();
-        };
+        }
 
-        window.mettreAJourChamp = function(index, champ, val) { missionData.pointsControle[index].eval[champ] = val; sauvegarderLocalement(); renderPage(); };
+        function mettreAJourChamp(index, champ, val) { missionData.pointsControle[index].eval[champ] = val; sauvegarderLocalement(); renderPage(); }
 
         function validerChampsObligatoires(listePointsCibles = null) {
             const pointsAValider = listePointsCibles || (missionData ? missionData.pointsControle : []);
@@ -1098,6 +1125,24 @@
             return { valide: true };
         }
 
+        function getUserTracePayload(mode = 'ARCHIVE') {
+            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            if (!u) return {};
+            const nom = u.nomComplet || u.identifiant;
+            if (mode === 'MODIFIER') {
+                return {
+                    modifiePar: nom,
+                    modifieParId: u.identifiant,
+                    modifieParRole: u.role
+                };
+            }
+            return {
+                creePar: nom,
+                creeParId: u.identifiant,
+                creeParRole: u.role
+            };
+        }
+
         function construirePayloadConstatsFC(idMission, mode = 'ARCHIVE', listePointsFiltres = null) {
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
@@ -1105,6 +1150,7 @@
             const dateCtrlDefaut = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const timestampSuivi = Date.now();
             const sourcePoints = listePointsFiltres || missionData.pointsControle;
+            const traceUser = getUserTracePayload(mode);
 
             return sourcePoints.map((p, idx) => {
                 const dateLigne = formatDateToFR(p._bddDateControle) || dateCtrlDefaut;
@@ -1142,40 +1188,12 @@
                     modifie: estMarqueModifie,
                     isSuivi: estSuivi,
                     suivi: estSuivi,
-                    cree_par_id: currentUser ? currentUser.username : '',
-                    cree_par_nom: currentUser ? currentUser.nom : ''
+                    ...traceUser
                 };
             });
         }
 
-        async function syncConstatsVersFirestore(constatsList) {
-            for (const c of constatsList) {
-                const tc = Number(c.tc || 0);
-                const evalLabel = tc >= 100 ? "Conforme" : (tc > 0 ? "Partiellement conforme" : "Non conforme");
-                const statutLabel = c.statut === "CLOTURE" ? "Clôturé" : (c.statut === "NON_CLOTURE" ? "Ouvert" : "En cours");
-
-                await upsertFCIRecord({
-                    record_uid: c.idConstat,
-                    numero_fiche: c.idConstat,
-                    code_mission: c.idMission,
-                    date_controle: formatDateToISO(c.dateControle || c.date),
-                    region: c.region,
-                    site: c.site || c.entite,
-                    type_controle: c.typeControle,
-                    processus: c.processus,
-                    code_pc: c.controle,
-                    libelle_pc: c.pc,
-                    evaluation: evalLabel,
-                    taux_conformite: tc,
-                    constat: c.constat,
-                    recommandation: c.recommandation,
-                    statut_suivi: statutLabel,
-                    is_followup: Boolean(c.isSuivi)
-                }, "FC");
-            }
-        }
-
-        window.archiverFicheControle = async function() {
+        async function archiverFicheControle() {
             const val = validerChampsObligatoires();
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
@@ -1193,6 +1211,7 @@
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+                const traceUser = getUserTracePayload('ARCHIVE');
 
                 const constatsBDD = construirePayloadConstatsFC(idMission, 'ARCHIVE');
 
@@ -1206,6 +1225,7 @@
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
                         controleur: meta.controleurs || '',
+                        ...traceUser,
                         pointsSelectionnes: missionData.pointsControle
                     }, false);
                 }
@@ -1218,9 +1238,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncConstatsVersFirestore(constatsBDD);
-
-                window.viderFormulaireFC();
+                viderFormulaireFC();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1228,11 +1246,12 @@
                     btn.innerHTML = texteOriginal;
                 }
             }
-        };
+        }
 
-        window.trouverFicheControleBDD = function() {
+        function trouverFicheControleBDD() {
+            const restrictedReg = getUserRegionRestriction();
             const fDate = document.getElementById('filterBddDate').value;
-            const fReg = document.getElementById('filterBddRegion').value;
+            const fReg = restrictedReg || document.getElementById('filterBddRegion').value;
             const fSite = document.getElementById('filterBddSite').value;
             const fProc = document.getElementById('filterBddProcessus').value;
 
@@ -1245,7 +1264,7 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            const constatsTrouves = getAccessibleConstatsFC(db).filter(c =>
+            const constatsTrouves = (db.constatsControle || []).filter(c =>
                 (!fDate || getConstatDateFR(c, mapMissions) === fDate) &&
                 (!fReg || getConstatRegion(c, mapMissions) === fReg) &&
                 (!fSite || getConstatSite(c, mapMissions) === fSite) &&
@@ -1261,7 +1280,7 @@
             const selectedId = premierConstat.idMission || ("MIS-" + Date.now());
             const missionInfo = mapMissions[selectedId] || {};
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
-            const regionRecuperee = normaliserRegion(premierConstat.region || missionInfo.region || '');
+            const regionRecuperee = restrictedReg || normaliserRegion(premierConstat.region || missionInfo.region || '');
             const dateCtrlTrouvee = getConstatDateFR(premierConstat, mapMissions) || formatDateToFR(missionInfo.date) || formatDateToFR(getTodayISO());
             const siteTrouve = getConstatSite(premierConstat, mapMissions) || missionInfo.entite || '';
 
@@ -1310,9 +1329,9 @@
             sauvegarderLocalement();
             renderPage();
             document.getElementById('searchStatus').innerText = `${constatsTrouves.length} ligne(s) FC importée(s) — Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
-        };
+        }
 
-        window.modifierFicheControle = async function() {
+        async function modifierFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD à modifier.");
                 return;
@@ -1378,9 +1397,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncConstatsVersFirestore(constatsMisAJour);
-
-                window.viderFormulaireFC();
+                viderFormulaireFC();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1388,9 +1405,9 @@
                     btn.innerHTML = texteOriginal;
                 }
             }
-        };
+        }
 
-        window.suiviFicheControle = async function() {
+        async function suiviFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD pour créer un suivi.");
                 return;
@@ -1423,6 +1440,7 @@
                 const dateCtrl = formatDateToFR(pointsModifiesPourSuivi[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
+                const traceUser = getUserTracePayload('SUIVI');
 
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
 
@@ -1439,6 +1457,7 @@
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
                         controleur: meta.controleurs || '',
+                        ...traceUser,
                         pointsSelectionnes: pointsModifiesPourSuivi
                     }, false);
                     sauvegarderDBSecurisee(db);
@@ -1449,9 +1468,7 @@
                     sauvegarderDBSecurisee(db);
                 }
 
-                await syncConstatsVersFirestore(nouvellesLignesSuivi);
-
-                window.viderFormulaireFC();
+                viderFormulaireFC();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1459,9 +1476,9 @@
                     btn.innerHTML = texteOriginal;
                 }
             }
-        };
+        }
 
-        window.supprimerFicheControle = async function() {
+        function supprimerFicheControle() {
             if (!missionData || !missionData.pointsControle || missionData.pointsControle.length === 0) {
                 alert("Aucune Fiche de Contrôle n'est actuellement chargée depuis la BDD à supprimer.");
                 return;
@@ -1475,37 +1492,30 @@
 
             if (idsToDelete.size > 0) {
                 db.constatsControle = (db.constatsControle || []).filter(c => !idsToDelete.has(c.idConstat));
-                for (const idToDel of idsToDelete) {
-                    await deleteFCIRecord(idToDel);
-                }
             } else if (missionData.metadata && missionData.metadata.idMission) {
                 db.missions = (db.missions || []).filter(m => m.idMission !== missionData.metadata.idMission);
                 db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== missionData.metadata.idMission);
             }
 
             sauvegarderDBSecurisee(db);
-            window.viderFormulaireFC();
+            viderFormulaireFC();
             remplirFiltresBDD();
-        };
+        }
 
         function sauvegarderLocalement() { localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData)); }
 
-        window.viderFormulaireFC = function() {
+        function viderFormulaireFC() {
             localStorage.removeItem('fci_fiche_controle_active');
             missionData = null;
             afficherEtatVide();
             document.getElementById('searchStatus').innerText = '';
-            window.reinitialiserFiltresBDD();
-        };
+            reinitialiserFiltresBDD();
+        }
 
-        window.exporterExcel = function() {
+        function exporterExcel() {
             if (!missionData || !missionData.pointsControle) return;
             XLSX.writeFile(XLSX.utils.json_to_sheet(missionData.pointsControle), "FicheControle_Export.xlsx");
-        };
-
-        // Initialisation immédiate après authentification
-        chargerDonneesMission();
-        remplirFiltresBDD();
+        }
     </script>
 </body>
 </html>
