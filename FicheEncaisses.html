@@ -697,24 +697,26 @@
         }
 
         function lireDBSecurisee() {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
+                const loaded = FCIDatabase.getDB();
+                if (loaded && typeof loaded === 'object') {
+                    if (!Array.isArray(loaded.missions)) loaded.missions = [];
+                    if (!Array.isArray(loaded.constatsControle)) loaded.constatsControle = [];
+                    if (!Array.isArray(loaded.constatsEncaisses)) loaded.constatsEncaisses = [];
+                    return loaded;
+                }
+            }
             let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                    const loaded = FCIDatabase.getDB();
-                    if (loaded && typeof loaded === 'object') db = loaded;
-                } else {
-                    const raw = localStorage.getItem('fci_database');
-                    if (raw) db = JSON.parse(raw);
-                }
-            } catch (e) {
-                try {
-                    const raw = localStorage.getItem('fci_database');
-                    if (raw) db = JSON.parse(raw);
-                } catch (err) {}
-            }
+                const raw = localStorage.getItem('fci_database');
+                if (raw) db = JSON.parse(raw);
+            } catch (e) {}
             if (!Array.isArray(db.missions)) db.missions = [];
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            if (window.FCIAuth && typeof window.FCIAuth.filterDatabase === 'function') {
+                return window.FCIAuth.filterDatabase(db);
+            }
             return db;
         }
 
@@ -722,10 +724,18 @@
             if (!Array.isArray(db.missions)) db.missions = [];
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
-            localStorage.setItem('fci_database', JSON.stringify(db));
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
-                FCIDatabase.saveDB(db);
+                return FCIDatabase.saveDB(db);
             }
+            localStorage.setItem('fci_database', JSON.stringify(db));
+            return db;
+        }
+
+        function etiqueterEnregistrement(record) {
+            if (window.FCIAuth && typeof window.FCIAuth.tagRecordWithSpace === 'function') {
+                return window.FCIAuth.tagRecordWithSpace(record);
+            }
+            return record;
         }
 
         function upsertMissionFVEnBDD(db, {
@@ -762,7 +772,7 @@
 
             const traceUser = getUserTracePayload('ARCHIVE');
             const idxMission = db.missions.findIndex(m => m.idMission === idMission);
-            const missionPayload = {
+            const missionBase = {
                 ...(idxMission !== -1 ? db.missions[idxMission] : {}),
                 idMission,
                 typeControle,
@@ -784,6 +794,10 @@
                 ...traceUser
             };
 
+            const missionPayload = (idxMission !== -1 && db.missions[idxMission].espaceSaisie)
+                ? { ...missionBase, espaceSaisie: db.missions[idxMission].espaceSaisie }
+                : etiqueterEnregistrement(missionBase);
+
             if (idxMission !== -1) {
                 db.missions[idxMission] = missionPayload;
             } else {
@@ -794,6 +808,7 @@
         function normaliserRegion(val) {
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
             return reg;
         }
 
@@ -1555,7 +1570,7 @@
                         ? true
                         : (mode === 'SUIVI' ? false : Boolean(c._isModifie));
 
-                    lot.push({
+                    const rawRecord = {
                         idEncaisse: mode === 'SUIVI'
                             ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
                             : (c._bddIdEncaisse || `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`),
@@ -1593,7 +1608,13 @@
                         suivi: estSuivi,
                         dateArchivage: new Date().toISOString(),
                         ...traceUser
-                    });
+                    };
+
+                    if (mode === 'MODIFIER' && c._espaceSaisie) {
+                        lot.push({ ...rawRecord, espaceSaisie: c._espaceSaisie });
+                    } else {
+                        lot.push(etiqueterEnregistrement(rawRecord));
+                    }
                 });
             });
 
@@ -1663,7 +1684,6 @@
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
-                    sauvegarderDBSecurisee(db);
                 }
 
                 clearForm();
@@ -1740,6 +1760,7 @@
                 const dLigne = getEncaisseDateFR(c, mapMissions) || dateVerifJJMMAAAA;
                 const constatObj = {
                     _bddIdEncaisse: c.idEncaisse,
+                    _espaceSaisie: c.espaceSaisie || '',
                     _initialDate: dLigne,
                     _isModifie: Boolean(c.isModifie || c.modifie),
                     _isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idEncaisse || '').toUpperCase().includes('SUIVI')),
@@ -1853,7 +1874,6 @@
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
-                    sauvegarderDBSecurisee(db);
                 }
 
                 clearForm();
@@ -1922,7 +1942,6 @@
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
-                    sauvegarderDBSecurisee(db);
                 }
 
                 clearForm();
