@@ -343,8 +343,7 @@
                     </div>
                     <div class="form-group">
                         <label>Contrôleur *</label>
-                        <input type="text" class="form-control" id="nomControleur" list="listeControleursBDD" name="fci_fv_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du contrôleur">
-                        <datalist id="listeControleursBDD"></datalist>
+                        <input type="text" class="form-control" id="nomControleur" name="fci_fv_ctrl_nohist" value="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du contrôleur">
                     </div>
                     <div class="form-group">
                         <label>Vérification *</label>
@@ -356,7 +355,7 @@
                 <div style="margin-top: 10px; max-width: 340px;">
                     <div class="form-group">
                         <label>Chef de centre / Responsable du site (Facultatif)</label>
-                        <input type="text" class="form-control" id="nomResponsable" name="fci_fv_resp_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du chef de centre">
+                        <input type="text" class="form-control" id="nomResponsable" name="fci_fv_resp_nohist" value="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du chef de centre">
                     </div>
                 </div>
             </form>
@@ -647,11 +646,25 @@
             return normaliserRegion(u.region);
         }
 
-        function appliquerRestrictionRegionSaisie(forcerNomControleur = false) {
-            const u = getCurrentAuthUser();
+        function reinitialiserChampsNomsVides() {
+            const stamp = Date.now();
+            const ctrlInput = document.getElementById('nomControleur');
+            const respInput = document.getElementById('nomResponsable');
+            if (ctrlInput) {
+                ctrlInput.value = '';
+                ctrlInput.setAttribute('name', 'fci_fv_ctrl_' + stamp);
+                ctrlInput.setAttribute('readonly', 'readonly');
+            }
+            if (respInput) {
+                respInput.value = '';
+                respInput.setAttribute('name', 'fci_fv_resp_' + stamp);
+                respInput.setAttribute('readonly', 'readonly');
+            }
+        }
+
+        function appliquerRestrictionRegionSaisie() {
             const restrictedReg = getUserRegionRestriction();
             const regSelect = document.getElementById('regionSite');
-            const ctrlInput = document.getElementById('nomControleur');
 
             if (regSelect) {
                 if (restrictedReg) {
@@ -663,66 +676,6 @@
                     regSelect.disabled = false;
                 }
             }
-
-            if (ctrlInput && u) {
-                const nomUser = String(u.nomComplet || u.identifiant || '').trim();
-                const estControleurRegional = Boolean(restrictedReg || u.role === 'CONTROLEUR');
-                if (estControleurRegional && nomUser && (forcerNomControleur || !ctrlInput.value.trim())) {
-                    ctrlInput.removeAttribute('readonly');
-                    ctrlInput.value = nomUser;
-                }
-            }
-        }
-
-        function remplirListeControleursBDD() {
-            const datalist = document.getElementById('listeControleursBDD');
-            if (!datalist) return;
-
-            const db = lireDBSecurisee();
-            const restrictedReg = getUserRegionRestriction();
-            const noms = new Set();
-
-            const u = getCurrentAuthUser();
-            if (u && (u.nomComplet || u.identifiant)) {
-                noms.add(String(u.nomComplet || u.identifiant).trim());
-            }
-
-            if (window.FCIAuth && Array.isArray(window.FCIAuth.USERS)) {
-                window.FCIAuth.USERS.forEach(usr => {
-                    const r = normaliserRegion(usr.region || '');
-                    if (!restrictedReg || r === restrictedReg) {
-                        const n = String(usr.nomComplet || usr.identifiant || '').trim();
-                        if (n) noms.add(n);
-                    }
-                });
-            }
-
-            (db.constatsEncaisses || []).forEach(c => {
-                const r = normaliserRegion(c.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (c.controleur) noms.add(String(c.controleur).trim());
-                }
-            });
-
-            (db.constatsControle || []).forEach(c => {
-                const r = normaliserRegion(c.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (c.controleur) noms.add(String(c.controleur).trim());
-                }
-            });
-
-            (db.missions || []).forEach(m => {
-                const r = normaliserRegion(m.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (m.controleur) noms.add(String(m.controleur).trim());
-                }
-            });
-
-            datalist.innerHTML = [...noms]
-                .filter(Boolean)
-                .sort((a, b) => a.localeCompare(b, 'fr'))
-                .map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`)
-                .join('');
         }
 
         function getUserTracePayload(mode = 'ARCHIVE') {
@@ -980,29 +933,35 @@
         document.addEventListener('DOMContentLoaded', () => {
             try { resetDateField(); } catch (e) {}
             try {
-                document.getElementById('nomControleur').value = '';
-                document.getElementById('nomResponsable').value = '';
-                appliquerRestrictionRegionSaisie(true);
-                remplirListeControleursBDD();
+                reinitialiserChampsNomsVides();
+                appliquerRestrictionRegionSaisie();
                 setTimeout(() => {
-                    document.getElementById('nomResponsable').value = '';
-                    appliquerRestrictionRegionSaisie(false);
-                    remplirListeControleursBDD();
+                    if (!addedPoints || addedPoints.length === 0) {
+                        reinitialiserChampsNomsVides();
+                    }
+                    appliquerRestrictionRegionSaisie();
                 }, 50);
             } catch (e) {}
             try { remplirFiltresEncaissesBDD(); } catch (e) {}
             chargerReferentielJSON();
         });
 
+        window.addEventListener('pageshow', () => {
+            if (!addedPoints || addedPoints.length === 0) {
+                reinitialiserChampsNomsVides();
+            }
+        });
+
         window.addEventListener('fci-auth-ready', () => {
-            appliquerRestrictionRegionSaisie(true);
-            remplirListeControleursBDD();
+            appliquerRestrictionRegionSaisie();
+            if (!addedPoints || addedPoints.length === 0) {
+                reinitialiserChampsNomsVides();
+            }
             remplirFiltresEncaissesBDD();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
-                remplirListeControleursBDD();
                 remplirFiltresEncaissesBDD();
             }
         });
@@ -1537,13 +1496,8 @@
             regSelect.value = restrictedReg || '';
             regSelect.disabled = Boolean(restrictedReg);
             onRegionEncaisseChange('');
-            const ctrlInput = document.getElementById('nomControleur');
-            const respInput = document.getElementById('nomResponsable');
-            ctrlInput.value = '';
-            ctrlInput.setAttribute('readonly', 'readonly');
-            respInput.value = '';
-            respInput.setAttribute('readonly', 'readonly');
-            appliquerRestrictionRegionSaisie(true);
+            reinitialiserChampsNomsVides();
+            appliquerRestrictionRegionSaisie();
             document.getElementById('periodeDebut').value = '';
             document.getElementById('periodeFin').value = '';
             document.getElementById('selectProcessus').value = '';
@@ -1713,7 +1667,6 @@
                 }
 
                 clearForm();
-                remplirListeControleursBDD();
                 remplirFiltresEncaissesBDD();
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
@@ -1904,7 +1857,6 @@
                 }
 
                 clearForm();
-                remplirListeControleursBDD();
                 remplirFiltresEncaissesBDD();
             } finally {
                 btn.disabled = false;
@@ -1974,7 +1926,6 @@
                 }
 
                 clearForm();
-                remplirListeControleursBDD();
                 remplirFiltresEncaissesBDD();
             } finally {
                 btn.disabled = false;
@@ -2010,7 +1961,6 @@
             sauvegarderDBSecurisee(db);
 
             clearForm();
-            remplirListeControleursBDD();
             remplirFiltresEncaissesBDD();
         }
 
