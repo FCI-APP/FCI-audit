@@ -255,7 +255,6 @@
             </div>
         </div>
 
-        <datalist id="listeControleursBDD"></datalist>
         <div id="saisie-bar-container"></div>
 
         <div class="modif-line-card">
@@ -473,100 +472,34 @@
             return normaliserRegion(u.region);
         }
 
-        function appliquerInfoControleurConnecte(meta, forcer = false) {
-            if (!meta) return;
-            const u = getCurrentAuthUser();
-            if (!u) return;
-            const nomUser = String(u.nomComplet || u.identifiant || '').trim();
-            const estControleurRegional = Boolean((u.region && u.region !== 'SIEGE') || u.role === 'CONTROLEUR');
-            if (estControleurRegional && nomUser && (forcer || !String(meta.controleurs || '').trim())) {
-                meta.controleurs = nomUser;
-                meta.controleurId = u.identifiant || '';
-                meta.controleurRegion = (u.region && u.region !== 'SIEGE') ? normaliserRegion(u.region) : (meta.region || '');
-            }
-        }
-
-        function remplirListeControleursBDD() {
-            const datalist = document.getElementById('listeControleursBDD');
-            if (!datalist) return;
-
-            const db = lireDBSecurisee();
-            const restrictedReg = getUserRegionRestriction();
-            const noms = new Set();
-
-            const u = getCurrentAuthUser();
-            if (u && (u.nomComplet || u.identifiant)) {
-                noms.add(String(u.nomComplet || u.identifiant).trim());
-            }
-
-            if (window.FCIAuth && Array.isArray(window.FCIAuth.USERS)) {
-                window.FCIAuth.USERS.forEach(usr => {
-                    const r = normaliserRegion(usr.region || '');
-                    if (!restrictedReg || r === restrictedReg) {
-                        const n = String(usr.nomComplet || usr.identifiant || '').trim();
-                        if (n) noms.add(n);
-                    }
-                });
-            }
-
-            (db.constatsControle || []).forEach(c => {
-                const r = normaliserRegion(c.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (c.controleur) noms.add(String(c.controleur).trim());
-                }
-            });
-
-            (db.constatsEncaisses || []).forEach(c => {
-                const r = normaliserRegion(c.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (c.controleur) noms.add(String(c.controleur).trim());
-                }
-            });
-
-            (db.missions || []).forEach(m => {
-                const r = normaliserRegion(m.region || '');
-                if (!restrictedReg || !r || r === restrictedReg) {
-                    if (m.controleur) noms.add(String(m.controleur).trim());
-                }
-            });
-
-            datalist.innerHTML = [...noms]
-                .filter(Boolean)
-                .sort((a, b) => a.localeCompare(b, 'fr'))
-                .map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`)
-                .join('');
-        }
-
         function lireDBSecurisee() {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
+                return FCIDatabase.getDB();
+            }
             let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             try {
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                    const loaded = FCIDatabase.getDB();
-                    if (loaded && typeof loaded === 'object') db = loaded;
-                } else {
-                    const raw = localStorage.getItem('fci_database');
-                    if (raw) db = JSON.parse(raw);
-                }
-            } catch (e) {
-                try {
-                    const raw = localStorage.getItem('fci_database');
-                    if (raw) db = JSON.parse(raw);
-                } catch (err) {}
+                const raw = localStorage.getItem('fci_database');
+                if (raw) db = JSON.parse(raw);
+            } catch (e) {}
+            if (window.FCIAuth && typeof window.FCIAuth.filterDatabase === 'function') {
+                return window.FCIAuth.filterDatabase(db);
             }
-            if (!Array.isArray(db.missions)) db.missions = [];
-            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
-            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
             return db;
         }
 
         function sauvegarderDBSecurisee(db) {
-            if (!Array.isArray(db.missions)) db.missions = [];
-            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
-            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
-            localStorage.setItem('fci_database', JSON.stringify(db));
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
-                FCIDatabase.saveDB(db);
+                return FCIDatabase.saveDB(db);
             }
+            localStorage.setItem('fci_database', JSON.stringify(db));
+            return db;
+        }
+
+        function etiqueterEnregistrement(record) {
+            if (window.FCIAuth && typeof window.FCIAuth.tagRecordWithSpace === 'function') {
+                return window.FCIAuth.tagRecordWithSpace(record);
+            }
+            return record;
         }
 
         function upsertMissionFCEnBDD(db, {
@@ -604,7 +537,7 @@
 
             const traceUser = getUserTracePayload('ARCHIVE');
             const idxMission = db.missions.findIndex(m => m.idMission === idMission);
-            const missionPayload = {
+            const missionBase = {
                 ...(idxMission !== -1 ? db.missions[idxMission] : {}),
                 idMission,
                 sourceFeuille: 'FC',
@@ -629,6 +562,10 @@
                 ...traceUser
             };
 
+            const missionPayload = (idxMission !== -1 && db.missions[idxMission].espaceSaisie)
+                ? { ...missionBase, espaceSaisie: db.missions[idxMission].espaceSaisie }
+                : etiqueterEnregistrement(missionBase);
+
             if (idxMission !== -1) {
                 db.missions[idxMission] = missionPayload;
             } else {
@@ -639,6 +576,7 @@
         function normaliserRegion(val) {
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
             return reg;
         }
 
@@ -725,19 +663,16 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            remplirListeControleursBDD();
             chargerDonneesMission();
             remplirFiltresBDD();
         });
 
         window.addEventListener('fci-auth-ready', () => {
-            remplirListeControleursBDD();
             if (missionData) {
                 const restrictedReg = getUserRegionRestriction();
                 if (restrictedReg && missionData.metadata) {
                     missionData.metadata.region = restrictedReg;
                 }
-                appliquerInfoControleurConnecte(missionData.metadata, false);
                 renderPage();
             }
             remplirFiltresBDD();
@@ -745,7 +680,6 @@
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
-                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } else if (e.key === 'fci_fiche_controle_active') {
                 chargerDonneesMission();
@@ -921,7 +855,10 @@
                 missionData.metadata.region = normaliserRegion(missionData.metadata.region);
             }
 
-            appliquerInfoControleurConnecte(missionData.metadata, false);
+            // Si la mission n'a pas été importée depuis la BDD, le champ Contrôleur reste toujours vide
+            if (!missionData._loadedFromBDDFilter) {
+                missionData.metadata.controleurs = '';
+            }
 
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
             missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
@@ -987,6 +924,8 @@
             }
 
             const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
+            const ctrlValEscaped = String(meta.controleurs || '').replace(/"/g, '&quot;');
+            const ctrlReadonlyAttr = ctrlValEscaped ? '' : 'readonly onfocus="this.removeAttribute(\'readonly\');"';
 
             barContainer.innerHTML = `
                 <div class="saisie-line-card">
@@ -994,44 +933,46 @@
                         <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
                         <span style="margin-left:auto;">${badgeDateInfo}</span>
                     </div>
-                    <div class="single-row-7">
-                        <div class="meta-item">
-                            <span class="label">Région *</span>
-                            <select class="input-date-ctrl" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
-                                <option value="">-- Région --</option>
-                                ${regionOptionsHtml}
-                            </select>
+                    <form autocomplete="off" onsubmit="return false;">
+                        <div class="single-row-7">
+                            <div class="meta-item">
+                                <span class="label">Région *</span>
+                                <select class="input-date-ctrl" autocomplete="off" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                                    <option value="">-- Région --</option>
+                                    ${regionOptionsHtml}
+                                </select>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Centre *</span>
+                                <select class="input-date-ctrl" autocomplete="off" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
+                                    ${centreOptionsHtml}
+                                </select>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date contrôle *</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date début contrôle</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date fin contrôle</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Contrôleur *</span>
+                                <input type="text" class="input-date-ctrl" name="fci_fc_ctrl_${Date.now()}" value="${ctrlValEscaped}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ${ctrlReadonlyAttr} oninput="mettreAJourMetadata('controleurs', this.value)" placeholder="Nom du contrôleur">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Type de contrôle</span>
+                                <select class="input-date-ctrl" autocomplete="off" onchange="mettreAJourMetadata('typeControle', this.value)">
+                                    <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
+                                    <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="meta-item">
-                            <span class="label">Centre *</span>
-                            <select class="input-date-ctrl" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
-                                ${centreOptionsHtml}
-                            </select>
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date contrôle *</span>
-                            <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date début contrôle</span>
-                            <input type="date" class="input-date-ctrl" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date fin contrôle</span>
-                            <input type="date" class="input-date-ctrl" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Contrôleur *</span>
-                            <input type="text" class="input-date-ctrl" list="listeControleursBDD" value="${(meta.controleurs || '').replace(/"/g, '&quot;')}" oninput="mettreAJourMetadata('controleurs', this.value)" placeholder="Nom du contrôleur">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Type de contrôle</span>
-                            <select class="input-date-ctrl" onchange="mettreAJourMetadata('typeControle', this.value)">
-                                <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
-                                <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
-                            </select>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             `;
         }
@@ -1303,7 +1244,7 @@
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
             const regionMission = meta.region || '';
-            const controleur = String(meta.controleurs || (u ? (u.nomComplet || u.identifiant) : '')).trim();
+            const controleur = String(meta.controleurs || '').trim();
             const controleurId = (u && (u.nomComplet === controleur || u.identifiant === controleur))
                 ? u.identifiant
                 : (meta.controleurId || (u ? u.identifiant : ''));
@@ -1322,7 +1263,7 @@
                     ? true
                     : (mode === 'SUIVI' ? false : Boolean(p._isModifie));
 
-                return {
+                const rawRecord = {
                     idConstat: mode === 'SUIVI'
                         ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
                         : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
@@ -1358,6 +1299,12 @@
                     dateArchivage: new Date().toISOString(),
                     ...traceUser
                 };
+
+                // Si modification d'un enregistrement existant, on conserve son espace d'origine ; sinon on étiquette selon l'utilisateur courant
+                if (mode === 'MODIFIER' && p._espaceSaisie) {
+                    return { ...rawRecord, espaceSaisie: p._espaceSaisie };
+                }
+                return etiqueterEnregistrement(rawRecord);
             });
         }
 
@@ -1380,7 +1327,6 @@
                 const regionMission = meta.region || '';
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
                 const controleur = String(meta.controleurs || '').trim();
-                const traceUser = getUserTracePayload('ARCHIVE');
 
                 const constatsBDD = construirePayloadConstatsFC(idMission, 'ARCHIVE');
 
@@ -1413,33 +1359,11 @@
 
                 sauvegarderDBSecurisee(db);
 
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
-                    await FCIDatabase.enregistrerMission({
-                        idMission: idMission,
-                        sourceFeuille: 'FC',
-                        region: regionMission,
-                        typeControle: typeControleMission,
-                        date: dateCtrl,
-                        dateDebut: meta.periodeDebut || '',
-                        dateFin: meta.periodeFin || '',
-                        entite: meta.entite || '',
-                        site: meta.entite || '',
-                        controleur: controleur,
-                        controleurId: constatsBDD[0]?.controleurId || meta.controleurId || '',
-                        controleurRegion: constatsBDD[0]?.controleurRegion || regionMission,
-                        ...traceUser,
-                        pointsSelectionnes: missionData.pointsControle
-                    }, false);
-                    sauvegarderDBSecurisee(db);
-                }
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
-                    sauvegarderDBSecurisee(db);
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
+                    await FCIDatabase.enregistrerLotControle(constatsBDD, meta.entite || '', idMission);
                 }
 
                 viderFormulaireFC();
-                remplirListeControleursBDD();
                 remplirFiltresBDD();
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
@@ -1508,6 +1432,7 @@
                     const dLigne = getConstatDateFR(c, mapMissions) || dateCtrlTrouvee;
                     const pointObj = {
                         _bddIdConstat: c.idConstat,
+                        _espaceSaisie: c.espaceSaisie || '',
                         _initialDate: dLigne,
                         _bddDateControle: dLigne,
                         _isModifie: Boolean(c.isModifie || c.modifie),
@@ -1616,13 +1541,11 @@
 
                 sauvegarderDBSecurisee(db);
 
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    await FCIDatabase.enregistrerConstatsControle(constatsMisAJour, true);
-                    sauvegarderDBSecurisee(db);
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
+                    await FCIDatabase.enregistrerLotControle(constatsMisAJour, meta.entite || '', idMission);
                 }
 
                 viderFormulaireFC();
-                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1666,7 +1589,6 @@
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
                 const controleur = String(meta.controleurs || '').trim();
-                const traceUser = getUserTracePayload('SUIVI');
 
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
 
@@ -1689,33 +1611,11 @@
 
                 sauvegarderDBSecurisee(db);
 
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
-                    await FCIDatabase.enregistrerMission({
-                        idMission: idMissionSuivi,
-                        sourceFeuille: 'FC',
-                        region: regionMission,
-                        typeControle: typeControleMission,
-                        date: dateCtrl,
-                        dateDebut: meta.periodeDebut || '',
-                        dateFin: meta.periodeFin || '',
-                        entite: meta.entite || '',
-                        site: meta.entite || '',
-                        controleur: controleur,
-                        controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
-                        controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || regionMission,
-                        ...traceUser,
-                        pointsSelectionnes: pointsModifiesPourSuivi
-                    }, false);
-                    sauvegarderDBSecurisee(db);
-                }
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
-                    await FCIDatabase.enregistrerConstatsControle(nouvellesLignesSuivi, true);
-                    sauvegarderDBSecurisee(db);
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
+                    await FCIDatabase.enregistrerLotControle(nouvellesLignesSuivi, meta.entite || '', idMissionSuivi);
                 }
 
                 viderFormulaireFC();
-                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1753,7 +1653,6 @@
 
             sauvegarderDBSecurisee(db);
             viderFormulaireFC();
-            remplirListeControleursBDD();
             remplirFiltresBDD();
         }
 
