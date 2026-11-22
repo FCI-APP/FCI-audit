@@ -1,66 +1,77 @@
 /**
- * FCI v1.0 - Module d'Authentification & Cloisonnement Régional (36 Comptes)
+ * FCI v1.0 - Module d'Authentification & Cloisonnement Régional (41 Comptes)
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
+ * Session volatile (sessionStorage uniquement) : fermer/quitter déconnecte automatiquement.
  */
 (function () {
     const SESSION_KEY = 'fci_auth_session_v1';
 
+    // Purge systématique de toute session persistante résiduelle dans localStorage
+    try {
+        localStorage.removeItem(SESSION_KEY);
+    } catch (e) {}
+
     const FCI_USERS = [
-        // ================= 6 COMPTES SIÈGE =================
+        // ================= 7 COMPTES SIÈGE =================
         { username: 'admin-siege',      password: 'dcp@+2026',            fonction: 'Administrateur',       role: 'ADMIN',        region: 'SIEGE' },
         { username: 'directeur-001',    password: 'directeur@+2026',      fonction: 'Directeur',            role: 'DIRECTEUR',    region: 'SIEGE' },
         { username: 'chef service-001', password: 'chef service1@+2026',  fonction: 'Chef de service 1',    role: 'CHEF_SERVICE', region: 'SIEGE' },
         { username: 'chef service-002', password: 'chef service2@+2026',  fonction: 'Chef de service 2',    role: 'CHEF_SERVICE', region: 'SIEGE' },
         { username: 'chef service-003', password: 'chef service3@+2026',  fonction: 'Chef de service 3',    role: 'CHEF_SERVICE', region: 'SIEGE' },
         { username: 'chef service-004', password: 'chef service4@+2026',  fonction: 'Chef de service 4',    role: 'CHEF_SERVICE', region: 'SIEGE' },
+        { username: 'chef service-005', password: 'chef service5@+2026',  fonction: 'Chef de service 5',    role: 'CHEF_SERVICE', region: 'SIEGE' },
 
-        // ================= 30 COMPTES CONTRÔLEURS RÉGIONAUX (3 PAR RÉGION) =================
-        // Casablanca
+        // ================= 34 COMPTES CONTRÔLEURS RÉGIONAUX =================
+        // Casablanca (5)
         { username: 'CASA-001',         password: 'CASA1@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
         { username: 'CASA-002',         password: 'CASA2@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
         { username: 'CASA-003',         password: 'CASA3@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
+        { username: 'CASA-004',         password: 'CASA4@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
+        { username: 'CASA-005',         password: 'CASA5@+2026',          fonction: 'Contrôleur Casablanca', role: 'CONTROLEUR',  region: 'CASA' },
 
-        // Settat
+        // Settat (3)
         { username: 'SETTAT-001',       password: 'SETTAT1@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
         { username: 'SETTAT-002',       password: 'SETTAT2@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
         { username: 'SETTAT-003',       password: 'SETTAT3@+2026',        fonction: 'Contrôleur Settat',     role: 'CONTROLEUR',  region: 'SETTAT' },
 
-        // Rabat
+        // Rabat (5)
         { username: 'RABAT-001',        password: 'RABAT1@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
         { username: 'RABAT-002',        password: 'RABAT2@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
         { username: 'RABAT-003',        password: 'RABAT3@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
+        { username: 'RABAT-004',        password: 'RABAT4@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
+        { username: 'RABAT-005',        password: 'RABAT5@+2026',         fonction: 'Contrôleur Rabat',      role: 'CONTROLEUR',  region: 'RABAT' },
 
-        // Tanger
+        // Tanger (3)
         { username: 'TANGER-001',       password: 'TANGER1@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
         { username: 'TANGER-002',       password: 'TANGER2@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
         { username: 'TANGER-003',       password: 'TANGER3@+2026',        fonction: 'Contrôleur Tanger',     role: 'CONTROLEUR',  region: 'TANGER' },
 
-        // Marrakech
+        // Marrakech (3)
         { username: 'MARRAKECH-001',    password: 'MARRAKECH1@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
         { username: 'MARRAKECH-002',    password: 'MARRAKECH2@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
         { username: 'MARRAKECH-003',    password: 'MARRAKECH3@+2026',     fonction: 'Contrôleur Marrakech',  role: 'CONTROLEUR',  region: 'MARRAKECH' },
 
-        // Agadir
+        // Agadir (3)
         { username: 'AGADIR-001',       password: 'AGADIR1@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
         { username: 'AGADIR-002',       password: 'AGADIR2@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
         { username: 'AGADIR-003',       password: 'AGADIR3@+2026',        fonction: 'Contrôleur Agadir',     role: 'CONTROLEUR',  region: 'AGADIR' },
 
-        // Fès
+        // Fès (3)
         { username: 'FES-001',          password: 'FES1@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
         { username: 'FES-002',          password: 'FES2@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
         { username: 'FES-003',          password: 'FES3@+2026',           fonction: 'Contrôleur Fès',        role: 'CONTROLEUR',  region: 'FES' },
 
-        // Meknès
+        // Meknès (3)
         { username: 'MEKNES-001',       password: 'MEKNES1@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
         { username: 'MEKNES-002',       password: 'MEKNES2@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
         { username: 'MEKNES-003',       password: 'MEKNES3@+2026',        fonction: 'Contrôleur Meknès',     role: 'CONTROLEUR',  region: 'MEKNES' },
 
-        // Laâyoune (identifiants LAYOUNE-001..003 rattachés au code région LAAYOUNE)
+        // Laâyoune (3)
         { username: 'LAYOUNE-001',      password: 'LAYOUNE1@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
         { username: 'LAYOUNE-002',      password: 'LAYOUNE2@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
         { username: 'LAYOUNE-003',      password: 'LAYOUNE3@+2026',       fonction: 'Contrôleur Laâyoune',   role: 'CONTROLEUR',  region: 'LAAYOUNE' },
 
-        // Oujda (identifiants OUJDA-001..003 rattachés au code région OUEJDA)
+        // Oujda (3)
         { username: 'OUJDA-001',        password: 'OUJDA1@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' },
         { username: 'OUJDA-002',        password: 'OUJDA2@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' },
         { username: 'OUJDA-003',        password: 'OUJDA3@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' }
@@ -68,7 +79,8 @@
 
     function getCurrentUser() {
         try {
-            const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
+            // Lecture strictement depuis sessionStorage : la fermeture de l'application efface automatiquement la session
+            const raw = sessionStorage.getItem(SESSION_KEY);
             if (!raw) return null;
             const parsed = JSON.parse(raw);
             if (!parsed || !parsed.username) return null;
@@ -92,21 +104,26 @@
 
         const sessionData = {
             username: found.username,
+            identifiant: found.username,
             fonction: found.fonction,
             role: found.role,
             region: found.region,
             loginTime: new Date().toISOString()
         };
 
+        try {
+            localStorage.removeItem(SESSION_KEY);
+        } catch (e) {}
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
         return { success: true, user: sessionData };
     }
 
     function logout() {
-        sessionStorage.removeItem(SESSION_KEY);
-        localStorage.removeItem(SESSION_KEY);
-        window.location.href = 'login.html';
+        try {
+            sessionStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(SESSION_KEY);
+        } catch (e) {}
+        window.location.replace('login.html');
     }
 
     function isSiege() {
