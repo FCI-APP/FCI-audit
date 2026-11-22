@@ -255,6 +255,7 @@
             </div>
         </div>
 
+        <datalist id="listeControleursBDD"></datalist>
         <div id="saisie-bar-container"></div>
 
         <div class="modif-line-card">
@@ -460,10 +461,80 @@
         const LISTE_REGIONS = Object.keys(CENTRES_PAR_REGION);
         let missionData = null;
 
+        function getCurrentAuthUser() {
+            return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
+                ? window.FCIAuth.getCurrentUser()
+                : null;
+        }
+
         function getUserRegionRestriction() {
-            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            const u = getCurrentAuthUser();
             if (!u || !u.region || u.region === 'SIEGE') return '';
             return normaliserRegion(u.region);
+        }
+
+        function appliquerInfoControleurConnecte(meta, forcer = false) {
+            if (!meta) return;
+            const u = getCurrentAuthUser();
+            if (!u) return;
+            const nomUser = String(u.nomComplet || u.identifiant || '').trim();
+            const estControleurRegional = Boolean((u.region && u.region !== 'SIEGE') || u.role === 'CONTROLEUR');
+            if (estControleurRegional && nomUser && (forcer || !String(meta.controleurs || '').trim())) {
+                meta.controleurs = nomUser;
+                meta.controleurId = u.identifiant || '';
+                meta.controleurRegion = (u.region && u.region !== 'SIEGE') ? normaliserRegion(u.region) : (meta.region || '');
+            }
+        }
+
+        function remplirListeControleursBDD() {
+            const datalist = document.getElementById('listeControleursBDD');
+            if (!datalist) return;
+
+            const db = lireDBSecurisee();
+            const restrictedReg = getUserRegionRestriction();
+            const noms = new Set();
+
+            const u = getCurrentAuthUser();
+            if (u && (u.nomComplet || u.identifiant)) {
+                noms.add(String(u.nomComplet || u.identifiant).trim());
+            }
+
+            if (window.FCIAuth && Array.isArray(window.FCIAuth.USERS)) {
+                window.FCIAuth.USERS.forEach(usr => {
+                    const r = normaliserRegion(usr.region || '');
+                    if (!restrictedReg || r === restrictedReg) {
+                        const n = String(usr.nomComplet || usr.identifiant || '').trim();
+                        if (n) noms.add(n);
+                    }
+                });
+            }
+
+            (db.constatsControle || []).forEach(c => {
+                const r = normaliserRegion(c.region || '');
+                if (!restrictedReg || !r || r === restrictedReg) {
+                    if (c.controleur) noms.add(String(c.controleur).trim());
+                }
+            });
+
+            (db.constatsEncaisses || []).forEach(c => {
+                const r = normaliserRegion(c.region || '');
+                if (!restrictedReg || !r || r === restrictedReg) {
+                    if (c.controleur) noms.add(String(c.controleur).trim());
+                }
+            });
+
+            (db.missions || []).forEach(m => {
+                const r = normaliserRegion(m.region || '');
+                if (!restrictedReg || !r || r === restrictedReg) {
+                    if (m.controleur) noms.add(String(m.controleur).trim());
+                }
+            });
+
+            datalist.innerHTML = [...noms]
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b, 'fr'))
+                .map(n => `<option value="${n.replace(/"/g, '&quot;')}"></option>`)
+                .join('');
         }
 
         function lireDBSecurisee() {
@@ -489,10 +560,79 @@
         }
 
         function sauvegarderDBSecurisee(db) {
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            localStorage.setItem('fci_database', JSON.stringify(db));
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
                 FCIDatabase.saveDB(db);
+            }
+        }
+
+        function upsertMissionFCEnBDD(db, {
+            idMission,
+            region,
+            entite,
+            dateFR,
+            dateDebut,
+            dateFin,
+            controleur,
+            controleurId,
+            controleurRegion,
+            typeControle = 'Thématique',
+            constats = [],
+            pointsSelectionnes = []
+        }) {
+            if (!idMission) return;
+            if (!Array.isArray(db.missions)) db.missions = [];
+
+            const constatsMission = (db.constatsControle || []).filter(c => c.idMission === idMission);
+            const sourceList = constatsMission.length > 0 ? constatsMission : constats;
+
+            const tauxMoyen = sourceList.length > 0
+                ? Number((sourceList.reduce((acc, item) => acc + (parseFloat(item.tc) || 0), 0) / sourceList.length).toFixed(2))
+                : 0;
+
+            let statutMission = 'EN_COURS';
+            if (sourceList.length > 0) {
+                if (sourceList.every(item => item.statut === 'CLOTURE')) {
+                    statutMission = 'CLOTURE';
+                } else if (sourceList.some(item => item.statut === 'NON_CLOTURE')) {
+                    statutMission = 'NON_CLOTURE';
+                }
+            }
+
+            const traceUser = getUserTracePayload('ARCHIVE');
+            const idxMission = db.missions.findIndex(m => m.idMission === idMission);
+            const missionPayload = {
+                ...(idxMission !== -1 ? db.missions[idxMission] : {}),
+                idMission,
+                sourceFeuille: 'FC',
+                typeControle,
+                region,
+                entite,
+                site: entite,
+                centre: entite,
+                date: dateFR,
+                dateControle: dateFR,
+                dateDebut: dateDebut || '',
+                dateFin: dateFin || '',
+                controleur,
+                controleurId: controleurId || (idxMission !== -1 ? db.missions[idxMission].controleurId : '') || '',
+                controleurRegion: controleurRegion || region,
+                statut: statutMission,
+                tauxMoyen,
+                nbConstats: sourceList.length,
+                pointsSelectionnes: pointsSelectionnes.length > 0
+                    ? pointsSelectionnes
+                    : (idxMission !== -1 ? db.missions[idxMission].pointsSelectionnes || [] : []),
+                ...traceUser
+            };
+
+            if (idxMission !== -1) {
+                db.missions[idxMission] = missionPayload;
             } else {
-                localStorage.setItem('fci_database', JSON.stringify(db));
+                db.missions.push(missionPayload);
             }
         }
 
@@ -585,16 +725,19 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            remplirListeControleursBDD();
             chargerDonneesMission();
             remplirFiltresBDD();
         });
 
         window.addEventListener('fci-auth-ready', () => {
+            remplirListeControleursBDD();
             if (missionData) {
                 const restrictedReg = getUserRegionRestriction();
                 if (restrictedReg && missionData.metadata) {
                     missionData.metadata.region = restrictedReg;
                 }
+                appliquerInfoControleurConnecte(missionData.metadata, false);
                 renderPage();
             }
             remplirFiltresBDD();
@@ -602,6 +745,7 @@
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
+                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } else if (e.key === 'fci_fiche_controle_active') {
                 chargerDonneesMission();
@@ -771,24 +915,13 @@
             if (!missionData.metadata) missionData.metadata = {};
 
             const restrictedReg = getUserRegionRestriction();
-
-            // Lors d'une nouvelle collecte (hors chargement depuis BDD et avant saisie manuelle),
-            // les champs Région (pour le Siège) et Contrôleur démarrent vides sans historique.
-            if (!missionData._loadedFromBDDFilter && !missionData._saisieActive) {
-                missionData.metadata.controleurs = '';
-                if (restrictedReg) {
-                    missionData.metadata.region = restrictedReg;
-                } else {
-                    missionData.metadata.region = '';
-                    missionData.metadata.entite = '';
-                }
-            } else {
-                if (restrictedReg) {
-                    missionData.metadata.region = restrictedReg;
-                } else if (missionData.metadata.region) {
-                    missionData.metadata.region = normaliserRegion(missionData.metadata.region);
-                }
+            if (restrictedReg) {
+                missionData.metadata.region = restrictedReg;
+            } else if (missionData.metadata.region) {
+                missionData.metadata.region = normaliserRegion(missionData.metadata.region);
             }
+
+            appliquerInfoControleurConnecte(missionData.metadata, false);
 
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
             missionData.metadata.periodeDebut = formatDateToFR(missionData.metadata.periodeDebut || missionData.metadata.dateDebutControle);
@@ -854,8 +987,6 @@
             }
 
             const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
-            const uidChamp = Date.now();
-            const valCtrlEchappe = String(meta.controleurs || '').replace(/"/g, '&quot;');
 
             barContainer.innerHTML = `
                 <div class="saisie-line-card">
@@ -863,46 +994,44 @@
                         <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
                         <span style="margin-left:auto;">${badgeDateInfo}</span>
                     </div>
-                    <form autocomplete="off" onsubmit="return false;">
-                        <div class="single-row-7">
-                            <div class="meta-item">
-                                <span class="label">Région *</span>
-                                <select class="input-date-ctrl" name="fci_fc_reg_${uidChamp}" autocomplete="off" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
-                                    <option value="">-- Région --</option>
-                                    ${regionOptionsHtml}
-                                </select>
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Centre *</span>
-                                <select class="input-date-ctrl" name="fci_fc_site_${uidChamp}" autocomplete="off" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
-                                    ${centreOptionsHtml}
-                                </select>
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Date contrôle *</span>
-                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Date début contrôle</span>
-                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Date fin contrôle</span>
-                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Contrôleur *</span>
-                                <input type="text" class="input-date-ctrl" name="fci_fc_ctrl_${uidChamp}" value="${valCtrlEchappe}" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" onmousedown="this.removeAttribute('readonly');" oninput="mettreAJourMetadataSansRender('controleurs', this.value)" onchange="mettreAJourMetadata('controleurs', this.value)" placeholder="Nom du contrôleur">
-                            </div>
-                            <div class="meta-item">
-                                <span class="label">Type de contrôle</span>
-                                <select class="input-date-ctrl" autocomplete="off" onchange="mettreAJourMetadata('typeControle', this.value)">
-                                    <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
-                                    <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
-                                </select>
-                            </div>
+                    <div class="single-row-7">
+                        <div class="meta-item">
+                            <span class="label">Région *</span>
+                            <select class="input-date-ctrl" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                                <option value="">-- Région --</option>
+                                ${regionOptionsHtml}
+                            </select>
                         </div>
-                    </form>
+                        <div class="meta-item">
+                            <span class="label">Centre *</span>
+                            <select class="input-date-ctrl" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
+                                ${centreOptionsHtml}
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date contrôle *</span>
+                            <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date début contrôle</span>
+                            <input type="date" class="input-date-ctrl" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Date fin contrôle</span>
+                            <input type="date" class="input-date-ctrl" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Contrôleur *</span>
+                            <input type="text" class="input-date-ctrl" list="listeControleursBDD" value="${(meta.controleurs || '').replace(/"/g, '&quot;')}" oninput="mettreAJourMetadata('controleurs', this.value)" placeholder="Nom du contrôleur">
+                        </div>
+                        <div class="meta-item">
+                            <span class="label">Type de contrôle</span>
+                            <select class="input-date-ctrl" onchange="mettreAJourMetadata('typeControle', this.value)">
+                                <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
+                                <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -1066,7 +1195,6 @@
 
         function onRegionFCChange(nouvelleRegion) {
             const restrictedReg = getUserRegionRestriction();
-            missionData._saisieActive = true;
             missionData.metadata.region = restrictedReg || nouvelleRegion;
             missionData.metadata.entite = '';
             sauvegarderLocalement();
@@ -1075,7 +1203,6 @@
 
         function mettreAJourMetadataDate(champ, val) {
             const frDate = formatDateToFR(val);
-            missionData._saisieActive = true;
             missionData.metadata[champ] = frDate;
             if (champ === 'dateControle' && Array.isArray(missionData.pointsControle)) {
                 missionData.pointsControle.forEach(p => { p._bddDateControle = frDate; });
@@ -1091,17 +1218,21 @@
             renderPage();
         }
 
-        function mettreAJourMetadataSansRender(champ, val) {
-            missionData._saisieActive = true;
-            missionData.metadata[champ] = val;
-            sauvegarderLocalement();
-        }
-
         function mettreAJourMetadata(champ, val) {
-            missionData._saisieActive = true;
             missionData.metadata[champ] = val;
+            if (champ === 'controleurs') {
+                const u = getCurrentAuthUser();
+                const nomSaisi = String(val || '').trim();
+                if (u && (u.nomComplet === nomSaisi || u.identifiant === nomSaisi)) {
+                    missionData.metadata.controleurId = u.identifiant || '';
+                } else {
+                    missionData.metadata.controleurId = '';
+                }
+            }
             sauvegarderLocalement();
-            renderPage();
+            if (champ !== 'controleurs') {
+                renderPage();
+            }
         }
 
         function mettreAJourCalcul(index, champ, valeur) {
@@ -1135,8 +1266,8 @@
             if (!missionData.metadata.entite) {
                 return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'enregistrer." };
             }
-            if (!missionData.metadata.controleurs || missionData.metadata.controleurs.trim() === '') {
-                return { valide: false, messageErreur: "Veuillez saisir le nom du Contrôleur avant d'enregistrer." };
+            if (!missionData.metadata.controleurs || String(missionData.metadata.controleurs).trim() === '') {
+                return { valide: false, messageErreur: "Veuillez renseigner le nom du Contrôleur avant d'enregistrer." };
             }
             for (let p of pointsAValider) {
                 const ev = p.eval;
@@ -1150,28 +1281,35 @@
         }
 
         function getUserTracePayload(mode = 'ARCHIVE') {
-            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            const u = getCurrentAuthUser();
             if (!u) return {};
-            const nom = u.username || u.identifiant;
+            const nom = u.nomComplet || u.identifiant;
             if (mode === 'MODIFIER') {
                 return {
                     modifiePar: nom,
-                    modifieParId: nom,
+                    modifieParId: u.identifiant,
                     modifieParRole: u.role
                 };
             }
             return {
                 creePar: nom,
-                creeParId: nom,
+                creeParId: u.identifiant,
                 creeParRole: u.role
             };
         }
 
         function construirePayloadConstatsFC(idMission, mode = 'ARCHIVE', listePointsFiltres = null) {
+            const u = getCurrentAuthUser();
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
             const regionMission = meta.region || '';
-            const controleurMission = (meta.controleurs || '').trim();
+            const controleur = String(meta.controleurs || (u ? (u.nomComplet || u.identifiant) : '')).trim();
+            const controleurId = (u && (u.nomComplet === controleur || u.identifiant === controleur))
+                ? u.identifiant
+                : (meta.controleurId || (u ? u.identifiant : ''));
+            const controleurRegion = (u && u.region && u.region !== 'SIEGE')
+                ? normaliserRegion(u.region)
+                : (meta.controleurRegion || regionMission);
             const dateCtrlDefaut = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const timestampSuivi = Date.now();
             const sourcePoints = listePointsFiltres || missionData.pointsControle;
@@ -1189,11 +1327,15 @@
                         ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
                         : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
                     idMission: idMission,
+                    sourceFeuille: 'FC',
                     region: regionMission,
                     typeControle: typeControleMission,
                     entite: meta.entite || 'Controle',
                     site: meta.entite || 'Controle',
-                    controleur: controleurMission,
+                    centre: meta.entite || 'Controle',
+                    controleur: controleur,
+                    controleurId: controleurId,
+                    controleurRegion: controleurRegion,
                     date: dateLigne,
                     dateControle: dateLigne,
                     processus: getItemVal(p, ['Processus']),
@@ -1213,6 +1355,7 @@
                     modifie: estMarqueModifie,
                     isSuivi: estSuivi,
                     suivi: estSuivi,
+                    dateArchivage: new Date().toISOString(),
                     ...traceUser
                 };
             });
@@ -1235,37 +1378,73 @@
                 meta.idMission = idMission;
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
-                const controleurMission = (meta.controleurs || '').trim();
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
+                const controleur = String(meta.controleurs || '').trim();
                 const traceUser = getUserTracePayload('ARCHIVE');
 
                 const constatsBDD = construirePayloadConstatsFC(idMission, 'ARCHIVE');
 
+                const db = lireDBSecurisee();
+                const listeExistante = db.constatsControle || [];
+                constatsBDD.forEach(item => {
+                    const idx = listeExistante.findIndex(c => c.idConstat && c.idConstat === item.idConstat);
+                    if (idx !== -1) {
+                        listeExistante[idx] = { ...listeExistante[idx], ...item };
+                    } else {
+                        listeExistante.push(item);
+                    }
+                });
+                db.constatsControle = listeExistante;
+
+                upsertMissionFCEnBDD(db, {
+                    idMission,
+                    region: regionMission,
+                    entite: meta.entite || '',
+                    dateFR: dateCtrl,
+                    dateDebut: meta.periodeDebut || '',
+                    dateFin: meta.periodeFin || '',
+                    controleur,
+                    controleurId: constatsBDD[0]?.controleurId || meta.controleurId || '',
+                    controleurRegion: constatsBDD[0]?.controleurRegion || regionMission,
+                    typeControle: typeControleMission,
+                    constats: constatsBDD,
+                    pointsSelectionnes: missionData.pointsControle
+                });
+
+                sauvegarderDBSecurisee(db);
+
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
                     await FCIDatabase.enregistrerMission({
                         idMission: idMission,
+                        sourceFeuille: 'FC',
                         region: regionMission,
                         typeControle: typeControleMission,
                         date: dateCtrl,
                         dateDebut: meta.periodeDebut || '',
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
-                        controleur: controleurMission,
+                        site: meta.entite || '',
+                        controleur: controleur,
+                        controleurId: constatsBDD[0]?.controleurId || meta.controleurId || '',
+                        controleurRegion: constatsBDD[0]?.controleurRegion || regionMission,
                         ...traceUser,
                         pointsSelectionnes: missionData.pointsControle
                     }, false);
+                    sauvegarderDBSecurisee(db);
                 }
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
                     await FCIDatabase.enregistrerConstatsControle(constatsBDD, true);
-                } else {
-                    const db = lireDBSecurisee();
-                    db.constatsControle = [...db.constatsControle, ...constatsBDD];
                     sauvegarderDBSecurisee(db);
                 }
 
                 viderFormulaireFC();
+                remplirListeControleursBDD();
                 remplirFiltresBDD();
+                const statusEl = document.getElementById('searchStatus');
+                if (statusEl) {
+                    statusEl.innerText = `${constatsBDD.length} constat(s) FC archivé(s) dans la BDD — Contrôleur : ${controleur}`;
+                }
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1312,7 +1491,6 @@
 
             missionData = {
                 _loadedFromBDDFilter: { date: fDate, region: fReg, site: fSite, processus: fProc },
-                _saisieActive: true,
                 _loadedConstatIds: constatsTrouves.map(c => c.idConstat).filter(Boolean),
                 metadata: {
                     idMission: selectedId,
@@ -1322,7 +1500,9 @@
                     dateControle: dateCtrlTrouvee,
                     periodeDebut: formatDateToFR(missionInfo.dateDebut || ''),
                     periodeFin: formatDateToFR(missionInfo.dateFin || ''),
-                    controleurs: premierConstat.controleur || missionInfo.controleur || ''
+                    controleurs: premierConstat.controleur || missionInfo.controleur || '',
+                    controleurId: premierConstat.controleurId || missionInfo.controleurId || '',
+                    controleurRegion: premierConstat.controleurRegion || missionInfo.controleurRegion || regionRecuperee
                 },
                 pointsControle: constatsTrouves.map(c => {
                     const dLigne = getConstatDateFR(c, mapMissions) || dateCtrlTrouvee;
@@ -1389,6 +1569,7 @@
                 const meta = missionData.metadata || {};
                 const idMission = meta.idMission || ("MIS-" + Date.now());
                 meta.idMission = idMission;
+                const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
 
                 const constatsMisAJour = construirePayloadConstatsFC(idMission, 'MODIFIER', pointsModifies);
                 const listeExistante = db.constatsControle || [];
@@ -1417,6 +1598,22 @@
                 });
 
                 db.constatsControle = listeExistante;
+
+                upsertMissionFCEnBDD(db, {
+                    idMission,
+                    region: meta.region || '',
+                    entite: meta.entite || '',
+                    dateFR: dateCtrl,
+                    dateDebut: meta.periodeDebut || '',
+                    dateFin: meta.periodeFin || '',
+                    controleur: String(meta.controleurs || '').trim(),
+                    controleurId: constatsMisAJour[0]?.controleurId || meta.controleurId || '',
+                    controleurRegion: constatsMisAJour[0]?.controleurRegion || meta.region || '',
+                    typeControle: meta.typeControle || 'Thématique',
+                    constats: constatsMisAJour,
+                    pointsSelectionnes: missionData.pointsControle
+                });
+
                 sauvegarderDBSecurisee(db);
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerConstatsControle === 'function') {
@@ -1425,6 +1622,7 @@
                 }
 
                 viderFormulaireFC();
+                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1467,24 +1665,44 @@
                 const dateCtrl = formatDateToFR(pointsModifiesPourSuivi[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
-                const controleurMission = (meta.controleurs || '').trim();
+                const controleur = String(meta.controleurs || '').trim();
                 const traceUser = getUserTracePayload('SUIVI');
 
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
 
                 db.constatsControle = [...(db.constatsControle || []), ...nouvellesLignesSuivi];
+
+                upsertMissionFCEnBDD(db, {
+                    idMission: idMissionSuivi,
+                    region: regionMission,
+                    entite: meta.entite || '',
+                    dateFR: dateCtrl,
+                    dateDebut: meta.periodeDebut || '',
+                    dateFin: meta.periodeFin || '',
+                    controleur,
+                    controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
+                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || regionMission,
+                    typeControle: typeControleMission,
+                    constats: nouvellesLignesSuivi,
+                    pointsSelectionnes: pointsModifiesPourSuivi
+                });
+
                 sauvegarderDBSecurisee(db);
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
                     await FCIDatabase.enregistrerMission({
                         idMission: idMissionSuivi,
+                        sourceFeuille: 'FC',
                         region: regionMission,
                         typeControle: typeControleMission,
                         date: dateCtrl,
                         dateDebut: meta.periodeDebut || '',
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
-                        controleur: controleurMission,
+                        site: meta.entite || '',
+                        controleur: controleur,
+                        controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
+                        controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || regionMission,
                         ...traceUser,
                         pointsSelectionnes: pointsModifiesPourSuivi
                     }, false);
@@ -1497,6 +1715,7 @@
                 }
 
                 viderFormulaireFC();
+                remplirListeControleursBDD();
                 remplirFiltresBDD();
             } finally {
                 if (btn) {
@@ -1525,8 +1744,16 @@
                 db.constatsControle = (db.constatsControle || []).filter(c => c.idMission !== missionData.metadata.idMission);
             }
 
+            if (missionData.metadata && missionData.metadata.idMission) {
+                const restePourMission = (db.constatsControle || []).some(c => c.idMission === missionData.metadata.idMission);
+                if (!restePourMission) {
+                    db.missions = (db.missions || []).filter(m => m.idMission !== missionData.metadata.idMission);
+                }
+            }
+
             sauvegarderDBSecurisee(db);
             viderFormulaireFC();
+            remplirListeControleursBDD();
             remplirFiltresBDD();
         }
 
