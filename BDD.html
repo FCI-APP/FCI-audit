@@ -94,7 +94,7 @@
 
         .multi-filter-bar {
             display: grid;
-            grid-template-columns: repeat(6, minmax(160px, 1fr));
+            grid-template-columns: repeat(7, minmax(145px, 1fr));
             gap: 10px;
             align-items: end;
             background: #F8FAFC;
@@ -147,6 +147,9 @@
         .filter-site-theme label { color: #0F766E; }
         .filter-site-theme .filter-dropdown { background-color: #F0FDFA; color: #115E59; border-color: #5EEAD4; }
 
+        .filter-controleur-theme label { color: #0369A1; }
+        .filter-controleur-theme .filter-dropdown { background-color: #F0F9FF; color: #0C4A6E; border-color: #7DD3FC; }
+
         .filter-processus-theme label { color: #B45309; }
         .filter-processus-theme .filter-dropdown { background-color: #FFFBEB; color: #92400E; border-color: #FCD34D; }
 
@@ -166,7 +169,7 @@
 
         table.bdd-table {
             width: 100%;
-            min-width: 1980px;
+            min-width: 2145px;
             border-collapse: collapse;
             font-size: 0.82rem;
             table-layout: auto;
@@ -197,6 +200,7 @@
         .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
         .col-region { width: 115px; min-width: 115px; white-space: nowrap; }
         .col-centre { width: 175px; min-width: 175px; }
+        .col-controleur { width: 165px; min-width: 165px; font-weight: 600; color: #0F172A; }
         .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
         .col-risque { width: 220px; min-width: 220px; }
         .col-controle { width: 230px; min-width: 230px; }
@@ -263,15 +267,15 @@
         .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
         .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
 
-        @media (max-width: 1360px) {
-            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        @media (max-width: 1480px) {
+            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); }
         }
 
         @media print {
             .sidebar, .header-actions-bdd, .multi-filter-bar { display: none !important; }
             .main-content { margin-left: 0 !important; max-width: 100% !important; padding: 0 !important; }
             .table-responsive-wrapper { overflow: visible !important; border: none !important; }
-            table.bdd-table { min-width: 100% !important; font-size: 0.7rem !important; }
+            table.bdd-table { min-width: 100% !important; font-size: 0.68rem !important; }
         }
     </style>
 </head>
@@ -342,6 +346,13 @@
                         </select>
                     </div>
 
+                    <div class="filter-select-group filter-controleur-theme">
+                        <label for="selectFiltreControleur"><i class="fa-solid fa-user-tie"></i> Contrôleur</label>
+                        <select id="selectFiltreControleur" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                            <option value="TOUS">-- Tous les contrôleurs --</option>
+                        </select>
+                    </div>
+
                     <div class="filter-select-group filter-processus-theme">
                         <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
                         <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre()">
@@ -372,6 +383,7 @@
                             <th class="col-date">Date contrôle / vérif.</th>
                             <th class="col-region">Région</th>
                             <th class="col-centre">Centre / Entité</th>
+                            <th class="col-controleur">Contrôleur</th>
                             <th class="col-processus">Processus</th>
                             <th class="col-risque">Risque</th>
                             <th class="col-controle">Contrôle</th>
@@ -397,6 +409,7 @@
         let filtreDateActif = 'TOUS';
         let filtreRegionActif = 'TOUS';
         let filtreSiteActif = 'TOUS';
+        let filtreControleurActif = 'TOUS';
         let filtreProcessusActif = 'TOUS';
         let filtreStatutActif = 'TOUS';
         let filtreTypeActif = 'TOUS';
@@ -415,15 +428,36 @@
             { bg: '#FAE8FF', text: '#86198F' }
         ];
 
+        function escapeHTML(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
         function normaliserRegion(val) {
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
             return reg;
+        }
+
+        function extraireNomControleur(item, missionAssociee = {}) {
+            const brut = (item && (item.controleur || item.controleurs || item.nomControleur || item.auditeur))
+                || (missionAssociee && (missionAssociee.controleur || missionAssociee.controleurs || missionAssociee.nomControleur || missionAssociee.auditeur))
+                || '';
+            if (Array.isArray(brut)) {
+                const joined = brut.map(v => String(v || '').trim()).filter(Boolean).join(' / ');
+                return joined || '--';
+            }
+            const str = String(brut || '').trim();
+            return str || '--';
         }
 
         function getUserRegionRestriction() {
             const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
-            if (!u || !u.region || u.region === 'SIEGE') return '';
+            if (!u || !u.region || u.region === 'SIEGE' || u.region === 'NATIONAL' || u.region === 'ALL') return '';
             return normaliserRegion(u.region);
         }
 
@@ -544,6 +578,7 @@
             filtreDateActif = document.getElementById('selectFiltreDate').value;
             filtreRegionActif = restrictedReg || document.getElementById('selectFiltreRegion').value;
             filtreSiteActif = document.getElementById('selectFiltreSite').value;
+            filtreControleurActif = document.getElementById('selectFiltreControleur').value;
             filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
             filtreStatutActif = document.getElementById('selectFiltreStatut').value;
             filtreTypeActif = document.getElementById('selectFiltreType').value;
@@ -556,12 +591,14 @@
             filtreDateActif = 'TOUS';
             filtreRegionActif = restrictedReg || 'TOUS';
             filtreSiteActif = 'TOUS';
+            filtreControleurActif = 'TOUS';
             filtreProcessusActif = 'TOUS';
             filtreStatutActif = 'TOUS';
             filtreTypeActif = 'TOUS';
             document.getElementById('selectFiltreDate').value = 'TOUS';
             document.getElementById('selectFiltreRegion').value = restrictedReg || 'TOUS';
             document.getElementById('selectFiltreSite').value = 'TOUS';
+            document.getElementById('selectFiltreControleur').value = 'TOUS';
             document.getElementById('selectFiltreProcessus').value = 'TOUS';
             document.getElementById('selectFiltreStatut').value = 'TOUS';
             document.getElementById('selectFiltreType').value = 'TOUS';
@@ -581,7 +618,7 @@
                 const c = getCouleurOptionIndex(idx);
                 const label = formatterLabelFn ? formatterLabelFn(val) : val;
                 const selected = val === valeurActive ? 'selected' : '';
-                html += `<option value="${val}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${label}</option>`;
+                html += `<option value="${escapeHTML(val)}" ${selected} style="background-color:${c.bg}; color:${c.text}; font-weight:700;">${escapeHTML(label)}</option>`;
             });
             selectEl.innerHTML = html;
         }
@@ -591,6 +628,7 @@
             const selDate = document.getElementById('selectFiltreDate');
             const selRegion = document.getElementById('selectFiltreRegion');
             const selSite = document.getElementById('selectFiltreSite');
+            const selControleur = document.getElementById('selectFiltreControleur');
             const selProcessus = document.getElementById('selectFiltreProcessus');
             const selStatut = document.getElementById('selectFiltreStatut');
             const selType = document.getElementById('selectFiltreType');
@@ -613,7 +651,7 @@
             );
 
             if (restrictedReg) {
-                selRegion.innerHTML = `<option value="${restrictedReg}" selected style="background-color:#F5F3FF; color:#5B21B6; font-weight:700;">📍 ${restrictedReg} (${lignesUnifiees.length})</option>`;
+                selRegion.innerHTML = `<option value="${escapeHTML(restrictedReg)}" selected style="background-color:#F5F3FF; color:#5B21B6; font-weight:700;">📍 ${escapeHTML(restrictedReg)} (${lignesUnifiees.length})</option>`;
                 selRegion.disabled = true;
             } else {
                 selRegion.disabled = false;
@@ -641,6 +679,20 @@
                 filtreSiteActif,
                 'Tous les sites',
                 (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
+            );
+
+            const sourceControleurs = sourceSites.filter(l =>
+                filtreSiteActif === 'TOUS' || l.entite === filtreSiteActif
+            );
+            const controleursTries = [...new Set(
+                sourceControleurs.map(l => l.controleur).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selControleur,
+                controleursTries,
+                filtreControleurActif,
+                'Tous les contrôleurs',
+                (ctrl) => `👤 ${ctrl} (${sourceControleurs.filter(l => l.controleur === ctrl).length})`
             );
 
             const processusTries = [...new Set(
@@ -731,6 +783,7 @@
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: regionNorm || '--',
                     entite: c.entite || c.site || missionAssociee.entite || '--',
+                    controleur: extraireNomControleur(c, missionAssociee),
                     processus: c.processus || '--',
                     risque: c.risque || '--',
                     controle: c.controle || '--',
@@ -762,6 +815,7 @@
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: regionNorm || '--',
                     entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
+                    controleur: extraireNomControleur(e, missionAssociee),
                     processus: e.processus || '--',
                     risque: e.risque || '--',
                     controle: e.controle || '--',
@@ -793,10 +847,11 @@
                 const matchDate = (filtreDateActif === 'TOUS') || (l.dateCtrlVerif === filtreDateActif);
                 const matchRegion = (filtreRegionActif === 'TOUS') || (l.region === filtreRegionActif);
                 const matchSite = (filtreSiteActif === 'TOUS') || (l.entite === filtreSiteActif);
+                const matchControleur = (filtreControleurActif === 'TOUS') || (l.controleur === filtreControleurActif);
                 const matchProcessus = (filtreProcessusActif === 'TOUS') || (l.processus === filtreProcessusActif);
                 const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
                 const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
-                return matchDate && matchRegion && matchSite && matchProcessus && matchStatut && matchType;
+                return matchDate && matchRegion && matchSite && matchControleur && matchProcessus && matchStatut && matchType;
             });
 
             dernieresLignesAffichees = lignesAffichees;
@@ -807,6 +862,7 @@
                     filtreDateActif === 'TOUS' &&
                     (filtreRegionActif === 'TOUS' || Boolean(restrictedReg)) &&
                     filtreSiteActif === 'TOUS' &&
+                    filtreControleurActif === 'TOUS' &&
                     filtreProcessusActif === 'TOUS' &&
                     filtreStatutActif === 'TOUS' &&
                     filtreTypeActif === 'TOUS'
@@ -814,7 +870,7 @@
                 const msgVide = aucunFiltre
                     ? 'Aucun constat enregistré dans la BDD.'
                     : 'Aucun constat ne correspond aux critères sélectionnés.';
-                tbody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
             }
 
@@ -825,25 +881,29 @@
                 const suiviTagHtml = ligne.isSuivi
                     ? `<br><span class="badge-suivi-tag" title="Ligne issue d'un suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
                     : '';
+                const controleurHtml = ligne.controleur && ligne.controleur !== '--'
+                    ? `<i class="fa-solid fa-user-tie" style="color:var(--primary-blue); margin-right:5px; font-size:0.75rem;"></i>${escapeHTML(ligne.controleur)}`
+                    : '<span style="color:var(--text-muted);">--</span>';
 
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
-                        <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${ligne.dateCtrlVerif}</td>
-                        <td class="col-region"><b>${ligne.region}</b></td>
-                        <td class="col-centre">${ligne.entite}</td>
-                        <td class="col-processus">${ligne.processus}</td>
-                        <td class="col-risque">${ligne.risque}</td>
-                        <td class="col-controle">${ligne.controle}</td>
-                        <td class="col-pc">${ligne.pc}</td>
+                        <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${escapeHTML(ligne.dateCtrlVerif)}</td>
+                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b></td>
+                        <td class="col-centre">${escapeHTML(ligne.entite)}</td>
+                        <td class="col-controleur">${controleurHtml}</td>
+                        <td class="col-processus">${escapeHTML(ligne.processus)}</td>
+                        <td class="col-risque">${escapeHTML(ligne.risque)}</td>
+                        <td class="col-controle">${escapeHTML(ligne.controle)}</td>
+                        <td class="col-pc">${escapeHTML(ligne.pc)}</td>
                         <td class="col-num">${ligne.pop}</td>
                         <td class="col-num">${ligne.ech}</td>
                         <td class="col-num"><span style="color:var(--success);font-weight:bold;">${ligne.ok}</span></td>
                         <td class="col-num"><span style="color:var(--danger);font-weight:bold;">${ligne.ko}</span></td>
                         <td class="col-tc"><b>${ligne.tc.toFixed(1)}%</b></td>
-                        <td class="col-constat">${ligne.constat}</td>
-                        <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${ligne.statutInfo.label}</span></td>
+                        <td class="col-constat">${escapeHTML(ligne.constat)}</td>
+                        <td class="col-badge"><span class="badge-statut-constat ${ligne.statutInfo.badgeClass}">${escapeHTML(ligne.statutInfo.label)}</span></td>
                         <td class="col-badge">
-                            <span class="badge-type ${ligne.typeInfo.badgeClass}">${ligne.typeInfo.label}</span>
+                            <span class="badge-type ${ligne.typeInfo.badgeClass}">${escapeHTML(ligne.typeInfo.label)}</span>
                             ${modifieTagHtml}
                             ${suiviTagHtml}
                         </td>
@@ -866,6 +926,7 @@
                     "Date contrôle / vérif.": l.dateCtrlVerif,
                     "Région": l.region,
                     "Centre / Entité": l.entite,
+                    "Contrôleur": l.controleur,
                     "Processus": l.processus,
                     "Risque": l.risque,
                     "Contrôle": l.controle,
