@@ -595,10 +595,6 @@
                 if (restrictedReg && missionData.metadata) {
                     missionData.metadata.region = restrictedReg;
                 }
-                const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
-                if (u && u.nomComplet && missionData.metadata && !missionData.metadata.controleurs) {
-                    missionData.metadata.controleurs = u.nomComplet;
-                }
                 renderPage();
             }
             remplirFiltresBDD();
@@ -775,15 +771,23 @@
             if (!missionData.metadata) missionData.metadata = {};
 
             const restrictedReg = getUserRegionRestriction();
-            if (restrictedReg) {
-                missionData.metadata.region = restrictedReg;
-            } else if (missionData.metadata.region) {
-                missionData.metadata.region = normaliserRegion(missionData.metadata.region);
-            }
 
-            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
-            if (u && u.nomComplet && !missionData.metadata.controleurs) {
-                missionData.metadata.controleurs = u.nomComplet;
+            // Lors d'une nouvelle collecte (hors chargement depuis BDD et avant saisie manuelle),
+            // les champs Région (pour le Siège) et Contrôleur démarrent vides sans historique.
+            if (!missionData._loadedFromBDDFilter && !missionData._saisieActive) {
+                missionData.metadata.controleurs = '';
+                if (restrictedReg) {
+                    missionData.metadata.region = restrictedReg;
+                } else {
+                    missionData.metadata.region = '';
+                    missionData.metadata.entite = '';
+                }
+            } else {
+                if (restrictedReg) {
+                    missionData.metadata.region = restrictedReg;
+                } else if (missionData.metadata.region) {
+                    missionData.metadata.region = normaliserRegion(missionData.metadata.region);
+                }
             }
 
             missionData.metadata.dateControle = formatDateToFR(missionData.metadata.dateControle) || formatDateToFR(getTodayISO());
@@ -850,6 +854,8 @@
             }
 
             const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
+            const uidChamp = Date.now();
+            const valCtrlEchappe = String(meta.controleurs || '').replace(/"/g, '&quot;');
 
             barContainer.innerHTML = `
                 <div class="saisie-line-card">
@@ -857,44 +863,46 @@
                         <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
                         <span style="margin-left:auto;">${badgeDateInfo}</span>
                     </div>
-                    <div class="single-row-7">
-                        <div class="meta-item">
-                            <span class="label">Région *</span>
-                            <select class="input-date-ctrl" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
-                                <option value="">-- Région --</option>
-                                ${regionOptionsHtml}
-                            </select>
+                    <form autocomplete="off" onsubmit="return false;">
+                        <div class="single-row-7">
+                            <div class="meta-item">
+                                <span class="label">Région *</span>
+                                <select class="input-date-ctrl" name="fci_fc_reg_${uidChamp}" autocomplete="off" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                                    <option value="">-- Région --</option>
+                                    ${regionOptionsHtml}
+                                </select>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Centre *</span>
+                                <select class="input-date-ctrl" name="fci_fc_site_${uidChamp}" autocomplete="off" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
+                                    ${centreOptionsHtml}
+                                </select>
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date contrôle *</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date début contrôle</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Date fin contrôle</span>
+                                <input type="date" class="input-date-ctrl" autocomplete="off" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Contrôleur *</span>
+                                <input type="text" class="input-date-ctrl" name="fci_fc_ctrl_${uidChamp}" value="${valCtrlEchappe}" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" onmousedown="this.removeAttribute('readonly');" oninput="mettreAJourMetadataSansRender('controleurs', this.value)" onchange="mettreAJourMetadata('controleurs', this.value)" placeholder="Nom du contrôleur">
+                            </div>
+                            <div class="meta-item">
+                                <span class="label">Type de contrôle</span>
+                                <select class="input-date-ctrl" autocomplete="off" onchange="mettreAJourMetadata('typeControle', this.value)">
+                                    <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
+                                    <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="meta-item">
-                            <span class="label">Centre *</span>
-                            <select class="input-date-ctrl" ${!regionActuelle ? 'disabled' : ''} onchange="mettreAJourMetadata('entite', this.value)">
-                                ${centreOptionsHtml}
-                            </select>
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date contrôle *</span>
-                            <input type="date" class="input-date-ctrl" value="${dateCtrlISO}" onchange="mettreAJourMetadataDate('dateControle', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date début contrôle</span>
-                            <input type="date" class="input-date-ctrl" value="${dateDebutISO}" onchange="mettreAJourMetadataDate('periodeDebut', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Date fin contrôle</span>
-                            <input type="date" class="input-date-ctrl" value="${dateFinISO}" onchange="mettreAJourMetadataDate('periodeFin', this.value)">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Contrôleur</span>
-                            <input type="text" class="input-date-ctrl" value="${meta.controleurs || ''}" oninput="mettreAJourMetadata('controleurs', this.value)" placeholder="Contrôleur">
-                        </div>
-                        <div class="meta-item">
-                            <span class="label">Type de contrôle</span>
-                            <select class="input-date-ctrl" onchange="mettreAJourMetadata('typeControle', this.value)">
-                                <option value="Thématique" ${(meta.typeControle || 'Thématique') === 'Thématique' ? 'selected' : ''}>Thématique</option>
-                                <option value="Systématique" ${meta.typeControle === 'Systématique' ? 'selected' : ''}>Systématique</option>
-                            </select>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             `;
         }
@@ -1058,6 +1066,7 @@
 
         function onRegionFCChange(nouvelleRegion) {
             const restrictedReg = getUserRegionRestriction();
+            missionData._saisieActive = true;
             missionData.metadata.region = restrictedReg || nouvelleRegion;
             missionData.metadata.entite = '';
             sauvegarderLocalement();
@@ -1066,6 +1075,7 @@
 
         function mettreAJourMetadataDate(champ, val) {
             const frDate = formatDateToFR(val);
+            missionData._saisieActive = true;
             missionData.metadata[champ] = frDate;
             if (champ === 'dateControle' && Array.isArray(missionData.pointsControle)) {
                 missionData.pointsControle.forEach(p => { p._bddDateControle = frDate; });
@@ -1081,7 +1091,18 @@
             renderPage();
         }
 
-        function mettreAJourMetadata(champ, val) { missionData.metadata[champ] = val; sauvegarderLocalement(); renderPage(); }
+        function mettreAJourMetadataSansRender(champ, val) {
+            missionData._saisieActive = true;
+            missionData.metadata[champ] = val;
+            sauvegarderLocalement();
+        }
+
+        function mettreAJourMetadata(champ, val) {
+            missionData._saisieActive = true;
+            missionData.metadata[champ] = val;
+            sauvegarderLocalement();
+            renderPage();
+        }
 
         function mettreAJourCalcul(index, champ, valeur) {
             const ev = missionData.pointsControle[index].eval;
@@ -1114,6 +1135,9 @@
             if (!missionData.metadata.entite) {
                 return { valide: false, messageErreur: "Veuillez sélectionner un Centre / Entité contrôlée avant d'enregistrer." };
             }
+            if (!missionData.metadata.controleurs || missionData.metadata.controleurs.trim() === '') {
+                return { valide: false, messageErreur: "Veuillez saisir le nom du Contrôleur avant d'enregistrer." };
+            }
             for (let p of pointsAValider) {
                 const ev = p.eval;
                 const pcName = getItemVal(p, ['Points de contrôle', 'Point de contrôle']);
@@ -1128,17 +1152,17 @@
         function getUserTracePayload(mode = 'ARCHIVE') {
             const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
             if (!u) return {};
-            const nom = u.nomComplet || u.identifiant;
+            const nom = u.username || u.identifiant;
             if (mode === 'MODIFIER') {
                 return {
                     modifiePar: nom,
-                    modifieParId: u.identifiant,
+                    modifieParId: nom,
                     modifieParRole: u.role
                 };
             }
             return {
                 creePar: nom,
-                creeParId: u.identifiant,
+                creeParId: nom,
                 creeParRole: u.role
             };
         }
@@ -1147,6 +1171,7 @@
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
             const regionMission = meta.region || '';
+            const controleurMission = (meta.controleurs || '').trim();
             const dateCtrlDefaut = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const timestampSuivi = Date.now();
             const sourcePoints = listePointsFiltres || missionData.pointsControle;
@@ -1168,7 +1193,7 @@
                     typeControle: typeControleMission,
                     entite: meta.entite || 'Controle',
                     site: meta.entite || 'Controle',
-                    controleur: meta.controleurs || '',
+                    controleur: controleurMission,
                     date: dateLigne,
                     dateControle: dateLigne,
                     processus: getItemVal(p, ['Processus']),
@@ -1210,6 +1235,7 @@
                 meta.idMission = idMission;
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
+                const controleurMission = (meta.controleurs || '').trim();
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
                 const traceUser = getUserTracePayload('ARCHIVE');
 
@@ -1224,7 +1250,7 @@
                         dateDebut: meta.periodeDebut || '',
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
-                        controleur: meta.controleurs || '',
+                        controleur: controleurMission,
                         ...traceUser,
                         pointsSelectionnes: missionData.pointsControle
                     }, false);
@@ -1286,6 +1312,7 @@
 
             missionData = {
                 _loadedFromBDDFilter: { date: fDate, region: fReg, site: fSite, processus: fProc },
+                _saisieActive: true,
                 _loadedConstatIds: constatsTrouves.map(c => c.idConstat).filter(Boolean),
                 metadata: {
                     idMission: selectedId,
@@ -1440,6 +1467,7 @@
                 const dateCtrl = formatDateToFR(pointsModifiesPourSuivi[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
                 const typeControleMission = meta.typeControle || 'Thématique';
                 const regionMission = meta.region || '';
+                const controleurMission = (meta.controleurs || '').trim();
                 const traceUser = getUserTracePayload('SUIVI');
 
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
@@ -1456,7 +1484,7 @@
                         dateDebut: meta.periodeDebut || '',
                         dateFin: meta.periodeFin || '',
                         entite: meta.entite || '',
-                        controleur: meta.controleurs || '',
+                        controleur: controleurMission,
                         ...traceUser,
                         pointsSelectionnes: pointsModifiesPourSuivi
                     }, false);
