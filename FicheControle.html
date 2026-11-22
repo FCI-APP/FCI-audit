@@ -303,6 +303,7 @@
         const CENTRES_PAR_REGION = {
             "MARRAKECH": [
                 "MARRAKECH CTD",
+                "MARRAKECH CM",
                 "MARRAKECH SYBA CD",
                 "AGENCE MESSAGERIE GUELIZ MARRAKECH",
                 "ESSAOUIRA CCC",
@@ -414,9 +415,9 @@
                 "ESSEMARA CLD",
                 "LAAYOUNE CCC",
                 "LAAYOUNE AM",
-                "LAAYOUNE AM PORT",
-                "BOUJDOUR AM",
-                "GUERGURATE AM",
+                "LAAYOUNE AM PORT (En cours de création)",
+                "BOUJDOUR AM (En cours de création)",
+                "GUERGURATE AM (En cours de création)",
                 "SERVICE OPERATION REGIONAL LAAYOUNE",
                 "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
@@ -855,8 +856,8 @@
                 missionData.metadata.region = normaliserRegion(missionData.metadata.region);
             }
 
-            // Si la mission n'a pas été importée depuis la BDD, le champ Contrôleur reste toujours vide
-            if (!missionData._loadedFromBDDFilter) {
+            // Si la mission n'a pas été importée depuis la BDD et n'a pas été saisie depuis Planification, le champ Contrôleur reste vide
+            if (!missionData._loadedFromBDDFilter && !missionData.metadata.controleurs) {
                 missionData.metadata.controleurs = '';
             }
 
@@ -1164,8 +1165,8 @@
             if (champ === 'controleurs') {
                 const u = getCurrentAuthUser();
                 const nomSaisi = String(val || '').trim();
-                if (u && (u.nomComplet === nomSaisi || u.identifiant === nomSaisi)) {
-                    missionData.metadata.controleurId = u.identifiant || '';
+                if (u && (u.fonction === nomSaisi || u.username === nomSaisi)) {
+                    missionData.metadata.controleurId = u.username || '';
                 } else {
                     missionData.metadata.controleurId = '';
                 }
@@ -1224,17 +1225,17 @@
         function getUserTracePayload(mode = 'ARCHIVE') {
             const u = getCurrentAuthUser();
             if (!u) return {};
-            const nom = u.nomComplet || u.identifiant;
+            const nom = u.fonction || u.username;
             if (mode === 'MODIFIER') {
                 return {
                     modifiePar: nom,
-                    modifieParId: u.identifiant,
+                    modifieParId: u.username,
                     modifieParRole: u.role
                 };
             }
             return {
                 creePar: nom,
-                creeParId: u.identifiant,
+                creeParId: u.username,
                 creeParRole: u.role
             };
         }
@@ -1245,9 +1246,9 @@
             const typeControleMission = meta.typeControle || 'Thématique';
             const regionMission = meta.region || '';
             const controleur = String(meta.controleurs || '').trim();
-            const controleurId = (u && (u.nomComplet === controleur || u.identifiant === controleur))
-                ? u.identifiant
-                : (meta.controleurId || (u ? u.identifiant : ''));
+            const controleurId = (u && (u.fonction === controleur || u.username === controleur))
+                ? u.username
+                : (meta.controleurId || (u ? u.username : ''));
             const controleurRegion = (u && u.region && u.region !== 'SIEGE')
                 ? normaliserRegion(u.region)
                 : (meta.controleurRegion || regionMission);
