@@ -1,5 +1,5 @@
 /**
- * FCI v1.0 - Module d'Authentification & Cloisonnement Régional (41 Comptes)
+ * FCI v1.0 - Module d'Authentification & Cloisonnement Deux Espaces (Siège / Régional)
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  * Session volatile (sessionStorage uniquement) : fermer/quitter déconnecte automatiquement.
  */
@@ -77,9 +77,20 @@
         { username: 'OUJDA-003',        password: 'OUJDA3@+2026',         fonction: 'Contrôleur Oujda',      role: 'CONTROLEUR',  region: 'OUEJDA' }
     ];
 
+    const SIEGE_ROLES = new Set(['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE']);
+    const SIEGE_USERNAMES = new Set(
+        FCI_USERS.filter(u => u.region === 'SIEGE').map(u => u.username.toLowerCase())
+    );
+
+    function normaliserRegion(val) {
+        let reg = String(val || '').toUpperCase().trim();
+        if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+        if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+        return reg;
+    }
+
     function getCurrentUser() {
         try {
-            // Lecture strictement depuis sessionStorage : la fermeture de l'application efface automatiquement la session
             const raw = sessionStorage.getItem(SESSION_KEY);
             if (!raw) return null;
             const parsed = JSON.parse(raw);
@@ -88,6 +99,139 @@
         } catch (e) {
             return null;
         }
+    }
+
+    function isSiegeUser(user = getCurrentUser()) {
+        if (!user) return false;
+        return normaliserRegion(user.region) === 'SIEGE' || SIEGE_ROLES.has(String(user.role || '').toUpperCase());
+    }
+
+    function isAdmin(user = getCurrentUser()) {
+        if (!user) return false;
+        return String(user.role || '').toUpperCase() === 'ADMIN';
+    }
+
+    /**
+     * Détermine si un enregistrement (mission, constat FC, constat FV, planification)
+     * a été saisi depuis l'Espace Siège.
+     */
+    function isRecordFromSiege(record) {
+        if (!record || typeof record !== 'object') return false;
+
+        // 1. Marqueur explicite d'espace
+        const espace = String(record.espaceSaisie || record.espace || record.scope || '').toUpperCase().trim();
+        if (espace === 'SIEGE') return true;
+        if (espace === 'REGIONAL') return false;
+
+        // 2. Région de l'auteur ou du contrôleur marquée SIEGE
+        const auteurRegion = normaliserRegion(record.auteurRegion || record.controleurRegion || record.creeParRegion || '');
+        if (auteurRegion === 'SIEGE') return true;
+
+        // 3. Rôle de l'auteur appartenant au Siège
+        const roleAuteur = String(record.creeParRole || record.auteurRole || record.role || '').toUpperCase().trim();
+        if (SIEGE_ROLES.has(roleAuteur)) return true;
+
+        // 4. Identifiant de l'auteur appartenant aux comptes Siège
+        const candidatsIds = [
+            record.creeParId,
+            record.auteurId,
+            record.controleurId,
+            record.username,
+            record.identifiant
+        ].map(v => String(v || '').toLowerCase().trim()).filter(Boolean);
+
+        if (candidatsIds.some(id => SIEGE_USERNAMES.has(id))) {
+            return true;
+        }
+
+        // 5. Région cible marquée SIEGE (saisie interne Siège sans région cible)
+        if (normaliserRegion(record.region) === 'SIEGE') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Règle fondamentale d'accès :
+     * - Espace Siège (Directeur, Chefs de service, Administrateur) :
+     *   accès global à toutes les données régionales + toutes les données internes du Siège.
+     * - Espace Régional (Contrôleurs d'une région) :
+     *   accès uniquement aux données régionales de LEUR propre région.
+     *   Aucun accès aux autres régions ni aux données saisies au niveau du Siège.
+     */
+    function canAccessRecord(record, user = getCurrentUser()) {
+        if (!user || !record) return false;
+
+        // L'Espace Siège dispose d'une visibilité globale (toutes régions + données internes Siège)
+        if (isSiegeUser(user)) {
+            return true;
+        }
+
+        // Espace Régional :
+        // 1) Les données saisies au niveau du Siège sont strictement invisibles aux régions
+        if (isRecordFromSiege(record)) {
+            return false;
+        }
+
+        // 2) Seules les données de la même région que le contrôleur connecté sont accessibles
+        const userRegion = normaliserRegion(user.region);
+        const recordRegion = normaliserRegion(
+            record.region || record.auteurRegion || record.controleurRegion || ''
+        );
+
+        return Boolean(userRegion && recordRegion && userRegion === recordRegion);
+    }
+
+    /**
+     * Filtre un tableau d'enregistrements selon les droits de l'utilisateur connecté.
+     */
+    function filterVisibleRecords(records, user = getCurrentUser()) {
+        if (!Array.isArray(records)) return [];
+        if (!user) return [];
+        if (isSiegeUser(user)) return records;
+        return records.filter(item => canAccessRecord(item, user));
+    }
+
+    /**
+     * Filtre l'objet complet de la base de données (missions, constatsControle, constatsEncaisses, planifications).
+     */
+    function filterDatabase(db, user = getCurrentUser()) {
+        const safeDb = (db && typeof db === 'object') ? db : {};
+        return {
+            ...safeDb,
+            missions: filterVisibleRecords(safeDb.missions || [], user),
+            constatsControle: filterVisibleRecords(safeDb.constatsControle || [], user),
+            constatsEncaisses: filterVisibleRecords(safeDb.constatsEncaisses || [], user),
+            planifications: filterVisibleRecords(safeDb.planifications || [], user)
+        };
+    }
+
+    /**
+     * Étiquette automatiquement toute nouvelle donnée saisie avec son espace d'origine
+     * ('SIEGE' ou 'REGIONAL') et les métadonnées de l'utilisateur auteur.
+     */
+    function tagRecordWithSpace(record, user = getCurrentUser()) {
+        if (!record || typeof record !== 'object') return record;
+        if (!user) return record;
+
+        const siege = isSiegeUser(user);
+        const userReg = normaliserRegion(user.region);
+
+        return {
+            ...record,
+            espaceSaisie: siege ? 'SIEGE' : 'REGIONAL',
+            auteurId: user.identifiant || user.username,
+            auteurFonction: user.fonction || '',
+            auteurRole: user.role || '',
+            auteurRegion: userReg,
+            creeParId: record.creeParId || user.identifiant || user.username,
+            creeParRole: record.creeParRole || user.role || '',
+            // Si une donnée régionale n'a pas encore de région renseignée, on force la région du contrôleur
+            region: siege
+                ? (normaliserRegion(record.region) || 'SIEGE')
+                : userReg
+        };
     }
 
     function login(usernameInput, passwordInput) {
@@ -102,12 +246,15 @@
             return { success: false, message: "Nom d'utilisateur ou mot de passe incorrect." };
         }
 
+        const espace = found.region === 'SIEGE' ? 'SIEGE' : 'REGIONAL';
+
         const sessionData = {
             username: found.username,
             identifiant: found.username,
             fonction: found.fonction,
             role: found.role,
             region: found.region,
+            espace: espace,
             loginTime: new Date().toISOString()
         };
 
@@ -124,16 +271,6 @@
             localStorage.removeItem(SESSION_KEY);
         } catch (e) {}
         window.location.replace('login.html');
-    }
-
-    function isSiege() {
-        const u = getCurrentUser();
-        return Boolean(u && u.region === 'SIEGE');
-    }
-
-    function isAdmin() {
-        const u = getCurrentUser();
-        return Boolean(u && u.role === 'ADMIN');
     }
 
     function injecterProfilSidebar(user) {
@@ -154,9 +291,9 @@
             'line-height: 1.4;'
         ].join('');
 
-        const badgePerimetre = user.region === 'SIEGE'
-            ? '<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#EAAA00;color:#002244;font-weight:800;font-size:0.68rem;">SIÈGE · ACCÈS NATIONAL</span>'
-            : `<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#0284C7;color:#FFFFFF;font-weight:800;font-size:0.68rem;">RÉGION : ${user.region}</span>`;
+        const badgePerimetre = isSiegeUser(user)
+            ? '<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#EAAA00;color:#002244;font-weight:800;font-size:0.68rem;">ESPACE SIÈGE · VISIBILITÉ GLOBALE</span>'
+            : `<span style="display:inline-block;margin-top:4px;padding:2px 7px;border-radius:4px;background:#0284C7;color:#FFFFFF;font-weight:800;font-size:0.68rem;">ESPACE RÉGIONAL · ${user.region}</span>`;
 
         box.innerHTML = `
             <div style="display:flex;align-items:center;gap:7px;font-weight:800;color:#FDE68A;">
@@ -195,8 +332,14 @@
         getCurrentUser,
         login,
         logout,
-        isSiege,
-        isAdmin,
+        isSiege: () => isSiegeUser(),
+        isAdmin: () => isAdmin(),
+        isRecordFromSiege,
+        canAccessRecord,
+        filterVisibleRecords,
+        filterDatabase,
+        tagRecordWithSpace,
+        normaliserRegion,
         getAllUsersCount: () => FCI_USERS.length
     };
 })();
