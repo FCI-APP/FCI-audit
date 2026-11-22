@@ -88,8 +88,45 @@
             flex-wrap: wrap; gap: 12px;
         }
 
-        .page-title h1 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title h1 { font-size: 1.38rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .page-title p { font-size: 0.84rem; color: var(--text-muted); margin-top: 4px; }
+
+        .espace-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .espace-pill-siege {
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #F59E0B;
+        }
+        .espace-pill-regional {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #93C5FD;
+        }
+
+        .badge-origine-siege {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 5px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.64rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #F59E0B;
+        }
 
         .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
@@ -577,15 +614,19 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i> Feuille 6 : Analyse & Pilotage</h1>
-                <p>Pilotage décisionnel multi-niveaux (Centre / Site, Régional, National) — Barid Al-Maghrib</p>
+                <h1>
+                    <i class="fa-solid fa-chart-line" style="color: var(--accent-gold);"></i>
+                    Feuille 6 : Analyse & Pilotage
+                    <span id="badgeEspaceActifTDB" class="espace-pill espace-pill-regional"><i class="fa-solid fa-shield-halved"></i> Chargement espace...</span>
+                </h1>
+                <p id="sousTitreEspaceTDB">Pilotage décisionnel multi-niveaux (Centre / Site, Régional, National) — Barid Al-Maghrib</p>
             </div>
             <div class="header-actions no-print">
                 <button class="btn btn-excel" onclick="exporterExcelTDB()" title="Télécharger le rapport analytique complet en Excel"><i class="fa-solid fa-file-excel"></i> Télécharger Excel</button>
                 <button class="btn btn-pdf" onclick="imprimerPDF()" title="Imprimer ou enregistrer en PDF"><i class="fa-solid fa-file-pdf"></i> Imprimer PDF</button>
                 <button class="btn btn-refresh" id="btnActualiserTDB" onclick="window.location.reload()" title="Recharger les données depuis la BDD"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                 <button class="btn btn-danger" onclick="viderTDB()" title="Vider uniquement l'affichage de la feuille Analyse & Pilotage"><i class="fa-solid fa-eraser"></i> Vider TDB</button>
-                <button class="btn btn-primary" onclick="FCIDatabase.exporterBDD()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
+                <button class="btn btn-primary" onclick="exporterJSONTDB()"><i class="fa-solid fa-download"></i> Exporter (JSON)</button>
             </div>
         </header>
 
@@ -776,7 +817,7 @@
                     </div>
                     <div class="bench-item">
                         <div class="bench-header">
-                            <span>Moyenne Nationale Réseau (Pondérée)</span>
+                            <span id="benchLabel3">Moyenne Nationale Réseau (Pondérée)</span>
                             <span id="benchVal3" style="color:#059669;">0.0 %</span>
                         </div>
                         <div class="bench-track"><div class="bench-fill" id="benchBar3" style="width:0%; background:#10B981;"></div></div>
@@ -1010,7 +1051,7 @@
             ],
             "LAAYOUNE": [
                 "DAKHLA AM", "DAKHLA CLD", "ESSEMARA CLD", "LAAYOUNE CCC", "LAAYOUNE AM",
-                "LAAYOUNE AM PORT", "BOUJDOUR AM", "GUERGURATE AM",
+                "LAAYOUNE AM PORT (En cours de création)", "BOUJDOUR AM (En cours de création)", "GUERGURATE AM (En cours de création)",
                 "SERVICE OPERATION REGIONAL LAAYOUNE", "SERVICE SUPPORT REGIONAL LAAYOUNE"
             ],
             "FES": [
@@ -1052,10 +1093,12 @@
         let chartClassementCentreInst = null;
 
         document.addEventListener('DOMContentLoaded', () => {
+            mettreAJourBadgeEspaceHeader();
             chargerEtPreparerDonnees();
         });
 
         window.addEventListener('fci-auth-ready', () => {
+            mettreAJourBadgeEspaceHeader();
             chargerEtPreparerDonnees();
         });
 
@@ -1073,28 +1116,120 @@
                 .replace(/"/g, '&quot;');
         }
 
+        function getCurrentAuthUser() {
+            return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
+                ? window.FCIAuth.getCurrentUser()
+                : null;
+        }
+
+        function estUtilisateurSiege() {
+            const u = getCurrentAuthUser();
+            if (!u) return false;
+            const reg = String(u.region || '').toUpperCase().trim();
+            const role = String(u.role || '').toUpperCase().trim();
+            return reg === 'SIEGE' || reg === 'NATIONAL' || reg === 'ALL'
+                || ['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role);
+        }
+
         function getUserRegionRestriction() {
-            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
-            if (!u || !u.region || u.region === 'SIEGE') return '';
+            if (estUtilisateurSiege()) return '';
+            const u = getCurrentAuthUser();
+            if (!u || !u.region) return '__NONE__';
             return normaliserRegion(u.region);
         }
 
+        /**
+         * Détermine si un enregistrement appartient à l'Espace Siège (strictement confidentiel au Siège)
+         * ou à l'Espace Régional (partagé au sein de la même région + visible par le Siège).
+         */
+        function estDonneeEspaceSiege(item, missionAssociee = {}) {
+            const checkObj = (obj) => {
+                if (!obj || typeof obj !== 'object') return false;
+                const espace = String(obj.espaceSaisie || obj.espace || obj.scope || '').toUpperCase().trim();
+                if (espace === 'SIEGE' || espace === 'ESPACE_SIEGE') return true;
+                if (espace === 'REGIONAL' || espace === 'ESPACE_REGIONAL') return false;
+
+                const ctrlReg = String(obj.controleurRegion || '').toUpperCase().trim();
+                if (ctrlReg === 'SIEGE') return true;
+
+                const role = String(obj.creeParRole || obj.role || '').toUpperCase().trim();
+                if (['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role)) return true;
+
+                const creeId = String(obj.creeParId || obj.controleurId || '').toLowerCase().trim();
+                if (creeId.includes('siege') || creeId === 'admin' || creeId === 'directeur') return true;
+
+                return false;
+            };
+            return checkObj(item) || checkObj(missionAssociee);
+        }
+
+        function aDroitConsultationDonnee(item, missionAssociee, isSiegeUser, restrictedReg) {
+            const isDonneeSiege = estDonneeEspaceSiege(item, missionAssociee);
+
+            // Espace Siège : visibilité globale (données internes du Siège + données de toutes les régions)
+            if (isSiegeUser) return true;
+
+            // Espace Régional :
+            // 1. Les données saisies au niveau du Siège sont strictement confidentielles et masquées
+            if (isDonneeSiege) return false;
+
+            // 2. Accès exclusif aux données de la même région
+            const regNorm = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
+            return Boolean(restrictedReg && restrictedReg !== '__NONE__' && regNorm === restrictedReg);
+        }
+
+        function mettreAJourBadgeEspaceHeader() {
+            const badge = document.getElementById('badgeEspaceActifTDB');
+            const sousTitre = document.getElementById('sousTitreEspaceTDB');
+            if (!badge) return;
+
+            if (estUtilisateurSiege()) {
+                badge.className = 'espace-pill espace-pill-siege';
+                badge.innerHTML = '<i class="fa-solid fa-landmark"></i> Espace Siège — Visibilité Globale';
+                if (sousTitre) {
+                    sousTitre.innerText = "Pilotage global : données internes du Siège (confidentielles) + ensemble des 10 régions — Barid Al-Maghrib";
+                }
+            } else {
+                const reg = getUserRegionRestriction();
+                const regLabel = (reg && reg !== '__NONE__') ? reg : 'NON ATTRIBUÉE';
+                badge.className = 'espace-pill espace-pill-regional';
+                badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Espace Régional — ${escapeHTML(regLabel)}`;
+                if (sousTitre) {
+                    sousTitre.innerText = `Pilotage régional strictement limité à ${regLabel} (données Siège et autres régions masquées)`;
+                }
+            }
+        }
+
         function lireDB() {
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                return FCIDatabase.getDB();
+                const loaded = FCIDatabase.getDB();
+                if (loaded && typeof loaded === 'object') db = loaded;
+            } else {
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                } catch (e) {}
             }
-            try {
-                const raw = localStorage.getItem('fci_database');
-                return raw ? JSON.parse(raw) : { missions: [], constatsControle: [], constatsEncaisses: [] };
-            } catch (e) {
-                return { missions: [], constatsControle: [], constatsEncaisses: [] };
-            }
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            return db;
         }
 
         function normaliserRegion(val) {
             let reg = String(val || '').trim().toUpperCase();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
+            if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
             return reg;
+        }
+
+        function normaliserNomCentrePourCouverture(nomSite) {
+            return String(nomSite || '')
+                .replace(/\(En cours de création\)/gi, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toUpperCase();
         }
 
         function decouperValeurControleurs(val) {
@@ -1212,25 +1347,26 @@
 
         function calculerCouvertureRegion(regNorm, listeDonneesRegion) {
             const refCentres = REFERENTIEL_CENTRES_PAR_REGION[regNorm] || [];
-            const sitesTouchesSet = new Set(listeDonneesRegion.map(d => String(d.site || '').trim().toUpperCase()).filter(Boolean));
-            const sitesTouchesControleSet = new Set(
-                listeDonneesRegion
-                    .filter(d => d.source === 'FC')
-                    .map(d => String(d.site || '').trim().toUpperCase())
-                    .filter(Boolean)
-            );
-            const sitesTouchesVerificationSet = new Set(
-                listeDonneesRegion
-                    .filter(d => d.source === 'FV')
-                    .map(d => String(d.site || '').trim().toUpperCase())
-                    .filter(Boolean)
-            );
+            const sitesTouchesMap = new Map();
+            const sitesTouchesControleMap = new Map();
+            const sitesTouchesVerificationMap = new Map();
 
-            const sitesTouchesList = [...sitesTouchesSet].sort((a, b) => a.localeCompare(b, 'fr'));
-            const sitesTouchesControleList = [...sitesTouchesControleSet].sort((a, b) => a.localeCompare(b, 'fr'));
-            const sitesTouchesVerificationList = [...sitesTouchesVerificationSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            listeDonneesRegion.forEach(d => {
+                const rawSite = String(d.site || '').trim();
+                const normKey = normaliserNomCentrePourCouverture(rawSite);
+                if (!normKey) return;
+
+                const libelleRef = refCentres.find(rc => normaliserNomCentrePourCouverture(rc) === normKey) || rawSite.toUpperCase();
+                sitesTouchesMap.set(normKey, libelleRef);
+                if (d.source === 'FC') sitesTouchesControleMap.set(normKey, libelleRef);
+                if (d.source === 'FV') sitesTouchesVerificationMap.set(normKey, libelleRef);
+            });
+
+            const sitesTouchesList = [...sitesTouchesMap.values()].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesTouchesControleList = [...sitesTouchesControleMap.values()].sort((a, b) => a.localeCompare(b, 'fr'));
+            const sitesTouchesVerificationList = [...sitesTouchesVerificationMap.values()].sort((a, b) => a.localeCompare(b, 'fr'));
             const sitesNonTouchesList = refCentres
-                .filter(c => !sitesTouchesSet.has(c.trim().toUpperCase()))
+                .filter(c => !sitesTouchesMap.has(normaliserNomCentrePourCouverture(c)))
                 .sort((a, b) => a.localeCompare(b, 'fr'));
 
             const nbTouches = sitesTouchesList.length;
@@ -1321,12 +1457,12 @@
 
         function chargerEtPreparerDonnees() {
             const db = lireDB();
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
 
-            toutesLesMissions = (db.missions || []).filter(m => {
-                if (!restrictedReg) return true;
-                return normaliserRegion(m.region) === restrictedReg;
-            });
+            toutesLesMissions = (db.missions || []).filter(m =>
+                aDroitConsultationDonnee(m, m, isSiegeUser, restrictedReg)
+            );
 
             const mapMissionsById = {};
             const mapMissionsBySiteDate = {};
@@ -1351,9 +1487,10 @@
 
             (db.constatsControle || []).forEach(c => {
                 const m = trouverMissionAssociee(c, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
-                const regionNorm = normaliserRegion(c.region || m.region || '');
-                if (restrictedReg && regionNorm !== restrictedReg) return;
+                if (!aDroitConsultationDonnee(c, m, isSiegeUser, restrictedReg)) return;
 
+                const regionNorm = normaliserRegion(c.region || m.region || '');
+                const isEspaceSiege = estDonneeEspaceSiege(c, m);
                 const iso = normaliserDateISO(c.date || c.dateControle || m.date || m.dateControle);
                 const ech = parseInt(c.ech) || 0;
                 const ok = parseInt(c.ok) || 0;
@@ -1384,15 +1521,17 @@
                     typeControle: typeNorm,
                     typeVisite: typeNorm === 'Vérification' ? 'Vérification' : 'Contrôle',
                     isSuivi: Boolean(c.isSuivi || c.suivi || String(c.idConstat || '').toUpperCase().includes('SUIVI')),
-                    isModifie: Boolean(c.isModifie || c.modifie)
+                    isModifie: Boolean(c.isModifie || c.modifie),
+                    isEspaceSiege: isEspaceSiege
                 });
             });
 
             (db.constatsEncaisses || []).forEach(e => {
                 const m = trouverMissionAssociee(e, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
-                const regionNorm = normaliserRegion(e.region || m.region || '');
-                if (restrictedReg && regionNorm !== restrictedReg) return;
+                if (!aDroitConsultationDonnee(e, m, isSiegeUser, restrictedReg)) return;
 
+                const regionNorm = normaliserRegion(e.region || m.region || '');
+                const isEspaceSiege = estDonneeEspaceSiege(e, m);
                 const iso = normaliserDateISO(e.date || e.dateVerification || m.date);
                 const ech = parseInt(e.ech) || 0;
                 const ok = parseInt(e.ok) || 0;
@@ -1423,16 +1562,17 @@
                     typeControle: typeNorm,
                     typeVisite: 'Vérification',
                     isSuivi: Boolean(e.isSuivi || e.suivi || String(e.idEncaisse || '').toUpperCase().includes('SUIVI')),
-                    isModifie: Boolean(e.isModifie || e.modifie)
+                    isModifie: Boolean(e.isModifie || e.modifie),
+                    isEspaceSiege: isEspaceSiege
                 });
             });
 
             toutesLesDonnees = unifies;
 
             const tabNat = document.getElementById('tabNational');
-            if (restrictedReg) {
+            if (!isSiegeUser) {
                 tabNat.disabled = true;
-                tabNat.title = "Accès réservé au Siège";
+                tabNat.title = "Accès réservé à l'Espace Siège";
                 if (niveauActif === 'NATIONAL') {
                     niveauActif = 'REGIONAL';
                 }
@@ -1463,9 +1603,10 @@
         }
 
         function lireEtatFiltres() {
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
             return {
-                reg: restrictedReg || (niveauActif === 'NATIONAL' ? 'TOUS' : document.getElementById('filtreRegion').value),
+                reg: (!isSiegeUser && restrictedReg) ? restrictedReg : (niveauActif === 'NATIONAL' ? 'TOUS' : document.getElementById('filtreRegion').value),
                 centre: niveauActif === 'CENTRE' ? document.getElementById('filtreCentre').value : 'TOUS',
                 dateSpec: document.getElementById('filtreDate').value,
                 dateDebut: document.getElementById('filtreDateDebut').value,
@@ -1479,9 +1620,13 @@
         }
 
         function filtrerSubset(etat, exclure = []) {
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
             return toutesLesDonnees.filter(d => {
-                if (restrictedReg && d.region !== restrictedReg) return false;
+                if (!isSiegeUser) {
+                    if (d.isEspaceSiege) return false;
+                    if (!restrictedReg || restrictedReg === '__NONE__' || d.region !== restrictedReg) return false;
+                }
                 if (!exclure.includes('REGION') && etat.reg !== 'TOUS' && d.region !== etat.reg) return false;
                 if (!exclure.includes('CENTRE') && etat.centre !== 'TOUS' && d.site !== etat.centre) return false;
                 if (!exclure.includes('TEMPS') && !correspondFiltreTemporel(d.dateISO, etat.dateSpec, etat.dateDebut, etat.dateFin)) return false;
@@ -1512,14 +1657,15 @@
 
         function actualiserFiltresDynamiquesEtAnalyse() {
             const etat = lireEtatFiltres();
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
 
             const selReg = document.getElementById('filtreRegion');
-            const regionsBDD = restrictedReg
+            const regionsBDD = (!isSiegeUser && restrictedReg)
                 ? [restrictedReg]
                 : [...new Set([...LISTE_10_REGIONS, ...toutesLesDonnees.map(d => d.region).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            if (restrictedReg) {
+            if (!isSiegeUser && restrictedReg) {
                 selReg.innerHTML = `<option value="${escapeHTML(restrictedReg)}" selected>${escapeHTML(restrictedReg)}</option>`;
                 selReg.value = restrictedReg;
                 etat.reg = restrictedReg;
@@ -1606,12 +1752,13 @@
         }
 
         function changerNiveau(nouveauNiveau) {
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
-            if (restrictedReg && nouveauNiveau === 'NATIONAL') return;
+            if (!isSiegeUser && nouveauNiveau === 'NATIONAL') return;
 
             niveauActif = nouveauNiveau;
 
-            document.getElementById('filtreRegion').value = restrictedReg || 'TOUS';
+            document.getElementById('filtreRegion').value = (!isSiegeUser && restrictedReg) ? restrictedReg : 'TOUS';
             document.getElementById('filtreCentre').value = 'TOUS';
 
             appliquerEtatNiveau();
@@ -1619,6 +1766,7 @@
         }
 
         function appliquerEtatNiveau() {
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
             document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
             document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
@@ -1629,7 +1777,7 @@
             const grpReg = document.getElementById('grpRegion');
             const grpCentre = document.getElementById('grpCentre');
 
-            if (restrictedReg) {
+            if (!isSiegeUser && restrictedReg) {
                 selReg.disabled = true;
                 grpReg.classList.add('is-locked');
                 selReg.classList.remove('highlight-focus');
@@ -1670,8 +1818,9 @@
         }
 
         function reinitialiserFiltresTDB() {
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
-            document.getElementById('filtreRegion').value = restrictedReg || 'TOUS';
+            document.getElementById('filtreRegion').value = (!isSiegeUser && restrictedReg) ? restrictedReg : 'TOUS';
             document.getElementById('filtreCentre').value = 'TOUS';
             document.getElementById('filtreDate').value = 'TOUS';
             document.getElementById('filtreDateDebut').value = 'TOUS';
@@ -1805,7 +1954,6 @@
                 return;
             }
 
-            // NATIONAL : raisonnement exclusivement par région (sur les 10 régions)
             document.getElementById('lblKpiCouverture').textContent = 'Taux Couverture National (Régions)';
             const nbRegionsTouchees = LISTE_10_REGIONS.filter(r => regionsUniques.has(r)).length;
             const tauxCouvNationalRegions = (nbRegionsTouchees / LISTE_10_REGIONS.length) * 100;
@@ -1838,7 +1986,7 @@
                 titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau Centre / Site`;
 
                 if (donnees.length === 0) {
-                    bodyEl.innerHTML = `Aucune donnée enregistrée pour ${nomCentre} sur les critères sélectionnés.`;
+                    bodyEl.innerHTML = `Aucune donnée enregistrée pour ${nomCentre} sur les critères sélectionnés dans votre espace autorisé.`;
                     return;
                 }
 
@@ -1893,7 +2041,6 @@
                     </ul>
                 `;
             } else {
-                // NIVEAU NATIONAL : raisonnement exclusivement par région
                 titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau National (Approche Régionale)`;
 
                 const regionsToucheesSet = new Set(donnees.map(d => d.region).filter(Boolean));
@@ -1914,6 +2061,7 @@
 
         function calculerBenchmarkEtSynthese(donneesFiltrees, etat) {
             const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
+            const isSiegeUser = estUtilisateurSiege();
             const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
 
             const tcSelection = calculerTCPondere(donneesFiltrees);
@@ -1934,6 +2082,9 @@
             document.getElementById('benchVal2').textContent = tcRegion.toFixed(1) + ' %';
             document.getElementById('benchBar2').style.width = Math.min(100, tcRegion) + '%';
 
+            document.getElementById('benchLabel3').textContent = isSiegeUser
+                ? 'Moyenne Nationale Réseau (Pondérée)'
+                : `Référence Espace Régional (${reg || 'Région'})`;
             document.getElementById('benchVal3').textContent = tcNational.toFixed(1) + ' %';
             document.getElementById('benchBar3').style.width = Math.min(100, tcNational) + '%';
 
@@ -1954,7 +2105,7 @@
                 } else {
                     badgeRang.style.display = 'none';
                 }
-            } else if (niveauActif === 'REGIONAL' && reg !== 'TOUS') {
+            } else if (niveauActif === 'REGIONAL' && reg !== 'TOUS' && isSiegeUser) {
                 const mapRegs = {};
                 baseTransverse.forEach(d => {
                     if (!mapRegs[d.region]) mapRegs[d.region] = [];
@@ -1976,7 +2127,7 @@
 
             const box = document.getElementById('syntheseDecisionnelleBox');
             if (donneesFiltrees.length === 0) {
-                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée correspondante dans la BDD pour cette combinaison de filtres.`;
+                box.innerHTML = `<strong>Synthèse :</strong> Aucune donnée correspondante dans votre espace autorisé pour cette combinaison de filtres.`;
                 return;
             }
 
@@ -1994,10 +2145,11 @@
                 .map(([p, list]) => ({ p, tc: calculerTCPondere(list), ko: list.reduce((a, b) => a + b.ko, 0) }))
                 .sort((a, b) => a.tc - b.tc)[0];
 
+            const libelleRef = isSiegeUser ? 'moyenne nationale' : 'moyenne de votre espace régional';
             box.innerHTML = `
                 <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle (${libelleFiltreTemporel(dateSpec, dateDebut, dateFin)}) :</strong><br>
                 Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
-                (soit <strong>${signeEcart} pts</strong> vs moyenne nationale ${tcNational.toFixed(1)}%).
+                (soit <strong>${signeEcart} pts</strong> vs ${libelleRef} ${tcNational.toFixed(1)}%).
                 On relève <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} non clôturé(s)</strong>.
                 ${pireProc ? `Le processus le plus sensible est <strong>« ${escapeHTML(pireProc.p)} »</strong> (TC : ${pireProc.tc.toFixed(1)}%, ${pireProc.ko} KO).` : ''}
             `;
@@ -2145,10 +2297,11 @@
 
             section.style.display = 'block';
             const { reg } = etat;
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
             const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
 
-            const regionsPourClassement = restrictedReg ? [restrictedReg] : LISTE_10_REGIONS;
+            const regionsPourClassement = (!isSiegeUser && restrictedReg) ? [restrictedReg] : LISTE_10_REGIONS;
             const classementRegionsData = regionsPourClassement.map(r => {
                 const itemsR = baseTransverse.filter(d => d.region === r);
                 return {
@@ -2255,7 +2408,6 @@
                 });
 
             } else {
-                // NIVEAU NATIONAL : raisonnement exclusivement par région
                 document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-pie"></i> Couverture Nationale des Régions (10 Régions)`;
                 document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement National des Régions (TC %)`;
                 document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement National des Centres / Sites (TC %)`;
@@ -2600,7 +2752,6 @@
                 });
 
             } else {
-                // NIVEAU NATIONAL : classement et statut de couverture par région uniquement
                 titreP.innerHTML = `
                     <span><i class="fa-solid fa-ranking-star"></i> Classement & Évolution des Régions (Réseau National)</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Statut régional (Touchée / Non touchée), Contrôles (FC), Vérifications (FV) & conformité</span>`;
@@ -2721,7 +2872,6 @@
                 }
             }
 
-            // Bloc Type de Contrôle
             const typesPresents = [...new Set(donnees.map(d => d.typeControle).filter(Boolean))];
             const typesData = typesPresents.map(t => {
                 const items = donnees.filter(d => d.typeControle === t);
@@ -2786,9 +2936,6 @@
             }
         }
 
-        // =========================================================================
-        // ANALYSE DE LA PARTICIPATION DES CONTRÔLEURS (CENTRE / RÉGIONAL / NATIONAL)
-        // =========================================================================
         function construireAnalyseParticipationControleurs(donnees, reg, centre) {
             const titreTexte = document.getElementById('titreTexteParticipationControleurs');
             const sousTitre = document.getElementById('sousTitreParticipationControleurs');
@@ -2995,7 +3142,6 @@
                     </tr>`;
 
             } else {
-                // NIVEAU NATIONAL : Consolidation nationale par contrôleur
                 titreTexte.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Consolidation Nationale`;
                 sousTitre.textContent = 'Classement national par contrôleur : régions, type de visite, nb contrôles, nb vérifications, total visites, centres visités & % participation';
 
@@ -3142,11 +3288,12 @@
 
         function afficherTableDetaillee(donnees) {
             const tbody = document.getElementById('tdbTableBody');
+            const isSiegeUser = estUtilisateurSiege();
             document.getElementById('countConstatsTable').textContent = donnees.length;
             tbody.innerHTML = '';
 
             if (donnees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="14" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères dans votre espace autorisé.</td></tr>';
                 return;
             }
 
@@ -3155,11 +3302,14 @@
                 const stCls = c.statut === 'CLOTURE' ? 'pill-faible' : (c.statut === 'NON_CLOTURE' ? 'pill-critique' : 'pill-modere');
                 const tpCls = c.typeControle === 'Thématique' ? 'pill-them' : (c.typeControle === 'Systématique' ? 'pill-syst' : 'pill-verif');
                 const tags = `${c.isModifie ? ' <span class="pill pill-eleve">Modifié</span>' : ''}${c.isSuivi ? ' <span class="pill pill-them">Suivi</span>' : ''}`;
+                const badgeSiege = (isSiegeUser && c.isEspaceSiege)
+                    ? `<span class="badge-origine-siege" title="Donnée interne saisie au niveau du Siège"><i class="fa-solid fa-landmark"></i> Siège</span>`
+                    : '';
 
                 tbody.innerHTML += `
                     <tr>
                         <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${c.dateFR}</td>
-                        <td><b>${escapeHTML(c.region)}</b></td>
+                        <td><b>${escapeHTML(c.region)}</b>${badgeSiege}</td>
                         <td>${escapeHTML(c.site)}</td>
                         <td><span style="font-weight:700; color:#334155;">${escapeHTML(c.controleur)}</span></td>
                         <td><b>${escapeHTML(c.processus)}</b></td>
@@ -3341,6 +3491,7 @@
                 return;
             }
 
+            const isSiegeUser = estUtilisateurSiege();
             const dateSpec = document.getElementById('filtreDate').value;
             const dateDebut = document.getElementById('filtreDateDebut').value;
             const dateFin = document.getElementById('filtreDateFin').value;
@@ -3348,6 +3499,7 @@
             const wb = XLSX.utils.book_new();
 
             const kpiRows = [
+                { "Indicateur": "Espace d'accès", "Valeur": isSiegeUser ? "Espace Siège (Global)" : `Espace Régional (${getUserRegionRestriction()})` },
                 { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
                 { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
                 { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateSpec, dateDebut, dateFin) },
@@ -3378,31 +3530,63 @@
             const wsPart = XLSX.utils.json_to_sheet(exportParticipationControleurs.length > 0 ? exportParticipationControleurs : [{ "Info": "Aucune donnée de participation" }]);
             XLSX.utils.book_append_sheet(wb, wsPart, "5_Participation_Controleurs");
 
-            const rowsDetail = dernieresDonneesFiltrees.map(c => ({
-                "Date": c.dateFR,
-                "Source": c.source,
-                "Région": c.region,
-                "Centre / Site": c.site,
-                "Contrôleur": c.controleur,
-                "Type de Contrôle": c.typeControle,
-                "Processus": c.processus,
-                "Contrôle": c.controle || 'N/A',
-                "Point de Contrôle (PC)": c.pc || 'N/A',
-                "Pop": c.pop,
-                "Ech": c.ech,
-                "OK": c.ok,
-                "KO": c.ko,
-                "TC (%)": Number(c.tc.toFixed(1)),
-                "Statut": libelleStatut(c.statut),
-                "Suivi": c.isSuivi ? "Oui" : "Non",
-                "Modifié": c.isModifie ? "Oui" : "Non",
-                "Constat / Remarques": c.constat
-            }));
+            const rowsDetail = dernieresDonneesFiltrees.map(c => {
+                const row = {
+                    "Date": c.dateFR,
+                    "Source": c.source,
+                    "Région": c.region,
+                    "Centre / Site": c.site,
+                    "Contrôleur": c.controleur,
+                    "Type de Contrôle": c.typeControle,
+                    "Processus": c.processus,
+                    "Contrôle": c.controle || 'N/A',
+                    "Point de Contrôle (PC)": c.pc || 'N/A',
+                    "Pop": c.pop,
+                    "Ech": c.ech,
+                    "OK": c.ok,
+                    "KO": c.ko,
+                    "TC (%)": Number(c.tc.toFixed(1)),
+                    "Statut": libelleStatut(c.statut),
+                    "Suivi": c.isSuivi ? "Oui" : "Non",
+                    "Modifié": c.isModifie ? "Oui" : "Non",
+                    "Constat / Remarques": c.constat
+                };
+                if (isSiegeUser) {
+                    row["Espace"] = c.isEspaceSiege ? "Siège" : "Régional";
+                }
+                return row;
+            });
             const wsDetail = XLSX.utils.json_to_sheet(rowsDetail.length > 0 ? rowsDetail : [{ "Info": "Aucun constat" }]);
             XLSX.utils.book_append_sheet(wb, wsDetail, "6_Detail_Constats");
 
             const dateStr = new Date().toISOString().slice(0, 10);
             XLSX.writeFile(wb, `FCI_Analyse_Pilotage_${niveauActif}_${dateStr}.xlsx`);
+        }
+
+        function exporterJSONTDB() {
+            const isSiegeUser = estUtilisateurSiege();
+            if (isSiegeUser && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
+                FCIDatabase.exporterBDD();
+                return;
+            }
+            const restrictedReg = getUserRegionRestriction();
+            const db = lireDB();
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const filteredDb = {
+                missions: (db.missions || []).filter(m => aDroitConsultationDonnee(m, m, isSiegeUser, restrictedReg)),
+                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationDonnee(c, mapMissions[c.idMission] || {}, isSiegeUser, restrictedReg)),
+                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationDonnee(e, mapMissions[e.idMission] || {}, isSiegeUser, restrictedReg))
+            };
+
+            const blob = new Blob([JSON.stringify(filteredDb, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `FCI_TDB_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         function imprimerPDF() {
