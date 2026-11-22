@@ -181,7 +181,7 @@
                     <label for="username">Nom d'utilisateur</label>
                     <div class="input-wrap">
                         <i class="fa-solid fa-user left-icon"></i>
-                        <input type="text" id="username" placeholder="Ex : admin-siege ou CASA-001" required autofocus>
+                        <input type="text" id="username" name="fci_login_user" autocomplete="off" placeholder="Ex : admin-siege ou CASA-001" required autofocus>
                     </div>
                 </div>
 
@@ -189,7 +189,7 @@
                     <label for="password">Mot de passe</label>
                     <div class="input-wrap">
                         <i class="fa-solid fa-lock left-icon"></i>
-                        <input type="password" id="password" placeholder="Saisir votre mot de passe" required>
+                        <input type="password" id="password" name="fci_login_pass" autocomplete="new-password" placeholder="Saisir votre mot de passe" required>
                         <button type="button" class="toggle-pass" id="btnTogglePass" title="Afficher / Masquer">
                             <i class="fa-solid fa-eye"></i>
                         </button>
@@ -212,6 +212,11 @@
         if (window.FCIAuth && window.FCIAuth.getCurrentUser()) {
             window.location.replace('index.html');
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        });
 
         document.getElementById('btnTogglePass').addEventListener('click', function () {
             const pwd = document.getElementById('password');
