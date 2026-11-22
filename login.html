@@ -176,12 +176,26 @@
                 <span id="loginErrorMsg">Identifiants invalides.</span>
             </div>
 
-            <form id="loginForm" autocomplete="off">
+            <form id="loginForm" autocomplete="off" novalidate>
                 <div class="form-group">
                     <label for="username">Nom d'utilisateur</label>
                     <div class="input-wrap">
                         <i class="fa-solid fa-user left-icon"></i>
-                        <input type="text" id="username" name="fci_login_user" autocomplete="off" placeholder="Ex : admin-siege ou CASA-001" required autofocus>
+                        <input
+                            type="text"
+                            id="username"
+                            value=""
+                            placeholder=""
+                            autocomplete="off"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            aria-autocomplete="none"
+                            data-lpignore="true"
+                            data-form-type="other"
+                            readonly
+                            required
+                        >
                     </div>
                 </div>
 
@@ -189,7 +203,21 @@
                     <label for="password">Mot de passe</label>
                     <div class="input-wrap">
                         <i class="fa-solid fa-lock left-icon"></i>
-                        <input type="password" id="password" name="fci_login_pass" autocomplete="new-password" placeholder="Saisir votre mot de passe" required>
+                        <input
+                            type="password"
+                            id="password"
+                            value=""
+                            placeholder=""
+                            autocomplete="new-password"
+                            autocorrect="off"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            aria-autocomplete="none"
+                            data-lpignore="true"
+                            data-form-type="other"
+                            readonly
+                            required
+                        >
                         <button type="button" class="toggle-pass" id="btnTogglePass" title="Afficher / Masquer">
                             <i class="fa-solid fa-eye"></i>
                         </button>
@@ -213,9 +241,50 @@
             window.location.replace('index.html');
         }
 
+        function reinitialiserCellulesVides() {
+            const userInput = document.getElementById('username');
+            const passInput = document.getElementById('password');
+            const suffixeUnique = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+
+            if (userInput) {
+                userInput.setAttribute('name', 'fci_u_' + suffixeUnique);
+                userInput.setAttribute('readonly', 'readonly');
+                userInput.value = '';
+            }
+            if (passInput) {
+                passInput.setAttribute('name', 'fci_p_' + suffixeUnique);
+                passInput.setAttribute('readonly', 'readonly');
+                passInput.value = '';
+            }
+        }
+
+        function activerSaisieSansHistorique(inputEl) {
+            if (!inputEl) return;
+            const debloquer = () => {
+                if (inputEl.hasAttribute('readonly')) {
+                    inputEl.removeAttribute('readonly');
+                }
+            };
+            inputEl.addEventListener('pointerdown', debloquer);
+            inputEl.addEventListener('focus', debloquer);
+            inputEl.addEventListener('keydown', debloquer);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
+            const userInput = document.getElementById('username');
+            const passInput = document.getElementById('password');
+
+            reinitialiserCellulesVides();
+            activerSaisieSansHistorique(userInput);
+            activerSaisieSansHistorique(passInput);
+
+            // Double nettoyage différé pour neutraliser toute injection tardive du navigateur
+            setTimeout(reinitialiserCellulesVides, 50);
+            setTimeout(reinitialiserCellulesVides, 150);
+        });
+
+        window.addEventListener('pageshow', () => {
+            reinitialiserCellulesVides();
         });
 
         document.getElementById('btnTogglePass').addEventListener('click', function () {
@@ -232,12 +301,19 @@
 
         document.getElementById('loginForm').addEventListener('submit', function (e) {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
+            const userInput = document.getElementById('username');
+            const passInput = document.getElementById('password');
+            const user = userInput.value;
+            const pass = passInput.value;
             const res = window.FCIAuth.login(user, pass);
 
             if (res.success) {
-                window.location.href = 'index.html';
+                // Vidage des champs avant navigation pour éviter toute mémorisation dans l'historique
+                userInput.value = '';
+                passInput.value = '';
+                userInput.removeAttribute('name');
+                passInput.removeAttribute('name');
+                window.location.replace('index.html');
             } else {
                 const errBox = document.getElementById('loginError');
                 document.getElementById('loginErrorMsg').textContent = res.message;
