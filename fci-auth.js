@@ -81,6 +81,9 @@
     const SIEGE_USERNAMES = new Set(
         FCI_USERS.filter(u => u.region === 'SIEGE').map(u => u.username.toLowerCase())
     );
+    const SIEGE_FONCTIONS = new Set(
+        FCI_USERS.filter(u => u.region === 'SIEGE').map(u => u.fonction.toLowerCase())
+    );
 
     function normaliserRegion(val) {
         let reg = String(val || '').toUpperCase().trim();
@@ -111,9 +114,14 @@
         return String(user.role || '').toUpperCase() === 'ADMIN';
     }
 
+    function getSpace(user = getCurrentUser()) {
+        if (!user) return 'NONE';
+        return isSiegeUser(user) ? 'SIEGE' : 'REGIONAL';
+    }
+
     /**
      * Détermine si un enregistrement (mission, constat FC, constat FV, planification)
-     * a été saisi depuis l'Espace Siège.
+     * a été saisi depuis l'Espace Siège (y compris pour les anciens enregistrements).
      */
     function isRecordFromSiege(record) {
         if (!record || typeof record !== 'object') return false;
@@ -144,7 +152,23 @@
             return true;
         }
 
-        // 5. Région cible marquée SIEGE (saisie interne Siège sans région cible)
+        // 5. Fallback rétroactif : nom/fonction d'un compte Siège dans controleur / controleurs / auteurFonction
+        const candidatsTexte = [
+            record.auteurFonction,
+            record.controleur,
+            Array.isArray(record.controleurs) ? record.controleurs.join(',') : record.controleurs
+        ].map(v => String(v || '').toLowerCase().trim()).filter(Boolean);
+
+        for (const txt of candidatsTexte) {
+            for (const uSiege of SIEGE_USERNAMES) {
+                if (txt.includes(uSiege)) return true;
+            }
+            for (const fSiege of SIEGE_FONCTIONS) {
+                if (txt.includes(fSiege)) return true;
+            }
+        }
+
+        // 6. Région cible marquée SIEGE
         if (normaliserRegion(record.region) === 'SIEGE') {
             return true;
         }
@@ -163,18 +187,14 @@
     function canAccessRecord(record, user = getCurrentUser()) {
         if (!user || !record) return false;
 
-        // L'Espace Siège dispose d'une visibilité globale (toutes régions + données internes Siège)
         if (isSiegeUser(user)) {
             return true;
         }
 
-        // Espace Régional :
-        // 1) Les données saisies au niveau du Siège sont strictement invisibles aux régions
         if (isRecordFromSiege(record)) {
             return false;
         }
 
-        // 2) Seules les données de la même région que le contrôleur connecté sont accessibles
         const userRegion = normaliserRegion(user.region);
         const recordRegion = normaliserRegion(
             record.region || record.auteurRegion || record.controleurRegion || ''
@@ -183,9 +203,6 @@
         return Boolean(userRegion && recordRegion && userRegion === recordRegion);
     }
 
-    /**
-     * Filtre un tableau d'enregistrements selon les droits de l'utilisateur connecté.
-     */
     function filterVisibleRecords(records, user = getCurrentUser()) {
         if (!Array.isArray(records)) return [];
         if (!user) return [];
@@ -193,9 +210,6 @@
         return records.filter(item => canAccessRecord(item, user));
     }
 
-    /**
-     * Filtre l'objet complet de la base de données (missions, constatsControle, constatsEncaisses, planifications).
-     */
     function filterDatabase(db, user = getCurrentUser()) {
         const safeDb = (db && typeof db === 'object') ? db : {};
         return {
@@ -207,10 +221,6 @@
         };
     }
 
-    /**
-     * Étiquette automatiquement toute nouvelle donnée saisie avec son espace d'origine
-     * ('SIEGE' ou 'REGIONAL') et les métadonnées de l'utilisateur auteur.
-     */
     function tagRecordWithSpace(record, user = getCurrentUser()) {
         if (!record || typeof record !== 'object') return record;
         if (!user) return record;
@@ -227,7 +237,6 @@
             auteurRegion: userReg,
             creeParId: record.creeParId || user.identifiant || user.username,
             creeParRole: record.creeParRole || user.role || '',
-            // Si une donnée régionale n'a pas encore de région renseignée, on force la région du contrôleur
             region: siege
                 ? (normaliserRegion(record.region) || 'SIEGE')
                 : userReg
@@ -330,6 +339,7 @@
 
     window.FCIAuth = {
         getCurrentUser,
+        getSpace,
         login,
         logout,
         isSiege: () => isSiegeUser(),
