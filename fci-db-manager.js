@@ -133,6 +133,31 @@
     }
 
     /**
+     * Enregistre ou met à jour une mission (Planification / FC / FV) avec étiquetage d'espace.
+     */
+    async function enregistrerMission(mission) {
+        if (!mission || typeof mission !== 'object') return getDB();
+        const user = getCurrentUser();
+        const db = getDB();
+
+        const taggedMission = tagRecord({
+            ...mission,
+            idMission: mission.idMission || ('MISS-' + Date.now())
+        }, user);
+
+        const missions = db.missions || [];
+        const idx = missions.findIndex(m => m.idMission === taggedMission.idMission);
+        if (idx !== -1) {
+            missions[idx] = { ...missions[idx], ...taggedMission };
+        } else {
+            missions.push(taggedMission);
+        }
+
+        db.missions = missions;
+        return saveDB(db);
+    }
+
+    /**
      * Enregistre ou met à jour un lot de constats de Fiche de Contrôle (FC).
      */
     async function enregistrerLotControle(lotConstats, site = '', idMission = '') {
@@ -182,7 +207,8 @@
         const existants = db.constatsEncaisses || [];
         taggedLot.forEach(item => {
             const idx = existants.findIndex(e =>
-                (item.idEncaisse && e.idEncaisse === item.idEncaisse)
+                (item.idEncaisse && e.idEncaisse === item.idEncaisse) ||
+                (item.id && e.id === item.id)
             );
             if (idx !== -1) {
                 existants[idx] = { ...existants[idx], ...item };
@@ -220,13 +246,77 @@
         return saveDB(db);
     }
 
+    /**
+     * Exporte en JSON uniquement le périmètre autorisé de l'utilisateur connecté.
+     */
+    function exporterBDD() {
+        const scopedDb = getDB();
+        const payload = {
+            missions: scopedDb.missions || [],
+            constatsControle: scopedDb.constatsControle || [],
+            constatsEncaisses: scopedDb.constatsEncaisses || [],
+            planifications: scopedDb.planifications || [],
+            exportDate: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FCI_BDD_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Importe un fichier JSON en respectant strictement le cloisonnement d'espace de l'utilisateur.
+     */
+    function importerBDD(importedData) {
+        if (!importedData || typeof importedData !== 'object') return getDB();
+        const user = getCurrentUser();
+        const currentScoped = getDB();
+
+        const mergeByKey = (existingArr, incomingArr, keyField) => {
+            const result = [...existingArr];
+            (Array.isArray(incomingArr) ? incomingArr : []).forEach(item => {
+                if (!item || typeof item !== 'object') return;
+                // Un utilisateur régional ne peut importer que des données de sa propre région (hors données Siège)
+                if (user && !isSiegeUser(user) && !canAccess(item, user)) return;
+
+                const tagged = (item.espaceSaisie === 'SIEGE' || item.espaceSaisie === 'REGIONAL')
+                    ? item
+                    : tagRecord(item, user);
+
+                const idx = keyField && tagged[keyField]
+                    ? result.findIndex(e => e[keyField] === tagged[keyField])
+                    : -1;
+
+                if (idx !== -1) {
+                    result[idx] = { ...result[idx], ...tagged };
+                } else {
+                    result.push(tagged);
+                }
+            });
+            return result;
+        };
+
+        return saveDB({
+            missions: mergeByKey(currentScoped.missions, importedData.missions, 'idMission'),
+            constatsControle: mergeByKey(currentScoped.constatsControle, importedData.constatsControle, 'idConstat'),
+            constatsEncaisses: mergeByKey(currentScoped.constatsEncaisses, importedData.constatsEncaisses, 'idEncaisse'),
+            planifications: mergeByKey(currentScoped.planifications, importedData.planifications, 'idPlanification')
+        });
+    }
+
     // Exposition globale unifiée pour toutes les feuilles (FC, FV, Planification, BDD, TDB)
     window.FCIDatabase = {
         getDB,
         saveDB,
+        enregistrerMission,
         enregistrerLotControle,
         enregistrerLotEncaisses,
         enregistrerPlanification,
+        exporterBDD,
+        importerBDD,
         canAccessRecord: canAccess
     };
 
@@ -234,6 +324,7 @@
     window.FCIDBManager = {
         getLocalDatabase: getDB,
         saveLocalDatabase: saveDB,
+        upsertFCIMission: enregistrerMission,
         upsertFCIRecord: async (record, moduleSource = 'FC') => {
             if (moduleSource === 'FV') {
                 return enregistrerLotEncaisses([record], record.site || '', record.idMission || '');
