@@ -821,7 +821,6 @@
 
         <!-- SECTION COUVERTURE & GRAPHIQUES DE CLASSEMENT (ONGLETS RÉGIONAL & NATIONAL) -->
         <section id="sectionCouvertureEtClassementCharts" style="display:none;">
-            <!-- Graphiques Classement Région & Classement Centre + Graphique Couverture -->
             <div class="charts-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
                 <div class="chart-card">
                     <h3 id="titreChartCouverture"><i class="fa-solid fa-chart-bar"></i> Taux de Couverture (%)</h3>
@@ -837,7 +836,7 @@
                 </div>
             </div>
 
-            <!-- Tableau dédié Taux de Couverture (Sites par Région en Régional / Régions uniquement en National) -->
+            <!-- Tableau dédié Taux de Couverture -->
             <div class="table-card">
                 <h3 id="titreTableCouvertureDetail">
                     <span><i class="fa-solid fa-map-location-dot"></i> Tableau de Couverture : Entités Touchées et Non Touchées</span>
@@ -868,8 +867,8 @@
 
         <!-- ANALYSE DE LA PARTICIPATION DES CONTRÔLEURS (CENTRE / RÉGIONAL / NATIONAL) -->
         <section class="table-card participation-card">
-            <h3 id="titreTableParticipationControleurs">
-                <span><i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau National</span>
+            <h3>
+                <span id="titreTexteParticipationControleurs"><i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau National</span>
                 <span style="font-size:0.75rem; color:var(--text-muted);" id="sousTitreParticipationControleurs">Nombre de visites (Contrôle / Vérification) et pourcentage de participation</span>
             </h3>
             <div class="table-scroll">
@@ -947,6 +946,7 @@
                             <th>Date</th>
                             <th>Région</th>
                             <th>Centre / Site</th>
+                            <th>Contrôleur(s)</th>
                             <th>Processus</th>
                             <th>Contrôle</th>
                             <th>Point de Contrôle (PC)</th>
@@ -1097,16 +1097,53 @@
             return reg;
         }
 
-        function extraireNomControleur(item, missionAssociee = {}) {
-            const brut = (item && (item.controleur || item.controleurs || item.nomControleur || item.auditeur))
-                || (missionAssociee && (missionAssociee.controleur || missionAssociee.controleurs || missionAssociee.nomControleur || missionAssociee.auditeur))
-                || '';
-            if (Array.isArray(brut)) {
-                const joined = brut.map(v => String(v || '').trim()).filter(Boolean).join(' / ');
-                return joined || 'Non renseigné';
+        function decouperValeurControleurs(val) {
+            if (!val) return [];
+            if (Array.isArray(val)) {
+                return val.flatMap(v => decouperValeurControleurs(v));
             }
-            const str = String(brut || '').replace(/\s+/g, ' ').trim();
-            return str || 'Non renseigné';
+            if (typeof val === 'object') {
+                const candidat = val.nom || val.name || val.username || val.identifiant || val.controleur || val.label || '';
+                return decouperValeurControleurs(candidat);
+            }
+            const texte = String(val).trim();
+            if (!texte || texte === '--' || texte.toLowerCase() === 'non renseigné') return [];
+            return texte
+                .split(/[,;/\n+&]+|\s+et\s+/i)
+                .map(s => s.replace(/\s+/g, ' ').trim())
+                .filter(s => s && s !== '--' && s.toLowerCase() !== 'non renseigné');
+        }
+
+        function extraireControleurs(item, missionAssociee = {}) {
+            const champsPossibles = [
+                'controleur', 'controleurs', 'nomControleur', 'nomsControleurs',
+                'controleur1', 'controleur2', 'controleur3',
+                'equipe', 'equipeControle', 'auditeur', 'auditeurs',
+                'verificateur', 'verificateurs', 'intervenant', 'intervenants',
+                'agent', 'agents', 'utilisateur', 'user', 'username',
+                'identifiant', 'createdBy', 'creePar'
+            ];
+
+            const noms = [];
+            const ajouterDepuisSource = (src) => {
+                if (!src || typeof src !== 'object') return;
+                champsPossibles.forEach(champ => {
+                    if (src[champ] !== undefined && src[champ] !== null) {
+                        decouperValeurControleurs(src[champ]).forEach(nom => {
+                            if (!noms.some(existant => existant.toLowerCase() === nom.toLowerCase())) {
+                                noms.push(nom);
+                            }
+                        });
+                    }
+                });
+            };
+
+            ajouterDepuisSource(item);
+            if (noms.length === 0) {
+                ajouterDepuisSource(missionAssociee);
+            }
+
+            return noms.length > 0 ? noms : ['Non renseigné'];
         }
 
         function normaliserDateISO(val) {
@@ -1264,6 +1301,24 @@
             return { label: 'Faible', cls: 'pill-faible' };
         }
 
+        function trouverMissionAssociee(item, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite) {
+            const idCand = String(item.idMission || item.missionId || '').trim();
+            if (idCand && mapMissionsById[idCand]) {
+                return mapMissionsById[idCand];
+            }
+            const reg = normaliserRegion(item.region);
+            const site = String(item.entite || item.site || item.agence || '').trim().toUpperCase();
+            const iso = normaliserDateISO(item.date || item.dateControle || item.dateVerification);
+
+            if (reg && site && iso && mapMissionsBySiteDate[`${reg}|${site}|${iso}`]) {
+                return mapMissionsBySiteDate[`${reg}|${site}|${iso}`];
+            }
+            if (reg && site && mapMissionsBySite[`${reg}|${site}`]) {
+                return mapMissionsBySite[`${reg}|${site}`];
+            }
+            return {};
+        }
+
         function chargerEtPreparerDonnees() {
             const db = lireDB();
             const restrictedReg = getUserRegionRestriction();
@@ -1273,15 +1328,29 @@
                 return normaliserRegion(m.region) === restrictedReg;
             });
 
-            const mapMissions = {};
+            const mapMissionsById = {};
+            const mapMissionsBySiteDate = {};
+            const mapMissionsBySite = {};
+
             (db.missions || []).forEach(m => {
-                if (m.idMission) mapMissions[m.idMission] = m;
+                const mid = String(m.idMission || m.id || '').trim();
+                if (mid) mapMissionsById[mid] = m;
+
+                const mReg = normaliserRegion(m.region);
+                const mSite = String(m.entite || m.site || m.agence || '').trim().toUpperCase();
+                const mIso = normaliserDateISO(m.date || m.dateControle);
+                if (mReg && mSite && mIso) {
+                    mapMissionsBySiteDate[`${mReg}|${mSite}|${mIso}`] = m;
+                }
+                if (mReg && mSite) {
+                    mapMissionsBySite[`${mReg}|${mSite}`] = m;
+                }
             });
 
             const unifies = [];
 
             (db.constatsControle || []).forEach(c => {
-                const m = mapMissions[c.idMission] || {};
+                const m = trouverMissionAssociee(c, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
                 const regionNorm = normaliserRegion(c.region || m.region || '');
                 if (restrictedReg && regionNorm !== restrictedReg) return;
 
@@ -1291,15 +1360,18 @@
                 const ko = parseInt(c.ko) || 0;
                 const tc = c.tc !== undefined ? parseFloat(c.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
                 const typeNorm = normaliserType(c.typeControle || m.typeControle, 'FC');
+                const controleursList = extraireControleurs(c, m);
+
                 unifies.push({
                     source: 'FC',
-                    idMission: c.idMission || '',
+                    idMission: c.idMission || m.idMission || '',
                     dateISO: iso,
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
                     region: regionNorm,
                     site: String(c.entite || c.site || m.entite || '').trim(),
-                    controleur: extraireNomControleur(c, m),
+                    controleurs: controleursList,
+                    controleur: controleursList.join(' / '),
                     processus: String(c.processus || '').trim(),
                     risque: String(c.risque || '').trim(),
                     controle: String(c.controle || '').trim(),
@@ -1317,7 +1389,7 @@
             });
 
             (db.constatsEncaisses || []).forEach(e => {
-                const m = mapMissions[e.idMission] || {};
+                const m = trouverMissionAssociee(e, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
                 const regionNorm = normaliserRegion(e.region || m.region || '');
                 if (restrictedReg && regionNorm !== restrictedReg) return;
 
@@ -1327,15 +1399,18 @@
                 const ko = parseInt(e.ko) || 0;
                 const tc = e.tc !== undefined ? parseFloat(e.tc) : (ech > 0 ? (ok / ech) * 100 : 0);
                 const typeNorm = normaliserType(e.typeControle, 'FV');
+                const controleursList = extraireControleurs(e, m);
+
                 unifies.push({
                     source: 'FV',
-                    idMission: e.idMission || '',
+                    idMission: e.idMission || m.idMission || '',
                     dateISO: iso,
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
                     region: regionNorm,
                     site: String(e.entite || e.site || e.agence || m.entite || '').trim(),
-                    controleur: extraireNomControleur(e, m),
+                    controleurs: controleursList,
+                    controleur: controleursList.join(' / '),
                     processus: String(e.processus || 'Vérification Encaisses').trim(),
                     risque: String(e.risque || '').trim(),
                     controle: String(e.controle || '').trim(),
@@ -1424,7 +1499,7 @@
             selectEl.innerHTML = `<option value="TOUS">${libelleTous}</option>`;
             valeursUniques.forEach(v => {
                 const txt = formatterFn ? formatterFn(v) : v;
-                selectEl.innerHTML += `<option value="${v}">${txt}</option>`;
+                selectEl.innerHTML += `<option value="${escapeHTML(v)}">${escapeHTML(txt)}</option>`;
             });
             if (valeursUniques.includes(valActuelle)) {
                 selectEl.value = valActuelle;
@@ -1445,7 +1520,7 @@
                 : [...new Set([...LISTE_10_REGIONS, ...toutesLesDonnees.map(d => d.region).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'fr'));
 
             if (restrictedReg) {
-                selReg.innerHTML = `<option value="${restrictedReg}" selected>${restrictedReg}</option>`;
+                selReg.innerHTML = `<option value="${escapeHTML(restrictedReg)}" selected>${escapeHTML(restrictedReg)}</option>`;
                 selReg.value = restrictedReg;
                 etat.reg = restrictedReg;
             } else if (niveauActif === 'NATIONAL') {
@@ -1639,10 +1714,10 @@
             if (niveauActif === 'NATIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (10)' : reg} · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (10)' : escapeHTML(reg)} · ${infoTemps}`;
             } else {
-                const nomCentre = centre === 'TOUS' ? 'Tous les centres' : centre;
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + reg + ')' : ''} · ${infoTemps}`;
+                const nomCentre = centre === 'TOUS' ? 'Tous les centres' : escapeHTML(centre);
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + escapeHTML(reg) + ')' : ''} · ${infoTemps}`;
             }
 
             const donneesFiltrees = filtrerSubset(etat, []);
@@ -1757,7 +1832,7 @@
             const pctNonClot = donnees.length > 0 ? ((nbNonClot / donnees.length) * 100).toFixed(1) : '0.0';
 
             if (niveauActif === 'CENTRE') {
-                const nomCentre = centre === 'TOUS' ? 'l’ensemble des centres filtrés' : `le centre <strong>${centre}</strong>`;
+                const nomCentre = centre === 'TOUS' ? 'l’ensemble des centres filtrés' : `le centre <strong>${escapeHTML(centre)}</strong>`;
                 const procs = new Set(donnees.map(d => d.processus).filter(Boolean));
                 const pcs = new Set(donnees.map(d => d.pc).filter(Boolean));
                 titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau Centre / Site`;
@@ -1781,7 +1856,7 @@
                 bodyEl.innerHTML = `
                     <p>L'analyse détaillée de ${nomCentre} porte sur <span class="desc-chip">${donnees.length} constat(s)</span> répartis sur <span class="desc-chip">${procs.size} processus</span> et <span class="desc-chip">${pcs.size} point(s) de contrôle</span> (totalisant <span class="desc-chip">${totalEch} unités échantillonnées</span> : ${totalOK} OK et ${totalKO} KO).</p>
                     <ul>
-                        <li><strong>Niveau de conformité :</strong> Le taux de conformité pondéré du centre s'établit à <span class="desc-chip">${tcGlobal.toFixed(1)}%</span>. ${pireProc ? `Le processus le plus sensible est <strong>${pireProc.p}</strong> (<span class="desc-chip">${pireProc.tc.toFixed(1)}%</span>, ${pireProc.ko} KO)` : ''}${meilleurProc && procsTries.length > 1 ? `, tandis que le meilleur score est atteint sur <strong>${meilleurProc.p}</strong> (<span class="desc-chip">${meilleurProc.tc.toFixed(1)}%</span>).` : '.'}</li>
+                        <li><strong>Niveau de conformité :</strong> Le taux de conformité pondéré du centre s'établit à <span class="desc-chip">${tcGlobal.toFixed(1)}%</span>. ${pireProc ? `Le processus le plus sensible est <strong>${escapeHTML(pireProc.p)}</strong> (<span class="desc-chip">${pireProc.tc.toFixed(1)}%</span>, ${pireProc.ko} KO)` : ''}${meilleurProc && procsTries.length > 1 ? `, tandis que le meilleur score est atteint sur <strong>${escapeHTML(meilleurProc.p)}</strong> (<span class="desc-chip">${meilleurProc.tc.toFixed(1)}%</span>).` : '.'}</li>
                         <li><strong>État d'avancement des constats :</strong> <span class="desc-chip">${nbClot} (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> sont en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> demeurent non clôturés.</li>
                     </ul>
                 `;
@@ -1807,11 +1882,11 @@
                 const tauxCouvPerim = totalCentresPerim > 0 ? (totalTouchesPerim / totalCentresPerim) * 100 : 0;
 
                 const resumeParRegion = detailsRegions.map(r =>
-                    `<strong>${r.region}</strong> : <span class="desc-chip">${r.tauxCouverture.toFixed(1)}%</span> (${r.centresTouches}/${r.totalCentres} centres, ${r.nbControlesFC} FC, ${r.nbVerificationsFV} FV)`
+                    `<strong>${escapeHTML(r.region)}</strong> : <span class="desc-chip">${r.tauxCouverture.toFixed(1)}%</span> (${r.centresTouches}/${r.totalCentres} centres, ${r.nbControlesFC} FC, ${r.nbVerificationsFV} FV)`
                 ).join(' · ');
 
                 bodyEl.innerHTML = `
-                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${reg}</strong>`}), le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
+                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${escapeHTML(reg)}</strong>`}), le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
                     <ul>
                         <li><strong>Couverture et interventions par région :</strong> ${resumeParRegion}.</li>
                         <li><strong>Conformité & remédiation régionale :</strong> Le taux de conformité pondéré atteint <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
@@ -1924,7 +1999,7 @@
                 Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
                 (soit <strong>${signeEcart} pts</strong> vs moyenne nationale ${tcNational.toFixed(1)}%).
                 On relève <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} non clôturé(s)</strong>.
-                ${pireProc ? `Le processus le plus sensible est <strong>« ${pireProc.p} »</strong> (TC : ${pireProc.tc.toFixed(1)}%, ${pireProc.ko} KO).` : ''}
+                ${pireProc ? `Le processus le plus sensible est <strong>« ${escapeHTML(pireProc.p)} »</strong> (TC : ${pireProc.tc.toFixed(1)}%, ${pireProc.ko} KO).` : ''}
             `;
         }
 
@@ -1951,7 +2026,7 @@
                     .sort((a, b) => a.tc - b.tc);
 
                 if (procsSensibles.length > 0) {
-                    const top3 = procsSensibles.slice(0, 3).map(x => `<b>${x.p}</b> (${x.tc.toFixed(1)}%, ${x.ko} KO)`).join(', ');
+                    const top3 = procsSensibles.slice(0, 3).map(x => `<b>${escapeHTML(x.p)}</b> (${x.tc.toFixed(1)}%, ${x.ko} KO)`).join(', ');
                     alertes.push({
                         type: 'alert-critical',
                         icon: 'fa-diagram-project',
@@ -1976,7 +2051,7 @@
                     .sort((a, b) => a.tc - b.tc);
 
                 if (sitesSensibles.length > 0) {
-                    const top3 = sitesSensibles.slice(0, 3).map(s => `<b>${s.site}</b> (${s.region} : ${s.tc.toFixed(1)}%)`).join(', ');
+                    const top3 = sitesSensibles.slice(0, 3).map(s => `<b>${escapeHTML(s.site)}</b> (${escapeHTML(s.region)} : ${s.tc.toFixed(1)}%)`).join(', ');
                     alertes.push({
                         type: 'alert-critical',
                         icon: 'fa-building-circle-exclamation',
@@ -1984,7 +2059,6 @@
                     });
                 }
             } else {
-                // NATIONAL : alerte par région sous le seuil
                 const regionsSensibles = LISTE_10_REGIONS.map(r => {
                     const itemsR = donnees.filter(d => d.region === r);
                     return {
@@ -1996,7 +2070,7 @@
                 }).filter(r => r.nb > 0 && r.tc < SEUIL_ALERTE_TC).sort((a, b) => a.tc - b.tc);
 
                 if (regionsSensibles.length > 0) {
-                    const top3 = regionsSensibles.slice(0, 3).map(r => `<b>${r.region}</b> (${r.tc.toFixed(1)}%, ${r.ko} KO)`).join(', ');
+                    const top3 = regionsSensibles.slice(0, 3).map(r => `<b>${escapeHTML(r.region)}</b> (${r.tc.toFixed(1)}%, ${r.ko} KO)`).join(', ');
                     alertes.push({
                         type: 'alert-critical',
                         icon: 'fa-map-location-dot',
@@ -2023,7 +2097,7 @@
                 alertes.push({
                     type: 'alert-warning',
                     icon: 'fa-triangle-exclamation',
-                    text: `<b>Concentration des anomalies :</b> le processus « ${topProc[0]} » cumule <b>${topProc[1]} KO</b>.`
+                    text: `<b>Concentration des anomalies :</b> le processus « ${escapeHTML(topProc[0])} » cumule <b>${topProc[1]} KO</b>.`
                 });
             }
 
@@ -2053,7 +2127,7 @@
             if (!listeNoms || listeNoms.length === 0) {
                 return `<span style="color:var(--text-muted); font-style:italic; font-size:0.74rem;">${texteVide}</span>`;
             }
-            return `<div class="tag-list">${listeNoms.map(n => `<span class="${classeCss}">${n}</span>`).join('')}</div>`;
+            return `<div class="tag-list">${listeNoms.map(n => `<span class="${classeCss}">${escapeHTML(n)}</span>`).join('')}</div>`;
         }
 
         function construireCouvertureEtClassementCharts(donnees, etat) {
@@ -2104,12 +2178,12 @@
 
             if (niveauActif === 'REGIONAL') {
                 const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
-                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture des Sites (${nomReg})`;
+                document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture des Sites (${escapeHTML(nomReg)})`;
                 document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)`;
-                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement des Centres (${nomReg} — TC %)`;
+                document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement des Centres (${escapeHTML(nomReg)} — TC %)`;
 
                 document.getElementById('titreTableCouvertureDetail').innerHTML = `
-                    <span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture Régional : Sites Touchés & Sites Non Touchés (${nomReg})</span>
+                    <span><i class="fa-solid fa-map-location-dot"></i> Taux de Couverture Régional : Sites Touchés & Sites Non Touchés (${escapeHTML(nomReg)})</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Distinction des centres touchés par contrôle (FC), par vérification (FV) et restants à couvrir</span>`;
 
                 theadCov.innerHTML = `
@@ -2141,7 +2215,7 @@
 
                     tbodyCov.innerHTML += `
                         <tr>
-                            <td><b>${item.region}</b></td>
+                            <td><b>${escapeHTML(item.region)}</b></td>
                             <td class="num-center"><span class="pill pill-cov">${item.tauxCouverture.toFixed(1)}%</span></td>
                             <td class="num-center"><b>${item.centresTouches}</b> / ${item.totalCentres}</td>
                             <td>${formaterBadgesListe(item.sitesTouchesControleList, 'tag-touche', 'Aucun site touché par contrôle')}</td>
@@ -2304,7 +2378,7 @@
             if (niveauActif === 'CENTRE') {
                 const nomCentre = centre === 'TOUS' ? 'Tous les centres (BDD)' : centre;
                 titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement des Processus, Contrôles & Points de Contrôle (PC) — Centre : ${nomCentre}</span>
+                    <span><i class="fa-solid fa-ranking-star"></i> Classement des Processus, Contrôles & Points de Contrôle (PC) — Centre : ${escapeHTML(nomCentre)}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Analyse détaillée intra-centre</span>`;
 
                 theadP.innerHTML = `
@@ -2351,9 +2425,9 @@
                         tbodyP.innerHTML += `
                             <tr>
                                 <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.processus}</b></td>
-                                <td>${r.controle || 'N/A'}</td>
-                                <td>${r.pc || 'N/A'}</td>
+                                <td><b>${escapeHTML(r.processus)}</b></td>
+                                <td>${escapeHTML(r.controle || 'N/A')}</td>
+                                <td>${escapeHTML(r.pc || 'N/A')}</td>
                                 <td class="num-center">${r.nb}</td>
                                 <td class="num-center">${r.ech}</td>
                                 <td class="num-center" style="color:var(--success); font-weight:700;">${r.ok}</td>
@@ -2365,7 +2439,7 @@
                     });
                 }
 
-                titreS.innerHTML = `<span><i class="fa-solid fa-diagram-project"></i> Performance par Processus dans le Centre (${nomCentre})</span>`;
+                titreS.innerHTML = `<span><i class="fa-solid fa-diagram-project"></i> Performance par Processus dans le Centre (${escapeHTML(nomCentre)})</span>`;
                 theadS.innerHTML = `
                     <tr>
                         <th class="num-center">Rang</th>
@@ -2401,7 +2475,7 @@
                         tbodyS.innerHTML += `
                             <tr>
                                 <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.p}</b></td>
+                                <td><b>${escapeHTML(r.p)}</b></td>
                                 <td class="num-center">${r.nbPc}</td>
                                 <td class="num-center">${r.nb}</td>
                                 <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
@@ -2414,7 +2488,7 @@
             } else if (niveauActif === 'REGIONAL') {
                 const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
                 titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Centres / Sites — Région : ${nomReg}</span>
+                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Centres / Sites — Région : ${escapeHTML(nomReg)}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Contrôles (FC), Vérifications (FV) & performance des centres</span>`;
 
                 theadP.innerHTML = `
@@ -2469,8 +2543,8 @@
                         tbodyP.innerHTML += `
                             <tr>
                                 <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.site}</b></td>
-                                <td>${r.region}</td>
+                                <td><b>${escapeHTML(r.site)}</b></td>
+                                <td>${escapeHTML(r.region)}</td>
                                 <td class="num-center"><span class="pill pill-them">${r.nbControlesFC} (${r.constatsFC} PC)</span></td>
                                 <td class="num-center"><span class="pill pill-verif">${r.nbVerificationsFV} (${r.constatsFV} PC)</span></td>
                                 <td class="num-center">${r.nbProc}</td>
@@ -2516,7 +2590,7 @@
                     });
                     tbodyS.innerHTML += `
                         <tr>
-                            <td><b>${r.region}</b></td>
+                            <td><b>${escapeHTML(r.region)}</b></td>
                             <td class="num-center">${r.centresTouches} / ${r.totalCentres}</td>
                             <td class="num-center"><span class="pill pill-cov">${r.tauxCouverture.toFixed(1)}%</span></td>
                             <td class="num-center">${r.nbControlesFC}</td>
@@ -2581,7 +2655,7 @@
                     tbodyP.innerHTML += `
                         <tr>
                             <td class="num-center"><b>#${i + 1}</b></td>
-                            <td><b>${r.region}</b></td>
+                            <td><b>${escapeHTML(r.region)}</b></td>
                             <td class="num-center"><span class="pill ${statutCouvCls}">${statutCouvTxt}</span></td>
                             <td class="num-center"><span class="pill pill-them">${r.nbControlesFC} (${r.constatsFC} PC)</span></td>
                             <td class="num-center"><span class="pill pill-verif">${r.nbVerificationsFV} (${r.constatsFV} PC)</span></td>
@@ -2635,8 +2709,8 @@
                         tbodyS.innerHTML += `
                             <tr>
                                 <td class="num-center"><b>#${i + 1}</b></td>
-                                <td><b>${r.site}</b></td>
-                                <td><span style="font-size:0.75rem; font-weight:700; color:var(--primary-blue);">${r.region}</span></td>
+                                <td><b>${escapeHTML(r.site)}</b></td>
+                                <td><span style="font-size:0.75rem; font-weight:700; color:var(--primary-blue);">${escapeHTML(r.region)}</span></td>
                                 <td class="num-center">${r.nb}</td>
                                 <td class="num-center" style="color:var(--danger); font-weight:700;">${r.ko}</td>
                                 <td class="num-center"><b>${r.tc.toFixed(1)}%</b></td>
@@ -2671,7 +2745,7 @@
                     const pillCls = t.type === 'Thématique' ? 'pill-them' : (t.type === 'Systématique' ? 'pill-syst' : 'pill-verif');
                     tbodyType.innerHTML += `
                         <tr>
-                            <td><span class="pill ${pillCls}">${t.type}</span></td>
+                            <td><span class="pill ${pillCls}">${escapeHTML(t.type)}</span></td>
                             <td class="num-center">${t.nb}</td>
                             <td class="num-center">${t.ech}</td>
                             <td class="num-center" style="color:var(--success); font-weight:700;">${t.ok}</td>
@@ -2703,7 +2777,7 @@
                 procList.slice(0, 6).forEach(p => {
                     tbodyProc.innerHTML += `
                         <tr>
-                            <td><b>${p.processus}</b></td>
+                            <td><b>${escapeHTML(p.processus)}</b></td>
                             <td class="num-center">${p.nb}</td>
                             <td class="num-center" style="color:var(--danger); font-weight:700;">${p.ko}</td>
                             <td class="num-center"><b>${p.tc.toFixed(1)}%</b></td>
@@ -2716,7 +2790,7 @@
         // ANALYSE DE LA PARTICIPATION DES CONTRÔLEURS (CENTRE / RÉGIONAL / NATIONAL)
         // =========================================================================
         function construireAnalyseParticipationControleurs(donnees, reg, centre) {
-            const titre = document.getElementById('titreTableParticipationControleurs');
+            const titreTexte = document.getElementById('titreTexteParticipationControleurs');
             const sousTitre = document.getElementById('sousTitreParticipationControleurs');
             const thead = document.getElementById('theadParticipationControleurs');
             const tbody = document.getElementById('tbodyParticipationControleurs');
@@ -2728,8 +2802,7 @@
 
             if (niveauActif === 'CENTRE') {
                 const nomCentre = centre === 'TOUS' ? 'Tous les centres' : centre;
-                titre.innerHTML = `
-                    <span><i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau Centre (${escapeHTML(nomCentre)})</span>`;
+                titreTexte.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau Centre (${escapeHTML(nomCentre)})`;
                 sousTitre.textContent = 'Contrôleur · Type de visite (Contrôle ou Vérification) · Centre visité · Visites · Constats · Participation (%)';
 
                 thead.innerHTML = `
@@ -2744,22 +2817,25 @@
 
                 const mapGroupes = new Map();
                 donnees.forEach(d => {
-                    const ctrl = d.controleur || 'Non renseigné';
+                    const listeCtrls = Array.isArray(d.controleurs) && d.controleurs.length > 0 ? d.controleurs : [d.controleur || 'Non renseigné'];
                     const typeVisite = d.typeVisite || (d.source === 'FV' ? 'Vérification' : 'Contrôle');
                     const site = d.site || 'Centre non précisé';
-                    const cle = `${ctrl}|||${typeVisite}|||${site}`;
-                    if (!mapGroupes.has(cle)) {
-                        mapGroupes.set(cle, {
-                            controleur: ctrl,
-                            typeVisite,
-                            centre: site,
-                            visitesSet: new Set(),
-                            constats: 0
-                        });
-                    }
-                    const g = mapGroupes.get(cle);
-                    g.visitesSet.add(`${d.dateISO || d.idMission || 'DATE'}|${d.region}|${site}|${ctrl}|${typeVisite}`);
-                    g.constats += 1;
+
+                    listeCtrls.forEach(ctrl => {
+                        const cle = `${ctrl}|||${typeVisite}|||${site}`;
+                        if (!mapGroupes.has(cle)) {
+                            mapGroupes.set(cle, {
+                                controleur: ctrl,
+                                typeVisite,
+                                centre: site,
+                                visitesSet: new Set(),
+                                constats: 0
+                            });
+                        }
+                        const g = mapGroupes.get(cle);
+                        g.visitesSet.add(`${d.dateISO || d.idMission || 'DATE'}|${d.region}|${site}|${ctrl}|${typeVisite}`);
+                        g.constats += 1;
+                    });
                 });
 
                 const rows = [...mapGroupes.values()]
@@ -2820,8 +2896,7 @@
 
             } else if (niveauActif === 'REGIONAL') {
                 const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
-                titre.innerHTML = `
-                    <span><i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau Régional (${escapeHTML(nomReg)})</span>`;
+                titreTexte.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau Régional (${escapeHTML(nomReg)})`;
                 sousTitre.textContent = 'Contrôleur · Type de visite (Contrôle ou Vérification) · Centre visité · Région · Visites · Constats · Participation (%)';
 
                 thead.innerHTML = `
@@ -2837,24 +2912,27 @@
 
                 const mapGroupes = new Map();
                 donnees.forEach(d => {
-                    const ctrl = d.controleur || 'Non renseigné';
+                    const listeCtrls = Array.isArray(d.controleurs) && d.controleurs.length > 0 ? d.controleurs : [d.controleur || 'Non renseigné'];
                     const typeVisite = d.typeVisite || (d.source === 'FV' ? 'Vérification' : 'Contrôle');
                     const site = d.site || 'Centre non précisé';
                     const region = d.region || 'NON DÉFINIE';
-                    const cle = `${ctrl}|||${typeVisite}|||${site}|||${region}`;
-                    if (!mapGroupes.has(cle)) {
-                        mapGroupes.set(cle, {
-                            controleur: ctrl,
-                            typeVisite,
-                            centre: site,
-                            region,
-                            visitesSet: new Set(),
-                            constats: 0
-                        });
-                    }
-                    const g = mapGroupes.get(cle);
-                    g.visitesSet.add(`${d.dateISO || d.idMission || 'DATE'}|${region}|${site}|${ctrl}|${typeVisite}`);
-                    g.constats += 1;
+
+                    listeCtrls.forEach(ctrl => {
+                        const cle = `${ctrl}|||${typeVisite}|||${site}|||${region}`;
+                        if (!mapGroupes.has(cle)) {
+                            mapGroupes.set(cle, {
+                                controleur: ctrl,
+                                typeVisite,
+                                centre: site,
+                                region,
+                                visitesSet: new Set(),
+                                constats: 0
+                            });
+                        }
+                        const g = mapGroupes.get(cle);
+                        g.visitesSet.add(`${d.dateISO || d.idMission || 'DATE'}|${region}|${site}|${ctrl}|${typeVisite}`);
+                        g.constats += 1;
+                    });
                 });
 
                 const rows = [...mapGroupes.values()]
@@ -2918,8 +2996,7 @@
 
             } else {
                 // NIVEAU NATIONAL : Consolidation nationale par contrôleur
-                titre.innerHTML = `
-                    <span><i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Consolidation Nationale</span>`;
+                titreTexte.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Consolidation Nationale`;
                 sousTitre.textContent = 'Classement national par contrôleur : régions, type de visite, nb contrôles, nb vérifications, total visites, centres visités & % participation';
 
                 thead.innerHTML = `
@@ -2938,31 +3015,33 @@
 
                 const mapCtrl = new Map();
                 donnees.forEach(d => {
-                    const ctrl = d.controleur || 'Non renseigné';
+                    const listeCtrls = Array.isArray(d.controleurs) && d.controleurs.length > 0 ? d.controleurs : [d.controleur || 'Non renseigné'];
                     const typeVisite = d.typeVisite || (d.source === 'FV' ? 'Vérification' : 'Contrôle');
                     const site = d.site || '';
                     const region = d.region || '';
 
-                    if (!mapCtrl.has(ctrl)) {
-                        mapCtrl.set(ctrl, {
-                            controleur: ctrl,
-                            regionsSet: new Set(),
-                            centresSet: new Set(),
-                            visitesCtrlSet: new Set(),
-                            visitesVerifSet: new Set(),
-                            constats: 0
-                        });
-                    }
-                    const item = mapCtrl.get(ctrl);
-                    if (region) item.regionsSet.add(region);
-                    if (site) item.centresSet.add(site);
-                    const visitKey = `${d.dateISO || d.idMission || 'DATE'}|${region}|${site}|${ctrl}|${typeVisite}`;
-                    if (typeVisite === 'Vérification') {
-                        item.visitesVerifSet.add(visitKey);
-                    } else {
-                        item.visitesCtrlSet.add(visitKey);
-                    }
-                    item.constats += 1;
+                    listeCtrls.forEach(ctrl => {
+                        if (!mapCtrl.has(ctrl)) {
+                            mapCtrl.set(ctrl, {
+                                controleur: ctrl,
+                                regionsSet: new Set(),
+                                centresSet: new Set(),
+                                visitesCtrlSet: new Set(),
+                                visitesVerifSet: new Set(),
+                                constats: 0
+                            });
+                        }
+                        const item = mapCtrl.get(ctrl);
+                        if (region) item.regionsSet.add(region);
+                        if (site) item.centresSet.add(site);
+                        const visitKey = `${d.dateISO || d.idMission || 'DATE'}|${region}|${site}|${ctrl}|${typeVisite}`;
+                        if (typeVisite === 'Vérification') {
+                            item.visitesVerifSet.add(visitKey);
+                        } else {
+                            item.visitesCtrlSet.add(visitKey);
+                        }
+                        item.constats += 1;
+                    });
                 });
 
                 const rows = [...mapCtrl.values()]
@@ -3067,7 +3146,7 @@
             tbody.innerHTML = '';
 
             if (donnees.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14" class="num-center" style="padding:20px; color:var(--text-muted);">Aucun constat affiché pour ces critères.</td></tr>';
                 return;
             }
 
@@ -3080,18 +3159,19 @@
                 tbody.innerHTML += `
                     <tr>
                         <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${c.dateFR}</td>
-                        <td><b>${c.region}</b></td>
-                        <td>${c.site}</td>
-                        <td><b>${c.processus}</b></td>
-                        <td>${c.controle || 'N/A'}</td>
-                        <td>${c.pc || 'N/A'}</td>
+                        <td><b>${escapeHTML(c.region)}</b></td>
+                        <td>${escapeHTML(c.site)}</td>
+                        <td><span style="font-weight:700; color:#334155;">${escapeHTML(c.controleur)}</span></td>
+                        <td><b>${escapeHTML(c.processus)}</b></td>
+                        <td>${escapeHTML(c.controle || 'N/A')}</td>
+                        <td>${escapeHTML(c.pc || 'N/A')}</td>
                         <td class="num-center">${c.ech}</td>
                         <td class="num-center" style="color:var(--success); font-weight:700;">${c.ok}</td>
                         <td class="num-center" style="color:var(--danger); font-weight:700;">${c.ko}</td>
                         <td class="num-center"><b>${c.tc.toFixed(1)}%</b></td>
                         <td><span class="pill ${stCls}">${libelleStatut(c.statut)}</span></td>
-                        <td><span class="pill ${tpCls}">${c.typeControle}</span>${tags}</td>
-                        <td>${c.constat}</td>
+                        <td><span class="pill ${tpCls}">${escapeHTML(c.typeControle)}</span>${tags}</td>
+                        <td>${escapeHTML(c.constat)}</td>
                     </tr>`;
             });
         }
@@ -3110,13 +3190,13 @@
                     mapG1[d.region].push(d);
                 });
             } else if (niveauActif === 'REGIONAL') {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres de la Région ${reg === 'TOUS' ? '' : reg} (%)`;
+                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres de la Région ${reg === 'TOUS' ? '' : escapeHTML(reg)} (%)`;
                 donnees.forEach(d => {
                     if (!mapG1[d.site]) mapG1[d.site] = [];
                     mapG1[d.site].push(d);
                 });
             } else {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Taux de Conformité par Processus — ${centre === 'TOUS' ? 'Centre' : centre} (%)`;
+                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Taux de Conformité par Processus — ${centre === 'TOUS' ? 'Centre' : escapeHTML(centre)} (%)`;
                 donnees.forEach(d => {
                     if (!mapG1[d.processus]) mapG1[d.processus] = [];
                     mapG1[d.processus].push(d);
