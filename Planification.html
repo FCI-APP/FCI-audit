@@ -396,14 +396,14 @@
         function normalizeRegionOption(reg) {
             if (!reg) return "";
             const up = String(reg).trim().toUpperCase();
-            if (up === "OUJEDA") return "OUEJDA";
+            if (up === "OUJEDA" || up === "OUJDA") return "OUEJDA";
+            if (up === "LAYOUNE") return "LAAYOUNE";
             return up;
         }
 
         function applyUserScopePlanif(profile) {
             if (!profile) return;
             const regionSelect = document.getElementById('audit-region');
-            const ctrlInput = document.getElementById('audit-controleurs');
 
             if (profile.region && profile.region !== "SIEGE") {
                 const targetReg = normalizeRegionOption(profile.region);
@@ -412,11 +412,6 @@
                     regionSelect.disabled = true;
                     onRegionChangePlanif();
                 }
-            }
-
-            if (ctrlInput && !ctrlInput.value.trim() && profile.nomComplet) {
-                ctrlInput.removeAttribute('readonly');
-                ctrlInput.value = profile.nomComplet;
             }
         }
 
@@ -471,13 +466,8 @@
             }
 
             const ctrlInput = document.getElementById('audit-controleurs');
-            if (cachedProfile && cachedProfile.nomComplet) {
-                ctrlInput.removeAttribute('readonly');
-                ctrlInput.value = cachedProfile.nomComplet;
-            } else {
-                ctrlInput.value = "";
-                ctrlInput.setAttribute('readonly', 'readonly');
-            }
+            ctrlInput.value = "";
+            ctrlInput.setAttribute('readonly', 'readonly');
 
             document.getElementById('audit-type-controle').value = "";
             document.getElementById('audit-date-debut').value = today;
@@ -703,9 +693,10 @@
             try {
                 const currentUser = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
                 const traceInfo = currentUser ? {
-                    creePar: currentUser.nomComplet || currentUser.identifiant,
-                    creeParId: currentUser.identifiant,
-                    creeParRole: currentUser.role
+                    creePar: currentUser.fonction || currentUser.username,
+                    creeParId: currentUser.username,
+                    creeParRole: currentUser.role,
+                    espaceSaisie: (window.FCIAuth && window.FCIAuth.isSiege()) ? 'SIEGE' : 'REGIONAL'
                 } : {};
 
                 const idMission = "MIS-" + Date.now();
@@ -724,18 +715,21 @@
                     pointsControle: activeItems
                 };
 
-                await FCIDatabase.enregistrerMission({
-                    idMission: idMission,
-                    region: region,
-                    typeControle: typeControle,
-                    date: new Date().toISOString().slice(0, 10),
-                    dateDebut: dateDebut,
-                    dateFin: dateFin,
-                    entite: entite,
-                    controleur: controleurs,
-                    ...traceInfo,
-                    pointsSelectionnes: activeItems
-                }, true);
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerMission === 'function') {
+                    await FCIDatabase.enregistrerMission({
+                        idMission: idMission,
+                        region: region,
+                        typeControle: typeControle,
+                        date: new Date().toISOString().slice(0, 10),
+                        dateDebut: dateDebut,
+                        dateFin: dateFin,
+                        entite: entite,
+                        site: entite,
+                        controleur: controleurs,
+                        ...traceInfo,
+                        pointsSelectionnes: activeItems
+                    });
+                }
 
                 localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
                 viderPlanification();
