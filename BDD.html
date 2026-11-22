@@ -62,8 +62,45 @@
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); border: 1px solid var(--border-color);
         }
 
-        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .page-title h1 { font-size: 1.4rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .page-title p { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+
+        .espace-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 11px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .espace-pill-siege {
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #F59E0B;
+        }
+        .espace-pill-regional {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #93C5FD;
+        }
+
+        .badge-origine-siege {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #F59E0B;
+        }
 
         .btn { padding: 9px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
@@ -198,7 +235,7 @@
         }
 
         .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
-        .col-region { width: 115px; min-width: 115px; white-space: nowrap; }
+        .col-region { width: 125px; min-width: 125px; white-space: nowrap; }
         .col-centre { width: 175px; min-width: 175px; }
         .col-controleur { width: 165px; min-width: 165px; font-weight: 600; color: #0F172A; }
         .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
@@ -227,7 +264,6 @@
         .badge-systematique { background-color: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
         .badge-verification { background-color: #D1FAE5; color: #065F46; border: 1px solid #6EE7B7; }
 
-        /* Symbole Modifier (Stylo orange) sous Type de contrôle */
         .badge-modifie-tag {
             display: inline-flex;
             align-items: center;
@@ -243,7 +279,6 @@
             border: 1px solid #FB923C;
         }
 
-        /* Symbole Suivi (Bleu) sous Type de contrôle */
         .badge-suivi-tag {
             display: inline-flex;
             align-items: center;
@@ -304,8 +339,12 @@
     <main class="main-content">
         <header class="page-header">
             <div class="page-title">
-                <h1><i class="fa-solid fa-database" style="color: var(--accent-gold);"></i> Feuille 5 : Base de Données Centralisée (BDD)</h1>
-                <p>Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
+                <h1>
+                    <i class="fa-solid fa-database" style="color: var(--accent-gold);"></i>
+                    Feuille 5 : Base de Données Centralisée (BDD)
+                    <span id="badgeEspaceActifBDD" class="espace-pill espace-pill-regional"><i class="fa-solid fa-shield-halved"></i> Chargement espace...</span>
+                </h1>
+                <p id="sousTitreEspaceBDD">Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
             </div>
             <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
                 <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
@@ -455,10 +494,73 @@
             return str || '--';
         }
 
+        function getCurrentAuthUser() {
+            return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
+                ? window.FCIAuth.getCurrentUser()
+                : null;
+        }
+
+        function estUtilisateurSiege() {
+            const u = getCurrentAuthUser();
+            if (!u) return false;
+            const reg = String(u.region || '').toUpperCase().trim();
+            const role = String(u.role || '').toUpperCase().trim();
+            return reg === 'SIEGE' || reg === 'NATIONAL' || reg === 'ALL'
+                || ['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role);
+        }
+
         function getUserRegionRestriction() {
-            const u = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
-            if (!u || !u.region || u.region === 'SIEGE' || u.region === 'NATIONAL' || u.region === 'ALL') return '';
+            if (estUtilisateurSiege()) return '';
+            const u = getCurrentAuthUser();
+            if (!u || !u.region) return '__NONE__';
             return normaliserRegion(u.region);
+        }
+
+        /**
+         * Détermine si un enregistrement appartient à l'Espace Siège (confidentiel au Siège)
+         * ou à l'Espace Régional (partagé au sein de la région + visible par le Siège).
+         */
+        function estDonneeEspaceSiege(item, missionAssociee = {}) {
+            const checkObj = (obj) => {
+                if (!obj || typeof obj !== 'object') return false;
+                const espace = String(obj.espaceSaisie || obj.espace || obj.scope || '').toUpperCase().trim();
+                if (espace === 'SIEGE' || espace === 'ESPACE_SIEGE') return true;
+                if (espace === 'REGIONAL' || espace === 'ESPACE_REGIONAL') return false;
+
+                const ctrlReg = String(obj.controleurRegion || '').toUpperCase().trim();
+                if (ctrlReg === 'SIEGE') return true;
+
+                const role = String(obj.creeParRole || obj.role || '').toUpperCase().trim();
+                if (['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role)) return true;
+
+                const creeId = String(obj.creeParId || obj.controleurId || '').toLowerCase().trim();
+                if (creeId.includes('siege') || creeId === 'admin' || creeId === 'directeur') return true;
+
+                return false;
+            };
+            return checkObj(item) || checkObj(missionAssociee);
+        }
+
+        function mettreAJourBadgeEspaceHeader() {
+            const badge = document.getElementById('badgeEspaceActifBDD');
+            const sousTitre = document.getElementById('sousTitreEspaceBDD');
+            if (!badge) return;
+
+            if (estUtilisateurSiege()) {
+                badge.className = 'espace-pill espace-pill-siege';
+                badge.innerHTML = '<i class="fa-solid fa-landmark"></i> Espace Siège — Visibilité Globale';
+                if (sousTitre) {
+                    sousTitre.innerText = "Accès complet : données internes du Siège (confidentielles) + ensemble des données des 10 régions";
+                }
+            } else {
+                const reg = getUserRegionRestriction();
+                const regLabel = (reg && reg !== '__NONE__') ? reg : 'NON ATTRIBUÉE';
+                badge.className = 'espace-pill espace-pill-regional';
+                badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Espace Régional — ${escapeHTML(regLabel)}`;
+                if (sousTitre) {
+                    sousTitre.innerText = `Visibilité strictement limitée aux données régionales de ${regLabel} (données Siège et autres régions masquées)`;
+                }
+            }
         }
 
         function getCouleurOptionIndex(index) {
@@ -466,15 +568,20 @@
         }
 
         function lireBDDLocaleSecurisee() {
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
-                return FCIDatabase.getDB();
+                const loaded = FCIDatabase.getDB();
+                if (loaded && typeof loaded === 'object') db = loaded;
+            } else {
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) db = JSON.parse(raw);
+                } catch (e) {}
             }
-            try {
-                const raw = localStorage.getItem('fci_database');
-                return raw ? JSON.parse(raw) : { missions: [], constatsControle: [], constatsEncaisses: [] };
-            } catch (e) {
-                return { missions: [], constatsControle: [], constatsEncaisses: [] };
-            }
+            if (!Array.isArray(db.missions)) db.missions = [];
+            if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
+            if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            return db;
         }
 
         function formaterDateBDD(valeurBrute) {
@@ -506,10 +613,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            mettreAJourBadgeEspaceHeader();
             chargerBDDEnVisuel();
         });
 
         window.addEventListener('fci-auth-ready', () => {
+            mettreAJourBadgeEspaceHeader();
             chargerBDDEnVisuel();
         });
 
@@ -739,12 +848,28 @@
             selType.innerHTML = htmlType;
         }
 
+        function aDroitConsultationLigne(item, missionAssociee, isSiegeUser, restrictedReg) {
+            const isDonneeSiege = estDonneeEspaceSiege(item, missionAssociee);
+
+            // Espace Siège : accès global (données internes du Siège + données de toutes les régions)
+            if (isSiegeUser) return true;
+
+            // Espace Régional :
+            // 1. Les données internes du Siège sont strictement confidentielles et inaccessibles aux régions
+            if (isDonneeSiege) return false;
+
+            // 2. Accès exclusif aux données régionales de la même région
+            const regionNorm = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
+            return Boolean(restrictedReg && restrictedReg !== '__NONE__' && regionNorm === restrictedReg);
+        }
+
         function chargerBDDEnVisuel() {
             const db = lireBDDLocaleSecurisee();
             const tbody = document.getElementById('tableBDDUnifiee');
             const totalBadge = document.getElementById('totalLignesBDD');
             tbody.innerHTML = '';
 
+            const isSiegeUser = estUtilisateurSiege();
             const restrictedReg = getUserRegionRestriction();
             if (restrictedReg) {
                 filtreRegionActif = restrictedReg;
@@ -771,9 +896,10 @@
 
             mapConstatsFC.forEach(c => {
                 const missionAssociee = mapMissions[c.idMission] || {};
-                const regionNorm = normaliserRegion(c.region || missionAssociee.region || '');
-                if (restrictedReg && regionNorm !== restrictedReg) return;
+                if (!aDroitConsultationLigne(c, missionAssociee, isSiegeUser, restrictedReg)) return;
 
+                const regionNorm = normaliserRegion(c.region || missionAssociee.region || '');
+                const isEspaceSiege = estDonneeEspaceSiege(c, missionAssociee);
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
                 const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
@@ -797,15 +923,17 @@
                     statutInfo: normaliserStatutConstat(c.statut || c.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FC'),
                     isSuivi: isSuivi,
-                    isModifie: isModifie
+                    isModifie: isModifie,
+                    isEspaceSiege: isEspaceSiege
                 });
             });
 
             mapConstatsFV.forEach(e => {
                 const missionAssociee = mapMissions[e.idMission] || {};
-                const regionNorm = normaliserRegion(e.region || missionAssociee.region || '');
-                if (restrictedReg && regionNorm !== restrictedReg) return;
+                if (!aDroitConsultationLigne(e, missionAssociee, isSiegeUser, restrictedReg)) return;
 
+                const regionNorm = normaliserRegion(e.region || missionAssociee.region || '');
+                const isEspaceSiege = estDonneeEspaceSiege(e, missionAssociee);
                 const typeBrut = e.typeControle || 'Vérification';
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
                 const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
@@ -829,7 +957,8 @@
                     statutInfo: normaliserStatutConstat(e.statut || e.statutConstat),
                     typeInfo: normaliserTypeControle(typeBrut, 'FV'),
                     isSuivi: isSuivi,
-                    isModifie: isModifie
+                    isModifie: isModifie,
+                    isEspaceSiege: isEspaceSiege
                 });
             });
 
@@ -868,7 +997,7 @@
                     filtreTypeActif === 'TOUS'
                 );
                 const msgVide = aucunFiltre
-                    ? 'Aucun constat enregistré dans la BDD.'
+                    ? 'Aucun constat enregistré dans votre espace autorisé.'
                     : 'Aucun constat ne correspond aux critères sélectionnés.';
                 tbody.innerHTML = `<tr><td colspan="16" style="text-align:center; padding:25px; color:var(--text-muted);">${msgVide}</td></tr>`;
                 return;
@@ -881,6 +1010,9 @@
                 const suiviTagHtml = ligne.isSuivi
                     ? `<br><span class="badge-suivi-tag" title="Ligne issue d'un suivi"><i class="fa-solid fa-code-branch"></i> Suivi</span>`
                     : '';
+                const siegeOriginTagHtml = (isSiegeUser && ligne.isEspaceSiege)
+                    ? `<br><span class="badge-origine-siege" title="Donnée interne saisie au niveau du Siège"><i class="fa-solid fa-landmark"></i> Siège</span>`
+                    : '';
                 const controleurHtml = ligne.controleur && ligne.controleur !== '--'
                     ? `<i class="fa-solid fa-user-tie" style="color:var(--primary-blue); margin-right:5px; font-size:0.75rem;"></i>${escapeHTML(ligne.controleur)}`
                     : '<span style="color:var(--text-muted);">--</span>';
@@ -888,7 +1020,7 @@
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${escapeHTML(ligne.dateCtrlVerif)}</td>
-                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b></td>
+                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b>${siegeOriginTagHtml}</td>
                         <td class="col-centre">${escapeHTML(ligne.entite)}</td>
                         <td class="col-controleur">${controleurHtml}</td>
                         <td class="col-processus">${escapeHTML(ligne.processus)}</td>
@@ -917,12 +1049,13 @@
                 return;
             }
 
+            const isSiegeUser = estUtilisateurSiege();
             const lignesExcel = dernieresLignesAffichees.map(l => {
                 const tags = [];
                 if (l.isModifie) tags.push('Modifié');
                 if (l.isSuivi) tags.push('Suivi');
                 const suffixeType = tags.length > 0 ? ` (${tags.join(' - ')})` : '';
-                return {
+                const row = {
                     "Date contrôle / vérif.": l.dateCtrlVerif,
                     "Région": l.region,
                     "Centre / Entité": l.entite,
@@ -940,6 +1073,10 @@
                     "Statut constat": l.statutInfo.label,
                     "Type de contrôle": `${l.typeInfo.label}${suffixeType}`
                 };
+                if (isSiegeUser) {
+                    row["Espace"] = l.isEspaceSiege ? "Siège" : "Régional";
+                }
+                return row;
             });
 
             const ws = XLSX.utils.json_to_sheet(lignesExcel);
@@ -976,18 +1113,62 @@
         }
 
         function viderTouteLaBDD() {
+            const isSiegeUser = estUtilisateurSiege();
+            const restrictedReg = getUserRegionRestriction();
+
+            if (!isSiegeUser && restrictedReg && restrictedReg !== '__NONE__') {
+                // Protection : un utilisateur régional ne peut vider que les données de sa propre région
+                let rawDb = { missions: [], constatsControle: [], constatsEncaisses: [] };
+                try {
+                    const raw = localStorage.getItem('fci_database');
+                    if (raw) rawDb = JSON.parse(raw);
+                } catch (e) {}
+
+                const mapMissions = {};
+                (rawDb.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+                const doitEtreConserve = (item, missionLiee = {}) => {
+                    if (estDonneeEspaceSiege(item, missionLiee)) return true;
+                    const reg = normaliserRegion(item.region || missionLiee.region || '');
+                    return reg !== restrictedReg;
+                };
+
+                rawDb.constatsControle = (rawDb.constatsControle || []).filter(c => doitEtreConserve(c, mapMissions[c.idMission] || {}));
+                rawDb.constatsEncaisses = (rawDb.constatsEncaisses || []).filter(e => doitEtreConserve(e, mapMissions[e.idMission] || {}));
+                rawDb.missions = (rawDb.missions || []).filter(m => doitEtreConserve(m, m));
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
+                    FCIDatabase.saveDB(rawDb);
+                } else {
+                    localStorage.setItem('fci_database', JSON.stringify(rawDb));
+                }
+                reinitialiserFiltresBDD();
+                return;
+            }
+
             if (typeof FCIDatabase !== 'undefined') FCIDatabase.viderBDD();
             else localStorage.removeItem('fci_database');
             reinitialiserFiltresBDD();
         }
 
         function exporterBDDAction() {
-            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
+            const isSiegeUser = estUtilisateurSiege();
+            if (isSiegeUser && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
                 FCIDatabase.exporterBDD();
                 return;
             }
+            const restrictedReg = getUserRegionRestriction();
             const db = lireBDDLocaleSecurisee();
-            const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+            const mapMissions = {};
+            (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
+
+            const filteredDb = {
+                missions: (db.missions || []).filter(m => aDroitConsultationLigne(m, m, isSiegeUser, restrictedReg)),
+                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationLigne(c, mapMissions[c.idMission] || {}, isSiegeUser, restrictedReg)),
+                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationLigne(e, mapMissions[e.idMission] || {}, isSiegeUser, restrictedReg))
+            };
+
+            const blob = new Blob([JSON.stringify(filteredDb, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
