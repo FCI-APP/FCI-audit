@@ -1,177 +1,245 @@
 /**
- * FCI Database Manager — Synchronisation Firestore & Cache localStorage
- * Préserve la compatibilité complète avec fci_database sur les 6 feuilles
+ * FCI v1.0 - Gestionnaire Central de Base de Données (fci_database)
+ * Cloisonnement Deux Espaces : Espace Régional (partagé par région + Siège) & Espace Siège (confidentiel)
+ * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  */
-import { db, buildAuditMetadata, logAuditAction } from "./fci-auth.js";
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  deleteDoc,
-  query,
-  where
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+(function () {
+    const LOCAL_DB_KEY = 'fci_database';
 
-const LOCAL_DB_KEY = "fci_database";
+    function getDefaultSchema() {
+        return {
+            missions: [],
+            constatsControle: [],
+            constatsEncaisses: [],
+            planifications: [],
+            lastSync: null
+        };
+    }
 
-function getDefaultLocalSchema() {
-  return {
-    referentiel: [],
-    planifications: [],
-    controles: [],
-    encaisses: [],
-    bdd: [],
-    lastSync: null
-  };
-}
+    function readRawDatabase() {
+        try {
+            const raw = localStorage.getItem(LOCAL_DB_KEY);
+            if (!raw) return getDefaultSchema();
+            const parsed = JSON.parse(raw);
+            return {
+                ...getDefaultSchema(),
+                ...(parsed && typeof parsed === 'object' ? parsed : {}),
+                missions: Array.isArray(parsed?.missions) ? parsed.missions : [],
+                constatsControle: Array.isArray(parsed?.constatsControle) ? parsed.constatsControle : [],
+                constatsEncaisses: Array.isArray(parsed?.constatsEncaisses) ? parsed.constatsEncaisses : [],
+                planifications: Array.isArray(parsed?.planifications) ? parsed.planifications : []
+            };
+        } catch (e) {
+            return getDefaultSchema();
+        }
+    }
 
-export function getLocalDatabase() {
-  try {
-    const raw = localStorage.getItem(LOCAL_DB_KEY);
-    if (!raw) return getDefaultLocalSchema();
-    return { ...getDefaultLocalSchema(), ...JSON.parse(raw) };
-  } catch (e) {
-    return getDefaultLocalSchema();
-  }
-}
+    function getCurrentUser() {
+        if (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function') {
+            return window.FCIAuth.getCurrentUser();
+        }
+        return null;
+    }
 
-export function saveLocalDatabase(data) {
-  localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(data));
-}
+    function isSiegeUser(user = getCurrentUser()) {
+        if (!user) return false;
+        if (window.FCIAuth && typeof window.FCIAuth.isSiege === 'function') {
+            return window.FCIAuth.isSiege();
+        }
+        return String(user.region || '').toUpperCase() === 'SIEGE';
+    }
 
-// Chargement initial depuis Firestore selon les droits du profil connecté
-export async function syncFromFirestoreToLocal(user) {
-  if (!user) return getLocalDatabase();
+    function tagRecord(record, user = getCurrentUser()) {
+        if (!record || typeof record !== 'object') return record;
+        if (window.FCIAuth && typeof window.FCIAuth.tagRecordWithSpace === 'function') {
+            return window.FCIAuth.tagRecordWithSpace(record, user);
+        }
+        return record;
+    }
 
-  const localDb = getLocalDatabase();
-  const isControleur = user.role === "CONTROLEUR";
+    function canAccess(record, user = getCurrentUser()) {
+        if (!record || typeof record !== 'object') return false;
+        if (window.FCIAuth && typeof window.FCIAuth.canAccessRecord === 'function') {
+            return window.FCIAuth.canAccessRecord(record, user);
+        }
+        return true;
+    }
 
-  // 1. Enregistrements (FC, FV, BDD)
-  const qRecords = isControleur
-    ? query(collection(db, "fci_enregistrements"), where("cree_par_id", "==", user.username))
-    : collection(db, "fci_enregistrements");
+    /**
+     * Retourne uniquement les données visibles selon l'espace de l'utilisateur connecté :
+     * - Espace Siège : toutes les données (internes Siège + toutes les régions).
+     * - Espace Régional : uniquement les données régionales de sa région (aucune donnée Siège ni autre région).
+     */
+    function getDB() {
+        const rawDb = readRawDatabase();
+        const user = getCurrentUser();
+        if (!user) return getDefaultSchema();
 
-  const snapRecords = await getDocs(qRecords);
-  const allRecords = snapRecords.docs.map(d => ({ firestore_id: d.id, ...d.data() }));
+        if (window.FCIAuth && typeof window.FCIAuth.filterDatabase === 'function') {
+            const filtered = window.FCIAuth.filterDatabase(rawDb, user);
+            return {
+                ...filtered,
+                // Alias de compatibilité
+                controles: filtered.constatsControle,
+                encaisses: filtered.constatsEncaisses,
+                bdd: [...filtered.constatsControle, ...filtered.constatsEncaisses]
+            };
+        }
 
-  localDb.bdd = allRecords;
-  localDb.controles = allRecords.filter(r => r.source_module === "FC" || r.type_fiche === "FC");
-  localDb.encaisses = allRecords.filter(r => r.source_module === "FV" || r.type_fiche === "FV");
+        return rawDb;
+    }
 
-  // 2. Planifications
-  const qPlans = isControleur
-    ? query(collection(db, "fci_planifications"), where("cree_par_id", "==", user.username))
-    : collection(db, "fci_planifications");
+    /**
+     * Sauvegarde la base tout en :
+     * 1. Étiquetant automatiquement les nouvelles saisies avec l'espace d'origine ('SIEGE' ou 'REGIONAL').
+     * 2. Préservant intactes dans localStorage les données appartenant aux autres régions ou au Siège.
+     */
+    function saveDB(updatedScopedDb) {
+        const user = getCurrentUser();
+        const fullRawDb = readRawDatabase();
+        const incoming = (updatedScopedDb && typeof updatedScopedDb === 'object') ? updatedScopedDb : {};
 
-  const snapPlans = await getDocs(qPlans);
-  localDb.planifications = snapPlans.docs.map(d => ({ firestore_id: d.id, ...d.data() }));
+        const collections = ['missions', 'constatsControle', 'constatsEncaisses', 'planifications'];
+        const mergedDb = { ...fullRawDb };
 
-  localDb.lastSync = new Date().toISOString();
-  saveLocalDatabase(localDb);
+        collections.forEach(colName => {
+            if (!Array.isArray(incoming[colName])) return;
 
-  // Déclenche le rafraîchissement des tableaux/graphiques de la page active
-  window.dispatchEvent(new CustomEvent("fci-db-synced", { detail: localDb }));
-  return localDb;
-}
+            // Étiquetage de chaque enregistrement entrant avec l'espace de l'utilisateur courant
+            // (sauf s'il possède déjà un espaceSaisie valide, ex. modification par le Siège d'une ligne régionale)
+            const taggedIncoming = incoming[colName].map(item => {
+                if (item && (item.espaceSaisie === 'SIEGE' || item.espaceSaisie === 'REGIONAL')) {
+                    return item;
+                }
+                return tagRecord(item, user);
+            });
 
-// Sauvegarde d'un enregistrement (FC, FV ou ligne modifiée en BDD)
-export async function upsertFCIRecord(record, moduleSource = "BDD") {
-  const user = window.FCI_CURRENT_USER;
-  if (!user) throw new Error("Utilisateur non authentifié.");
+            if (!user || isSiegeUser(user)) {
+                // Le Siège a accès à tout : l'état envoyé représente l'intégralité de la collection
+                mergedDb[colName] = taggedIncoming;
+            } else {
+                // Utilisateur régional : on conserve intactes les lignes hors de son périmètre
+                // (données Siège + autres régions) et on remplace uniquement le périmètre de sa région
+                const horsPerimetre = (fullRawDb[colName] || []).filter(existing => !canAccess(existing, user));
+                mergedDb[colName] = [...horsPerimetre, ...taggedIncoming];
+            }
+        });
 
-  // Vérification de propriété côté client avant appel serveur
-  if (user.role === "CONTROLEUR" && record.cree_par_id && record.cree_par_id !== user.username) {
-    throw new Error("Action refusée : vous ne pouvez modifier que vos propres enregistrements.");
-  }
+        mergedDb.lastSync = new Date().toISOString();
+        localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(mergedDb));
 
-  const enriched = buildAuditMetadata({
-    ...record,
-    source_module: record.source_module || moduleSource
-  });
+        window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
+        return getDB();
+    }
 
-  const docId = enriched.firestore_id || enriched.record_uid;
-  enriched.firestore_id = docId;
+    /**
+     * Enregistre ou met à jour un lot de constats de Fiche de Contrôle (FC).
+     */
+    async function enregistrerLotControle(lotConstats, site = '', idMission = '') {
+        if (!Array.isArray(lotConstats) || lotConstats.length === 0) return getDB();
+        const user = getCurrentUser();
+        const db = getDB();
 
-  await setDoc(doc(db, "fci_enregistrements", docId), enriched, { merge: true });
+        const taggedLot = lotConstats.map(item => tagRecord({
+            ...item,
+            sourceFeuille: 'FC',
+            site: item.site || site,
+            idMission: item.idMission || idMission
+        }, user));
 
-  // Mise à jour immédiate du cache localStorage
-  const localDb = getLocalDatabase();
-  const idx = localDb.bdd.findIndex(item => (item.firestore_id || item.record_uid) === docId);
-  if (idx >= 0) {
-    localDb.bdd[idx] = enriched;
-  } else {
-    localDb.bdd.unshift(enriched);
-  }
-  localDb.controles = localDb.bdd.filter(r => r.source_module === "FC" || r.type_fiche === "FC");
-  localDb.encaisses = localDb.bdd.filter(r => r.source_module === "FV" || r.type_fiche === "FV");
-  saveLocalDatabase(localDb);
+        const existants = db.constatsControle || [];
+        taggedLot.forEach(item => {
+            const idx = existants.findIndex(e =>
+                (item.idConstat && e.idConstat === item.idConstat) ||
+                (item.id && e.id === item.id)
+            );
+            if (idx !== -1) {
+                existants[idx] = { ...existants[idx], ...item };
+            } else {
+                existants.push(item);
+            }
+        });
 
-  return enriched;
-}
+        db.constatsControle = existants;
+        return saveDB(db);
+    }
 
-// Suppression d'un enregistrement (Admin ou contrôleur propriétaire uniquement)
-export async function deleteFCIRecord(recordOrId) {
-  const user = window.FCI_CURRENT_USER;
-  if (!user) throw new Error("Utilisateur non authentifié.");
+    /**
+     * Enregistre ou met à jour un lot de constats de Vérification des Encaisses (FV).
+     */
+    async function enregistrerLotEncaisses(lotEncaisses, site = '', idMission = '') {
+        if (!Array.isArray(lotEncaisses) || lotEncaisses.length === 0) return getDB();
+        const user = getCurrentUser();
+        const db = getDB();
 
-  const docId = typeof recordOrId === "string"
-    ? recordOrId
-    : (recordOrId.firestore_id || recordOrId.record_uid);
+        const taggedLot = lotEncaisses.map(item => tagRecord({
+            ...item,
+            sourceFeuille: 'FV',
+            site: item.site || site,
+            idMission: item.idMission || idMission
+        }, user));
 
-  const localDb = getLocalDatabase();
-  const existing = localDb.bdd.find(item => (item.firestore_id || item.record_uid) === docId);
+        const existants = db.constatsEncaisses || [];
+        taggedLot.forEach(item => {
+            const idx = existants.findIndex(e =>
+                (item.idEncaisse && e.idEncaisse === item.idEncaisse)
+            );
+            if (idx !== -1) {
+                existants[idx] = { ...existants[idx], ...item };
+            } else {
+                existants.push(item);
+            }
+        });
 
-  if (user.role === "CONTROLEUR" && existing && existing.cree_par_id !== user.username) {
-    throw new Error("Action refusée : vous ne pouvez supprimer que vos propres enregistrements.");
-  }
+        db.constatsEncaisses = existants;
+        return saveDB(db);
+    }
 
-  await deleteDoc(doc(db, "fci_enregistrements", docId));
-  await logAuditAction("SUPPRESSION_ENREGISTREMENT", { record_id: docId });
+    /**
+     * Enregistre ou met à jour une ligne de planification (Espace Siège ou Espace Régional).
+     */
+    async function enregistrerPlanification(plan) {
+        if (!plan || typeof plan !== 'object') return getDB();
+        const user = getCurrentUser();
+        const db = getDB();
 
-  localDb.bdd = localDb.bdd.filter(item => (item.firestore_id || item.record_uid) !== docId);
-  localDb.controles = localDb.bdd.filter(r => r.source_module === "FC" || r.type_fiche === "FC");
-  localDb.encaisses = localDb.bdd.filter(r => r.source_module === "FV" || r.type_fiche === "FV");
-  saveLocalDatabase(localDb);
-}
+        const taggedPlan = tagRecord({
+            ...plan,
+            idPlanification: plan.idPlanification || ('PLAN-' + Date.now())
+        }, user);
 
-// Sauvegarde d'une planification
-export async function upsertFCIPlanification(plan) {
-  const user = window.FCI_CURRENT_USER;
-  if (!user) throw new Error("Utilisateur non authentifié.");
+        const plans = db.planifications || [];
+        const idx = plans.findIndex(p => p.idPlanification === taggedPlan.idPlanification);
+        if (idx !== -1) {
+            plans[idx] = { ...plans[idx], ...taggedPlan };
+        } else {
+            plans.push(taggedPlan);
+        }
 
-  if (user.role === "CONTROLEUR" && plan.cree_par_id && plan.cree_par_id !== user.username) {
-    throw new Error("Action refusée : vous ne pouvez modifier que vos propres planifications.");
-  }
+        db.planifications = plans;
+        return saveDB(db);
+    }
 
-  const enriched = buildAuditMetadata(plan);
-  const docId = enriched.firestore_id || enriched.record_uid;
-  enriched.firestore_id = docId;
+    // Exposition globale unifiée pour toutes les feuilles (FC, FV, Planification, BDD, TDB)
+    window.FCIDatabase = {
+        getDB,
+        saveDB,
+        enregistrerLotControle,
+        enregistrerLotEncaisses,
+        enregistrerPlanification,
+        canAccessRecord: canAccess
+    };
 
-  await setDoc(doc(db, "fci_planifications", docId), enriched, { merge: true });
-
-  const localDb = getLocalDatabase();
-  const idx = localDb.planifications.findIndex(item => (item.firestore_id || item.record_uid) === docId);
-  if (idx >= 0) {
-    localDb.planifications[idx] = enriched;
-  } else {
-    localDb.planifications.unshift(enriched);
-  }
-  saveLocalDatabase(localDb);
-
-  return enriched;
-}
-
-// Synchronisation automatique dès que la session Firebase est validée
-window.addEventListener("fci-auth-ready", async (e) => {
-  await syncFromFirestoreToLocal(e.detail);
-});
-
-window.FCIDBManager = {
-  getLocalDatabase,
-  saveLocalDatabase,
-  syncFromFirestoreToLocal,
-  upsertFCIRecord,
-  deleteFCIRecord,
-  upsertFCIPlanification
-};
+    // Alias de rétrocompatibilité
+    window.FCIDBManager = {
+        getLocalDatabase: getDB,
+        saveLocalDatabase: saveDB,
+        upsertFCIRecord: async (record, moduleSource = 'FC') => {
+            if (moduleSource === 'FV') {
+                return enregistrerLotEncaisses([record], record.site || '', record.idMission || '');
+            }
+            return enregistrerLotControle([record], record.site || '', record.idMission || '');
+        },
+        upsertFCIPlanification: enregistrerPlanification
+    };
+})();
