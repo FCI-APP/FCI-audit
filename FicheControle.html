@@ -467,7 +467,7 @@
                 : null;
         }
 
-        function getUserRegionRestriction() {
+        function getUserHomeRegion() {
             const u = getCurrentAuthUser();
             if (!u || !u.region || u.region === 'SIEGE') return '';
             return normaliserRegion(u.region);
@@ -536,6 +536,7 @@
                 }
             }
 
+            const homeReg = controleurRegion || getUserHomeRegion() || region;
             const traceUser = getUserTracePayload('ARCHIVE');
             const idxMission = db.missions.findIndex(m => m.idMission === idMission);
             const missionBase = {
@@ -553,7 +554,8 @@
                 dateFin: dateFin || '',
                 controleur,
                 controleurId: controleurId || (idxMission !== -1 ? db.missions[idxMission].controleurId : '') || '',
-                controleurRegion: controleurRegion || region,
+                controleurRegion: homeReg,
+                auteurRegion: homeReg,
                 statut: statutMission,
                 tauxMoyen,
                 nbConstats: sourceList.length,
@@ -670,9 +672,9 @@
 
         window.addEventListener('fci-auth-ready', () => {
             if (missionData) {
-                const restrictedReg = getUserRegionRestriction();
-                if (restrictedReg && missionData.metadata) {
-                    missionData.metadata.region = restrictedReg;
+                const homeReg = getUserHomeRegion();
+                if (homeReg && missionData.metadata && !missionData.metadata.region) {
+                    missionData.metadata.region = homeReg;
                 }
                 renderPage();
             }
@@ -688,13 +690,12 @@
         });
 
         function reinitialiserFiltresBDD() {
-            const restrictedReg = getUserRegionRestriction();
             const selDate = document.getElementById('filterBddDate');
             const selReg = document.getElementById('filterBddRegion');
             const selSite = document.getElementById('filterBddSite');
             const selProc = document.getElementById('filterBddProcessus');
             if (selDate) selDate.value = '';
-            if (selReg) selReg.value = restrictedReg || '';
+            if (selReg) selReg.value = '';
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresBDD();
@@ -708,10 +709,8 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            const restrictedReg = getUserRegionRestriction();
-            const constats = (db.constatsControle || []).filter(c =>
-                !restrictedReg || getConstatRegion(c, mapMissions) === restrictedReg
-            );
+            // lireDBSecurisee() applique déjà FCIAuth.filterDatabase (région d'affectation + contrôles reçus dans la région)
+            const constats = db.constatsControle || [];
 
             const badgeCount = document.getElementById('bddCountInfo');
             if (badgeCount) {
@@ -725,7 +724,7 @@
             if (!selDate || !selReg || !selSite || !selProc) return;
 
             let valDate = selDate.value;
-            let valReg = restrictedReg || selReg.value;
+            let valReg = selReg.value;
             let valSite = selSite.value;
             let valProc = selProc.value;
 
@@ -744,21 +743,19 @@
                 valDate = '';
             }
 
-            const regions = restrictedReg
-                ? [restrictedReg]
-                : [...new Set(
-                    constats
-                        .filter(c =>
-                            (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
-                            (!valSite || getConstatSite(c, mapMissions) === valSite) &&
-                            (!valProc || getConstatProcessus(c) === valProc)
-                        )
-                        .map(c => getConstatRegion(c, mapMissions))
-                        .filter(Boolean)
-                )].sort((a, b) => a.localeCompare(b, 'fr'));
+            const regions = [...new Set(
+                constats
+                    .filter(c =>
+                        (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getConstatSite(c, mapMissions) === valSite) &&
+                        (!valProc || getConstatProcessus(c) === valProc)
+                    )
+                    .map(c => getConstatRegion(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
             if (valReg && !regions.includes(valReg)) {
-                valReg = restrictedReg || '';
+                valReg = '';
             }
 
             const sites = [...new Set(
@@ -794,14 +791,9 @@
             selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            if (restrictedReg) {
-                selReg.innerHTML = `<option value="${restrictedReg}" selected>${restrictedReg}</option>`;
-                selReg.disabled = true;
-            } else {
-                selReg.disabled = false;
-                selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
-                    regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
-            }
+            selReg.disabled = false;
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
 
             selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
@@ -810,12 +802,12 @@
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
 
             selDate.classList.toggle('filter-active', Boolean(valDate));
-            selReg.classList.toggle('filter-active', Boolean(valReg) && !restrictedReg);
+            selReg.classList.toggle('filter-active', Boolean(valReg));
             selSite.classList.toggle('filter-active', Boolean(valSite));
             selProc.classList.toggle('filter-active', Boolean(valProc));
 
             const statusEl = document.getElementById('searchStatus');
-            if (statusEl && (valDate || (!restrictedReg && valReg) || valSite || valProc)) {
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
                 const nbCorrespondants = constats.filter(c =>
                     (!valDate || getConstatDateFR(c, mapMissions) === valDate) &&
                     (!valReg || getConstatRegion(c, mapMissions) === valReg) &&
@@ -827,9 +819,8 @@
         }
 
         function onFilterBDDChange(source = '') {
-            const restrictedReg = getUserRegionRestriction();
             if (source === 'DATE') {
-                if (!restrictedReg) document.getElementById('filterBddRegion').value = '';
+                document.getElementById('filterBddRegion').value = '';
                 document.getElementById('filterBddSite').value = '';
                 document.getElementById('filterBddProcessus').value = '';
             } else if (source === 'REGION') {
@@ -849,14 +840,13 @@
             if (!missionData.pointsControle || missionData.pointsControle.length === 0) { afficherEtatVide(); return; }
             if (!missionData.metadata) missionData.metadata = {};
 
-            const restrictedReg = getUserRegionRestriction();
-            if (restrictedReg) {
-                missionData.metadata.region = restrictedReg;
-            } else if (missionData.metadata.region) {
+            const homeReg = getUserHomeRegion();
+            if (missionData.metadata.region) {
                 missionData.metadata.region = normaliserRegion(missionData.metadata.region);
+            } else if (homeReg) {
+                missionData.metadata.region = homeReg;
             }
 
-            // Si la mission n'a pas été importée depuis la BDD et n'a pas été saisie depuis Planification, le champ Contrôleur reste vide
             if (!missionData._loadedFromBDDFilter && !missionData.metadata.controleurs) {
                 missionData.metadata.controleurs = '';
             }
@@ -895,10 +885,7 @@
             }
 
             const meta = missionData.metadata || {};
-            const restrictedReg = getUserRegionRestriction();
-            if (restrictedReg) {
-                meta.region = restrictedReg;
-            }
+            const homeReg = getUserHomeRegion();
 
             const dateCtrlFR = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
             const dateCtrlISO = formatDateToISO(dateCtrlFR);
@@ -924,6 +911,11 @@
                 }
             }
 
+            const isInterRegional = Boolean(homeReg && regionActuelle && homeReg !== regionActuelle);
+            const badgeInterReg = isInterRegional
+                ? `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Mission interrégionale (${homeReg} → ${regionActuelle})</span>`
+                : '';
+
             const badgeDateInfo = `<span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date de contrôle : ${dateCtrlFR}</span>`;
             const ctrlValEscaped = String(meta.controleurs || '').replace(/"/g, '&quot;');
             const ctrlReadonlyAttr = ctrlValEscaped ? '' : 'readonly onfocus="this.removeAttribute(\'readonly\');"';
@@ -932,13 +924,14 @@
                 <div class="saisie-line-card">
                     <div class="section-line-label">
                         <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
+                        ${badgeInterReg}
                         <span style="margin-left:auto;">${badgeDateInfo}</span>
                     </div>
                     <form autocomplete="off" onsubmit="return false;">
                         <div class="single-row-7">
                             <div class="meta-item">
-                                <span class="label">Région *</span>
-                                <select class="input-date-ctrl" autocomplete="off" ${restrictedReg ? 'disabled' : ''} onchange="onRegionFCChange(this.value)">
+                                <span class="label">Région du contrôle *</span>
+                                <select class="input-date-ctrl" autocomplete="off" onchange="onRegionFCChange(this.value)">
                                     <option value="">-- Région --</option>
                                     ${regionOptionsHtml}
                                 </select>
@@ -1136,8 +1129,7 @@
         }
 
         function onRegionFCChange(nouvelleRegion) {
-            const restrictedReg = getUserRegionRestriction();
-            missionData.metadata.region = restrictedReg || nouvelleRegion;
+            missionData.metadata.region = normaliserRegion(nouvelleRegion);
             missionData.metadata.entite = '';
             sauvegarderLocalement();
             renderPage();
@@ -1244,7 +1236,7 @@
             const u = getCurrentAuthUser();
             const meta = missionData.metadata || {};
             const typeControleMission = meta.typeControle || 'Thématique';
-            const regionMission = meta.region || '';
+            const regionMission = normaliserRegion(meta.region || '');
             const controleur = String(meta.controleurs || '').trim();
             const controleurId = (u && (u.fonction === controleur || u.username === controleur))
                 ? u.username
@@ -1278,6 +1270,7 @@
                     controleur: controleur,
                     controleurId: controleurId,
                     controleurRegion: controleurRegion,
+                    auteurRegion: controleurRegion,
                     date: dateLigne,
                     dateControle: dateLigne,
                     processus: getItemVal(p, ['Processus']),
@@ -1301,7 +1294,6 @@
                     ...traceUser
                 };
 
-                // Si modification d'un enregistrement existant, on conserve son espace d'origine ; sinon on étiquette selon l'utilisateur courant
                 if (mode === 'MODIFIER' && p._espaceSaisie) {
                     return { ...rawRecord, espaceSaisie: p._espaceSaisie };
                 }
@@ -1325,7 +1317,7 @@
                 const idMission = meta.idMission || ("MIS-" + Date.now());
                 meta.idMission = idMission;
                 const typeControleMission = meta.typeControle || 'Thématique';
-                const regionMission = meta.region || '';
+                const regionMission = normaliserRegion(meta.region || '');
                 const dateCtrl = formatDateToFR(meta.dateControle) || formatDateToFR(getTodayISO());
                 const controleur = String(meta.controleurs || '').trim();
 
@@ -1352,7 +1344,7 @@
                     dateFin: meta.periodeFin || '',
                     controleur,
                     controleurId: constatsBDD[0]?.controleurId || meta.controleurId || '',
-                    controleurRegion: constatsBDD[0]?.controleurRegion || regionMission,
+                    controleurRegion: constatsBDD[0]?.controleurRegion || getUserHomeRegion() || regionMission,
                     typeControle: typeControleMission,
                     constats: constatsBDD,
                     pointsSelectionnes: missionData.pointsControle
@@ -1368,7 +1360,7 @@
                 remplirFiltresBDD();
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
-                    statusEl.innerText = `${constatsBDD.length} constat(s) FC archivé(s) dans la BDD — Contrôleur : ${controleur}`;
+                    statusEl.innerText = `${constatsBDD.length} constat(s) FC archivé(s) dans la BDD — Région : ${regionMission} | Contrôleur : ${controleur}`;
                 }
             } finally {
                 if (btn) {
@@ -1379,9 +1371,8 @@
         }
 
         function trouverFicheControleBDD() {
-            const restrictedReg = getUserRegionRestriction();
             const fDate = document.getElementById('filterBddDate').value;
-            const fReg = restrictedReg || document.getElementById('filterBddRegion').value;
+            const fReg = document.getElementById('filterBddRegion').value;
             const fSite = document.getElementById('filterBddSite').value;
             const fProc = document.getElementById('filterBddProcessus').value;
 
@@ -1410,7 +1401,7 @@
             const selectedId = premierConstat.idMission || ("MIS-" + Date.now());
             const missionInfo = mapMissions[selectedId] || {};
             const typeCtrlRecupere = premierConstat.typeControle || missionInfo.typeControle || 'Thématique';
-            const regionRecuperee = restrictedReg || normaliserRegion(premierConstat.region || missionInfo.region || '');
+            const regionRecuperee = normaliserRegion(premierConstat.region || missionInfo.region || '');
             const dateCtrlTrouvee = getConstatDateFR(premierConstat, mapMissions) || formatDateToFR(missionInfo.date) || formatDateToFR(getTodayISO());
             const siteTrouve = getConstatSite(premierConstat, mapMissions) || missionInfo.entite || '';
 
@@ -1461,7 +1452,7 @@
 
             sauvegarderLocalement();
             renderPage();
-            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} ligne(s) FC importée(s) — Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
+            document.getElementById('searchStatus').innerText = `${constatsTrouves.length} ligne(s) FC importée(s) — Région : ${regionRecuperee || '--'} | Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
         }
 
         async function modifierFicheControle() {
@@ -1527,14 +1518,14 @@
 
                 upsertMissionFCEnBDD(db, {
                     idMission,
-                    region: meta.region || '',
+                    region: normaliserRegion(meta.region || ''),
                     entite: meta.entite || '',
                     dateFR: dateCtrl,
                     dateDebut: meta.periodeDebut || '',
                     dateFin: meta.periodeFin || '',
                     controleur: String(meta.controleurs || '').trim(),
                     controleurId: constatsMisAJour[0]?.controleurId || meta.controleurId || '',
-                    controleurRegion: constatsMisAJour[0]?.controleurRegion || meta.region || '',
+                    controleurRegion: constatsMisAJour[0]?.controleurRegion || getUserHomeRegion() || meta.region || '',
                     typeControle: meta.typeControle || 'Thématique',
                     constats: constatsMisAJour,
                     pointsSelectionnes: missionData.pointsControle
@@ -1588,7 +1579,7 @@
                 const idMissionSuivi = "MIS-SUIVI-" + Date.now();
                 const dateCtrl = formatDateToFR(pointsModifiesPourSuivi[0]._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
                 const typeControleMission = meta.typeControle || 'Thématique';
-                const regionMission = meta.region || '';
+                const regionMission = normaliserRegion(meta.region || '');
                 const controleur = String(meta.controleurs || '').trim();
 
                 const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', pointsModifiesPourSuivi);
@@ -1604,7 +1595,7 @@
                     dateFin: meta.periodeFin || '',
                     controleur,
                     controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
-                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || regionMission,
+                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || regionMission,
                     typeControle: typeControleMission,
                     constats: nouvellesLignesSuivi,
                     pointsSelectionnes: pointsModifiesPourSuivi
