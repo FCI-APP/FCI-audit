@@ -102,6 +102,21 @@
             border: 1px solid #F59E0B;
         }
 
+        .badge-interregional {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #E0E7FF;
+            color: #3730A3;
+            border: 1px solid #A5B4FC;
+        }
+
         .btn { padding: 9px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
         .btn-primary:hover { background-color: var(--dark-blue); }
@@ -235,9 +250,9 @@
         }
 
         .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
-        .col-region { width: 125px; min-width: 125px; white-space: nowrap; }
+        .col-region { width: 135px; min-width: 135px; white-space: nowrap; }
         .col-centre { width: 175px; min-width: 175px; }
-        .col-controleur { width: 165px; min-width: 165px; font-weight: 600; color: #0F172A; }
+        .col-controleur { width: 175px; min-width: 175px; font-weight: 600; color: #0F172A; }
         .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
         .col-risque { width: 220px; min-width: 220px; }
         .col-controle { width: 230px; min-width: 230px; }
@@ -494,6 +509,13 @@
             return str || '--';
         }
 
+        function extraireRegionControleur(item, missionAssociee = {}) {
+            const regBrute = (item && (item.controleurRegion || item.auteurRegion))
+                || (missionAssociee && (missionAssociee.controleurRegion || missionAssociee.auteurRegion))
+                || '';
+            return normaliserRegion(regBrute);
+        }
+
         function getCurrentAuthUser() {
             return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
                 ? window.FCIAuth.getCurrentUser()
@@ -509,7 +531,7 @@
                 || ['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role);
         }
 
-        function getUserRegionRestriction() {
+        function getUserHomeRegion() {
             if (estUtilisateurSiege()) return '';
             const u = getCurrentAuthUser();
             if (!u || !u.region) return '__NONE__';
@@ -518,7 +540,7 @@
 
         /**
          * Détermine si un enregistrement appartient à l'Espace Siège (confidentiel au Siège)
-         * ou à l'Espace Régional (partagé au sein de la région + visible par le Siège).
+         * ou à l'Espace Régional (partagé entre la région du site vérifié et la région du contrôleur + visible par le Siège).
          */
         function estDonneeEspaceSiege(item, missionAssociee = {}) {
             const checkObj = (obj) => {
@@ -550,15 +572,15 @@
                 badge.className = 'espace-pill espace-pill-siege';
                 badge.innerHTML = '<i class="fa-solid fa-landmark"></i> Espace Siège — Visibilité Globale';
                 if (sousTitre) {
-                    sousTitre.innerText = "Accès complet : données internes du Siège (confidentielles) + ensemble des données des 10 régions";
+                    sousTitre.innerText = "Accès complet : données internes du Siège (confidentielles) + ensemble des données régionales et interrégionales";
                 }
             } else {
-                const reg = getUserRegionRestriction();
+                const reg = getUserHomeRegion();
                 const regLabel = (reg && reg !== '__NONE__') ? reg : 'NON ATTRIBUÉE';
                 badge.className = 'espace-pill espace-pill-regional';
                 badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Espace Régional — ${escapeHTML(regLabel)}`;
                 if (sousTitre) {
-                    sousTitre.innerText = `Visibilité strictement limitée aux données régionales de ${regLabel} (données Siège et autres régions masquées)`;
+                    sousTitre.innerText = `Visibilité des contrôles de la région ${regLabel} et de vos missions interrégionales (données Siège masquées)`;
                 }
             }
         }
@@ -683,9 +705,8 @@
         }
 
         function appliquerMultiFiltre() {
-            const restrictedReg = getUserRegionRestriction();
             filtreDateActif = document.getElementById('selectFiltreDate').value;
-            filtreRegionActif = restrictedReg || document.getElementById('selectFiltreRegion').value;
+            filtreRegionActif = document.getElementById('selectFiltreRegion').value;
             filtreSiteActif = document.getElementById('selectFiltreSite').value;
             filtreControleurActif = document.getElementById('selectFiltreControleur').value;
             filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
@@ -696,16 +717,15 @@
         }
 
         function reinitialiserFiltresBDD() {
-            const restrictedReg = getUserRegionRestriction();
             filtreDateActif = 'TOUS';
-            filtreRegionActif = restrictedReg || 'TOUS';
+            filtreRegionActif = 'TOUS';
             filtreSiteActif = 'TOUS';
             filtreControleurActif = 'TOUS';
             filtreProcessusActif = 'TOUS';
             filtreStatutActif = 'TOUS';
             filtreTypeActif = 'TOUS';
             document.getElementById('selectFiltreDate').value = 'TOUS';
-            document.getElementById('selectFiltreRegion').value = restrictedReg || 'TOUS';
+            document.getElementById('selectFiltreRegion').value = 'TOUS';
             document.getElementById('selectFiltreSite').value = 'TOUS';
             document.getElementById('selectFiltreControleur').value = 'TOUS';
             document.getElementById('selectFiltreProcessus').value = 'TOUS';
@@ -733,7 +753,6 @@
         }
 
         function mettreAJourCompteursOptions(lignesUnifiees) {
-            const restrictedReg = getUserRegionRestriction();
             const selDate = document.getElementById('selectFiltreDate');
             const selRegion = document.getElementById('selectFiltreRegion');
             const selSite = document.getElementById('selectFiltreSite');
@@ -759,22 +778,21 @@
                 (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
             );
 
-            if (restrictedReg) {
-                selRegion.innerHTML = `<option value="${escapeHTML(restrictedReg)}" selected style="background-color:#F5F3FF; color:#5B21B6; font-weight:700;">📍 ${escapeHTML(restrictedReg)} (${lignesUnifiees.length})</option>`;
-                selRegion.disabled = true;
-            } else {
-                selRegion.disabled = false;
-                const regionsTriees = [...new Set(
-                    lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
-                )].sort((a, b) => a.localeCompare(b, 'fr'));
-                peuplerSelectDynamique(
-                    selRegion,
-                    regionsTriees,
-                    filtreRegionActif,
-                    'Toutes les régions',
-                    (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
-                );
+            // Liste dynamique des régions autorisées (région d'affectation + régions des missions interrégionales)
+            selRegion.disabled = false;
+            const regionsTriees = [...new Set(
+                lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
+            if (filtreRegionActif !== 'TOUS' && !regionsTriees.includes(filtreRegionActif)) {
+                filtreRegionActif = 'TOUS';
             }
+            peuplerSelectDynamique(
+                selRegion,
+                regionsTriees,
+                filtreRegionActif,
+                'Toutes les régions',
+                (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
+            );
 
             const sourceSites = filtreRegionActif === 'TOUS'
                 ? lignesUnifiees
@@ -848,19 +866,36 @@
             selType.innerHTML = htmlType;
         }
 
-        function aDroitConsultationLigne(item, missionAssociee, isSiegeUser, restrictedReg) {
+        function aDroitConsultationLigne(item, missionAssociee, isSiegeUser, homeReg, authUser) {
             const isDonneeSiege = estDonneeEspaceSiege(item, missionAssociee);
 
-            // Espace Siège : accès global (données internes du Siège + données de toutes les régions)
+            // 1. Espace Siège : visibilité totale (Siège + toutes les régions + interrégional)
             if (isSiegeUser) return true;
 
-            // Espace Régional :
-            // 1. Les données internes du Siège sont strictement confidentielles et inaccessibles aux régions
+            // 2. Confidentialité stricte : les données internes du Siège sont inaccessibles aux régions
             if (isDonneeSiege) return false;
 
-            // 2. Accès exclusif aux données régionales de la même région
-            const regionNorm = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
-            return Boolean(restrictedReg && restrictedReg !== '__NONE__' && regionNorm === restrictedReg);
+            if (!homeReg || homeReg === '__NONE__') return false;
+
+            // 3. Contrôle/Vérification effectué DANS la région d'affectation de l'utilisateur
+            const regionSite = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
+            if (regionSite === homeReg) return true;
+
+            // 4. Contrôle/Vérification INTERRÉGIONAL effectué par un contrôleur de la région de l'utilisateur dans une autre région
+            const ctrlReg = extraireRegionControleur(item, missionAssociee);
+            if (ctrlReg && ctrlReg === homeReg) return true;
+
+            // 5. Vérification par identifiant/nom du contrôleur connecté
+            if (authUser) {
+                const uId = String(authUser.username || '').toLowerCase().trim();
+                const uNom = String(authUser.fonction || '').toLowerCase().trim();
+                const itemCtrlId = String((item && (item.controleurId || item.creeParId)) || (missionAssociee && (missionAssociee.controleurId || missionAssociee.creeParId)) || '').toLowerCase().trim();
+                const itemCtrlNom = extraireNomControleur(item, missionAssociee).toLowerCase().trim();
+                if (uId && itemCtrlId && uId === itemCtrlId) return true;
+                if (uNom && itemCtrlNom && itemCtrlNom !== '--' && itemCtrlNom.includes(uNom)) return true;
+            }
+
+            return false;
         }
 
         function chargerBDDEnVisuel() {
@@ -869,11 +904,9 @@
             const totalBadge = document.getElementById('totalLignesBDD');
             tbody.innerHTML = '';
 
+            const authUser = getCurrentAuthUser();
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
-            if (restrictedReg) {
-                filtreRegionActif = restrictedReg;
-            }
+            const homeReg = getUserHomeRegion();
 
             const mapMissions = {};
             (db.missions || []).forEach(m => {
@@ -896,9 +929,11 @@
 
             mapConstatsFC.forEach(c => {
                 const missionAssociee = mapMissions[c.idMission] || {};
-                if (!aDroitConsultationLigne(c, missionAssociee, isSiegeUser, restrictedReg)) return;
+                if (!aDroitConsultationLigne(c, missionAssociee, isSiegeUser, homeReg, authUser)) return;
 
                 const regionNorm = normaliserRegion(c.region || missionAssociee.region || '');
+                const ctrlRegionNorm = extraireRegionControleur(c, missionAssociee);
+                const isInterRegional = Boolean(!estDonneeEspaceSiege(c, missionAssociee) && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const isEspaceSiege = estDonneeEspaceSiege(c, missionAssociee);
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
@@ -908,6 +943,8 @@
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: regionNorm || '--',
+                    controleurRegion: ctrlRegionNorm || '',
+                    isInterRegional: isInterRegional,
                     entite: c.entite || c.site || missionAssociee.entite || '--',
                     controleur: extraireNomControleur(c, missionAssociee),
                     processus: c.processus || '--',
@@ -930,9 +967,11 @@
 
             mapConstatsFV.forEach(e => {
                 const missionAssociee = mapMissions[e.idMission] || {};
-                if (!aDroitConsultationLigne(e, missionAssociee, isSiegeUser, restrictedReg)) return;
+                if (!aDroitConsultationLigne(e, missionAssociee, isSiegeUser, homeReg, authUser)) return;
 
                 const regionNorm = normaliserRegion(e.region || missionAssociee.region || '');
+                const ctrlRegionNorm = extraireRegionControleur(e, missionAssociee);
+                const isInterRegional = Boolean(!estDonneeEspaceSiege(e, missionAssociee) && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const isEspaceSiege = estDonneeEspaceSiege(e, missionAssociee);
                 const typeBrut = e.typeControle || 'Vérification';
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
@@ -942,6 +981,8 @@
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
                     region: regionNorm || '--',
+                    controleurRegion: ctrlRegionNorm || '',
+                    isInterRegional: isInterRegional,
                     entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
                     controleur: extraireNomControleur(e, missionAssociee),
                     processus: e.processus || '--',
@@ -989,7 +1030,7 @@
             if (lignesAffichees.length === 0) {
                 const aucunFiltre = (
                     filtreDateActif === 'TOUS' &&
-                    (filtreRegionActif === 'TOUS' || Boolean(restrictedReg)) &&
+                    filtreRegionActif === 'TOUS' &&
                     filtreSiteActif === 'TOUS' &&
                     filtreControleurActif === 'TOUS' &&
                     filtreProcessusActif === 'TOUS' &&
@@ -1013,6 +1054,9 @@
                 const siegeOriginTagHtml = (isSiegeUser && ligne.isEspaceSiege)
                     ? `<br><span class="badge-origine-siege" title="Donnée interne saisie au niveau du Siège"><i class="fa-solid fa-landmark"></i> Siège</span>`
                     : '';
+                const interRegTagHtml = ligne.isInterRegional
+                    ? `<br><span class="badge-interregional" title="Mission interrégionale effectuée par un contrôleur de ${escapeHTML(ligne.controleurRegion)}"><i class="fa-solid fa-right-left"></i> Ctrl: ${escapeHTML(ligne.controleurRegion)}</span>`
+                    : '';
                 const controleurHtml = ligne.controleur && ligne.controleur !== '--'
                     ? `<i class="fa-solid fa-user-tie" style="color:var(--primary-blue); margin-right:5px; font-size:0.75rem;"></i>${escapeHTML(ligne.controleur)}`
                     : '<span style="color:var(--text-muted);">--</span>';
@@ -1020,7 +1064,7 @@
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${escapeHTML(ligne.dateCtrlVerif)}</td>
-                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b>${siegeOriginTagHtml}</td>
+                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b>${siegeOriginTagHtml}${interRegTagHtml}</td>
                         <td class="col-centre">${escapeHTML(ligne.entite)}</td>
                         <td class="col-controleur">${controleurHtml}</td>
                         <td class="col-processus">${escapeHTML(ligne.processus)}</td>
@@ -1057,7 +1101,9 @@
                 const suffixeType = tags.length > 0 ? ` (${tags.join(' - ')})` : '';
                 const row = {
                     "Date contrôle / vérif.": l.dateCtrlVerif,
-                    "Région": l.region,
+                    "Région site": l.region,
+                    "Région contrôleur": l.controleurRegion || l.region,
+                    "Interrégional": l.isInterRegional ? "Oui" : "Non",
                     "Centre / Entité": l.entite,
                     "Contrôleur": l.controleur,
                     "Processus": l.processus,
@@ -1113,11 +1159,12 @@
         }
 
         function viderTouteLaBDD() {
+            const authUser = getCurrentAuthUser();
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const homeReg = getUserHomeRegion();
 
-            if (!isSiegeUser && restrictedReg && restrictedReg !== '__NONE__') {
-                // Protection : un utilisateur régional ne peut vider que les données de sa propre région
+            if (!isSiegeUser && homeReg && homeReg !== '__NONE__') {
+                // Protection : un utilisateur régional ne vide que les données autorisées de son périmètre (sa région + ses missions interrégionales)
                 let rawDb = { missions: [], constatsControle: [], constatsEncaisses: [] };
                 try {
                     const raw = localStorage.getItem('fci_database');
@@ -1129,8 +1176,7 @@
 
                 const doitEtreConserve = (item, missionLiee = {}) => {
                     if (estDonneeEspaceSiege(item, missionLiee)) return true;
-                    const reg = normaliserRegion(item.region || missionLiee.region || '');
-                    return reg !== restrictedReg;
+                    return !aDroitConsultationLigne(item, missionLiee, false, homeReg, authUser);
                 };
 
                 rawDb.constatsControle = (rawDb.constatsControle || []).filter(c => doitEtreConserve(c, mapMissions[c.idMission] || {}));
@@ -1152,20 +1198,21 @@
         }
 
         function exporterBDDAction() {
+            const authUser = getCurrentAuthUser();
             const isSiegeUser = estUtilisateurSiege();
             if (isSiegeUser && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
                 FCIDatabase.exporterBDD();
                 return;
             }
-            const restrictedReg = getUserRegionRestriction();
+            const homeReg = getUserHomeRegion();
             const db = lireBDDLocaleSecurisee();
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
             const filteredDb = {
-                missions: (db.missions || []).filter(m => aDroitConsultationLigne(m, m, isSiegeUser, restrictedReg)),
-                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationLigne(c, mapMissions[c.idMission] || {}, isSiegeUser, restrictedReg)),
-                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationLigne(e, mapMissions[e.idMission] || {}, isSiegeUser, restrictedReg))
+                missions: (db.missions || []).filter(m => aDroitConsultationLigne(m, m, isSiegeUser, homeReg, authUser)),
+                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationLigne(c, mapMissions[c.idMission] || {}, isSiegeUser, homeReg, authUser)),
+                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationLigne(e, mapMissions[e.idMission] || {}, isSiegeUser, homeReg, authUser))
             };
 
             const blob = new Blob([JSON.stringify(filteredDb, null, 2)], { type: 'application/json' });
