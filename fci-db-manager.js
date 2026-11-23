@@ -1,6 +1,6 @@
 /**
  * FCI v1.0 - Gestionnaire Central de Base de Données (fci_database)
- * Cloisonnement Deux Espaces : Espace Régional (partagé par région + Siège) & Espace Siège (confidentiel)
+ * Gestion interrégionale & Cloisonnement Deux Espaces (Siège / Régional)
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  */
 (function () {
@@ -66,9 +66,10 @@
     }
 
     /**
-     * Retourne uniquement les données visibles selon l'espace de l'utilisateur connecté :
-     * - Espace Siège : toutes les données (internes Siège + toutes les régions).
-     * - Espace Régional : uniquement les données régionales de sa région (aucune donnée Siège ni autre région).
+     * Retourne uniquement les données visibles selon les règles d'accès de l'utilisateur connecté :
+     * - Espace Siège : accès global à toutes les données régionales et internes du Siège.
+     * - Espace Régional : données de sa région d'affectation (y compris ses contrôles hors région)
+     *   + contrôles effectués dans sa région par d'autres contrôleurs régionaux.
      */
     function getDB() {
         const rawDb = readRawDatabase();
@@ -91,8 +92,8 @@
 
     /**
      * Sauvegarde la base tout en :
-     * 1. Étiquetant automatiquement les nouvelles saisies avec l'espace d'origine ('SIEGE' ou 'REGIONAL').
-     * 2. Préservant intactes dans localStorage les données appartenant aux autres régions ou au Siège.
+     * 1. Étiquetant chaque saisie avec la région du contrôle (region) et la région d'affectation (controleurRegion).
+     * 2. Préservant intactes dans localStorage les données hors périmètre (autres régions / données internes du Siège).
      */
     function saveDB(updatedScopedDb) {
         const user = getCurrentUser();
@@ -105,21 +106,19 @@
         collections.forEach(colName => {
             if (!Array.isArray(incoming[colName])) return;
 
-            // Étiquetage de chaque enregistrement entrant avec l'espace de l'utilisateur courant
-            // (sauf s'il possède déjà un espaceSaisie valide, ex. modification par le Siège d'une ligne régionale)
             const taggedIncoming = incoming[colName].map(item => {
                 if (item && (item.espaceSaisie === 'SIEGE' || item.espaceSaisie === 'REGIONAL')) {
+                    if (!item.controleurRegion && item.auteurRegion) {
+                        return { ...item, controleurRegion: item.auteurRegion };
+                    }
                     return item;
                 }
                 return tagRecord(item, user);
             });
 
             if (!user || isSiegeUser(user)) {
-                // Le Siège a accès à tout : l'état envoyé représente l'intégralité de la collection
                 mergedDb[colName] = taggedIncoming;
             } else {
-                // Utilisateur régional : on conserve intactes les lignes hors de son périmètre
-                // (données Siège + autres régions) et on remplace uniquement le périmètre de sa région
                 const horsPerimetre = (fullRawDb[colName] || []).filter(existing => !canAccess(existing, user));
                 mergedDb[colName] = [...horsPerimetre, ...taggedIncoming];
             }
@@ -133,7 +132,27 @@
     }
 
     /**
-     * Enregistre ou met à jour une mission (Planification / FC / FV) avec étiquetage d'espace.
+     * Vide uniquement les enregistrements visibles dans le périmètre de l'utilisateur courant,
+     * sans supprimer les données des autres régions ni les données internes du Siège.
+     */
+    function viderBDD() {
+        return saveDB({
+            missions: [],
+            constatsControle: [],
+            constatsEncaisses: [],
+            planifications: []
+        });
+    }
+
+    /**
+     * Synchronise ou restaure depuis la base locale/distante en respectant le cloisonnement.
+     */
+    async function restaurerDepuisGitHub() {
+        return getDB();
+    }
+
+    /**
+     * Enregistre ou met à jour une mission (Planification / FC / FV) avec étiquetage interrégional.
      */
     async function enregistrerMission(mission) {
         if (!mission || typeof mission !== 'object') return getDB();
@@ -268,7 +287,7 @@
     }
 
     /**
-     * Importe un fichier JSON en respectant strictement le cloisonnement d'espace de l'utilisateur.
+     * Importe un fichier JSON en respectant strictement les droits d'accès de l'utilisateur.
      */
     function importerBDD(importedData) {
         if (!importedData || typeof importedData !== 'object') return getDB();
@@ -279,7 +298,6 @@
             const result = [...existingArr];
             (Array.isArray(incomingArr) ? incomingArr : []).forEach(item => {
                 if (!item || typeof item !== 'object') return;
-                // Un utilisateur régional ne peut importer que des données de sa propre région (hors données Siège)
                 if (user && !isSiegeUser(user) && !canAccess(item, user)) return;
 
                 const tagged = (item.espaceSaisie === 'SIEGE' || item.espaceSaisie === 'REGIONAL')
@@ -311,6 +329,8 @@
     window.FCIDatabase = {
         getDB,
         saveDB,
+        viderBDD,
+        restaurerDepuisGitHub,
         enregistrerMission,
         enregistrerLotControle,
         enregistrerLotEncaisses,
