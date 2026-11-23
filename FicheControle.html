@@ -505,6 +505,8 @@
 
         function upsertMissionFCEnBDD(db, {
             idMission,
+            idPlanificationSiege = '',
+            planifiePar = '',
             region,
             entite,
             dateFR,
@@ -542,6 +544,8 @@
             const missionBase = {
                 ...(idxMission !== -1 ? db.missions[idxMission] : {}),
                 idMission,
+                ...(idPlanificationSiege ? { idPlanificationSiege } : {}),
+                ...(planifiePar ? { planifiePar } : {}),
                 sourceFeuille: 'FC',
                 typeControle,
                 region,
@@ -573,6 +577,17 @@
                 db.missions[idxMission] = missionPayload;
             } else {
                 db.missions.push(missionPayload);
+            }
+
+            // Mettre à jour automatiquement le statut de la planification Siège correspondante pour tous les membres du Siège
+            const planId = idPlanificationSiege || missionPayload.idPlanificationSiege || '';
+            if (planId && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.marquerPlanificationStatut === 'function') {
+                FCIDatabase.marquerPlanificationStatut(planId, 'REALISEE', {
+                    idMissionExecution: idMission,
+                    dateExecution: dateFR,
+                    executePar: controleur,
+                    tauxMoyenExecution: tauxMoyen
+                });
             }
         }
 
@@ -709,7 +724,6 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            // lireDBSecurisee() applique déjà FCIAuth.filterDatabase (région d'affectation + contrôles reçus dans la région)
             const constats = db.constatsControle || [];
 
             const badgeCount = document.getElementById('bddCountInfo');
@@ -911,6 +925,11 @@
                 }
             }
 
+            const isMandatSiege = String(meta.planifiePar || '').toUpperCase() === 'SIEGE' || Boolean(meta.idPlanificationSiege);
+            const badgeMandatSiege = isMandatSiege
+                ? `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-landmark"></i> Planifié par le Siège${meta.auteurSiege ? ' (' + meta.auteurSiege + ')' : ''}</span>`
+                : '';
+
             const isInterRegional = Boolean(homeReg && regionActuelle && homeReg !== regionActuelle);
             const badgeInterReg = isInterRegional
                 ? `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Mission interrégionale (${homeReg} → ${regionActuelle})</span>`
@@ -924,6 +943,7 @@
                 <div class="saisie-line-card">
                     <div class="section-line-label">
                         <span><i class="fa-solid fa-sliders"></i> Espace Saisie de la Mission de Contrôle</span>
+                        ${badgeMandatSiege}
                         ${badgeInterReg}
                         <span style="margin-left:auto;">${badgeDateInfo}</span>
                     </div>
@@ -1261,6 +1281,7 @@
                         ? `CST-SUIVI-${timestampSuivi}-${idx + 1}`
                         : (p._bddIdConstat || `CST-${idMission}-${idx + 1}`),
                     idMission: idMission,
+                    ...(meta.idPlanificationSiege ? { idPlanificationSiege: meta.idPlanificationSiege, planifiePar: 'SIEGE' } : {}),
                     sourceFeuille: 'FC',
                     region: regionMission,
                     typeControle: typeControleMission,
@@ -1337,6 +1358,8 @@
 
                 upsertMissionFCEnBDD(db, {
                     idMission,
+                    idPlanificationSiege: meta.idPlanificationSiege || '',
+                    planifiePar: meta.planifiePar || '',
                     region: regionMission,
                     entite: meta.entite || '',
                     dateFR: dateCtrl,
@@ -1410,6 +1433,8 @@
                 _loadedConstatIds: constatsTrouves.map(c => c.idConstat).filter(Boolean),
                 metadata: {
                     idMission: selectedId,
+                    idPlanificationSiege: premierConstat.idPlanificationSiege || missionInfo.idPlanificationSiege || '',
+                    planifiePar: premierConstat.planifiePar || missionInfo.planifiePar || '',
                     region: regionRecuperee,
                     entite: siteTrouve,
                     typeControle: typeCtrlRecupere,
@@ -1518,6 +1543,8 @@
 
                 upsertMissionFCEnBDD(db, {
                     idMission,
+                    idPlanificationSiege: meta.idPlanificationSiege || '',
+                    planifiePar: meta.planifiePar || '',
                     region: normaliserRegion(meta.region || ''),
                     entite: meta.entite || '',
                     dateFR: dateCtrl,
@@ -1588,6 +1615,8 @@
 
                 upsertMissionFCEnBDD(db, {
                     idMission: idMissionSuivi,
+                    idPlanificationSiege: meta.idPlanificationSiege || '',
+                    planifiePar: meta.planifiePar || '',
                     region: regionMission,
                     entite: meta.entite || '',
                     dateFR: dateCtrl,
