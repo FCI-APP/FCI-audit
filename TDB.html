@@ -128,6 +128,21 @@
             border: 1px solid #F59E0B;
         }
 
+        .badge-interregional {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 3px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.63rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #E0E7FF;
+            color: #3730A3;
+            border: 1px solid #A5B4FC;
+        }
+
         .header-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
         .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; white-space: nowrap; }
@@ -1131,16 +1146,23 @@
                 || ['ADMIN', 'DIRECTEUR', 'CHEF_SERVICE', 'CHEF_DE_SERVICE', 'SIEGE'].includes(role);
         }
 
-        function getUserRegionRestriction() {
+        function getUserHomeRegion() {
             if (estUtilisateurSiege()) return '';
             const u = getCurrentAuthUser();
             if (!u || !u.region) return '__NONE__';
             return normaliserRegion(u.region);
         }
 
+        function extraireRegionControleur(item, missionAssociee = {}) {
+            const regBrute = (item && (item.controleurRegion || item.auteurRegion))
+                || (missionAssociee && (missionAssociee.controleurRegion || missionAssociee.auteurRegion))
+                || '';
+            return normaliserRegion(regBrute);
+        }
+
         /**
          * Détermine si un enregistrement appartient à l'Espace Siège (strictement confidentiel au Siège)
-         * ou à l'Espace Régional (partagé au sein de la même région + visible par le Siège).
+         * ou à l'Espace Régional (partagé entre la région du site vérifié et la région du contrôleur + visible par le Siège).
          */
         function estDonneeEspaceSiege(item, missionAssociee = {}) {
             const checkObj = (obj) => {
@@ -1163,19 +1185,51 @@
             return checkObj(item) || checkObj(missionAssociee);
         }
 
-        function aDroitConsultationDonnee(item, missionAssociee, isSiegeUser, restrictedReg) {
+        function aDroitConsultationDonnee(item, missionAssociee, isSiegeUser, homeReg, authUser) {
             const isDonneeSiege = estDonneeEspaceSiege(item, missionAssociee);
 
-            // Espace Siège : visibilité globale (données internes du Siège + données de toutes les régions)
+            // 1. Espace Siège : visibilité globale (données internes du Siège + toutes les régions + interrégional)
             if (isSiegeUser) return true;
 
-            // Espace Régional :
-            // 1. Les données saisies au niveau du Siège sont strictement confidentielles et masquées
+            // 2. Confidentialité stricte : les données saisies au niveau du Siège sont masquées aux régions
             if (isDonneeSiege) return false;
 
-            // 2. Accès exclusif aux données de la même région
-            const regNorm = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
-            return Boolean(restrictedReg && restrictedReg !== '__NONE__' && regNorm === restrictedReg);
+            if (!homeReg || homeReg === '__NONE__') return false;
+
+            // 3. Contrôle/Vérification effectué DANS la région d'affectation de l'utilisateur
+            const regionSite = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
+            if (regionSite === homeReg) return true;
+
+            // 4. Contrôle/Vérification INTERRÉGIONAL effectué par un contrôleur de la région de l'utilisateur dans une autre région
+            const ctrlReg = extraireRegionControleur(item, missionAssociee);
+            if (ctrlReg && ctrlReg === homeReg) return true;
+
+            // 5. Vérification par identifiant ou fonction du contrôleur connecté
+            if (authUser) {
+                const uId = String(authUser.username || '').toLowerCase().trim();
+                const uNom = String(authUser.fonction || '').toLowerCase().trim();
+                const itemCtrlId = String((item && (item.controleurId || item.creeParId)) || (missionAssociee && (missionAssociee.controleurId || missionAssociee.creeParId)) || '').toLowerCase().trim();
+                const itemCtrlNom = extraireControleurs(item, missionAssociee).join(' / ').toLowerCase().trim();
+                if (uId && itemCtrlId && uId === itemCtrlId) return true;
+                if (uNom && itemCtrlNom && itemCtrlNom !== 'non renseigné' && itemCtrlNom.includes(uNom)) return true;
+            }
+
+            return false;
+        }
+
+        function getRegionsAutoriseesUtilisateur() {
+            const isSiegeUser = estUtilisateurSiege();
+            if (isSiegeUser) {
+                return [...new Set([...LISTE_10_REGIONS, ...toutesLesDonnees.map(d => d.region).filter(Boolean)])]
+                    .sort((a, b) => a.localeCompare(b, 'fr'));
+            }
+            const homeReg = getUserHomeRegion();
+            if (!homeReg || homeReg === '__NONE__') return [];
+            const regs = new Set([homeReg]);
+            toutesLesDonnees.forEach(d => {
+                if (d.region) regs.add(d.region);
+            });
+            return [...regs].sort((a, b) => a.localeCompare(b, 'fr'));
         }
 
         function mettreAJourBadgeEspaceHeader() {
@@ -1190,12 +1244,12 @@
                     sousTitre.innerText = "Pilotage global : données internes du Siège (confidentielles) + ensemble des 10 régions — Barid Al-Maghrib";
                 }
             } else {
-                const reg = getUserRegionRestriction();
+                const reg = getUserHomeRegion();
                 const regLabel = (reg && reg !== '__NONE__') ? reg : 'NON ATTRIBUÉE';
                 badge.className = 'espace-pill espace-pill-regional';
                 badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Espace Régional — ${escapeHTML(regLabel)}`;
                 if (sousTitre) {
-                    sousTitre.innerText = `Pilotage régional strictement limité à ${regLabel} (données Siège et autres régions masquées)`;
+                    sousTitre.innerText = `Visibilité des contrôles de la région ${regLabel} et de vos missions interrégionales (données Siège masquées)`;
                 }
             }
         }
@@ -1457,11 +1511,12 @@
 
         function chargerEtPreparerDonnees() {
             const db = lireDB();
+            const authUser = getCurrentAuthUser();
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const homeReg = getUserHomeRegion();
 
             toutesLesMissions = (db.missions || []).filter(m =>
-                aDroitConsultationDonnee(m, m, isSiegeUser, restrictedReg)
+                aDroitConsultationDonnee(m, m, isSiegeUser, homeReg, authUser)
             );
 
             const mapMissionsById = {};
@@ -1487,10 +1542,12 @@
 
             (db.constatsControle || []).forEach(c => {
                 const m = trouverMissionAssociee(c, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
-                if (!aDroitConsultationDonnee(c, m, isSiegeUser, restrictedReg)) return;
+                if (!aDroitConsultationDonnee(c, m, isSiegeUser, homeReg, authUser)) return;
 
                 const regionNorm = normaliserRegion(c.region || m.region || '');
+                const ctrlRegionNorm = extraireRegionControleur(c, m);
                 const isEspaceSiege = estDonneeEspaceSiege(c, m);
+                const isInterRegional = Boolean(!isEspaceSiege && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const iso = normaliserDateISO(c.date || c.dateControle || m.date || m.dateControle);
                 const ech = parseInt(c.ech) || 0;
                 const ok = parseInt(c.ok) || 0;
@@ -1506,6 +1563,8 @@
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
                     region: regionNorm,
+                    controleurRegion: ctrlRegionNorm,
+                    isInterRegional: isInterRegional,
                     site: String(c.entite || c.site || m.entite || '').trim(),
                     controleurs: controleursList,
                     controleur: controleursList.join(' / '),
@@ -1528,10 +1587,12 @@
 
             (db.constatsEncaisses || []).forEach(e => {
                 const m = trouverMissionAssociee(e, mapMissionsById, mapMissionsBySiteDate, mapMissionsBySite);
-                if (!aDroitConsultationDonnee(e, m, isSiegeUser, restrictedReg)) return;
+                if (!aDroitConsultationDonnee(e, m, isSiegeUser, homeReg, authUser)) return;
 
                 const regionNorm = normaliserRegion(e.region || m.region || '');
+                const ctrlRegionNorm = extraireRegionControleur(e, m);
                 const isEspaceSiege = estDonneeEspaceSiege(e, m);
+                const isInterRegional = Boolean(!isEspaceSiege && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const iso = normaliserDateISO(e.date || e.dateVerification || m.date);
                 const ech = parseInt(e.ech) || 0;
                 const ok = parseInt(e.ok) || 0;
@@ -1547,6 +1608,8 @@
                     dateFR: formaterDateFR(iso),
                     periode: iso ? iso.slice(0, 7) : 'Non daté',
                     region: regionNorm,
+                    controleurRegion: ctrlRegionNorm,
+                    isInterRegional: isInterRegional,
                     site: String(e.entite || e.site || e.agence || m.entite || '').trim(),
                     controleurs: controleursList,
                     controleur: controleursList.join(' / '),
@@ -1604,9 +1667,17 @@
 
         function lireEtatFiltres() {
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
+            let regVal = niveauActif === 'NATIONAL' ? 'TOUS' : document.getElementById('filtreRegion').value;
+
+            if (!isSiegeUser && regionsAutorisees.length === 1) {
+                regVal = regionsAutorisees[0];
+            } else if (!isSiegeUser && regVal !== 'TOUS' && !regionsAutorisees.includes(regVal)) {
+                regVal = 'TOUS';
+            }
+
             return {
-                reg: (!isSiegeUser && restrictedReg) ? restrictedReg : (niveauActif === 'NATIONAL' ? 'TOUS' : document.getElementById('filtreRegion').value),
+                reg: regVal,
                 centre: niveauActif === 'CENTRE' ? document.getElementById('filtreCentre').value : 'TOUS',
                 dateSpec: document.getElementById('filtreDate').value,
                 dateDebut: document.getElementById('filtreDateDebut').value,
@@ -1621,11 +1692,11 @@
 
         function filtrerSubset(etat, exclure = []) {
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             return toutesLesDonnees.filter(d => {
                 if (!isSiegeUser) {
                     if (d.isEspaceSiege) return false;
-                    if (!restrictedReg || restrictedReg === '__NONE__' || d.region !== restrictedReg) return false;
+                    if (!regionsAutorisees.includes(d.region)) return false;
                 }
                 if (!exclure.includes('REGION') && etat.reg !== 'TOUS' && d.region !== etat.reg) return false;
                 if (!exclure.includes('CENTRE') && etat.centre !== 'TOUS' && d.site !== etat.centre) return false;
@@ -1658,23 +1729,26 @@
         function actualiserFiltresDynamiquesEtAnalyse() {
             const etat = lireEtatFiltres();
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
 
             const selReg = document.getElementById('filtreRegion');
-            const regionsBDD = (!isSiegeUser && restrictedReg)
-                ? [restrictedReg]
-                : [...new Set([...LISTE_10_REGIONS, ...toutesLesDonnees.map(d => d.region).filter(Boolean)])].sort((a, b) => a.localeCompare(b, 'fr'));
 
-            if (!isSiegeUser && restrictedReg) {
-                selReg.innerHTML = `<option value="${escapeHTML(restrictedReg)}" selected>${escapeHTML(restrictedReg)}</option>`;
-                selReg.value = restrictedReg;
-                etat.reg = restrictedReg;
+            if (!isSiegeUser && regionsAutorisees.length <= 1) {
+                const uniqueReg = regionsAutorisees[0] || '';
+                selReg.innerHTML = uniqueReg
+                    ? `<option value="${escapeHTML(uniqueReg)}" selected>${escapeHTML(uniqueReg)}</option>`
+                    : `<option value="TOUS">-- Aucune région --</option>`;
+                selReg.value = uniqueReg || 'TOUS';
+                etat.reg = uniqueReg || 'TOUS';
             } else if (niveauActif === 'NATIONAL') {
-                remplirSelectOptions(selReg, regionsBDD, '-- Verrouillé (National) --');
+                remplirSelectOptions(selReg, regionsAutorisees, '-- Verrouillé (National) --');
                 selReg.value = 'TOUS';
                 etat.reg = 'TOUS';
             } else {
-                etat.reg = remplirSelectOptions(selReg, regionsBDD, '-- Toutes les régions --');
+                const libTous = isSiegeUser
+                    ? '-- Toutes les régions --'
+                    : `-- Toutes mes régions (${regionsAutorisees.length}) --`;
+                etat.reg = remplirSelectOptions(selReg, regionsAutorisees, libTous);
             }
 
             const selCentre = document.getElementById('filtreCentre');
@@ -1753,12 +1827,14 @@
 
         function changerNiveau(nouveauNiveau) {
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             if (!isSiegeUser && nouveauNiveau === 'NATIONAL') return;
 
             niveauActif = nouveauNiveau;
 
-            document.getElementById('filtreRegion').value = (!isSiegeUser && restrictedReg) ? restrictedReg : 'TOUS';
+            document.getElementById('filtreRegion').value = (!isSiegeUser && regionsAutorisees.length === 1)
+                ? regionsAutorisees[0]
+                : 'TOUS';
             document.getElementById('filtreCentre').value = 'TOUS';
 
             appliquerEtatNiveau();
@@ -1767,7 +1843,7 @@
 
         function appliquerEtatNiveau() {
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             document.getElementById('tabCentre').classList.toggle('active', niveauActif === 'CENTRE');
             document.getElementById('tabRegional').classList.toggle('active', niveauActif === 'REGIONAL');
             document.getElementById('tabNational').classList.toggle('active', niveauActif === 'NATIONAL');
@@ -1777,7 +1853,7 @@
             const grpReg = document.getElementById('grpRegion');
             const grpCentre = document.getElementById('grpCentre');
 
-            if (!isSiegeUser && restrictedReg) {
+            if (!isSiegeUser && regionsAutorisees.length <= 1) {
                 selReg.disabled = true;
                 grpReg.classList.add('is-locked');
                 selReg.classList.remove('highlight-focus');
@@ -1819,8 +1895,10 @@
 
         function reinitialiserFiltresTDB() {
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
-            document.getElementById('filtreRegion').value = (!isSiegeUser && restrictedReg) ? restrictedReg : 'TOUS';
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
+            document.getElementById('filtreRegion').value = (!isSiegeUser && regionsAutorisees.length === 1)
+                ? regionsAutorisees[0]
+                : 'TOUS';
             document.getElementById('filtreCentre').value = 'TOUS';
             document.getElementById('filtreDate').value = 'TOUS';
             document.getElementById('filtreDateDebut').value = 'TOUS';
@@ -1850,6 +1928,8 @@
         function actualiserAnalyse(etatParam = null) {
             const etat = etatParam || lireEtatFiltres();
             const { reg, centre, dateSpec, dateDebut, dateFin, proc, ctrl, pc } = etat;
+            const isSiegeUser = estUtilisateurSiege();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
 
             document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
             document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', dateDebut !== 'TOUS');
@@ -1863,7 +1943,10 @@
             if (niveauActif === 'NATIONAL') {
                 scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}`;
             } else if (niveauActif === 'REGIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${reg === 'TOUS' ? 'Toutes les régions (10)' : escapeHTML(reg)} · ${infoTemps}`;
+                const libReg = reg === 'TOUS'
+                    ? (isSiegeUser ? 'Toutes les régions (10)' : `Périmètre Régional & Interrégional (${regionsAutorisees.length} région(s))`)
+                    : escapeHTML(reg);
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${libReg} · ${infoTemps}`;
             } else {
                 const nomCentre = centre === 'TOUS' ? 'Tous les centres' : escapeHTML(centre);
                 scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + escapeHTML(reg) + ')' : ''} · ${infoTemps}`;
@@ -1885,6 +1968,8 @@
 
         function calculerEtAfficherKPIs(donnees, etat) {
             const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
+            const isSiegeUser = estUtilisateurSiege();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
             const regionsUniques = new Set(donnees.map(d => d.region).filter(Boolean));
             const procsUniques = new Set(donnees.map(d => d.processus).filter(Boolean));
@@ -1946,6 +2031,13 @@
                     const cov = calculerCouvertureRegion(reg, donnees);
                     document.getElementById('kpiCouverture').textContent = cov.tauxCouverture.toFixed(1) + ' %';
                     document.getElementById('subKpiCouverture').textContent = `${cov.centresTouches} / ${cov.totalCentres} centres touchés (${reg})`;
+                } else if (!isSiegeUser) {
+                    const detailsRegs = regionsAutorisees.map(r => calculerCouvertureRegion(r, donnees.filter(d => d.region === r)));
+                    const totCentres = detailsRegs.reduce((s, x) => s + x.totalCentres, 0);
+                    const totTouches = detailsRegs.reduce((s, x) => s + x.centresTouches, 0);
+                    const covPerim = totCentres > 0 ? (totTouches / totCentres) * 100 : 0;
+                    document.getElementById('kpiCouverture').textContent = covPerim.toFixed(1) + ' %';
+                    document.getElementById('subKpiCouverture').textContent = `${totTouches} / ${totCentres} centres (${regionsAutorisees.length} région(s))`;
                 } else {
                     const covAll = (sitesUniques.size / TOTAL_CENTRES_NATIONAL) * 100;
                     document.getElementById('kpiCouverture').textContent = covAll.toFixed(1) + ' %';
@@ -1963,6 +2055,8 @@
 
         function genererDescriptionOnglet(donnees, etat) {
             const { reg, centre } = etat;
+            const isSiegeUser = estUtilisateurSiege();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             const titreEl = document.getElementById('titreDescriptionOnglet');
             const bodyEl = document.getElementById('contenuDescriptionOnglet');
 
@@ -2011,7 +2105,10 @@
             } else if (niveauActif === 'REGIONAL') {
                 titreEl.innerHTML = `<i class="fa-solid fa-file-lines"></i> Description & Analyse — Niveau Régional`;
 
-                const regionsCibles = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
+                const regionsCibles = reg !== 'TOUS'
+                    ? [reg]
+                    : (isSiegeUser ? LISTE_10_REGIONS : regionsAutorisees);
+
                 const detailsRegions = regionsCibles.map(r => {
                     const itemsR = donnees.filter(d => d.region === r);
                     const covR = calculerCouvertureRegion(r, itemsR);
@@ -2033,8 +2130,12 @@
                     `<strong>${escapeHTML(r.region)}</strong> : <span class="desc-chip">${r.tauxCouverture.toFixed(1)}%</span> (${r.centresTouches}/${r.totalCentres} centres, ${r.nbControlesFC} FC, ${r.nbVerificationsFV} FV)`
                 ).join(' · ');
 
+                const libPerim = reg === 'TOUS'
+                    ? (isSiegeUser ? 'les <strong>10 régions</strong>' : `votre périmètre régional & interrégional (<strong>${regionsCibles.length} région(s)</strong>)`)
+                    : `la région <strong>${escapeHTML(reg)}</strong>`;
+
                 bodyEl.innerHTML = `
-                    <p>Sur le périmètre régional (${reg === 'TOUS' ? 'les <strong>10 régions</strong>' : `la région <strong>${escapeHTML(reg)}</strong>`}), le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
+                    <p>Sur ${libPerim}, le taux de couverture des sites s'élève à <span class="desc-chip">${tauxCouvPerim.toFixed(1)}%</span> (<span class="desc-chip">${totalTouchesPerim} centres touchés sur ${totalCentresPerim}</span>), avec <span class="desc-chip">${ops.nbControlesFC} contrôle(s) (FC)</span> et <span class="desc-chip">${ops.nbVerificationsFV} vérification(s) (FV)</span> générant <span class="desc-chip">${donnees.length} constat(s)</span>.</p>
                     <ul>
                         <li><strong>Couverture et interventions par région :</strong> ${resumeParRegion}.</li>
                         <li><strong>Conformité & remédiation régionale :</strong> Le taux de conformité pondéré atteint <span class="desc-chip">${tcGlobal.toFixed(1)}%</span> (${totalKO} KO sur ${totalEch} échantillons). <span class="desc-chip">${nbClot} constats (${pctClot}%)</span> sont clôturés, <span class="desc-chip">${nbEnCours} (${pctEnCours}%)</span> en cours et <span class="desc-chip">${nbNonClot} (${pctNonClot}%)</span> non clôturés.</li>
@@ -2062,17 +2163,19 @@
         function calculerBenchmarkEtSynthese(donneesFiltrees, etat) {
             const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
             const isSiegeUser = estUtilisateurSiege();
+            const homeReg = getUserHomeRegion();
             const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
 
             const tcSelection = calculerTCPondere(donneesFiltrees);
-            const baseRegion = reg !== 'TOUS' ? baseTransverse.filter(d => d.region === reg) : baseTransverse;
+            const regRef = reg !== 'TOUS' ? reg : (!isSiegeUser && homeReg ? homeReg : 'TOUS');
+            const baseRegion = regRef !== 'TOUS' ? baseTransverse.filter(d => d.region === regRef) : baseTransverse;
             const tcRegion = calculerTCPondere(baseRegion);
             const tcNational = calculerTCPondere(baseTransverse);
 
             const lbl1 = (niveauActif === 'CENTRE' && centre !== 'TOUS')
                 ? `Centre : ${centre}`
-                : (reg !== 'TOUS' ? `Région : ${reg}` : 'Périmètre National Sélectionné');
-            const lbl2 = reg !== 'TOUS' ? `Moyenne Régionale (${reg})` : 'Moyenne Régionale Globale';
+                : (reg !== 'TOUS' ? `Région : ${reg}` : (isSiegeUser ? 'Périmètre National Sélectionné' : 'Périmètre Autorisé Sélectionné'));
+            const lbl2 = regRef !== 'TOUS' ? `Moyenne Régionale (${regRef})` : 'Moyenne Régionale Globale';
 
             document.getElementById('benchLabel1').textContent = lbl1;
             document.getElementById('benchVal1').textContent = tcSelection.toFixed(1) + ' %';
@@ -2084,7 +2187,7 @@
 
             document.getElementById('benchLabel3').textContent = isSiegeUser
                 ? 'Moyenne Nationale Réseau (Pondérée)'
-                : `Référence Espace Régional (${reg || 'Région'})`;
+                : `Référence Espace Régional & Interrégional (${homeReg || 'Région'})`;
             document.getElementById('benchVal3').textContent = tcNational.toFixed(1) + ' %';
             document.getElementById('benchBar3').style.width = Math.min(100, tcNational) + '%';
 
@@ -2145,7 +2248,7 @@
                 .map(([p, list]) => ({ p, tc: calculerTCPondere(list), ko: list.reduce((a, b) => a + b.ko, 0) }))
                 .sort((a, b) => a.tc - b.tc)[0];
 
-            const libelleRef = isSiegeUser ? 'moyenne nationale' : 'moyenne de votre espace régional';
+            const libelleRef = isSiegeUser ? 'moyenne nationale' : 'moyenne de votre espace autorisé';
             box.innerHTML = `
                 <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle (${libelleFiltreTemporel(dateSpec, dateDebut, dateFin)}) :</strong><br>
                 Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
@@ -2298,10 +2401,10 @@
             section.style.display = 'block';
             const { reg } = etat;
             const isSiegeUser = estUtilisateurSiege();
-            const restrictedReg = getUserRegionRestriction();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
 
-            const regionsPourClassement = (!isSiegeUser && restrictedReg) ? [restrictedReg] : LISTE_10_REGIONS;
+            const regionsPourClassement = isSiegeUser ? LISTE_10_REGIONS : regionsAutorisees;
             const classementRegionsData = regionsPourClassement.map(r => {
                 const itemsR = baseTransverse.filter(d => d.region === r);
                 return {
@@ -2330,7 +2433,9 @@
             tbodyCov.innerHTML = '';
 
             if (niveauActif === 'REGIONAL') {
-                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
+                const nomReg = reg === 'TOUS'
+                    ? (isSiegeUser ? 'Toutes les régions (10)' : `Périmètre régional & interrégional (${regionsAutorisees.length} région(s))`)
+                    : reg;
                 document.getElementById('titreChartCouverture').innerHTML = `<i class="fa-solid fa-chart-bar"></i> Couverture des Sites (${escapeHTML(nomReg)})`;
                 document.getElementById('titreChartClassementRegion').innerHTML = `<i class="fa-solid fa-ranking-star"></i> Classement des Régions (TC %)`;
                 document.getElementById('titreChartClassementCentre').innerHTML = `<i class="fa-solid fa-building-circle-check"></i> Classement des Centres (${escapeHTML(nomReg)} — TC %)`;
@@ -2349,7 +2454,10 @@
                         <th>Noms des Sites Non Touchés</th>
                     </tr>`;
 
-                const regsCibles = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
+                const regsCibles = reg !== 'TOUS'
+                    ? [reg]
+                    : (isSiegeUser ? LISTE_10_REGIONS : regionsAutorisees);
+
                 const detailsCov = regsCibles.map(r => {
                     const itemsR = donnees.filter(d => d.region === r);
                     return { region: r, ...calculerCouvertureRegion(r, itemsR) };
@@ -2516,6 +2624,9 @@
         }
 
         function construireTableauxSelonNiveau(donnees, reg, centre) {
+            const isSiegeUser = estUtilisateurSiege();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
+
             const titreP = document.getElementById('titreTableClassementPrincipal');
             const theadP = document.getElementById('theadClassementPrincipal');
             const tbodyP = document.getElementById('tbodyClassementPrincipal');
@@ -2638,9 +2749,11 @@
                 }
 
             } else if (niveauActif === 'REGIONAL') {
-                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
+                const nomReg = reg === 'TOUS'
+                    ? (isSiegeUser ? 'Toutes les régions (10)' : `Périmètre Régional & Interrégional (${regionsAutorisees.length} région(s))`)
+                    : reg;
                 titreP.innerHTML = `
-                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Centres / Sites — Région : ${escapeHTML(nomReg)}</span>
+                    <span><i class="fa-solid fa-ranking-star"></i> Classement, Couverture & Évolution des Centres / Sites — ${escapeHTML(nomReg)}</span>
                     <span style="font-size:0.75rem; color:var(--text-muted);">Contrôles (FC), Vérifications (FV) & performance des centres</span>`;
 
                 theadP.innerHTML = `
@@ -2682,7 +2795,7 @@
 
                 tbodyP.innerHTML = '';
                 if (rowsCentresReg.length === 0) {
-                    tbodyP.innerHTML = `<tr><td colspan="14" class="num-center" style="padding:18px; color:var(--text-muted);">Aucun centre contrôlé pour cette région.</td></tr>`;
+                    tbodyP.innerHTML = `<tr><td colspan="14" class="num-center" style="padding:18px; color:var(--text-muted);">Aucun centre contrôlé pour ce périmètre.</td></tr>`;
                 } else {
                     rowsCentresReg.forEach((r, i) => {
                         exportClassementPrincipal.push({
@@ -2723,7 +2836,10 @@
                         <th class="num-center">TC (%)</th>
                     </tr>`;
 
-                const regsAffichees = reg !== 'TOUS' ? [reg] : LISTE_10_REGIONS;
+                const regsAffichees = reg !== 'TOUS'
+                    ? [reg]
+                    : (isSiegeUser ? LISTE_10_REGIONS : regionsAutorisees);
+
                 const rowsCouvReg = regsAffichees.map(r => {
                     const itemsR = donnees.filter(d => d.region === r);
                     const cov = calculerCouvertureRegion(r, itemsR);
@@ -2937,6 +3053,9 @@
         }
 
         function construireAnalyseParticipationControleurs(donnees, reg, centre) {
+            const isSiegeUser = estUtilisateurSiege();
+            const regionsAutorisees = getRegionsAutoriseesUtilisateur();
+
             const titreTexte = document.getElementById('titreTexteParticipationControleurs');
             const sousTitre = document.getElementById('sousTitreParticipationControleurs');
             const thead = document.getElementById('theadParticipationControleurs');
@@ -3042,7 +3161,9 @@
                     </tr>`;
 
             } else if (niveauActif === 'REGIONAL') {
-                const nomReg = reg === 'TOUS' ? 'Toutes les régions (10)' : reg;
+                const nomReg = reg === 'TOUS'
+                    ? (isSiegeUser ? 'Toutes les régions (10)' : `Périmètre Régional & Interrégional (${regionsAutorisees.length} région(s))`)
+                    : reg;
                 titreTexte.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--accent-gold);"></i> Analyse de la Participation des Contrôleurs — Niveau Régional (${escapeHTML(nomReg)})`;
                 sousTitre.textContent = 'Contrôleur · Type de visite (Contrôle ou Vérification) · Centre visité · Région · Visites · Constats · Participation (%)';
 
@@ -3305,11 +3426,14 @@
                 const badgeSiege = (isSiegeUser && c.isEspaceSiege)
                     ? `<span class="badge-origine-siege" title="Donnée interne saisie au niveau du Siège"><i class="fa-solid fa-landmark"></i> Siège</span>`
                     : '';
+                const badgeInterReg = c.isInterRegional
+                    ? `<br><span class="badge-interregional" title="Mission interrégionale effectuée par un contrôleur de ${escapeHTML(c.controleurRegion)}"><i class="fa-solid fa-right-left"></i> Ctrl: ${escapeHTML(c.controleurRegion)}</span>`
+                    : '';
 
                 tbody.innerHTML += `
                     <tr>
                         <td style="white-space:nowrap; font-weight:700; color:var(--primary-blue);">${c.dateFR}</td>
-                        <td><b>${escapeHTML(c.region)}</b>${badgeSiege}</td>
+                        <td><b>${escapeHTML(c.region)}</b>${badgeSiege}${badgeInterReg}</td>
                         <td>${escapeHTML(c.site)}</td>
                         <td><span style="font-weight:700; color:#334155;">${escapeHTML(c.controleur)}</span></td>
                         <td><b>${escapeHTML(c.processus)}</b></td>
@@ -3340,7 +3464,7 @@
                     mapG1[d.region].push(d);
                 });
             } else if (niveauActif === 'REGIONAL') {
-                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres de la Région ${reg === 'TOUS' ? '' : escapeHTML(reg)} (%)`;
+                document.getElementById('titreChart1').innerHTML = `<i class="fa-solid fa-chart-column"></i> Comparaison des Centres ${reg === 'TOUS' ? '' : 'de la Région ' + escapeHTML(reg)} (%)`;
                 donnees.forEach(d => {
                     if (!mapG1[d.site]) mapG1[d.site] = [];
                     mapG1[d.site].push(d);
@@ -3492,6 +3616,7 @@
             }
 
             const isSiegeUser = estUtilisateurSiege();
+            const homeReg = getUserHomeRegion();
             const dateSpec = document.getElementById('filtreDate').value;
             const dateDebut = document.getElementById('filtreDateDebut').value;
             const dateFin = document.getElementById('filtreDateFin').value;
@@ -3499,7 +3624,7 @@
             const wb = XLSX.utils.book_new();
 
             const kpiRows = [
-                { "Indicateur": "Espace d'accès", "Valeur": isSiegeUser ? "Espace Siège (Global)" : `Espace Régional (${getUserRegionRestriction()})` },
+                { "Indicateur": "Espace d'accès", "Valeur": isSiegeUser ? "Espace Siège (Global)" : `Espace Régional & Interrégional (${homeReg})` },
                 { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
                 { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
                 { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateSpec, dateDebut, dateFin) },
@@ -3534,7 +3659,9 @@
                 const row = {
                     "Date": c.dateFR,
                     "Source": c.source,
-                    "Région": c.region,
+                    "Région site": c.region,
+                    "Région contrôleur": c.controleurRegion || c.region,
+                    "Interrégional": c.isInterRegional ? "Oui" : "Non",
                     "Centre / Site": c.site,
                     "Contrôleur": c.controleur,
                     "Type de Contrôle": c.typeControle,
@@ -3564,20 +3691,21 @@
         }
 
         function exporterJSONTDB() {
+            const authUser = getCurrentAuthUser();
             const isSiegeUser = estUtilisateurSiege();
             if (isSiegeUser && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.exporterBDD === 'function') {
                 FCIDatabase.exporterBDD();
                 return;
             }
-            const restrictedReg = getUserRegionRestriction();
+            const homeReg = getUserHomeRegion();
             const db = lireDB();
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
             const filteredDb = {
-                missions: (db.missions || []).filter(m => aDroitConsultationDonnee(m, m, isSiegeUser, restrictedReg)),
-                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationDonnee(c, mapMissions[c.idMission] || {}, isSiegeUser, restrictedReg)),
-                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationDonnee(e, mapMissions[e.idMission] || {}, isSiegeUser, restrictedReg))
+                missions: (db.missions || []).filter(m => aDroitConsultationDonnee(m, m, isSiegeUser, homeReg, authUser)),
+                constatsControle: (db.constatsControle || []).filter(c => aDroitConsultationDonnee(c, mapMissions[c.idMission] || {}, isSiegeUser, homeReg, authUser)),
+                constatsEncaisses: (db.constatsEncaisses || []).filter(e => aDroitConsultationDonnee(e, mapMissions[e.idMission] || {}, isSiegeUser, homeReg, authUser))
             };
 
             const blob = new Blob([JSON.stringify(filteredDb, null, 2)], { type: 'application/json' });
