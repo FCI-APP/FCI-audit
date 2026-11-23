@@ -303,12 +303,13 @@
         <section class="saisie-line-card">
             <div class="section-line-label">
                 <span><i class="fa-solid fa-circle-info"></i> Espace Saisie de la Vérification</span>
+                <span id="badgeInterRegFV"></span>
                 <span style="margin-left:auto;" id="headerDateVerifBadge"></span>
             </div>
             <form autocomplete="off" onsubmit="return false;">
                 <div class="single-row-saisie-fv">
                     <div class="form-group">
-                        <label>Région *</label>
+                        <label>Région de la vérif. *</label>
                         <select class="form-control" id="regionSite" autocomplete="off" onchange="onRegionEncaisseChange()">
                             <option value="">-- Région --</option>
                             <option value="MARRAKECH">MARRAKECH</option>
@@ -640,10 +641,23 @@
                 : null;
         }
 
-        function getUserRegionRestriction() {
+        function getUserHomeRegion() {
             const u = getCurrentAuthUser();
             if (!u || !u.region || u.region === 'SIEGE') return '';
             return normaliserRegion(u.region);
+        }
+
+        function updateInterRegionalBadge() {
+            const badge = document.getElementById('badgeInterRegFV');
+            const regSelect = document.getElementById('regionSite');
+            if (!badge || !regSelect) return;
+            const homeReg = getUserHomeRegion();
+            const currentReg = normaliserRegion(regSelect.value);
+            if (homeReg && currentReg && homeReg !== currentReg) {
+                badge.innerHTML = `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Vérification interrégionale (${homeReg} → ${currentReg})</span>`;
+            } else {
+                badge.innerHTML = '';
+            }
         }
 
         function reinitialiserChampsNomsVides() {
@@ -662,19 +676,20 @@
             }
         }
 
-        function appliquerRestrictionRegionSaisie() {
-            const restrictedReg = getUserRegionRestriction();
+        function appliquerRegionParDefautSaisie() {
+            const homeReg = getUserHomeRegion();
             const regSelect = document.getElementById('regionSite');
+            if (!regSelect) return;
 
-            if (regSelect) {
-                if (restrictedReg) {
-                    const siteActuel = document.getElementById('nomSite').value;
-                    regSelect.value = restrictedReg;
-                    regSelect.disabled = true;
-                    onRegionEncaisseChange(siteActuel);
-                } else {
-                    regSelect.disabled = false;
-                }
+            // La région reste sélectionnable pour permettre les vérifications interrégionales
+            regSelect.disabled = false;
+
+            if (!regSelect.value && homeReg) {
+                const siteActuel = document.getElementById('nomSite').value;
+                regSelect.value = homeReg;
+                onRegionEncaisseChange(siteActuel);
+            } else {
+                updateInterRegionalBadge();
             }
         }
 
@@ -751,6 +766,7 @@
             dateFin,
             controleur,
             controleurId,
+            controleurRegion,
             responsable,
             typeControle = 'Vérification',
             constats = []
@@ -774,6 +790,7 @@
                 }
             }
 
+            const homeReg = controleurRegion || getUserHomeRegion() || region;
             const traceUser = getUserTracePayload('ARCHIVE');
             const idxMission = db.missions.findIndex(m => m.idMission === idMission);
             const missionBase = {
@@ -791,6 +808,8 @@
                 dateFin: dateFin || '',
                 controleur,
                 controleurId: controleurId || (idxMission !== -1 ? db.missions[idxMission].controleurId : '') || '',
+                controleurRegion: homeReg,
+                auteurRegion: homeReg,
                 responsable: responsable || '',
                 statut: statutMission,
                 tauxMoyen,
@@ -907,14 +926,14 @@
         }
 
         function onRegionEncaisseChange(sitePreselectionne = '') {
-            const restrictedReg = getUserRegionRestriction();
             const regSelect = document.getElementById('regionSite');
-            if (restrictedReg && regSelect.value !== restrictedReg) {
-                regSelect.value = restrictedReg;
-            }
-            const region = restrictedReg || regSelect.value;
+            const region = normaliserRegion(regSelect.value);
+            if (regSelect.value !== region) regSelect.value = region;
+
             const siteSelect = document.getElementById('nomSite');
             siteSelect.innerHTML = '';
+
+            updateInterRegionalBadge();
 
             if (!region || !CENTRES_PAR_REGION[region]) {
                 siteSelect.innerHTML = '<option value="">-- Région requise --</option>';
@@ -953,12 +972,12 @@
             try { resetDateField(); } catch (e) {}
             try {
                 reinitialiserChampsNomsVides();
-                appliquerRestrictionRegionSaisie();
+                appliquerRegionParDefautSaisie();
                 setTimeout(() => {
                     if (!addedPoints || addedPoints.length === 0) {
                         reinitialiserChampsNomsVides();
                     }
-                    appliquerRestrictionRegionSaisie();
+                    appliquerRegionParDefautSaisie();
                 }, 50);
             } catch (e) {}
             try { remplirFiltresEncaissesBDD(); } catch (e) {}
@@ -972,7 +991,7 @@
         });
 
         window.addEventListener('fci-auth-ready', () => {
-            appliquerRestrictionRegionSaisie();
+            appliquerRegionParDefautSaisie();
             if (!addedPoints || addedPoints.length === 0) {
                 reinitialiserChampsNomsVides();
             }
@@ -986,13 +1005,12 @@
         });
 
         function reinitialiserFiltresBDDFV() {
-            const restrictedReg = getUserRegionRestriction();
             const selDate = document.getElementById('filterFvBddDate');
             const selReg = document.getElementById('filterFvBddRegion');
             const selSite = document.getElementById('filterFvBddSite');
             const selProc = document.getElementById('filterFvBddProcessus');
             if (selDate) selDate.value = '';
-            if (selReg) selReg.value = restrictedReg || '';
+            if (selReg) selReg.value = '';
             if (selSite) selSite.value = '';
             if (selProc) selProc.value = '';
             remplirFiltresEncaissesBDD();
@@ -1007,10 +1025,8 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            const restrictedReg = getUserRegionRestriction();
-            const encaisses = (db.constatsEncaisses || []).filter(c =>
-                !restrictedReg || getEncaisseRegion(c, mapMissions) === restrictedReg
-            );
+            // lireDBSecurisee() applique déjà FCIAuth.filterDatabase (région d'affectation + vérifications effectuées dans d'autres régions)
+            const encaisses = db.constatsEncaisses || [];
 
             const badgeCount = document.getElementById('bddCountInfoFV');
             if (badgeCount) {
@@ -1024,7 +1040,7 @@
             if (!selDate || !selReg || !selSite || !selProc) return;
 
             let valDate = selDate.value;
-            let valReg = restrictedReg || selReg.value;
+            let valReg = selReg.value;
             let valSite = selSite.value;
             let valProc = selProc.value;
 
@@ -1043,21 +1059,19 @@
                 valDate = '';
             }
 
-            const regions = restrictedReg
-                ? [restrictedReg]
-                : [...new Set(
-                    encaisses
-                        .filter(c =>
-                            (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
-                            (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
-                            (!valProc || getEncaisseProcessus(c) === valProc)
-                        )
-                        .map(c => getEncaisseRegion(c, mapMissions))
-                        .filter(Boolean)
-                )].sort((a, b) => a.localeCompare(b, 'fr'));
+            const regions = [...new Set(
+                encaisses
+                    .filter(c =>
+                        (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
+                        (!valSite || getEncaisseSite(c, mapMissions) === valSite) &&
+                        (!valProc || getEncaisseProcessus(c) === valProc)
+                    )
+                    .map(c => getEncaisseRegion(c, mapMissions))
+                    .filter(Boolean)
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
 
             if (valReg && !regions.includes(valReg)) {
-                valReg = restrictedReg || '';
+                valReg = '';
             }
 
             const sites = [...new Set(
@@ -1093,14 +1107,9 @@
             selDate.innerHTML = `<option value="">-- Toutes les dates (${dates.length}) --</option>` +
                 dates.map(d => `<option value="${d}" ${d === valDate ? 'selected' : ''}>${d}</option>`).join('');
 
-            if (restrictedReg) {
-                selReg.innerHTML = `<option value="${restrictedReg}" selected>${restrictedReg}</option>`;
-                selReg.disabled = true;
-            } else {
-                selReg.disabled = false;
-                selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
-                    regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
-            }
+            selReg.disabled = false;
+            selReg.innerHTML = `<option value="">-- Toutes les régions (${regions.length}) --</option>` +
+                regions.map(r => `<option value="${r}" ${r === valReg ? 'selected' : ''}>${r}</option>`).join('');
 
             selSite.innerHTML = `<option value="">-- Tous les sites (${sites.length}) --</option>` +
                 sites.map(s => `<option value="${s}" ${s === valSite ? 'selected' : ''}>${s}</option>`).join('');
@@ -1109,12 +1118,12 @@
                 procs.map(p => `<option value="${p}" ${p === valProc ? 'selected' : ''}>${p}</option>`).join('');
 
             selDate.classList.toggle('filter-active', Boolean(valDate));
-            selReg.classList.toggle('filter-active', Boolean(valReg) && !restrictedReg);
+            selReg.classList.toggle('filter-active', Boolean(valReg));
             selSite.classList.toggle('filter-active', Boolean(valSite));
             selProc.classList.toggle('filter-active', Boolean(valProc));
 
             const statusEl = document.getElementById('searchEncaisseStatus');
-            if (statusEl && (valDate || (!restrictedReg && valReg) || valSite || valProc)) {
+            if (statusEl && (valDate || valReg || valSite || valProc)) {
                 const nbCorrespondants = encaisses.filter(c =>
                     (!valDate || getEncaisseDateFR(c, mapMissions) === valDate) &&
                     (!valReg || getEncaisseRegion(c, mapMissions) === valReg) &&
@@ -1126,9 +1135,8 @@
         }
 
         function onFilterFvBDDChange(source = '') {
-            const restrictedReg = getUserRegionRestriction();
             if (source === 'DATE') {
-                if (!restrictedReg) document.getElementById('filterFvBddRegion').value = '';
+                document.getElementById('filterFvBddRegion').value = '';
                 document.getElementById('filterFvBddSite').value = '';
                 document.getElementById('filterFvBddProcessus').value = '';
             } else if (source === 'REGION') {
@@ -1510,13 +1518,12 @@
             currentMissionId = "";
             loadedEncaisseIds = [];
             loadedControleurId = "";
-            const restrictedReg = getUserRegionRestriction();
+            const homeReg = getUserHomeRegion();
             const regSelect = document.getElementById('regionSite');
-            regSelect.value = restrictedReg || '';
-            regSelect.disabled = Boolean(restrictedReg);
+            regSelect.disabled = false;
+            regSelect.value = homeReg || '';
             onRegionEncaisseChange('');
             reinitialiserChampsNomsVides();
-            appliquerRestrictionRegionSaisie();
             document.getElementById('periodeDebut').value = '';
             document.getElementById('periodeFin').value = '';
             document.getElementById('selectProcessus').value = '';
@@ -1542,8 +1549,7 @@
 
         function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
             const u = getCurrentAuthUser();
-            const restrictedReg = getUserRegionRestriction();
-            const region = restrictedReg || document.getElementById('regionSite').value;
+            const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const controleurId = (u && (u.fonction === controleur || u.username === controleur))
@@ -1588,6 +1594,7 @@
                         controleur: controleur,
                         controleurId: controleurId,
                         controleurRegion: controleurRegion,
+                        auteurRegion: controleurRegion,
                         responsable: responsable,
                         date: dateConstatISO,
                         dateVerification: dateConstatISO,
@@ -1628,8 +1635,7 @@
         async function archiverFicheEncaisse() {
             if (!validateCohérenceEchantillon()) return;
 
-            const restrictedReg = getUserRegionRestriction();
-            const region = restrictedReg || document.getElementById('regionSite').value;
+            const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const responsable = document.getElementById('nomResponsable').value.trim();
@@ -1679,6 +1685,7 @@
                     dateFin: periodeFin,
                     controleur,
                     controleurId: lotConstatsFV[0]?.controleurId || '',
+                    controleurRegion: lotConstatsFV[0]?.controleurRegion || getUserHomeRegion() || region,
                     responsable,
                     typeControle,
                     constats: lotConstatsFV
@@ -1694,7 +1701,7 @@
                 remplirFiltresEncaissesBDD();
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `${lotConstatsFV.length} constat(s) FV archivé(s) dans la BDD — Contrôleur : ${controleur}`;
+                    statusEl.innerText = `${lotConstatsFV.length} constat(s) FV archivé(s) dans la BDD — Région : ${region} | Contrôleur : ${controleur}`;
                 }
             } finally {
                 btn.disabled = false;
@@ -1703,9 +1710,8 @@
         }
 
         function trouverFicheEncaisseBDD() {
-            const restrictedReg = getUserRegionRestriction();
             const fDateFR = document.getElementById('filterFvBddDate').value;
-            const fReg = restrictedReg || document.getElementById('filterFvBddRegion').value;
+            const fReg = document.getElementById('filterFvBddRegion').value;
             const fSite = document.getElementById('filterFvBddSite').value;
             const fProc = document.getElementById('filterFvBddProcessus').value;
 
@@ -1739,18 +1745,19 @@
             const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification || missionLiee.date);
             const dateVerifJJMMAAAA = getEncaisseDateFR(sample, mapMissions);
 
-            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Site : ${sample.site || sample.entite || '--'} | Date initiale : ${dateVerifJJMMAAAA}`;
+            const siteVal = getEncaisseSite(sample, mapMissions);
+            const regVal = normaliserRegion(sample.region || missionLiee.region || trouverRegionDuSite(siteVal));
+
+            document.getElementById('searchEncaisseStatus').innerText = `${constatsFV.length} ligne(s) FV importée(s) — Région : ${regVal || '--'} | Site : ${siteVal || '--'} | Date initiale : ${dateVerifJJMMAAAA}`;
 
             document.getElementById('dateVerification').value = dateVerifISO;
             updateHeaderDateVerifBadge();
             if (sample.dateDebut || missionLiee.dateDebut) document.getElementById('periodeDebut').value = formatDateToISO(sample.dateDebut || missionLiee.dateDebut);
             if (sample.dateFin || missionLiee.dateFin) document.getElementById('periodeFin').value = formatDateToISO(sample.dateFin || missionLiee.dateFin);
 
-            const siteVal = getEncaisseSite(sample, mapMissions);
-            let regVal = restrictedReg || normaliserRegion(sample.region || missionLiee.region || trouverRegionDuSite(siteVal));
             const regSelect = document.getElementById('regionSite');
+            regSelect.disabled = false;
             regSelect.value = regVal;
-            regSelect.disabled = Boolean(restrictedReg);
             onRegionEncaisseChange(siteVal);
 
             const ctrlInput = document.getElementById('nomControleur');
@@ -1803,8 +1810,7 @@
 
             if (!validateCohérenceEchantillon()) return;
 
-            const restrictedReg = getUserRegionRestriction();
-            const region = restrictedReg || document.getElementById('regionSite').value;
+            const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const responsable = document.getElementById('nomResponsable').value.trim();
@@ -1869,6 +1875,7 @@
                     dateFin: periodeFin,
                     controleur,
                     controleurId: lotMisAJour[0]?.controleurId || loadedControleurId || '',
+                    controleurRegion: lotMisAJour[0]?.controleurRegion || getUserHomeRegion() || region,
                     responsable,
                     typeControle,
                     constats: lotMisAJour
@@ -1896,8 +1903,7 @@
 
             if (!validateCohérenceEchantillon()) return;
 
-            const restrictedReg = getUserRegionRestriction();
-            const region = restrictedReg || document.getElementById('regionSite').value;
+            const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
             const controleur = document.getElementById('nomControleur').value.trim();
             const responsable = document.getElementById('nomResponsable').value.trim();
@@ -1937,6 +1943,7 @@
                     dateFin: periodeFin,
                     controleur,
                     controleurId: nouvellesLignesSuivi[0]?.controleurId || loadedControleurId || '',
+                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || region,
                     responsable,
                     typeControle,
                     constats: nouvellesLignesSuivi
