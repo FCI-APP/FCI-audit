@@ -18,6 +18,7 @@
             --white: #FFFFFF;
             --border-color: #E2E8F0;
             --danger: #E74C3C;
+            --success: #10B981;
             --sidebar-width: 250px;
         }
 
@@ -57,13 +58,63 @@
         .top-header h1 { font-size: 1.5rem; color: var(--primary-blue); font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
         .card { background: var(--white); border-radius: 8px; padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
-        .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; }
+        .card-title { font-size: 1.1rem; color: var(--primary-blue); margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; font-weight: 700; flex-wrap: wrap; }
+
+        .siege-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 22px 25px;
+            margin-bottom: 25px;
+            border: 1px solid #FCD34D;
+            border-left: 5px solid var(--accent-gold);
+            box-shadow: 0 2px 6px rgba(0, 51, 102, 0.05);
+        }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group label { font-size: 0.82rem; font-weight: 700; color: var(--text-dark); text-transform: uppercase; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; font-size: 0.9rem; outline: none; background-color: #FFF; }
         .form-group select:disabled { background-color: #F1F5F9; color: #475569; cursor: not-allowed; font-weight: 600; }
+
+        .ctrl-chips-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #F8FAFC;
+            min-height: 44px;
+            align-items: center;
+        }
+        .ctrl-chip-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .ctrl-chip-label:hover { border-color: var(--primary-blue); background: #EFF6FF; }
+        .ctrl-chip-label input:checked + span { color: #002244; }
+        .ctrl-chip-label.is-checked {
+            background: #FEF3C7;
+            border-color: var(--accent-gold);
+            color: #92400E;
+        }
+
+        .lot-siege-panel {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px dashed #CBD5E1;
+        }
 
         .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .kpi-card { background: var(--white); padding: 15px 18px; border-radius: 8px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-color); }
@@ -73,7 +124,10 @@
         .toolbar { background: var(--white); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 
         .btn { padding: 9px 16px; border-radius: 6px; font-weight: 700; font-size: 0.88rem; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-sm { padding: 6px 11px; font-size: 0.78rem; }
         .btn-primary { background-color: var(--accent-gold); color: var(--primary-blue); padding: 12px 28px; font-size: 1rem; }
+        .btn-siege { background-color: var(--primary-blue); color: #FFFFFF; padding: 11px 22px; font-size: 0.92rem; }
+        .btn-siege:hover { background-color: var(--blue-dark); }
         .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border-color: #7DD3FC; }
         .btn-refresh:hover { background-color: #BAE6FD; }
@@ -81,21 +135,28 @@
         .btn-print { background-color: #FEF3C7; color: #92400E; border-color: #FCD34D; }
         .btn-danger-outline { background-color: #FFFFFF; color: var(--danger); border-color: #FCA5A5; }
 
+        .pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 12px; font-size: 0.72rem; font-weight: 800; }
+        .pill-siege { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .pill-ctrl { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .pill-planifiee { background: #E0F2FE; color: #0369A1; }
+        .pill-encours { background: #FEF3C7; color: #92400E; }
+        .pill-realisee { background: #D1FAE5; color: #065F46; }
+
         .processus-block { background: var(--white); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); overflow: hidden; }
         .processus-header { background-color: var(--primary-blue); color: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: top; word-break: break-word; }
-        th { background-color: rgba(0, 51, 102, 0.03); color: var(--primary-blue); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; word-break: break-word; }
+        th { background-color: rgba(0, 51, 102, 0.04); color: var(--primary-blue); font-weight: 700; text-transform: uppercase; font-size: 0.76rem; }
         tr.row-selected { background-color: #FEFCE8; }
 
         .empty-state { text-align: center; padding: 50px 20px; background: var(--white); border-radius: 8px; border: 2px dashed var(--border-color); }
-        .action-bar { display: flex; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
+        .action-bar { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
 
         @media print {
             .sidebar, .toolbar, .action-bar, .top-header button, .processus-header button, th:last-child, td:last-child { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .card, .processus-block { border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 15px !important; }
+            .card, .siege-card, .processus-block { border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 15px !important; }
         }
     </style>
 </head>
@@ -124,14 +185,17 @@
         <header class="top-header">
             <div>
                 <h1>Planification de la mission de contrôle</h1>
-                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler</p>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler (Fiche de Contrôle)</p>
             </div>
             <div>
-                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="window.location.reload()" title="Actualiser la page">
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et les missions planifiées">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
                 </button>
             </div>
         </header>
+
+        <!-- SECTION DIFFUSION / RÉCEPTION DES PLANIFICATIONS SIÈGE (FICHE DE CONTRÔLE UNIQUEMENT) -->
+        <section id="siege-planification-section"></section>
 
         <div class="kpi-row">
             <div class="kpi-card">
@@ -153,7 +217,10 @@
         </div>
 
         <section class="card">
-            <div class="card-title"><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</div>
+            <div class="card-title">
+                <span><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</span>
+                <span id="badgeModeSaisiePlanif"></span>
+            </div>
             <form autocomplete="off" onsubmit="return false;">
                 <div class="form-grid">
                     <div class="form-group">
@@ -194,9 +261,31 @@
                         <label for="audit-date-fin">Fin de la période du contrôle *</label>
                         <input type="date" id="audit-date-fin" autocomplete="off">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="grp-controleurs-libres">
                         <label for="audit-controleurs">Nom du / des Contrôleurs *</label>
                         <input type="text" id="audit-controleurs" name="fci_planif_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Saisir le nom du contrôleur">
+                    </div>
+                </div>
+
+                <!-- BLOC D'AFFECTATION AUX CONTRÔLEURS RÉGIONAUX (VISIBLE UNIQUEMENT POUR LE SIÈGE) -->
+                <div id="siege-affectation-box" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-user-check" style="color:var(--primary-blue);"></i> Contrôleur(s) régional(aux) désigné(s) pour cette mission *</label>
+                        <div id="siege-controleurs-list" class="ctrl-chips-box">
+                            <span style="font-size:0.8rem; color:#64748B;">Sélectionnez d'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002).</span>
+                        </div>
+                    </div>
+
+                    <div class="lot-siege-panel">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                            <span style="font-size:0.82rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase;">
+                                <i class="fa-solid fa-layer-group" style="color:var(--accent-gold);"></i> Campagne Multi-Régions / Multi-Contrôleurs Siège (<span id="countLotSiege">0</span> affectation(s))
+                            </span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterAffectationLotSiege()">
+                                <i class="fa-solid fa-plus"></i> Ajouter cette région / contrôleur au lot
+                            </button>
+                        </div>
+                        <div id="lot-siege-table-wrap"></div>
                     </div>
                 </div>
             </form>
@@ -217,7 +306,12 @@
         <section id="planification-container"></section>
 
         <div class="action-bar">
-            <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()"><i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle</button>
+            <button type="button" class="btn btn-siege" id="btnDiffuserSiege" style="display:none;" onclick="diffuserPlanificationSiege()">
+                <i class="fa-solid fa-paper-plane"></i> Diffuser la planification aux contrôleurs concernés
+            </button>
+            <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()">
+                <i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle
+            </button>
         </div>
     </main>
 
@@ -384,7 +478,18 @@
 
         let selectedData = [];
         let checkedKeys = new Set();
+        let lotAffectationsSiege = [];
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
+
+        function estUtilisateurSiege() {
+            return Boolean(window.FCIAuth && typeof window.FCIAuth.isSiege === 'function' && window.FCIAuth.isSiege());
+        }
+
+        function getCurrentAuthUser() {
+            return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
+                ? window.FCIAuth.getCurrentUser()
+                : null;
+        }
 
         function getItemVal(item, keys) {
             for (let k of keys) {
@@ -401,29 +506,65 @@
             return up;
         }
 
+        function formatDateFR(iso) {
+            if (!iso) return '--';
+            const s = String(iso).split('T')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+                const [y, m, d] = s.split('-');
+                return `${d}/${m}/${y}`;
+            }
+            return s;
+        }
+
         function applyUserScopePlanif(profile) {
             if (!profile) return;
             const regionSelect = document.getElementById('audit-region');
-            if (!regionSelect) return;
+            const isSiege = estUtilisateurSiege();
 
-            // La région reste sélectionnable pour permettre les missions interrégionales
-            regionSelect.disabled = false;
+            const badgeMode = document.getElementById('badgeModeSaisiePlanif');
+            const siegeAffectBox = document.getElementById('siege-affectation-box');
+            const grpCtrlLibres = document.getElementById('grp-controleurs-libres');
+            const btnDiffuserSiege = document.getElementById('btnDiffuserSiege');
 
-            if (!regionSelect.value && profile.region && profile.region !== "SIEGE") {
-                const targetReg = normalizeRegionOption(profile.region);
-                if (Array.from(regionSelect.options).some(o => o.value === targetReg)) {
-                    regionSelect.value = targetReg;
-                    onRegionChangePlanif();
+            if (isSiege) {
+                if (badgeMode) {
+                    badgeMode.innerHTML = `<span class="pill pill-siege"><i class="fa-solid fa-landmark"></i> Mode Planification Siège (Diffusion ciblée FC)</span>`;
+                }
+                if (siegeAffectBox) siegeAffectBox.style.display = 'block';
+                if (grpCtrlLibres) grpCtrlLibres.style.display = 'none';
+                if (btnDiffuserSiege) btnDiffuserSiege.style.display = 'inline-flex';
+            } else {
+                if (badgeMode) {
+                    badgeMode.innerHTML = `<span class="pill pill-ctrl"><i class="fa-solid fa-user-shield"></i> Espace Régional · ${escapeHtml(profile.region)}</span>`;
+                }
+                if (siegeAffectBox) siegeAffectBox.style.display = 'none';
+                if (grpCtrlLibres) grpCtrlLibres.style.display = 'flex';
+                if (btnDiffuserSiege) btnDiffuserSiege.style.display = 'none';
+            }
+
+            if (regionSelect) {
+                regionSelect.disabled = false;
+                if (!isSiege && !regionSelect.value && profile.region && profile.region !== "SIEGE") {
+                    const targetReg = normalizeRegionOption(profile.region);
+                    if (Array.from(regionSelect.options).some(o => o.value === targetReg)) {
+                        regionSelect.value = targetReg;
+                        onRegionChangePlanif();
+                    }
                 }
             }
+
+            renderSectionPlanificationsSiege();
+            renderLotAffectationsSiege();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
             loadPlanificationData();
-            const cachedProfile = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            const cachedProfile = getCurrentAuthUser();
             if (cachedProfile) {
                 applyUserScopePlanif(cachedProfile);
+            } else {
+                renderSectionPlanificationsSiege();
             }
         });
 
@@ -431,11 +572,22 @@
             applyUserScopePlanif(e.detail);
         });
 
+        window.addEventListener('fci-db-synced', () => {
+            renderSectionPlanificationsSiege();
+        });
+
         window.addEventListener('storage', (e) => {
             if (e.key === PLANIFICATION_PC_KEY) {
                 loadPlanificationData();
+            } else if (e.key === 'fci_database') {
+                renderSectionPlanificationsSiege();
             }
         });
+
+        function actualiserPagePlanif() {
+            renderSectionPlanificationsSiege();
+            loadPlanificationData();
+        }
 
         function onRegionChangePlanif() {
             const region = document.getElementById('audit-region').value;
@@ -444,18 +596,429 @@
             if (!region || !CENTRES_PAR_REGION[region]) {
                 entiteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
                 entiteSelect.disabled = true;
+            } else {
+                const centres = CENTRES_PAR_REGION[region];
+                entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
+                    centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+                entiteSelect.disabled = false;
+            }
+
+            renderControleursRegionCheckboxes(region);
+        }
+
+        function renderControleursRegionCheckboxes(region) {
+            const box = document.getElementById('siege-controleurs-list');
+            if (!box) return;
+
+            if (!region) {
+                box.innerHTML = '<span style="font-size:0.8rem; color:#64748B;">Sélectionnez d\'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002).</span>';
                 return;
             }
 
-            const centres = CENTRES_PAR_REGION[region];
-            entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
-                centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-            entiteSelect.disabled = false;
+            const ctrls = (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
+                ? window.FCIAuth.getControllersByRegion(region)
+                : [];
+
+            if (ctrls.length === 0) {
+                box.innerHTML = `<span style="font-size:0.8rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(region)}.</span>`;
+                return;
+            }
+
+            box.innerHTML = ctrls.map(c => `
+                <label class="ctrl-chip-label" onchange="this.classList.toggle('is-checked', this.querySelector('input').checked)">
+                    <input type="checkbox" name="siege_ctrl_assigne" value="${escapeHtml(c.username)}" data-fonction="${escapeHtml(c.fonction)}">
+                    <span><i class="fa-solid fa-user-tag"></i> ${escapeHtml(c.username)} <small style="font-weight:500; opacity:0.8;">(${escapeHtml(c.fonction)})</small></span>
+                </label>
+            `).join('');
+        }
+
+        function getControleursCochesSiege() {
+            const checked = Array.from(document.querySelectorAll('input[name="siege_ctrl_assigne"]:checked'));
+            return checked.map(cb => ({
+                username: cb.value,
+                fonction: cb.getAttribute('data-fonction') || cb.value
+            }));
+        }
+
+        function ajouterAffectationLotSiege() {
+            const region = normalizeRegionOption(document.getElementById('audit-region').value);
+            const entite = document.getElementById('audit-entite').value;
+            const typeControle = document.getElementById('audit-type-controle').value;
+            const dateDebut = document.getElementById('audit-date-debut').value;
+            const dateFin = document.getElementById('audit-date-fin').value;
+            const ctrls = getControleursCochesSiege();
+
+            if (!region || !entite || !typeControle || !dateDebut || !dateFin || ctrls.length === 0) {
+                alert("Veuillez renseigner la Région, l'Entité/Centre, le Type de contrôle, les Dates et cocher au moins un Contrôleur concerné.");
+                return;
+            }
+
+            lotAffectationsSiege.push({
+                idTemp: 'TMP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                region,
+                entite,
+                typeControle,
+                dateDebut,
+                dateFin,
+                controleursAssignes: ctrls.map(c => c.username),
+                controleursLibelles: ctrls.map(c => `${c.username} (${c.fonction})`)
+            });
+
+            // Réinitialisation partielle pour faciliter l'ajout immédiat d'une autre région (ex: AGADIR-003, SETTAT-002)
+            document.getElementById('audit-region').value = "";
+            onRegionChangePlanif();
+            renderLotAffectationsSiege();
+        }
+
+        function retirerAffectationLotSiege(index) {
+            if (index >= 0 && index < lotAffectationsSiege.length) {
+                lotAffectationsSiege.splice(index, 1);
+                renderLotAffectationsSiege();
+            }
+        }
+
+        function renderLotAffectationsSiege() {
+            const countEl = document.getElementById('countLotSiege');
+            const wrap = document.getElementById('lot-siege-table-wrap');
+            if (!wrap) return;
+            if (countEl) countEl.innerText = lotAffectationsSiege.length;
+
+            if (lotAffectationsSiege.length === 0) {
+                wrap.innerHTML = `<p style="font-size:0.78rem; color:#64748B;">Aucune ligne supplémentaire en attente. Vous pouvez soit diffuser directement la sélection ci-dessus, soit ajouter plusieurs régions/contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) avant de diffuser.</p>`;
+                return;
+            }
+
+            wrap.innerHTML = `
+                <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Région</th>
+                                <th>Entité / Centre</th>
+                                <th>Contrôleur(s) assigné(s)</th>
+                                <th>Type</th>
+                                <th>Période</th>
+                                <th style="text-align:center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${lotAffectationsSiege.map((item, idx) => `
+                                <tr>
+                                    <td><b>${escapeHtml(item.region)}</b></td>
+                                    <td>${escapeHtml(item.entite)}</td>
+                                    <td>${item.controleursAssignes.map(u => `<span class="pill pill-ctrl">${escapeHtml(u)}</span>`).join(' ')}</td>
+                                    <td>${escapeHtml(item.typeControle)}</td>
+                                    <td>${formatDateFR(item.dateDebut)} → ${formatDateFR(item.dateFin)}</td>
+                                    <td style="text-align:center;">
+                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationLotSiege(${idx})" title="Retirer">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function diffuserPlanificationSiege() {
+            if (!estUtilisateurSiege()) return;
+
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            if (!activeItems || activeItems.length === 0) {
+                alert("Veuillez d'abord sélectionner et cocher au moins un point de contrôle (Fiche de Contrôle) dans le tableau ci-dessous.");
+                return;
+            }
+
+            // Construire la liste finale des affectations (lot accumulé + formulaire courant s'il est rempli)
+            const aDiffuser = [...lotAffectationsSiege];
+
+            const curReg = normalizeRegionOption(document.getElementById('audit-region').value);
+            const curEntite = document.getElementById('audit-entite').value;
+            const curType = document.getElementById('audit-type-controle').value;
+            const curDebut = document.getElementById('audit-date-debut').value;
+            const curFin = document.getElementById('audit-date-fin').value;
+            const curCtrls = getControleursCochesSiege();
+
+            if (curReg || curEntite || curCtrls.length > 0) {
+                if (!curReg || !curEntite || !curType || !curDebut || !curFin || curCtrls.length === 0) {
+                    alert("Veuillez compléter tous les champs de la ligne en cours (Région, Centre, Type, Dates et Contrôleur(s)) ou la vider avant de diffuser.");
+                    return;
+                }
+                aDiffuser.push({
+                    region: curReg,
+                    entite: curEntite,
+                    typeControle: curType,
+                    dateDebut: curDebut,
+                    dateFin: curFin,
+                    controleursAssignes: curCtrls.map(c => c.username),
+                    controleursLibelles: curCtrls.map(c => `${c.username} (${c.fonction})`)
+                });
+            }
+
+            if (aDiffuser.length === 0) {
+                alert("Veuillez renseigner au moins une région, un centre et un contrôleur concerné (ex. MARRAKECH-001).");
+                return;
+            }
+
+            const btn = document.getElementById('btnDiffuserSiege');
+            const texteOrig = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Diffusion en cours...';
+            }
+
+            try {
+                const currentUser = getCurrentAuthUser();
+                const campagneId = 'CAMP-SIEGE-' + Date.now();
+                const auteurNom = currentUser ? `${currentUser.fonction} (${currentUser.username})` : 'Siège';
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
+                    for (let i = 0; i < aDiffuser.length; i++) {
+                        const aff = aDiffuser[i];
+                        await FCIDatabase.enregistrerPlanification({
+                            idPlanification: `PLAN-SIEGE-${Date.now()}-${i + 1}`,
+                            campagneSiegeId: campagneId,
+                            planifiePar: 'SIEGE',
+                            espaceSaisie: 'SIEGE',
+                            sourceFeuille: 'FC',
+                            auteurSiege: auteurNom,
+                            auteurId: currentUser ? currentUser.username : 'admin-siege',
+                            auteurFonction: currentUser ? currentUser.fonction : 'Siège',
+                            auteurRole: currentUser ? currentUser.role : 'ADMIN',
+                            auteurRegion: 'SIEGE',
+                            controleurRegion: 'SIEGE',
+                            region: aff.region,
+                            entite: aff.entite,
+                            site: aff.entite,
+                            typeControle: aff.typeControle,
+                            dateDebut: aff.dateDebut,
+                            dateFin: aff.dateFin,
+                            controleursAssignes: aff.controleursAssignes,
+                            controleursLibelles: aff.controleursLibelles,
+                            pointsControle: activeItems,
+                            nbPoints: activeItems.length,
+                            statutExecution: 'PLANIFIEE',
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                }
+
+                lotAffectationsSiege = [];
+                renderLotAffectationsSiege();
+                viderPlanification();
+                renderSectionPlanificationsSiege();
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = texteOrig;
+                }
+            }
+        }
+
+        function renderSectionPlanificationsSiege() {
+            const container = document.getElementById('siege-planification-section');
+            if (!container) return;
+
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.getDB !== 'function') {
+                container.innerHTML = '';
+                return;
+            }
+
+            const db = FCIDatabase.getDB();
+            const plans = (db.planifications || []).filter(p =>
+                String(p.planifiePar || '').toUpperCase() === 'SIEGE' ||
+                String(p.espaceSaisie || '').toUpperCase() === 'SIEGE'
+            );
+
+            const isSiege = estUtilisateurSiege();
+
+            if (isSiege) {
+                container.innerHTML = `
+                    <div class="siege-card">
+                        <div class="card-title" style="border-bottom-color:#FDE68A;">
+                            <span><i class="fa-solid fa-landmark" style="color:var(--accent-gold);"></i> Suivi Global des Planifications Émises par le Siège (Partagé entre tous les membres du Siège)</span>
+                            <span class="pill pill-siege">${plans.length} mission(s) planifiée(s)</span>
+                        </div>
+                        ${plans.length === 0 ? `
+                            <p style="font-size:0.84rem; color:#64748B;">Aucune planification Siège enregistrée pour le moment. Sélectionnez des points de contrôle dans le Référentiel puis affectez-les aux contrôleurs régionaux ci-dessous.</p>
+                        ` : `
+                            <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Planifié par (Siège)</th>
+                                            <th>Région</th>
+                                            <th>Entité / Centre</th>
+                                            <th>Contrôleur(s) concerné(s)</th>
+                                            <th>Type &amp; Période</th>
+                                            <th style="text-align:center;">PC (FC)</th>
+                                            <th style="text-align:center;">Avancement</th>
+                                            <th style="text-align:center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${[...plans].reverse().map(p => {
+                                            const st = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                                            const stHtml = st === 'REALISEE'
+                                                ? `<span class="pill pill-realisee"><i class="fa-solid fa-circle-check"></i> Réalisée${p.tauxMoyenExecution !== undefined ? ' (' + p.tauxMoyenExecution + '%)' : ''}</span>`
+                                                : (st === 'EN_COURS'
+                                                    ? `<span class="pill pill-encours"><i class="fa-solid fa-spinner"></i> En cours</span>`
+                                                    : `<span class="pill pill-planifiee"><i class="fa-regular fa-clock"></i> Planifiée</span>`);
+
+                                            const ctrlsBadges = (p.controleursAssignes || []).map(u => `<span class="pill pill-ctrl">${escapeHtml(u)}</span>`).join(' ');
+
+                                            return `
+                                                <tr>
+                                                    <td><b>${escapeHtml(p.auteurSiege || p.auteurFonction || 'Siège')}</b></td>
+                                                    <td><b>${escapeHtml(p.region)}</b></td>
+                                                    <td>${escapeHtml(p.entite)}</td>
+                                                    <td>${ctrlsBadges || '--'}</td>
+                                                    <td>
+                                                        <span style="font-weight:700; color:var(--primary-blue);">${escapeHtml(p.typeControle || 'Thématique')}</span><br>
+                                                        <small style="color:#64748B;">${formatDateFR(p.dateDebut)} → ${formatDateFR(p.dateFin)}</small>
+                                                    </td>
+                                                    <td style="text-align:center;"><b>${(p.pointsControle || []).length}</b></td>
+                                                    <td style="text-align:center;">${stHtml}</td>
+                                                    <td style="text-align:center;">
+                                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="supprimerPlanificationSiege('${escapeJsString(p.idPlanification)}')" title="Supprimer cette planification Siège">
+                                                            <i class="fa-solid fa-trash-can"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `}
+                    </div>
+                `;
+                return;
+            }
+
+            // Affichage côté Contrôleur Régional : uniquement les missions Siège qui lui sont nominativement assignées
+            if (plans.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="siege-card">
+                    <div class="card-title" style="border-bottom-color:#FDE68A;">
+                        <span><i class="fa-solid fa-bell" style="color:var(--accent-gold);"></i> Missions de Contrôle Planifiées par le Siège (Affectées à votre compte)</span>
+                        <span class="pill pill-siege">${plans.length} mission(s) reçue(s)</span>
+                    </div>
+                    <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Origine</th>
+                                    <th>Région</th>
+                                    <th>Entité / Centre à contrôler</th>
+                                    <th>Type de contrôle</th>
+                                    <th>Période prévue</th>
+                                    <th style="text-align:center;">PC (FC)</th>
+                                    <th style="text-align:center;">Statut</th>
+                                    <th style="text-align:center;">Exécution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${[...plans].reverse().map(p => {
+                                    const st = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                                    const stHtml = st === 'REALISEE'
+                                        ? `<span class="pill pill-realisee"><i class="fa-solid fa-circle-check"></i> Réalisée</span>`
+                                        : (st === 'EN_COURS'
+                                            ? `<span class="pill pill-encours"><i class="fa-solid fa-spinner"></i> En cours</span>`
+                                            : `<span class="pill pill-planifiee"><i class="fa-regular fa-clock"></i> À exécuter</span>`);
+
+                                    return `
+                                        <tr>
+                                            <td>
+                                                <span class="pill pill-siege"><i class="fa-solid fa-landmark"></i> Mandat Siège</span><br>
+                                                <small style="color:#64748B;">${escapeHtml(p.auteurSiege || 'Direction Contrôle Générale')}</small>
+                                            </td>
+                                            <td><b>${escapeHtml(p.region)}</b></td>
+                                            <td><b>${escapeHtml(p.entite)}</b></td>
+                                            <td>${escapeHtml(p.typeControle || 'Thématique')}</td>
+                                            <td>${formatDateFR(p.dateDebut)} → ${formatDateFR(p.dateFin)}</td>
+                                            <td style="text-align:center;"><b>${(p.pointsControle || []).length}</b></td>
+                                            <td style="text-align:center;">${stHtml}</td>
+                                            <td style="text-align:center;">
+                                                <button type="button" class="btn btn-siege btn-sm" onclick="executerMissionSiege('${escapeJsString(p.idPlanification)}')">
+                                                    <i class="fa-solid fa-play"></i> Exécuter FC
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function supprimerPlanificationSiege(idPlanification) {
+            if (!idPlanification) return;
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerPlanification === 'function') {
+                FCIDatabase.supprimerPlanification(idPlanification);
+            }
+            renderSectionPlanificationsSiege();
+        }
+
+        async function executerMissionSiege(idPlanification) {
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.getDB !== 'function') return;
+            const db = FCIDatabase.getDB();
+            const plan = (db.planifications || []).find(p => p.idPlanification === idPlanification);
+            if (!plan) return;
+
+            const currentUser = getCurrentAuthUser();
+            const controleurLabel = currentUser
+                ? `${currentUser.fonction} (${currentUser.username})`
+                : (plan.controleursAssignes || []).join(', ');
+            const controleurHomeRegion = (currentUser && currentUser.region && currentUser.region !== 'SIEGE')
+                ? normalizeRegionOption(currentUser.region)
+                : normalizeRegionOption(plan.region);
+
+            const idMission = plan.idMission || ('MIS-' + Date.now());
+
+            const activeCampaign = {
+                metadata: {
+                    idMission,
+                    idPlanificationSiege: plan.idPlanification,
+                    planifiePar: 'SIEGE',
+                    auteurSiege: plan.auteurSiege || '',
+                    region: normalizeRegionOption(plan.region),
+                    entite: plan.entite,
+                    typeControle: plan.typeControle || 'Thématique',
+                    dateDebutControle: plan.dateDebut || '',
+                    dateFinControle: plan.dateFin || '',
+                    controleurs: controleurLabel,
+                    controleurId: currentUser ? currentUser.username : '',
+                    controleurRegion: controleurHomeRegion,
+                    auteurRegion: controleurHomeRegion,
+                    espaceSaisie: 'REGIONAL',
+                    createdAt: new Date().toISOString()
+                },
+                pointsControle: plan.pointsControle || []
+            };
+
+            if (typeof FCIDatabase.marquerPlanificationStatut === 'function') {
+                FCIDatabase.marquerPlanificationStatut(plan.idPlanification, 'EN_COURS', {
+                    idMissionExecution: idMission,
+                    executePar: controleurLabel
+                });
+            }
+
+            localStorage.setItem('fci_fiche_controle_active', JSON.stringify(activeCampaign));
+            window.location.href = 'FicheControle.html';
         }
 
         function initFormDefaults() {
             const today = new Date().toISOString().split('T')[0];
-            const cachedProfile = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+            const cachedProfile = getCurrentAuthUser();
             const regionSelect = document.getElementById('audit-region');
 
             regionSelect.disabled = false;
@@ -641,11 +1204,13 @@
             saveAndRefresh();
         }
 
-        function viderPlanification() { 
-            selectedData = []; 
-            checkedKeys.clear(); 
+        function viderPlanification() {
+            selectedData = [];
+            checkedKeys.clear();
+            lotAffectationsSiege = [];
+            renderLotAffectationsSiege();
             initFormDefaults();
-            saveAndRefresh(); 
+            saveAndRefresh();
         }
 
         function saveAndRefresh() {
@@ -672,7 +1237,18 @@
             const typeControle = document.getElementById('audit-type-controle').value;
             const dateDebut = document.getElementById('audit-date-debut').value;
             const dateFin = document.getElementById('audit-date-fin').value;
-            const controleurs = document.getElementById('audit-controleurs').value.trim();
+            const isSiege = estUtilisateurSiege();
+
+            let controleurs = document.getElementById('audit-controleurs').value.trim();
+            if (isSiege && !controleurs) {
+                const ctrlsCoches = getControleursCochesSiege();
+                if (ctrlsCoches.length > 0) {
+                    controleurs = ctrlsCoches.map(c => c.username).join(' / ');
+                } else {
+                    const u = getCurrentAuthUser();
+                    controleurs = u ? u.fonction : '';
+                }
+            }
 
             if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
                 alert("Veuillez remplir l'ensemble des informations de la mission (Région, Centre, Type de contrôle, Dates et Contrôleurs) avant de continuer.");
@@ -693,7 +1269,7 @@
             }
 
             try {
-                const currentUser = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+                const currentUser = getCurrentAuthUser();
                 const controleurHomeRegion = (currentUser && currentUser.region && currentUser.region !== 'SIEGE')
                     ? normalizeRegionOption(currentUser.region)
                     : region;
@@ -705,7 +1281,7 @@
                     controleurId: (currentUser.fonction === controleurs || currentUser.username === controleurs) ? currentUser.username : '',
                     controleurRegion: controleurHomeRegion,
                     auteurRegion: controleurHomeRegion,
-                    espaceSaisie: (window.FCIAuth && window.FCIAuth.isSiege()) ? 'SIEGE' : 'REGIONAL'
+                    espaceSaisie: isSiege ? 'SIEGE' : 'REGIONAL'
                 } : {
                     controleurRegion: region,
                     auteurRegion: region
