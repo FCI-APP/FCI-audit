@@ -157,7 +157,7 @@
             <form autocomplete="off" onsubmit="return false;">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="audit-region">Région *</label>
+                        <label for="audit-region">Région de la mission *</label>
                         <select id="audit-region" autocomplete="off" onchange="onRegionChangePlanif()">
                             <option value="">-- Sélectionner une région --</option>
                             <option value="MARRAKECH">MARRAKECH</option>
@@ -404,12 +404,15 @@
         function applyUserScopePlanif(profile) {
             if (!profile) return;
             const regionSelect = document.getElementById('audit-region');
+            if (!regionSelect) return;
 
-            if (profile.region && profile.region !== "SIEGE") {
+            // La région reste sélectionnable pour permettre les missions interrégionales
+            regionSelect.disabled = false;
+
+            if (!regionSelect.value && profile.region && profile.region !== "SIEGE") {
                 const targetReg = normalizeRegionOption(profile.region);
-                if (regionSelect && Array.from(regionSelect.options).some(o => o.value === targetReg)) {
+                if (Array.from(regionSelect.options).some(o => o.value === targetReg)) {
                     regionSelect.value = targetReg;
-                    regionSelect.disabled = true;
                     onRegionChangePlanif();
                 }
             }
@@ -455,12 +458,11 @@
             const cachedProfile = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
             const regionSelect = document.getElementById('audit-region');
 
+            regionSelect.disabled = false;
             if (cachedProfile && cachedProfile.region && cachedProfile.region !== "SIEGE") {
                 regionSelect.value = normalizeRegionOption(cachedProfile.region);
-                regionSelect.disabled = true;
                 onRegionChangePlanif();
             } else {
-                regionSelect.disabled = false;
                 regionSelect.value = "";
                 onRegionChangePlanif();
             }
@@ -665,7 +667,7 @@
         }
 
         async function lancerFicheControle() {
-            const region = document.getElementById('audit-region').value;
+            const region = normalizeRegionOption(document.getElementById('audit-region').value);
             const entite = document.getElementById('audit-entite').value;
             const typeControle = document.getElementById('audit-type-controle').value;
             const dateDebut = document.getElementById('audit-date-debut').value;
@@ -692,12 +694,22 @@
 
             try {
                 const currentUser = window.FCIAuth ? window.FCIAuth.getCurrentUser() : null;
+                const controleurHomeRegion = (currentUser && currentUser.region && currentUser.region !== 'SIEGE')
+                    ? normalizeRegionOption(currentUser.region)
+                    : region;
+
                 const traceInfo = currentUser ? {
                     creePar: currentUser.fonction || currentUser.username,
                     creeParId: currentUser.username,
                     creeParRole: currentUser.role,
+                    controleurId: (currentUser.fonction === controleurs || currentUser.username === controleurs) ? currentUser.username : '',
+                    controleurRegion: controleurHomeRegion,
+                    auteurRegion: controleurHomeRegion,
                     espaceSaisie: (window.FCIAuth && window.FCIAuth.isSiege()) ? 'SIEGE' : 'REGIONAL'
-                } : {};
+                } : {
+                    controleurRegion: region,
+                    auteurRegion: region
+                };
 
                 const idMission = "MIS-" + Date.now();
                 const activeCampaign = {
