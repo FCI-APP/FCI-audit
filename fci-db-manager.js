@@ -1,6 +1,6 @@
 /**
  * FCI v1.0 - Gestionnaire Central de Base de Données (fci_database)
- * Gestion interrégionale & Cloisonnement Deux Espaces (Siège / Régional)
+ * Gestion interrégionale, diffusion ciblée des planifications Siège & Cloisonnement Deux Espaces
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  */
 (function () {
@@ -65,11 +65,16 @@
         return true;
     }
 
+    function canAccessPlan(plan, user = getCurrentUser()) {
+        if (!plan || typeof plan !== 'object') return false;
+        if (window.FCIAuth && typeof window.FCIAuth.canAccessPlanification === 'function') {
+            return window.FCIAuth.canAccessPlanification(plan, user);
+        }
+        return canAccess(plan, user);
+    }
+
     /**
-     * Retourne uniquement les données visibles selon les règles d'accès de l'utilisateur connecté :
-     * - Espace Siège : accès global à toutes les données régionales et internes du Siège.
-     * - Espace Régional : données de sa région d'affectation (y compris ses contrôles hors région)
-     *   + contrôles effectués dans sa région par d'autres contrôleurs régionaux.
+     * Retourne uniquement les données visibles selon les règles d'accès de l'utilisateur connecté.
      */
     function getDB() {
         const rawDb = readRawDatabase();
@@ -80,7 +85,6 @@
             const filtered = window.FCIAuth.filterDatabase(rawDb, user);
             return {
                 ...filtered,
-                // Alias de compatibilité
                 controles: filtered.constatsControle,
                 encaisses: filtered.constatsEncaisses,
                 bdd: [...filtered.constatsControle, ...filtered.constatsEncaisses]
@@ -91,9 +95,8 @@
     }
 
     /**
-     * Sauvegarde la base tout en :
-     * 1. Étiquetant chaque saisie avec la région du contrôle (region) et la région d'affectation (controleurRegion).
-     * 2. Préservant intactes dans localStorage les données hors périmètre (autres régions / données internes du Siège).
+     * Sauvegarde la base tout en préservant intactes dans localStorage
+     * les données hors périmètre (autres régions / données internes du Siège).
      */
     function saveDB(updatedScopedDb) {
         const user = getCurrentUser();
@@ -119,7 +122,8 @@
             if (!user || isSiegeUser(user)) {
                 mergedDb[colName] = taggedIncoming;
             } else {
-                const horsPerimetre = (fullRawDb[colName] || []).filter(existing => !canAccess(existing, user));
+                const accessFn = colName === 'planifications' ? canAccessPlan : canAccess;
+                const horsPerimetre = (fullRawDb[colName] || []).filter(existing => !accessFn(existing, user));
                 mergedDb[colName] = [...horsPerimetre, ...taggedIncoming];
             }
         });
@@ -131,10 +135,6 @@
         return getDB();
     }
 
-    /**
-     * Vide uniquement les enregistrements visibles dans le périmètre de l'utilisateur courant,
-     * sans supprimer les données des autres régions ni les données internes du Siège.
-     */
     function viderBDD() {
         return saveDB({
             missions: [],
@@ -144,16 +144,10 @@
         });
     }
 
-    /**
-     * Synchronise ou restaure depuis la base locale/distante en respectant le cloisonnement.
-     */
     async function restaurerDepuisGitHub() {
         return getDB();
     }
 
-    /**
-     * Enregistre ou met à jour une mission (Planification / FC / FV) avec étiquetage interrégional.
-     */
     async function enregistrerMission(mission) {
         if (!mission || typeof mission !== 'object') return getDB();
         const user = getCurrentUser();
@@ -176,9 +170,6 @@
         return saveDB(db);
     }
 
-    /**
-     * Enregistre ou met à jour un lot de constats de Fiche de Contrôle (FC).
-     */
     async function enregistrerLotControle(lotConstats, site = '', idMission = '') {
         if (!Array.isArray(lotConstats) || lotConstats.length === 0) return getDB();
         const user = getCurrentUser();
@@ -208,9 +199,6 @@
         return saveDB(db);
     }
 
-    /**
-     * Enregistre ou met à jour un lot de constats de Vérification des Encaisses (FV).
-     */
     async function enregistrerLotEncaisses(lotEncaisses, site = '', idMission = '') {
         if (!Array.isArray(lotEncaisses) || lotEncaisses.length === 0) return getDB();
         const user = getCurrentUser();
@@ -241,17 +229,22 @@
     }
 
     /**
-     * Enregistre ou met à jour une ligne de planification (Espace Siège ou Espace Régional).
+     * Enregistre ou met à jour une ligne de planification FC (Espace Siège partagé + diffusion ciblée aux contrôleurs désignés).
      */
     async function enregistrerPlanification(plan) {
         if (!plan || typeof plan !== 'object') return getDB();
         const user = getCurrentUser();
         const db = getDB();
 
-        const taggedPlan = tagRecord({
+        const basePlan = {
             ...plan,
+            sourceFeuille: 'FC',
             idPlanification: plan.idPlanification || ('PLAN-' + Date.now())
-        }, user);
+        };
+
+        const taggedPlan = (plan.espaceSaisie === 'SIEGE' || plan.espaceSaisie === 'REGIONAL')
+            ? basePlan
+            : tagRecord(basePlan, user);
 
         const plans = db.planifications || [];
         const idx = plans.findIndex(p => p.idPlanification === taggedPlan.idPlanification);
@@ -266,8 +259,37 @@
     }
 
     /**
-     * Exporte en JSON uniquement le périmètre autorisé de l'utilisateur connecté.
+     * Supprime une planification autorisée par son identifiant.
      */
+    function supprimerPlanification(idPlanification) {
+        if (!idPlanification) return getDB();
+        const db = getDB();
+        db.planifications = (db.planifications || []).filter(p => p.idPlanification !== idPlanification);
+        return saveDB(db);
+    }
+
+    /**
+     * Met à jour l'état d'avancement d'une planification Siège (PLANIFIEE -> EN_COURS -> REALISEE)
+     * visible immédiatement par tous les comptes du Siège.
+     */
+    function marquerPlanificationStatut(idPlanification, statut, extra = {}) {
+        if (!idPlanification) return getDB();
+        const fullRawDb = readRawDatabase();
+        const idx = (fullRawDb.planifications || []).findIndex(p => p.idPlanification === idPlanification);
+        if (idx !== -1) {
+            fullRawDb.planifications[idx] = {
+                ...fullRawDb.planifications[idx],
+                statutExecution: statut,
+                ...extra,
+                updatedAt: new Date().toISOString()
+            };
+            fullRawDb.lastSync = new Date().toISOString();
+            localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(fullRawDb));
+            window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
+        }
+        return getDB();
+    }
+
     function exporterBDD() {
         const scopedDb = getDB();
         const payload = {
@@ -286,19 +308,16 @@
         URL.revokeObjectURL(url);
     }
 
-    /**
-     * Importe un fichier JSON en respectant strictement les droits d'accès de l'utilisateur.
-     */
     function importerBDD(importedData) {
         if (!importedData || typeof importedData !== 'object') return getDB();
         const user = getCurrentUser();
         const currentScoped = getDB();
 
-        const mergeByKey = (existingArr, incomingArr, keyField) => {
+        const mergeByKey = (existingArr, incomingArr, keyField, accessCheckFn = canAccess) => {
             const result = [...existingArr];
             (Array.isArray(incomingArr) ? incomingArr : []).forEach(item => {
                 if (!item || typeof item !== 'object') return;
-                if (user && !isSiegeUser(user) && !canAccess(item, user)) return;
+                if (user && !isSiegeUser(user) && !accessCheckFn(item, user)) return;
 
                 const tagged = (item.espaceSaisie === 'SIEGE' || item.espaceSaisie === 'REGIONAL')
                     ? item
@@ -318,14 +337,13 @@
         };
 
         return saveDB({
-            missions: mergeByKey(currentScoped.missions, importedData.missions, 'idMission'),
-            constatsControle: mergeByKey(currentScoped.constatsControle, importedData.constatsControle, 'idConstat'),
-            constatsEncaisses: mergeByKey(currentScoped.constatsEncaisses, importedData.constatsEncaisses, 'idEncaisse'),
-            planifications: mergeByKey(currentScoped.planifications, importedData.planifications, 'idPlanification')
+            missions: mergeByKey(currentScoped.missions, importedData.missions, 'idMission', canAccess),
+            constatsControle: mergeByKey(currentScoped.constatsControle, importedData.constatsControle, 'idConstat', canAccess),
+            constatsEncaisses: mergeByKey(currentScoped.constatsEncaisses, importedData.constatsEncaisses, 'idEncaisse', canAccess),
+            planifications: mergeByKey(currentScoped.planifications, importedData.planifications, 'idPlanification', canAccessPlan)
         });
     }
 
-    // Exposition globale unifiée pour toutes les feuilles (FC, FV, Planification, BDD, TDB)
     window.FCIDatabase = {
         getDB,
         saveDB,
@@ -335,12 +353,14 @@
         enregistrerLotControle,
         enregistrerLotEncaisses,
         enregistrerPlanification,
+        supprimerPlanification,
+        marquerPlanificationStatut,
         exporterBDD,
         importerBDD,
-        canAccessRecord: canAccess
+        canAccessRecord: canAccess,
+        canAccessPlanification: canAccessPlan
     };
 
-    // Alias de rétrocompatibilité
     window.FCIDBManager = {
         getLocalDatabase: getDB,
         saveLocalDatabase: saveDB,
