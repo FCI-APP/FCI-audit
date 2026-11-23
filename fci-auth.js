@@ -1,5 +1,6 @@
 /**
  * FCI v1.0 - Module d'Authentification & Cloisonnement Deux Espaces (Siège / Régional)
+ * Gestion interrégionale : visibilité par région du contrôle ET par région d'affectation du contrôleur.
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  * Session volatile (sessionStorage uniquement) : fermer/quitter déconnecte automatiquement.
  */
@@ -121,7 +122,7 @@
 
     /**
      * Détermine si un enregistrement (mission, constat FC, constat FV, planification)
-     * a été saisi depuis l'Espace Siège (y compris pour les anciens enregistrements).
+     * appartient aux données internes du Siège.
      */
     function isRecordFromSiege(record) {
         if (!record || typeof record !== 'object') return false;
@@ -177,12 +178,15 @@
     }
 
     /**
-     * Règle fondamentale d'accès :
+     * Règle d'accès interrégionale :
      * - Espace Siège (Directeur, Chefs de service, Administrateur) :
-     *   accès global à toutes les données régionales + toutes les données internes du Siège.
+     *   accès global à l'ensemble des données régionales et aux données internes du Siège.
+     * - Données internes du Siège :
+     *   exclusivement accessibles aux utilisateurs autorisés du Siège.
      * - Espace Régional (Contrôleurs d'une région) :
-     *   accès uniquement aux données régionales de LEUR propre région.
-     *   Aucun accès aux autres régions ni aux données saisies au niveau du Siège.
+     *   accès aux données de leur région d'affectation (y compris les contrôles qu'ils ont
+     *   effectués dans d'autres régions) ET aux contrôles effectués dans leur région
+     *   par des contrôleurs provenant d'autres régions.
      */
     function canAccessRecord(record, user = getCurrentUser()) {
         if (!user || !record) return false;
@@ -196,11 +200,15 @@
         }
 
         const userRegion = normaliserRegion(user.region);
-        const recordRegion = normaliserRegion(
-            record.region || record.auteurRegion || record.controleurRegion || ''
+        if (!userRegion) return false;
+
+        const targetRegion = normaliserRegion(record.region || '');
+        const homeRegion = normaliserRegion(
+            record.controleurRegion || record.auteurRegion || record.creeParRegion || ''
         );
 
-        return Boolean(userRegion && recordRegion && userRegion === recordRegion);
+        return (Boolean(targetRegion) && targetRegion === userRegion) ||
+               (Boolean(homeRegion) && homeRegion === userRegion);
     }
 
     function filterVisibleRecords(records, user = getCurrentUser()) {
@@ -227,19 +235,20 @@
 
         const siege = isSiegeUser(user);
         const userReg = normaliserRegion(user.region);
+        const targetReg = normaliserRegion(record.region || '');
+        const homeReg = normaliserRegion(record.controleurRegion || record.auteurRegion || userReg);
 
         return {
             ...record,
             espaceSaisie: siege ? 'SIEGE' : 'REGIONAL',
-            auteurId: user.identifiant || user.username,
-            auteurFonction: user.fonction || '',
-            auteurRole: user.role || '',
-            auteurRegion: userReg,
+            auteurId: record.auteurId || user.identifiant || user.username,
+            auteurFonction: record.auteurFonction || user.fonction || '',
+            auteurRole: record.auteurRole || user.role || '',
+            auteurRegion: homeReg,
+            controleurRegion: homeReg,
             creeParId: record.creeParId || user.identifiant || user.username,
             creeParRole: record.creeParRole || user.role || '',
-            region: siege
-                ? (normaliserRegion(record.region) || 'SIEGE')
-                : userReg
+            region: targetReg || (siege ? 'SIEGE' : userReg)
         };
     }
 
