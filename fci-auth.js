@@ -1,6 +1,6 @@
 /**
  * FCI v1.0 - Module d'Authentification & Cloisonnement Deux Espaces (Siège / Régional)
- * Gestion interrégionale : visibilité par région du contrôle ET par région d'affectation du contrôleur.
+ * Gestion interrégionale & Diffusion ciblée des planifications Siège -> Contrôleurs désignés.
  * Direction Contrôle Générale - Division Contrôle Permanent - Barid Al-Maghrib
  * Session volatile (sessionStorage uniquement) : fermer/quitter déconnecte automatiquement.
  */
@@ -121,6 +121,21 @@
     }
 
     /**
+     * Retourne la liste des comptes contrôleurs régionaux (sans mot de passe),
+     * filtrée par région si un code région est fourni.
+     */
+    function getControllersByRegion(region = '') {
+        const targetReg = normaliserRegion(region);
+        return FCI_USERS
+            .filter(u => u.role === 'CONTROLEUR' && (!targetReg || normaliserRegion(u.region) === targetReg))
+            .map(u => ({
+                username: u.username,
+                fonction: u.fonction,
+                region: normaliserRegion(u.region)
+            }));
+    }
+
+    /**
      * Détermine si un enregistrement (mission, constat FC, constat FV, planification)
      * appartient aux données internes du Siège.
      */
@@ -178,15 +193,42 @@
     }
 
     /**
-     * Règle d'accès interrégionale :
-     * - Espace Siège (Directeur, Chefs de service, Administrateur) :
-     *   accès global à l'ensemble des données régionales et aux données internes du Siège.
-     * - Données internes du Siège :
-     *   exclusivement accessibles aux utilisateurs autorisés du Siège.
-     * - Espace Régional (Contrôleurs d'une région) :
-     *   accès aux données de leur région d'affectation (y compris les contrôles qu'ils ont
-     *   effectués dans d'autres régions) ET aux contrôles effectués dans leur région
-     *   par des contrôleurs provenant d'autres régions.
+     * Règle d'accès spécifique aux lignes de planification (Feuille 2 - Fiche de Contrôle) :
+     * - Tous les membres du Siège (7 comptes) voient toutes les planifications (Siège + Régions).
+     * - Une planification émise par le Siège (planifiePar === 'SIEGE') n'est visible côté régional
+     *   QUE par les contrôleurs nommément désignés dans controleursAssignes (ex. MARRAKECH-001).
+     * - Une planification régionale standard est visible par les contrôleurs de la région concernée.
+     */
+    function canAccessPlanification(plan, user = getCurrentUser()) {
+        if (!user || !plan) return false;
+        if (isSiegeUser(user)) return true;
+
+        const userId = String(user.username || user.identifiant || '').toUpperCase().trim();
+        const userRegion = normaliserRegion(user.region);
+        const assignes = Array.isArray(plan.controleursAssignes)
+            ? plan.controleursAssignes.map(c => String(c || '').toUpperCase().trim()).filter(Boolean)
+            : [];
+
+        const isSiegePlan = String(plan.planifiePar || '').toUpperCase() === 'SIEGE' || isRecordFromSiege(plan);
+        if (isSiegePlan) {
+            return Boolean(userId) && assignes.includes(userId);
+        }
+
+        if (!userRegion) return false;
+        const targetRegion = normaliserRegion(plan.region || '');
+        const homeRegion = normaliserRegion(plan.controleurRegion || plan.auteurRegion || '');
+
+        return (Boolean(targetRegion) && targetRegion === userRegion) ||
+               (Boolean(homeRegion) && homeRegion === userRegion) ||
+               (Boolean(userId) && assignes.includes(userId));
+    }
+
+    /**
+     * Règle d'accès interrégionale pour les constats et missions exécutées :
+     * - Espace Siège : accès global à toutes les données régionales et aux données internes du Siège.
+     * - Données internes du Siège : exclusivement accessibles aux utilisateurs autorisés du Siège.
+     * - Espace Régional : accès aux données de leur région d'affectation (y compris contrôles hors région)
+     *   ET aux contrôles effectués dans leur région par d'autres contrôleurs régionaux.
      */
     function canAccessRecord(record, user = getCurrentUser()) {
         if (!user || !record) return false;
@@ -225,7 +267,7 @@
             missions: filterVisibleRecords(safeDb.missions || [], user),
             constatsControle: filterVisibleRecords(safeDb.constatsControle || [], user),
             constatsEncaisses: filterVisibleRecords(safeDb.constatsEncaisses || [], user),
-            planifications: filterVisibleRecords(safeDb.planifications || [], user)
+            planifications: (safeDb.planifications || []).filter(p => canAccessPlanification(p, user))
         };
     }
 
@@ -355,10 +397,12 @@
         isAdmin: () => isAdmin(),
         isRecordFromSiege,
         canAccessRecord,
+        canAccessPlanification,
         filterVisibleRecords,
         filterDatabase,
         tagRecordWithSpace,
         normaliserRegion,
+        getControllersByRegion,
         getAllUsersCount: () => FCI_USERS.length
     };
 })();
