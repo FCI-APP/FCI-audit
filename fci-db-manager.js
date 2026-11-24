@@ -229,17 +229,19 @@
     }
 
     /**
-     * Enregistre ou met à jour une ligne de planification FC (Espace Siège partagé + diffusion ciblée aux contrôleurs désignés).
+     * Enregistre ou met à jour une ligne de planification (FC Contrôle ou FV Vérification)
+     * avec diffusion ciblée aux contrôleurs désignés.
      */
     async function enregistrerPlanification(plan) {
         if (!plan || typeof plan !== 'object') return getDB();
         const user = getCurrentUser();
         const db = getDB();
 
+        const sourceFeuille = String(plan.sourceFeuille || (String(plan.natureMission || '').toUpperCase().includes('VERIF') ? 'FV' : 'FC')).toUpperCase();
         const basePlan = {
             ...plan,
-            sourceFeuille: 'FC',
-            idPlanification: plan.idPlanification || ('PLAN-' + Date.now())
+            sourceFeuille,
+            idPlanification: plan.idPlanification || ((sourceFeuille === 'FV' ? 'PLAN-FV-' : 'PLAN-') + Date.now())
         };
 
         const taggedPlan = (plan.espaceSaisie === 'SIEGE' || plan.espaceSaisie === 'REGIONAL')
@@ -269,8 +271,8 @@
     }
 
     /**
-     * Met à jour l'état d'avancement d'une planification Siège (PLANIFIEE -> EN_COURS -> REALISEE)
-     * visible immédiatement par tous les comptes du Siège.
+     * Met à jour l'état d'avancement d'une planification (EN_COURS <-> CLOTURE / REALISEE)
+     * visible immédiatement par le Siège et par le contrôleur concerné.
      */
     function marquerPlanificationStatut(idPlanification, statut, extra = {}) {
         if (!idPlanification) return getDB();
@@ -280,6 +282,7 @@
             fullRawDb.planifications[idx] = {
                 ...fullRawDb.planifications[idx],
                 statutExecution: statut,
+                statutAvancement: (statut === 'CLOTURE' || statut === 'REALISEE') ? 'Clôturé' : 'En cours',
                 ...extra,
                 updatedAt: new Date().toISOString()
             };
