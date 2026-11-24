@@ -1361,15 +1361,20 @@
         /**
          * Contrôle d'accès sur les planifications (FC & FV) :
          * - Siège : visibilité globale de toutes les planifications.
-         * - Contrôleur régional : confidentialité stricte — voit uniquement ses propres missions attribuées.
+         * - Vérification (FV) en phase de planification : secret strict, visible uniquement par le contrôleur désigné (aucun repli régional).
+         * - Contrôle (FC) : visible par le contrôleur désigné ou par sa région si non nominatif.
          */
         function aDroitConsultationPlanification(plan, isSiegeUser, homeReg, authUser) {
             if (!plan || typeof plan !== 'object') return false;
             if (isSiegeUser) return true;
             if (!authUser) return false;
 
+            const src = String(plan.sourceFeuille || '').toUpperCase().trim();
+            const nat = String(plan.natureMission || plan.typeMission || plan.typeControle || '').toLowerCase().trim();
+            const estVerification = src === 'FV' || nat.includes('vérif') || nat.includes('verif') || nat.includes('encaisse');
+
             const myId = String(authUser.username || authUser.identifiant || '').toUpperCase().trim();
-            const myNom = String(authUser.fonction || '').toUpperCase().trim();
+            const myNom = String(authUser.fonction || authUser.nom || '').toUpperCase().trim();
 
             const cibleId = String(plan.controleurId || '').toUpperCase().trim();
             const cibleNom = String(plan.controleur || '').toUpperCase().trim();
@@ -1377,10 +1382,17 @@
                 ? plan.controleursAssignes.map(x => String(x || '').toUpperCase().trim()).filter(Boolean)
                 : [];
 
+            const estDesigne = Boolean(
+                (myId && (cibleId === myId || cibleNom === myId || assignes.includes(myId))) ||
+                (myNom && (cibleNom === myNom || assignes.includes(myNom)))
+            );
+
+            if (estVerification) {
+                return estDesigne;
+            }
+
             if (cibleId || assignes.length > 0 || (cibleNom && cibleNom !== 'NON ASSIGNÉ' && cibleNom !== 'NON RENSEIGNÉ')) {
-                if (myId && (cibleId === myId || cibleNom === myId || assignes.includes(myId))) return true;
-                if (myNom && (cibleNom === myNom || assignes.includes(myNom))) return true;
-                return false;
+                return estDesigne;
             }
 
             return Boolean(homeReg && homeReg !== '__NONE__' && normaliserRegion(plan.region) === homeReg);
@@ -2192,7 +2204,6 @@
             const isSiegeUser = estUtilisateurSiege();
             const regionsAutorisees = getRegionsAutoriseesUtilisateur();
 
-            // Synchronisation douce avec les sélections explicites du bandeau supérieur
             let regFilter = selReg.value;
             if (niveauActif !== 'NATIONAL' && etatGlobal.reg !== 'TOUS') {
                 if (isSiegeUser || regionsAutorisees.length > 1) {
@@ -2209,7 +2220,6 @@
             const natFilter = selNat.value;
             const statFilter = selStat.value;
 
-            // Peuplement dynamique des listes déroulantes en cascade
             const regsDisponibles = [...new Set(toutesLesPlanifications.map(p => p.region).filter(Boolean))]
                 .sort((a, b) => a.localeCompare(b, 'fr'));
             regFilter = remplirSelectOptions(selReg, regsDisponibles, '-- Toutes les régions --');
@@ -2235,14 +2245,12 @@
             const ctrlKeysDisponibles = [...ctrlsMap.keys()].sort((a, b) => a.localeCompare(b, 'fr'));
             const ctrlActuel = remplirSelectOptions(selCtrl, ctrlKeysDisponibles, '-- Tous les contrôleurs --', k => ctrlsMap.get(k) || k);
 
-            // Mise en surbrillance des filtres actifs
             selReg.classList.toggle('highlight-focus', regFilter !== 'TOUS');
             selCentre.classList.toggle('highlight-focus', centreFilter !== 'TOUS');
             selCtrl.classList.toggle('highlight-focus', ctrlActuel !== 'TOUS');
             selNat.classList.toggle('highlight-focus', natFilter !== 'TOUS');
             selStat.classList.toggle('highlight-focus', statFilter !== 'TOUS');
 
-            // Application des filtres
             const planifsFiltrees = toutesLesPlanifications.filter(p => {
                 if (regFilter !== 'TOUS' && p.region !== regFilter) return false;
                 if (centreFilter !== 'TOUS' && p.centre !== centreFilter) return false;
@@ -2252,7 +2260,6 @@
                 return true;
             });
 
-            // Calcul des indicateurs synthétiques
             const totalPlan = planifsFiltrees.length;
             const totalFC = planifsFiltrees.filter(p => p.natureMission === 'Contrôle').length;
             const totalFV = planifsFiltrees.filter(p => p.natureMission === 'Vérification').length;
@@ -2274,10 +2281,9 @@
             if (sousTitreEl) {
                 sousTitreEl.textContent = isSiegeUser
                     ? `Espace Siège (Visibilité globale) · ${totalPlan} mission(s) planifiée(s)`
-                    : `Mes missions planifiées attribuées · ${totalPlan} mission(s)`;
+                    : `Mes missions planifiées (Vérifications FV strictement nominatives) · ${totalPlan} mission(s)`;
             }
 
-            // Agrégation consolidée par (Région, Centre, Contrôleur, Nature de mission)
             const mapGroupes = new Map();
             planifsFiltrees.forEach(p => {
                 const cle = `${p.region}|||${p.centre}|||${p.controleurKey}|||${p.natureMission}`;
