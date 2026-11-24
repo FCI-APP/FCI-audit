@@ -73,6 +73,62 @@
         .bdd-badge-total { background-color: #DEF7EC; color: #03543F; font-size: 0.78rem; font-weight: 700; padding: 6px 10px; border-radius: 6px; border: 1px solid #A7F3D0; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
         .bdd-badge-error { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
 
+        .plan-fv-card {
+            background-color: #F0F9FF;
+            border-radius: 8px;
+            padding: 15px 18px;
+            border: 1px solid #BAE6FD;
+            border-left: 4px solid #0284C7;
+            margin-bottom: 14px;
+        }
+        .single-row-plan-fv {
+            display: grid;
+            grid-template-columns: 1.35fr 1fr 1.45fr 0.95fr 0.9fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+        .plan-fv-table-wrap {
+            margin-top: 12px;
+            overflow-x: auto;
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+        }
+        .plan-fv-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .plan-fv-table th {
+            background-color: var(--primary-blue);
+            color: #FFFFFF;
+            text-align: left;
+            padding: 8px 10px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .plan-fv-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #E2E8F0;
+            vertical-align: middle;
+        }
+        .plan-fv-table tr:last-child td { border-bottom: none; }
+        .plan-fv-table tr:hover td { background-color: #F8FAFC; }
+        .plan-fv-row-active td { background-color: #EFF6FF !important; }
+
+        .badge-etat-plan {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        .etat-plan-encours { background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .etat-plan-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
+
         .saisie-line-card {
             background-color: var(--card-bg);
             border-radius: 8px;
@@ -231,7 +287,10 @@
         .avis-tres-bonne { background-color: var(--success); color: #FFF; }
 
         .btn { padding: 8px 14px; border-radius: 6px; font-size: 0.83rem; font-weight: 700; border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap; }
+        .btn-sm { padding: 5px 9px; font-size: 0.74rem; gap: 4px; }
         .btn-primary { background-color: var(--primary-blue); color: #FFF; }
+        .btn-success { background-color: #D1FAE5; color: #065F46; border-color: #10B981; }
+        .btn-success:hover { background-color: #A7F3D0; }
         .btn-accent { background-color: var(--accent-gold); color: var(--dark-blue); }
         .btn-outline { background-color: transparent; border-color: var(--border-color); color: var(--text-dark); }
         .btn-warning { background-color: #FFEDD5; color: #C2410C; border-color: #FB923C; }
@@ -247,11 +306,12 @@
         @media (max-width: 1280px) {
             .single-row-saisie-fv { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
             .single-row-modif-fv { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+            .single-row-plan-fv { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
             .metrics-statut-row { grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); }
         }
 
         @media print {
-            .sidebar, .header-actions-wrapper, .modif-line-card { display: none !important; }
+            .sidebar, .header-actions-wrapper, .modif-line-card, .plan-fv-card { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
         }
     </style>
@@ -299,6 +359,86 @@
                 </div>
             </div>
         </header>
+
+        <!-- ESPACE PLANIFICATION DES VÉRIFICATIONS (SIÈGE : CRÉATION + SUIVI GLOBAL / CONTRÔLEUR : SES MISSIONS ATTRIBUÉES) -->
+        <section class="plan-fv-card" id="planificationFVSection">
+            <div class="section-line-label" style="color:#0369A1;">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span id="planFvSectionTitle">Planification &amp; Suivi des Vérifications (FV)</span>
+                <span id="planFvCountBadge" style="background:#E0F2FE; color:#0369A1; border:1px solid #7DD3FC; padding:2px 8px; border-radius:10px; font-size:0.72rem; text-transform:none;">0 planification(s)</span>
+                <span id="activePlanFvBanner" style="margin-left:auto;"></span>
+            </div>
+
+            <!-- Formulaire de création visible UNIQUEMENT par les comptes du Siège (Admin, Directeur, Chefs de service) -->
+            <div id="siegePlanFvCreator" style="display:none; margin-bottom:10px;">
+                <div class="single-row-plan-fv">
+                    <div class="form-group">
+                        <label for="planFvControleurSelect">Contrôleur désigné *</label>
+                        <select id="planFvControleurSelect" class="form-control">
+                            <option value="">-- Sélectionner un contrôleur --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvRegionSelect">Région concernée *</label>
+                        <select id="planFvRegionSelect" class="form-control" onchange="onPlanFvRegionChange()">
+                            <option value="">-- Région --</option>
+                            <option value="MARRAKECH">MARRAKECH</option>
+                            <option value="AGADIR">AGADIR</option>
+                            <option value="CASA">CASA</option>
+                            <option value="SETTAT">SETTAT</option>
+                            <option value="RABAT">RABAT</option>
+                            <option value="TANGER">TANGER</option>
+                            <option value="LAAYOUNE">LAAYOUNE</option>
+                            <option value="FES">FES</option>
+                            <option value="MEKNES">MEKNES</option>
+                            <option value="OUEJDA">OUEJDA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvSiteSelect">Centre concerné *</label>
+                        <select id="planFvSiteSelect" class="form-control" disabled>
+                            <option value="">-- Région requise --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvDateInput">Date prévue *</label>
+                        <input type="date" id="planFvDateInput" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvStatutSelect">État d'avancement</label>
+                        <select id="planFvStatutSelect" class="form-control">
+                            <option value="EN_COURS" selected>🟡 En cours</option>
+                            <option value="CLOTURE">🟢 Clôturé</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" onclick="creerPlanificationFV()">
+                            <i class="fa-solid fa-plus"></i> Planifier
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableau de suivi temps réel (Global pour le Siège / Strictement individuel pour le Contrôleur désigné) -->
+            <div class="plan-fv-table-wrap" id="planFvTableWrap">
+                <table class="plan-fv-table">
+                    <thead>
+                        <tr>
+                            <th>Contrôleur désigné</th>
+                            <th>Région</th>
+                            <th>Centre concerné</th>
+                            <th>Périmètre</th>
+                            <th>Date prévue</th>
+                            <th>État d'avancement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="planFvTableBody">
+                        <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Aucune vérification planifiée.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
         <section class="saisie-line-card">
             <div class="section-line-label">
@@ -634,6 +774,7 @@
         let currentMissionId = "";
         let loadedEncaisseIds = [];
         let loadedControleurId = "";
+        let activePlanificationFVId = "";
 
         function getCurrentAuthUser() {
             return (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
@@ -641,11 +782,349 @@
                 : null;
         }
 
+        function isCurrentUserSiege() {
+            const u = getCurrentAuthUser();
+            if (!u) return false;
+            if (window.FCIAuth && typeof window.FCIAuth.isSiege === 'function') {
+                return window.FCIAuth.isSiege();
+            }
+            return normaliserRegion(u.region) === 'SIEGE';
+        }
+
         function getUserHomeRegion() {
             const u = getCurrentAuthUser();
             if (!u || !u.region || u.region === 'SIEGE') return '';
             return normaliserRegion(u.region);
         }
+
+        // ==================== PLANIFICATION & SUIVI DES VÉRIFICATIONS (FV) ====================
+
+        function initPlanificationFVUI() {
+            const siege = isCurrentUserSiege();
+            const titleEl = document.getElementById('planFvSectionTitle');
+            const creatorEl = document.getElementById('siegePlanFvCreator');
+            const dateInput = document.getElementById('planFvDateInput');
+
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            if (siege) {
+                if (titleEl) titleEl.innerText = "Planification & Suivi des Vérifications (Espace Siège — Visibilité Globale)";
+                if (creatorEl) creatorEl.style.display = 'block';
+                peuplerListeControleursPlanFV();
+            } else {
+                if (titleEl) titleEl.innerText = "Mes Vérifications Planifiées par le Siège (Attribution Nominative)";
+                if (creatorEl) creatorEl.style.display = 'none';
+            }
+
+            renderPlanificationsFVTable();
+        }
+
+        function peuplerListeControleursPlanFV() {
+            const select = document.getElementById('planFvControleurSelect');
+            if (!select) return;
+
+            let controleurs = [];
+            if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+                controleurs = window.FCIAuth.getControllersByRegion('');
+            }
+
+            select.innerHTML = '<option value="">-- Sélectionner un contrôleur (ex. CASA-001) --</option>';
+            controleurs.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.username;
+                opt.dataset.fonction = c.fonction || '';
+                opt.dataset.region = c.region || '';
+                opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function onPlanFvRegionChange() {
+            const regSelect = document.getElementById('planFvRegionSelect');
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            if (!regSelect || !siteSelect) return;
+
+            const region = normaliserRegion(regSelect.value);
+            regSelect.value = region;
+            siteSelect.innerHTML = '';
+
+            if (!region || !CENTRES_PAR_REGION[region]) {
+                siteSelect.innerHTML = '<option value="">-- Région requise --</option>';
+                siteSelect.disabled = true;
+                return;
+            }
+
+            siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                siteSelect.appendChild(opt);
+            });
+            siteSelect.disabled = false;
+        }
+
+        function getPlanificationsFVVisibles() {
+            const db = lireDBSecurisee();
+            const u = getCurrentAuthUser();
+            const siege = isCurrentUserSiege();
+            const myId = u ? String(u.username || u.identifiant || '').toUpperCase().trim() : '';
+
+            return (db.planifications || []).filter(p => {
+                const isFV = String(p.sourceFeuille || '').toUpperCase() === 'FV' ||
+                             String(p.natureMission || '').toUpperCase().includes('VERIF');
+                if (!isFV) return false;
+
+                if (siege) return true;
+
+                // Confidentialité stricte : visible uniquement par le contrôleur désigné
+                const cibleId = String(p.controleurId || '').toUpperCase().trim();
+                const assignes = Array.isArray(p.controleursAssignes)
+                    ? p.controleursAssignes.map(x => String(x || '').toUpperCase().trim())
+                    : [];
+                return Boolean(myId) && (cibleId === myId || assignes.includes(myId));
+            });
+        }
+
+        function normaliserStatutPlanFV(plan) {
+            const raw = String(plan?.statutExecution || plan?.statutAvancement || '').toUpperCase().trim();
+            if (raw === 'CLOTURE' || raw === 'CLÔTURÉ' || raw === 'REALISEE' || raw === 'RÉALISÉE') {
+                return 'CLOTURE';
+            }
+            return 'EN_COURS';
+        }
+
+        async function creerPlanificationFV() {
+            if (!isCurrentUserSiege()) return;
+
+            const ctrlSelect = document.getElementById('planFvControleurSelect');
+            const regSelect = document.getElementById('planFvRegionSelect');
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            const dateInput = document.getElementById('planFvDateInput');
+            const statutSelect = document.getElementById('planFvStatutSelect');
+
+            const controleurId = String(ctrlSelect.value || '').trim();
+            const selectedOpt = ctrlSelect.options[ctrlSelect.selectedIndex];
+            const controleurFonction = selectedOpt ? (selectedOpt.dataset.fonction || controleurId) : controleurId;
+            const controleurHomeRegion = selectedOpt ? normaliserRegion(selectedOpt.dataset.region || '') : '';
+            const region = normaliserRegion(regSelect.value);
+            const site = String(siteSelect.value || '').trim();
+            const datePrevue = String(dateInput.value || '').trim();
+            const statut = statutSelect.value === 'CLOTURE' ? 'CLOTURE' : 'EN_COURS';
+
+            if (!controleurId || !region || !site || !datePrevue) {
+                alert("Veuillez renseigner le contrôleur désigné, la région, le centre concerné et la date prévue.");
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const idPlanification = 'PLAN-FV-' + Date.now();
+            const planRecord = {
+                idPlanification,
+                sourceFeuille: 'FV',
+                natureMission: 'Vérification',
+                planifiePar: 'SIEGE',
+                espaceSaisie: 'SIEGE',
+                creeParId: u ? u.username : 'admin-siege',
+                creeParRole: u ? u.role : 'ADMIN',
+                auteurFonction: u ? u.fonction : 'Siège',
+                controleurId,
+                controleur: controleurId,
+                controleurFonction,
+                controleurRegion: controleurHomeRegion,
+                controleursAssignes: [controleurId],
+                region,
+                site,
+                centre: site,
+                entite: site,
+                date: datePrevue,
+                datePrevue,
+                referentiel: 'Encaisses.json (Tous les PC)',
+                statutExecution: statut,
+                statutAvancement: statut === 'CLOTURE' ? 'Clôturé' : 'En cours',
+                createdAt: new Date().toISOString()
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
+                await FCIDatabase.enregistrerPlanification(planRecord);
+            } else {
+                const db = lireDBSecurisee();
+                db.planifications = [...(db.planifications || []), planRecord];
+                sauvegarderDBSecurisee(db);
+            }
+
+            ctrlSelect.value = '';
+            regSelect.value = '';
+            onPlanFvRegionChange();
+            renderPlanificationsFVTable();
+        }
+
+        function renderPlanificationsFVTable() {
+            const tbody = document.getElementById('planFvTableBody');
+            const countBadge = document.getElementById('planFvCountBadge');
+            const activeBanner = document.getElementById('activePlanFvBanner');
+            if (!tbody) return;
+
+            const plans = getPlanificationsFVVisibles().sort((a, b) =>
+                String(b.datePrevue || b.date || '').localeCompare(String(a.datePrevue || a.date || ''))
+            );
+
+            if (countBadge) {
+                countBadge.innerText = `${plans.length} planification(s)`;
+            }
+
+            if (activeBanner) {
+                if (activePlanificationFVId) {
+                    const activePlan = plans.find(p => p.idPlanification === activePlanificationFVId);
+                    activeBanner.innerHTML = activePlan
+                        ? `<span class="date-bdd-pill"><i class="fa-solid fa-link"></i> Mission planifiée active : ${activePlan.site} (${activePlan.controleurId})</span>`
+                        : '';
+                } else {
+                    activeBanner.innerHTML = '';
+                }
+            }
+
+            if (plans.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Aucune vérification planifiée attribuée.</td></tr>`;
+                return;
+            }
+
+            const siege = isCurrentUserSiege();
+
+            tbody.innerHTML = plans.map(p => {
+                const etat = normaliserStatutPlanFV(p);
+                const badgeEtat = etat === 'CLOTURE'
+                    ? `<span class="badge-etat-plan etat-plan-cloture">🟢 Clôturé</span>`
+                    : `<span class="badge-etat-plan etat-plan-encours">🟡 En cours</span>`;
+                const isSelected = activePlanificationFVId === p.idPlanification;
+                const dateAff = formatDateToJJMMAAAA(p.datePrevue || p.date || '');
+                const ctrlLabel = p.controleurFonction && p.controleurFonction !== p.controleurId
+                    ? `<strong>${p.controleurId}</strong> <span style="color:var(--text-muted); font-size:0.72rem;">(${p.controleurFonction})</span>`
+                    : `<strong>${p.controleurId || p.controleur || '--'}</strong>`;
+
+                const nextStatut = etat === 'CLOTURE' ? 'EN_COURS' : 'CLOTURE';
+                const toggleBtnLabel = etat === 'CLOTURE' ? 'Remettre En cours' : 'Clôturer';
+                const toggleBtnClass = etat === 'CLOTURE' ? 'btn-warning' : 'btn-success';
+
+                return `
+                    <tr class="${isSelected ? 'plan-fv-row-active' : ''}">
+                        <td>${ctrlLabel}</td>
+                        <td><strong>${normaliserRegion(p.region)}</strong></td>
+                        <td>${p.site || p.centre || '--'}</td>
+                        <td><span style="font-size:0.72rem; color:var(--primary-blue); font-weight:700;">Encaisses.json (Pop / Éch / OK / KO / TC / Constat / Reco)</span></td>
+                        <td>${dateAff || '--'}</td>
+                        <td>${badgeEtat}</td>
+                        <td style="display:flex; gap:5px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${p.idPlanification}')" title="Charger cette vérification dans la feuille FV">
+                                <i class="fa-solid fa-play"></i> Ouvrir
+                            </button>
+                            <button type="button" class="btn btn-sm ${toggleBtnClass}" onclick="basculerStatutPlanificationFV('${p.idPlanification}', '${nextStatut}')">
+                                <i class="fa-solid fa-check-double"></i> ${toggleBtnLabel}
+                            </button>
+                            ${siege ? `<button type="button" class="btn btn-sm btn-danger" onclick="supprimerPlanificationFV('${p.idPlanification}')" title="Supprimer cette planification"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function chargerPlanificationFVDansSaisie(idPlanification) {
+            const plans = getPlanificationsFVVisibles();
+            const plan = plans.find(p => p.idPlanification === idPlanification);
+            if (!plan) return;
+
+            activePlanificationFVId = plan.idPlanification;
+            currentMissionId = plan.idMission || ("MIS-ENC-" + Date.now());
+            loadedEncaisseIds = [];
+            loadedControleurId = plan.controleurId || '';
+
+            const regVal = normaliserRegion(plan.region);
+            const siteVal = plan.site || plan.centre || '';
+            const dateISO = formatDateToISO(plan.datePrevue || plan.date) || new Date().toISOString().split('T')[0];
+            const dateVerifFR = formatDateToJJMMAAAA(dateISO);
+
+            const regSelect = document.getElementById('regionSite');
+            regSelect.disabled = false;
+            regSelect.value = regVal;
+            onRegionEncaisseChange(siteVal);
+
+            document.getElementById('dateVerification').value = dateISO;
+            updateHeaderDateVerifBadge();
+
+            const ctrlInput = document.getElementById('nomControleur');
+            ctrlInput.removeAttribute('readonly');
+            ctrlInput.value = plan.controleurId || plan.controleur || '';
+
+            // Chargement d'office de tous les points de contrôle de Encaisses.json
+            if (Array.isArray(rawJsonData) && rawJsonData.length > 0) {
+                addedPoints = rawJsonData.map((item, idx) => ({
+                    id: Date.now() + idx,
+                    selected: true,
+                    dateVerification: dateVerifFR,
+                    processus: getItemVal(item, ['Processus']),
+                    risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
+                    controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
+                    pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
+                    constats: [{
+                        dateVerification: dateVerifFR,
+                        statut: 'EN_COURS',
+                        population: 0,
+                        echantillon: 0,
+                        ok: 0,
+                        ko: 0,
+                        rate: 100,
+                        constatText: '',
+                        recoText: '',
+                        avisText: ''
+                    }]
+                }));
+                renderPoints();
+            }
+
+            renderPlanificationsFVTable();
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = `Mission planifiée chargée — ${plan.controleurId} | ${regVal} | ${siteVal}`;
+            }
+        }
+
+        function basculerStatutPlanificationFV(idPlanification, nouveauStatut) {
+            if (!idPlanification) return;
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.marquerPlanificationStatut === 'function') {
+                FCIDatabase.marquerPlanificationStatut(idPlanification, nouveauStatut);
+            } else {
+                const raw = localStorage.getItem('fci_database');
+                if (raw) {
+                    const fullDb = JSON.parse(raw);
+                    const idx = (fullDb.planifications || []).findIndex(p => p.idPlanification === idPlanification);
+                    if (idx !== -1) {
+                        fullDb.planifications[idx].statutExecution = nouveauStatut;
+                        fullDb.planifications[idx].statutAvancement = nouveauStatut === 'CLOTURE' ? 'Clôturé' : 'En cours';
+                        localStorage.setItem('fci_database', JSON.stringify(fullDb));
+                    }
+                }
+            }
+            renderPlanificationsFVTable();
+        }
+
+        function supprimerPlanificationFV(idPlanification) {
+            if (!isCurrentUserSiege() || !idPlanification) return;
+            if (activePlanificationFVId === idPlanification) {
+                activePlanificationFVId = '';
+            }
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerPlanification === 'function') {
+                FCIDatabase.supprimerPlanification(idPlanification);
+            } else {
+                const db = lireDBSecurisee();
+                db.planifications = (db.planifications || []).filter(p => p.idPlanification !== idPlanification);
+                sauvegarderDBSecurisee(db);
+            }
+            renderPlanificationsFVTable();
+        }
+
+        // ==================== FIN PLANIFICATION & SUIVI FV ====================
 
         function updateInterRegionalBadge() {
             const badge = document.getElementById('badgeInterRegFV');
@@ -681,7 +1160,6 @@
             const regSelect = document.getElementById('regionSite');
             if (!regSelect) return;
 
-            // La région reste sélectionnable pour permettre les vérifications interrégionales
             regSelect.disabled = false;
 
             if (!regSelect.value && homeReg) {
@@ -719,7 +1197,7 @@
         }
 
         function lireDBSecurisee() {
-            let db = { missions: [], constatsControle: [], constatsEncaisses: [] };
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [], planifications: [] };
             try {
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
                     const loaded = FCIDatabase.getDB();
@@ -743,6 +1221,7 @@
             if (!Array.isArray(db.missions)) db.missions = [];
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            if (!Array.isArray(db.planifications)) db.planifications = [];
             return db;
         }
 
@@ -750,6 +1229,7 @@
             if (!Array.isArray(db.missions)) db.missions = [];
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
+            if (!Array.isArray(db.planifications)) db.planifications = [];
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
                 return FCIDatabase.saveDB(db);
             }
@@ -970,6 +1450,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try { resetDateField(); } catch (e) {}
+            try { initPlanificationFVUI(); } catch (e) {}
             try {
                 reinitialiserChampsNomsVides();
                 appliquerRegionParDefautSaisie();
@@ -988,9 +1469,11 @@
             if (!addedPoints || addedPoints.length === 0) {
                 reinitialiserChampsNomsVides();
             }
+            renderPlanificationsFVTable();
         });
 
         window.addEventListener('fci-auth-ready', () => {
+            initPlanificationFVUI();
             appliquerRegionParDefautSaisie();
             if (!addedPoints || addedPoints.length === 0) {
                 reinitialiserChampsNomsVides();
@@ -998,8 +1481,14 @@
             remplirFiltresEncaissesBDD();
         });
 
+        window.addEventListener('fci-db-synced', () => {
+            renderPlanificationsFVTable();
+            remplirFiltresEncaissesBDD();
+        });
+
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
+                renderPlanificationsFVTable();
                 remplirFiltresEncaissesBDD();
             }
         });
@@ -1025,7 +1514,6 @@
             const mapMissions = {};
             (db.missions || []).forEach(m => { if (m.idMission) mapMissions[m.idMission] = m; });
 
-            // lireDBSecurisee() applique déjà FCIAuth.filterDatabase (région d'affectation + vérifications effectuées dans d'autres régions)
             const encaisses = db.constatsEncaisses || [];
 
             const badgeCount = document.getElementById('bddCountInfoFV');
@@ -1518,6 +2006,7 @@
             currentMissionId = "";
             loadedEncaisseIds = [];
             loadedControleurId = "";
+            activePlanificationFVId = "";
             const homeReg = getUserHomeRegion();
             const regSelect = document.getElementById('regionSite');
             regSelect.disabled = false;
@@ -1530,6 +2019,7 @@
             onProcessusChange();
             resetDateField();
             renderPoints();
+            renderPlanificationsFVTable();
             localStorage.removeItem('fci_fiche_verification_encaisses');
             document.getElementById('searchEncaisseStatus').innerText = '';
             reinitialiserFiltresBDDFV();
@@ -1585,6 +2075,7 @@
                             ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
                             : (c._bddIdEncaisse || `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`),
                         idMission: idMission,
+                        idPlanification: activePlanificationFVId || '',
                         sourceFeuille: 'FV',
                         typeControle: typeControle,
                         region: region,
@@ -1663,6 +2154,7 @@
             try {
                 const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
                 const lotConstatsFV = construireLotConstatsFV(idMission, 'ARCHIVE');
+                const planIdToClose = activePlanificationFVId;
 
                 const db = lireDBSecurisee();
                 const listeExistante = db.constatsEncaisses || [];
@@ -1695,6 +2187,23 @@
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
                     await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
+                }
+
+                // Clôture automatique de la planification FV correspondante dans l'espace Siège et Contrôleur
+                if (planIdToClose) {
+                    basculerStatutPlanificationFV(planIdToClose, 'CLOTURE');
+                } else {
+                    const u = getCurrentAuthUser();
+                    const ctrlUpper = String(lotConstatsFV[0]?.controleurId || controleur || '').toUpperCase().trim();
+                    const matchingPlan = getPlanificationsFVVisibles().find(p =>
+                        normaliserStatutPlanFV(p) !== 'CLOTURE' &&
+                        normaliserRegion(p.region) === region &&
+                        String(p.site || p.centre || '').trim() === site &&
+                        (!ctrlUpper || String(p.controleurId || '').toUpperCase().trim() === ctrlUpper || (u && String(p.controleurId || '').toUpperCase().trim() === String(u.username || '').toUpperCase().trim()))
+                    );
+                    if (matchingPlan) {
+                        basculerStatutPlanificationFV(matchingPlan.idPlanification, 'CLOTURE');
+                    }
                 }
 
                 clearForm();
@@ -1741,6 +2250,7 @@
             currentMissionId = sample.idMission || ("MIS-ENC-" + Date.now());
             loadedEncaisseIds = constatsFV.map(c => c.idEncaisse).filter(Boolean);
             loadedControleurId = sample.controleurId || missionLiee.controleurId || '';
+            activePlanificationFVId = sample.idPlanification || '';
 
             const dateVerifISO = formatDateToISO(sample.date || sample.dateVerification || missionLiee.date);
             const dateVerifJJMMAAAA = getEncaisseDateFR(sample, mapMissions);
@@ -1800,6 +2310,7 @@
             });
 
             renderPoints();
+            renderPlanificationsFVTable();
         }
 
         async function modifierFicheEncaisse() {
