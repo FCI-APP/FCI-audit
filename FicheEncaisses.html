@@ -150,7 +150,7 @@
         }
         .single-row-saisie-fv {
             display: grid;
-            grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.15fr 0.9fr;
+            grid-template-columns: 1.05fr 1.45fr 0.95fr 0.95fr 0.95fr 1.25fr 0.9fr;
             gap: 10px;
             align-items: end;
         }
@@ -483,8 +483,10 @@
                         <input type="date" class="form-control" id="periodeFin" autocomplete="off">
                     </div>
                     <div class="form-group">
-                        <label>Contrôleur *</label>
-                        <input type="text" class="form-control" id="nomControleur" name="fci_fv_ctrl_nohist" value="" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" placeholder="Nom du contrôleur">
+                        <label for="nomControleur">Contrôleur *</label>
+                        <select class="form-control" id="nomControleur" autocomplete="off" onchange="onControleurSaisieChange()">
+                            <option value="">-- Contrôleur (ex. CASA-001) --</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label>Vérification *</label>
@@ -797,6 +799,97 @@
             return normaliserRegion(u.region);
         }
 
+        // ==================== LISTE DÉROULANTE DES CONTRÔLEURS (ESPACE SAISIE) ====================
+
+        function peuplerListeControleursSaisie(valeurConservee = '') {
+            const select = document.getElementById('nomControleur');
+            if (!select) return;
+
+            const currentVal = valeurConservee !== '' ? valeurConservee : select.value;
+
+            let controleurs = [];
+            if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+                controleurs = window.FCIAuth.getControllersByRegion('');
+            }
+
+            const regPrioritaire = normaliserRegion(
+                document.getElementById('regionSite')?.value || getUserHomeRegion()
+            );
+
+            // Regrouper les contrôleurs par région en plaçant la région prioritaire en tête
+            const groupesMap = new Map();
+            controleurs.forEach(c => {
+                const reg = normaliserRegion(c.region || 'AUTRE');
+                if (!groupesMap.has(reg)) groupesMap.set(reg, []);
+                groupesMap.get(reg).push(c);
+            });
+
+            const regionsOrdonnees = [...groupesMap.keys()].sort((a, b) => {
+                if (regPrioritaire) {
+                    if (a === regPrioritaire) return -1;
+                    if (b === regPrioritaire) return 1;
+                }
+                return a.localeCompare(b, 'fr');
+            });
+
+            select.innerHTML = '<option value="">-- Contrôleur (ex. CASA-001) --</option>';
+
+            regionsOrdonnees.forEach(reg => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = reg;
+                groupesMap.get(reg).forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = normaliserRegion(c.region || '');
+                    opt.textContent = `${c.username} — ${c.fonction}`;
+                    optgroup.appendChild(opt);
+                });
+                select.appendChild(optgroup);
+            });
+
+            if (currentVal) {
+                setControleurSaisieValue(currentVal);
+            }
+        }
+
+        function setControleurSaisieValue(val) {
+            const select = document.getElementById('nomControleur');
+            if (!select) return;
+            const clean = String(val || '').trim();
+            if (!clean) {
+                select.value = '';
+                updateInterRegionalBadge();
+                return;
+            }
+
+            // Recherche exacte par identifiant (ex. CASA-001) ou insensible à la casse
+            const match = Array.from(select.options).find(
+                o => o.value && o.value.toLowerCase() === clean.toLowerCase()
+            );
+            if (match) {
+                select.value = match.value;
+            } else {
+                // Option de compatibilité pour les anciennes fiches saisies en texte libre
+                const fallbackOpt = document.createElement('option');
+                fallbackOpt.value = clean;
+                fallbackOpt.textContent = clean;
+                select.appendChild(fallbackOpt);
+                select.value = clean;
+            }
+            updateInterRegionalBadge();
+        }
+
+        function onControleurSaisieChange() {
+            const select = document.getElementById('nomControleur');
+            if (!select) return;
+            const opt = select.options[select.selectedIndex];
+            if (opt && opt.value) {
+                loadedControleurId = opt.value;
+            }
+            updateInterRegionalBadge();
+        }
+
         // ==================== PLANIFICATION & SUIVI DES VÉRIFICATIONS (FV) ====================
 
         function initPlanificationFVUI() {
@@ -879,7 +972,6 @@
 
                 if (siege) return true;
 
-                // Confidentialité stricte : visible uniquement par le contrôleur désigné
                 const cibleId = String(p.controleurId || '').toUpperCase().trim();
                 const assignes = Array.isArray(p.controleursAssignes)
                     ? p.controleursAssignes.map(x => String(x || '').toUpperCase().trim())
@@ -1053,11 +1145,8 @@
             document.getElementById('dateVerification').value = dateISO;
             updateHeaderDateVerifBadge();
 
-            const ctrlInput = document.getElementById('nomControleur');
-            ctrlInput.removeAttribute('readonly');
-            ctrlInput.value = plan.controleurId || plan.controleur || '';
+            setControleurSaisieValue(plan.controleurId || plan.controleur || '');
 
-            // Chargement d'office de tous les points de contrôle de Encaisses.json
             if (Array.isArray(rawJsonData) && rawJsonData.length > 0) {
                 addedPoints = rawJsonData.map((item, idx) => ({
                     id: Date.now() + idx,
@@ -1129,11 +1218,15 @@
         function updateInterRegionalBadge() {
             const badge = document.getElementById('badgeInterRegFV');
             const regSelect = document.getElementById('regionSite');
+            const ctrlSelect = document.getElementById('nomControleur');
             if (!badge || !regSelect) return;
-            const homeReg = getUserHomeRegion();
+
+            const selectedOpt = ctrlSelect && ctrlSelect.selectedIndex >= 0 ? ctrlSelect.options[ctrlSelect.selectedIndex] : null;
+            const ctrlHomeReg = normaliserRegion(selectedOpt?.dataset?.region || getUserHomeRegion());
             const currentReg = normaliserRegion(regSelect.value);
-            if (homeReg && currentReg && homeReg !== currentReg) {
-                badge.innerHTML = `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Vérification interrégionale (${homeReg} → ${currentReg})</span>`;
+
+            if (ctrlHomeReg && currentReg && ctrlHomeReg !== currentReg) {
+                badge.innerHTML = `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Vérification interrégionale (${ctrlHomeReg} → ${currentReg})</span>`;
             } else {
                 badge.innerHTML = '';
             }
@@ -1141,13 +1234,12 @@
 
         function reinitialiserChampsNomsVides() {
             const stamp = Date.now();
-            const ctrlInput = document.getElementById('nomControleur');
-            const respInput = document.getElementById('nomResponsable');
-            if (ctrlInput) {
-                ctrlInput.value = '';
-                ctrlInput.setAttribute('name', 'fci_fv_ctrl_' + stamp);
-                ctrlInput.setAttribute('readonly', 'readonly');
+            peuplerListeControleursSaisie('');
+            const ctrlSelect = document.getElementById('nomControleur');
+            if (ctrlSelect) {
+                ctrlSelect.value = '';
             }
+            const respInput = document.getElementById('nomResponsable');
             if (respInput) {
                 respInput.value = '';
                 respInput.setAttribute('name', 'fci_fv_resp_' + stamp);
@@ -1167,6 +1259,7 @@
                 regSelect.value = homeReg;
                 onRegionEncaisseChange(siteActuel);
             } else {
+                peuplerListeControleursSaisie();
                 updateInterRegionalBadge();
             }
         }
@@ -1413,6 +1506,7 @@
             const siteSelect = document.getElementById('nomSite');
             siteSelect.innerHTML = '';
 
+            peuplerListeControleursSaisie();
             updateInterRegionalBadge();
 
             if (!region || !CENTRES_PAR_REGION[region]) {
@@ -1450,6 +1544,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             try { resetDateField(); } catch (e) {}
+            try { peuplerListeControleursSaisie(''); } catch (e) {}
             try { initPlanificationFVUI(); } catch (e) {}
             try {
                 reinitialiserChampsNomsVides();
@@ -1473,6 +1568,7 @@
         });
 
         window.addEventListener('fci-auth-ready', () => {
+            peuplerListeControleursSaisie();
             initPlanificationFVUI();
             appliquerRegionParDefautSaisie();
             if (!addedPoints || addedPoints.length === 0) {
@@ -2037,15 +2133,26 @@
             return true;
         }
 
+        function getSelectedControleurMeta() {
+            const ctrlSelect = document.getElementById('nomControleur');
+            const val = ctrlSelect ? String(ctrlSelect.value || '').trim() : '';
+            const opt = (ctrlSelect && ctrlSelect.selectedIndex >= 0) ? ctrlSelect.options[ctrlSelect.selectedIndex] : null;
+            const regFromOpt = opt && opt.dataset ? normaliserRegion(opt.dataset.region || '') : '';
+            return {
+                valeur: val,
+                regionControleur: regFromOpt
+            };
+        }
+
         function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
             const u = getCurrentAuthUser();
             const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
-            const controleur = document.getElementById('nomControleur').value.trim();
-            const controleurId = (u && (u.fonction === controleur || u.username === controleur))
-                ? u.username
-                : (loadedControleurId || (u ? u.username : ''));
-            const controleurRegion = (u && u.region && u.region !== 'SIEGE') ? normaliserRegion(u.region) : region;
+            const ctrlMeta = getSelectedControleurMeta();
+            const controleur = ctrlMeta.valeur;
+            const controleurId = controleur || loadedControleurId || (u ? u.username : '');
+            const controleurRegion = ctrlMeta.regionControleur ||
+                ((u && u.region && u.region !== 'SIEGE') ? normaliserRegion(u.region) : region);
             const responsable = document.getElementById('nomResponsable').value.trim();
             const typeControle = document.getElementById('typeControle').value || "Vérification";
             const dateVerifGlobaleISO = document.getElementById('dateVerification').value.slice(0, 10);
@@ -2136,7 +2243,7 @@
             const periodeFin = document.getElementById('periodeFin').value;
 
             if (!region || !site || !controleur) {
-                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                alert("Veuillez renseigner la région, le centre et sélectionner le contrôleur dans la liste.");
                 return;
             }
 
@@ -2270,11 +2377,11 @@
             regSelect.value = regVal;
             onRegionEncaisseChange(siteVal);
 
-            const ctrlInput = document.getElementById('nomControleur');
+            const ctrlVal = sample.controleurId || sample.controleur || missionLiee.controleurId || missionLiee.controleur || '';
+            setControleurSaisieValue(ctrlVal);
+
             const respInput = document.getElementById('nomResponsable');
-            ctrlInput.removeAttribute('readonly');
             respInput.removeAttribute('readonly');
-            ctrlInput.value = sample.controleur || missionLiee.controleur || '';
             respInput.value = sample.responsable || missionLiee.responsable || '';
 
             addedPoints = constatsFV.map((c, idx) => {
@@ -2331,7 +2438,7 @@
             const periodeFin = document.getElementById('periodeFin').value;
 
             if (!region || !site || !controleur) {
-                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                alert("Veuillez renseigner la région, le centre et sélectionner le contrôleur dans la liste.");
                 return;
             }
 
@@ -2424,7 +2531,7 @@
             const periodeFin = document.getElementById('periodeFin').value;
 
             if (!region || !site || !controleur) {
-                alert("Veuillez renseigner la région, le centre et le nom du contrôleur.");
+                alert("Veuillez renseigner la région, le centre et sélectionner le contrôleur dans la liste.");
                 return;
             }
 
