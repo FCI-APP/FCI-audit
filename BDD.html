@@ -102,6 +102,21 @@
             border: 1px solid #F59E0B;
         }
 
+        .badge-planifie-siege {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background-color: #E0F2FE;
+            color: #0369A1;
+            border: 1px solid #7DD3FC;
+        }
+
         .badge-interregional {
             display: inline-flex;
             align-items: center;
@@ -250,7 +265,7 @@
         }
 
         .col-date { width: 115px; min-width: 115px; white-space: nowrap; text-align: center !important; }
-        .col-region { width: 135px; min-width: 135px; white-space: nowrap; }
+        .col-region { width: 145px; min-width: 145px; white-space: nowrap; }
         .col-centre { width: 175px; min-width: 175px; }
         .col-controleur { width: 175px; min-width: 175px; font-weight: 600; color: #0F172A; }
         .col-processus { width: 165px; min-width: 165px; font-weight: 600; color: var(--primary-blue); }
@@ -539,8 +554,25 @@
         }
 
         /**
-         * Détermine si un enregistrement appartient à l'Espace Siège (confidentiel au Siège)
-         * ou à l'Espace Régional (partagé entre la région du site vérifié et la région du contrôleur + visible par le Siège).
+         * Détermine si un enregistrement a été planifié par le Siège puis exécuté.
+         * Ces résultats sont partagés entre le Siège et la région concernée.
+         */
+        function estPlanifieParSiege(item, missionAssociee = {}) {
+            const checkObj = (obj) => {
+                if (!obj || typeof obj !== 'object') return false;
+                if (String(obj.planifiePar || '').toUpperCase().trim() === 'SIEGE') return true;
+                if (String(obj.idPlanificationSiege || '').trim() !== '') return true;
+                const idPlan = String(obj.idPlanification || '').toUpperCase().trim();
+                if (idPlan.startsWith('PLAN-SIEGE') || idPlan.startsWith('PLAN-FV')) return true;
+                return false;
+            };
+            return checkObj(item) || checkObj(missionAssociee);
+        }
+
+        /**
+         * Détermine si un enregistrement appartient aux saisies internes confidentielles du Siège.
+         * Les missions planifiées par le Siège et exécutées dans une région (`espaceSaisie === 'REGIONAL'`
+         * ou `planifiePar === 'SIEGE'` avec région cible) restent visibles par le Siège ET la région concernée.
          */
         function estDonneeEspaceSiege(item, missionAssociee = {}) {
             const checkObj = (obj) => {
@@ -548,6 +580,10 @@
                 const espace = String(obj.espaceSaisie || obj.espace || obj.scope || '').toUpperCase().trim();
                 if (espace === 'SIEGE' || espace === 'ESPACE_SIEGE') return true;
                 if (espace === 'REGIONAL' || espace === 'ESPACE_REGIONAL') return false;
+
+                if (String(obj.planifiePar || '').toUpperCase().trim() === 'SIEGE' || String(obj.idPlanificationSiege || '').trim() !== '') {
+                    return false;
+                }
 
                 const ctrlReg = String(obj.controleurRegion || '').toUpperCase().trim();
                 if (ctrlReg === 'SIEGE') return true;
@@ -572,7 +608,7 @@
                 badge.className = 'espace-pill espace-pill-siege';
                 badge.innerHTML = '<i class="fa-solid fa-landmark"></i> Espace Siège — Visibilité Globale';
                 if (sousTitre) {
-                    sousTitre.innerText = "Accès complet : données internes du Siège (confidentielles) + ensemble des données régionales et interrégionales";
+                    sousTitre.innerText = "Accès complet : données internes du Siège (confidentielles) + ensemble des données régionales, interrégionales et planifiées";
                 }
             } else {
                 const reg = getUserHomeRegion();
@@ -580,7 +616,7 @@
                 badge.className = 'espace-pill espace-pill-regional';
                 badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Espace Régional — ${escapeHTML(regLabel)}`;
                 if (sousTitre) {
-                    sousTitre.innerText = `Visibilité des contrôles de la région ${regLabel} et de vos missions interrégionales (données Siège masquées)`;
+                    sousTitre.innerText = `Visibilité des contrôles de la région ${regLabel} (y compris contrôles planifiés par le Siège) et missions interrégionales`;
                 }
             }
         }
@@ -641,6 +677,10 @@
 
         window.addEventListener('fci-auth-ready', () => {
             mettreAJourBadgeEspaceHeader();
+            chargerBDDEnVisuel();
+        });
+
+        window.addEventListener('fci-db-synced', () => {
             chargerBDDEnVisuel();
         });
 
@@ -778,7 +818,6 @@
                 (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
             );
 
-            // Liste dynamique des régions autorisées (région d'affectation + régions des missions interrégionales)
             selRegion.disabled = false;
             const regionsTriees = [...new Set(
                 lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
@@ -869,15 +908,15 @@
         function aDroitConsultationLigne(item, missionAssociee, isSiegeUser, homeReg, authUser) {
             const isDonneeSiege = estDonneeEspaceSiege(item, missionAssociee);
 
-            // 1. Espace Siège : visibilité totale (Siège + toutes les régions + interrégional)
+            // 1. Espace Siège : visibilité totale (Siège + toutes les régions + planifiés Siège + interrégional)
             if (isSiegeUser) return true;
 
-            // 2. Confidentialité stricte : les données internes du Siège sont inaccessibles aux régions
+            // 2. Confidentialité stricte : les saisies internes du Siège sont inaccessibles aux régions
             if (isDonneeSiege) return false;
 
             if (!homeReg || homeReg === '__NONE__') return false;
 
-            // 3. Contrôle/Vérification effectué DANS la région d'affectation de l'utilisateur
+            // 3. Contrôle/Vérification effectué DANS la région d'affectation (y compris ceux planifiés par le Siège)
             const regionSite = normaliserRegion((item && item.region) || (missionAssociee && missionAssociee.region) || '');
             if (regionSite === homeReg) return true;
 
@@ -935,6 +974,7 @@
                 const ctrlRegionNorm = extraireRegionControleur(c, missionAssociee);
                 const isInterRegional = Boolean(!estDonneeEspaceSiege(c, missionAssociee) && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const isEspaceSiege = estDonneeEspaceSiege(c, missionAssociee);
+                const isPlanifieSiege = estPlanifieParSiege(c, missionAssociee);
                 const typeBrut = c.typeControle || missionAssociee.typeControle || 'Thématique';
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
                 const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
@@ -961,7 +1001,8 @@
                     typeInfo: normaliserTypeControle(typeBrut, 'FC'),
                     isSuivi: isSuivi,
                     isModifie: isModifie,
-                    isEspaceSiege: isEspaceSiege
+                    isEspaceSiege: isEspaceSiege,
+                    isPlanifieSiege: isPlanifieSiege
                 });
             });
 
@@ -973,6 +1014,7 @@
                 const ctrlRegionNorm = extraireRegionControleur(e, missionAssociee);
                 const isInterRegional = Boolean(!estDonneeEspaceSiege(e, missionAssociee) && ctrlRegionNorm && ctrlRegionNorm !== 'SIEGE' && regionNorm && ctrlRegionNorm !== regionNorm);
                 const isEspaceSiege = estDonneeEspaceSiege(e, missionAssociee);
+                const isPlanifieSiege = estPlanifieParSiege(e, missionAssociee);
                 const typeBrut = e.typeControle || 'Vérification';
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
                 const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
@@ -999,7 +1041,8 @@
                     typeInfo: normaliserTypeControle(typeBrut, 'FV'),
                     isSuivi: isSuivi,
                     isModifie: isModifie,
-                    isEspaceSiege: isEspaceSiege
+                    isEspaceSiege: isEspaceSiege,
+                    isPlanifieSiege: isPlanifieSiege
                 });
             });
 
@@ -1054,6 +1097,9 @@
                 const siegeOriginTagHtml = (isSiegeUser && ligne.isEspaceSiege)
                     ? `<br><span class="badge-origine-siege" title="Donnée interne saisie au niveau du Siège"><i class="fa-solid fa-landmark"></i> Siège</span>`
                     : '';
+                const planifieSiegeTagHtml = ligne.isPlanifieSiege
+                    ? `<br><span class="badge-planifie-siege" title="Mission planifiée par le Siège"><i class="fa-solid fa-calendar-check"></i> Planifié Siège</span>`
+                    : '';
                 const interRegTagHtml = ligne.isInterRegional
                     ? `<br><span class="badge-interregional" title="Mission interrégionale effectuée par un contrôleur de ${escapeHTML(ligne.controleurRegion)}"><i class="fa-solid fa-right-left"></i> Ctrl: ${escapeHTML(ligne.controleurRegion)}</span>`
                     : '';
@@ -1064,7 +1110,7 @@
                 tbody.innerHTML += `
                     <tr class="${ligne.typeInfo.rowClass}">
                         <td class="col-date" style="font-weight:700; color:var(--primary-blue);">${escapeHTML(ligne.dateCtrlVerif)}</td>
-                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b>${siegeOriginTagHtml}${interRegTagHtml}</td>
+                        <td class="col-region"><b>${escapeHTML(ligne.region)}</b>${siegeOriginTagHtml}${planifieSiegeTagHtml}${interRegTagHtml}</td>
                         <td class="col-centre">${escapeHTML(ligne.entite)}</td>
                         <td class="col-controleur">${controleurHtml}</td>
                         <td class="col-processus">${escapeHTML(ligne.processus)}</td>
@@ -1103,6 +1149,7 @@
                     "Date contrôle / vérif.": l.dateCtrlVerif,
                     "Région site": l.region,
                     "Région contrôleur": l.controleurRegion || l.region,
+                    "Planifié par Siège": l.isPlanifieSiege ? "Oui" : "Non",
                     "Interrégional": l.isInterRegional ? "Oui" : "Non",
                     "Centre / Entité": l.entite,
                     "Contrôleur": l.controleur,
@@ -1164,7 +1211,6 @@
             const homeReg = getUserHomeRegion();
 
             if (!isSiegeUser && homeReg && homeReg !== '__NONE__') {
-                // Protection : un utilisateur régional ne vide que les données autorisées de son périmètre (sa région + ses missions interrégionales)
                 let rawDb = { missions: [], constatsControle: [], constatsEncaisses: [] };
                 try {
                     const raw = localStorage.getItem('fci_database');
