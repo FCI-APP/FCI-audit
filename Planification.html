@@ -188,13 +188,13 @@
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler (Fiche de Contrôle)</p>
             </div>
             <div>
-                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et synchroniser les missions planifiées">
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et synchroniser les contrôles planifiés">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
                 </button>
             </div>
         </header>
 
-        <!-- SECTION DIFFUSION / RÉCEPTION DES PLANIFICATIONS SIÈGE (FICHE DE CONTRÔLE UNIQUEMENT) -->
+        <!-- SECTION DIFFUSION / SUIVI DES CONTRÔLES PLANIFIÉS (FICHE DE CONTRÔLE UNIQUEMENT) -->
         <section id="siege-planification-section"></section>
 
         <div class="kpi-row">
@@ -516,6 +516,43 @@
             return s;
         }
 
+        // Filtre strict : uniquement les contrôles (FC), jamais les vérifications d'encaisses (FV)
+        function estPlanificationControleFC(p) {
+            if (!p) return false;
+            const src = String(p.sourceFeuille || p.module || p.type || '').trim().toUpperCase();
+            const typeCtrl = String(p.typeControle || '').trim().toUpperCase();
+            const idPlan = String(p.idPlanification || '').trim().toUpperCase();
+
+            if (src === 'FV' || src === 'ENCAISSES' || src === 'VERIFICATION') return false;
+            if (typeCtrl === 'VÉRIFICATION' || typeCtrl === 'VERIFICATION' || typeCtrl === 'FV') return false;
+            if (idPlan.startsWith('PLAN-FV') || idPlan.startsWith('FV-')) return false;
+
+            return true;
+        }
+
+        // Vérifie si le contrôleur connecté est nominativement concerné par cette planification
+        function estControleurConcernePlanif(p, user) {
+            if (!p || !user) return false;
+            const uName = String(user.username || '').trim().toUpperCase();
+            const uFunc = String(user.fonction || '').trim().toUpperCase();
+
+            const assignes = Array.isArray(p.controleursAssignes)
+                ? p.controleursAssignes.map(x => String(x || '').trim().toUpperCase())
+                : [];
+            if (uName && assignes.includes(uName)) return true;
+            if (uFunc && assignes.includes(uFunc)) return true;
+
+            const ctrlId = String(p.controleurId || '').trim().toUpperCase();
+            if (uName && ctrlId === uName) return true;
+
+            const libelles = Array.isArray(p.controleursLibelles)
+                ? p.controleursLibelles.map(x => String(x || '').trim().toUpperCase())
+                : [];
+            if (uName && libelles.some(l => l.includes(uName))) return true;
+
+            return false;
+        }
+
         function applyUserScopePlanif(profile) {
             if (!profile) return;
             const regionSelect = document.getElementById('audit-region');
@@ -604,7 +641,7 @@
                 renderSectionPlanificationsSiege();
                 loadPlanificationData();
             } catch (e) {
-                // Ignorer et recharger la page
+                // Rechargement complet de secours
             } finally {
                 window.location.reload();
             }
@@ -685,7 +722,6 @@
                 controleursLibelles: ctrls.map(c => `${c.username} (${c.fonction})`)
             });
 
-            // Réinitialisation partielle pour faciliter l'ajout immédiat d'une autre région (ex: AGADIR-003, SETTAT-002)
             document.getElementById('audit-region').value = "";
             onRegionChangePlanif();
             renderLotAffectationsSiege();
@@ -752,7 +788,6 @@
                 return;
             }
 
-            // Construire la liste finale des affectations (lot accumulé + formulaire courant s'il est rempli)
             const aDiffuser = [...lotAffectationsSiege];
 
             const curReg = normalizeRegionOption(document.getElementById('audit-region').value);
@@ -848,29 +883,52 @@
             }
 
             const db = FCIDatabase.getDB();
-            const plans = (db.planifications || []).filter(p =>
-                String(p.planifiePar || '').toUpperCase() === 'SIEGE' ||
-                String(p.espaceSaisie || '').toUpperCase() === 'SIEGE'
-            );
-
+            const currentUser = getCurrentAuthUser();
             const isSiege = estUtilisateurSiege();
 
+            // 1. Conserver uniquement les planifications de CONTRÔLES (FC) et exclure les vérifications (FV)
+            const toutesPlanifsFC = (db.planifications || []).filter(p =>
+                estPlanificationControleFC(p) &&
+                (String(p.planifiePar || '').toUpperCase() === 'SIEGE' ||
+                 String(p.espaceSaisie || '').toUpperCase() === 'SIEGE')
+            );
+
+            // Vérifier si une mission planifiée a déjà été enregistrée comme réalisée dans db.controles / db.missions
+            const controlesEnregistres = Array.isArray(db.controles) ? db.controles : [];
+            const missionsEnregistrees = Array.isArray(db.missions) ? db.missions : [];
+
+            const enrichirStatutPlanif = (p) => {
+                const stActuel = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                if (stActuel === 'REALISEE') return { ...p, statutEffectif: 'REALISEE' };
+
+                const estRealiseeEnBDD =
+                    controlesEnregistres.some(c => c && c.idPlanificationSiege === p.idPlanification) ||
+                    missionsEnregistrees.some(m => m && m.idPlanificationSiege === p.idPlanification);
+
+                return {
+                    ...p,
+                    statutEffectif: estRealiseeEnBDD ? 'REALISEE' : stActuel
+                };
+            };
+
             if (isSiege) {
+                const plansSiege = toutesPlanifsFC.map(enrichirStatutPlanif);
+
                 container.innerHTML = `
                     <div class="siege-card">
                         <div class="card-title" style="border-bottom-color:#FDE68A;">
-                            <span><i class="fa-solid fa-landmark" style="color:var(--accent-gold);"></i> Suivi Global des Planifications Émises par le Siège (Partagé entre tous les membres du Siège)</span>
-                            <span class="pill pill-siege">${plans.length} mission(s) planifiée(s)</span>
+                            <span><i class="fa-solid fa-landmark" style="color:var(--accent-gold);"></i> Suivi des Contrôles Planifiés par le Siège (Fiche de Contrôle uniquement)</span>
+                            <span class="pill pill-siege">${plansSiege.length} contrôle(s) planifié(s)</span>
                         </div>
-                        ${plans.length === 0 ? `
-                            <p style="font-size:0.84rem; color:#64748B;">Aucune planification Siège enregistrée pour le moment. Sélectionnez des points de contrôle dans le Référentiel puis affectez-les aux contrôleurs régionaux ci-dessous.</p>
+                        ${plansSiege.length === 0 ? `
+                            <p style="font-size:0.84rem; color:#64748B;">Aucun contrôle planifié par le Siège pour le moment. Sélectionnez des points de contrôle dans le Référentiel puis affectez-les aux contrôleurs régionaux ci-dessous.</p>
                         ` : `
                             <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
                                 <table>
                                     <thead>
                                         <tr>
                                             <th>Planifié par (Siège)</th>
-                                            <th>Région</th>
+                                            <th>Région concernée</th>
                                             <th>Entité / Centre</th>
                                             <th>Contrôleur(s) concerné(s)</th>
                                             <th>Type &amp; Période</th>
@@ -880,8 +938,8 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        ${[...plans].reverse().map(p => {
-                                            const st = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                                        ${[...plansSiege].reverse().map(p => {
+                                            const st = p.statutEffectif;
                                             const stHtml = st === 'REALISEE'
                                                 ? `<span class="pill pill-realisee"><i class="fa-solid fa-circle-check"></i> Réalisée${p.tauxMoyenExecution !== undefined ? ' (' + p.tauxMoyenExecution + '%)' : ''}</span>`
                                                 : (st === 'EN_COURS'
@@ -903,7 +961,7 @@
                                                     <td style="text-align:center;"><b>${(p.pointsControle || []).length}</b></td>
                                                     <td style="text-align:center;">${stHtml}</td>
                                                     <td style="text-align:center;">
-                                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="supprimerPlanificationSiege('${escapeJsString(p.idPlanification)}')" title="Supprimer cette planification Siège">
+                                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="supprimerPlanificationSiege('${escapeJsString(p.idPlanification)}')" title="Supprimer ce contrôle planifié">
                                                             <i class="fa-solid fa-trash-can"></i>
                                                         </button>
                                                     </td>
@@ -919,8 +977,12 @@
                 return;
             }
 
-            // Affichage côté Contrôleur Régional : uniquement les missions Siège qui lui sont nominativement assignées
-            if (plans.length === 0) {
+            // 2. Affichage côté Contrôleur Régional : UNIQUEMENT les contrôles (FC) nominativement affectés au contrôleur connecté
+            const plansControleur = toutesPlanifsFC
+                .filter(p => estControleurConcernePlanif(p, currentUser))
+                .map(enrichirStatutPlanif);
+
+            if (plansControleur.length === 0) {
                 container.innerHTML = '';
                 return;
             }
@@ -928,8 +990,8 @@
             container.innerHTML = `
                 <div class="siege-card">
                     <div class="card-title" style="border-bottom-color:#FDE68A;">
-                        <span><i class="fa-solid fa-bell" style="color:var(--accent-gold);"></i> Missions de Contrôle Planifiées par le Siège (Affectées à votre compte)</span>
-                        <span class="pill pill-siege">${plans.length} mission(s) reçue(s)</span>
+                        <span><i class="fa-solid fa-bell" style="color:var(--accent-gold);"></i> Suivi de vos Contrôles Planifiés par le Siège (Affectés à votre compte)</span>
+                        <span class="pill pill-siege">${plansControleur.length} contrôle(s) assigné(s)</span>
                     </div>
                     <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
                         <table>
@@ -946,8 +1008,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                ${[...plans].reverse().map(p => {
-                                    const st = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                                ${[...plansControleur].reverse().map(p => {
+                                    const st = p.statutEffectif;
                                     const stHtml = st === 'REALISEE'
                                         ? `<span class="pill pill-realisee"><i class="fa-solid fa-circle-check"></i> Réalisée</span>`
                                         : (st === 'EN_COURS'
@@ -967,9 +1029,12 @@
                                             <td style="text-align:center;"><b>${(p.pointsControle || []).length}</b></td>
                                             <td style="text-align:center;">${stHtml}</td>
                                             <td style="text-align:center;">
-                                                <button type="button" class="btn btn-siege btn-sm" onclick="executerMissionSiege('${escapeJsString(p.idPlanification)}')">
-                                                    <i class="fa-solid fa-play"></i> Exécuter FC
-                                                </button>
+                                                ${st === 'REALISEE'
+                                                    ? `<span style="font-size:0.78rem; font-weight:700; color:#065F46;"><i class="fa-solid fa-check-double"></i> Diffusée (Siège &amp; ${escapeHtml(p.region)})</span>`
+                                                    : `<button type="button" class="btn btn-siege btn-sm" onclick="executerMissionSiege('${escapeJsString(p.idPlanification)}')">
+                                                        <i class="fa-solid fa-play"></i> Exécuter FC
+                                                       </button>`
+                                                }
                                             </td>
                                         </tr>
                                     `;
@@ -999,27 +1064,29 @@
             const controleurLabel = currentUser
                 ? `${currentUser.fonction} (${currentUser.username})`
                 : (plan.controleursAssignes || []).join(', ');
-            const controleurHomeRegion = (currentUser && currentUser.region && currentUser.region !== 'SIEGE')
-                ? normalizeRegionOption(currentUser.region)
-                : normalizeRegionOption(plan.region);
+            const missionRegion = normalizeRegionOption(plan.region);
 
             const idMission = plan.idMission || ('MIS-' + Date.now());
 
+            // Après réalisation du contrôle dans FicheControle.html, les données portent
+            // à la fois la région concernée (missionRegion) et l'origine Siège (planifiePar: 'SIEGE')
+            // afin d'être visibles dans l'espace du Siège et dans toute la région concernée (BDD & TDB).
             const activeCampaign = {
                 metadata: {
                     idMission,
                     idPlanificationSiege: plan.idPlanification,
                     planifiePar: 'SIEGE',
                     auteurSiege: plan.auteurSiege || '',
-                    region: normalizeRegionOption(plan.region),
+                    region: missionRegion,
                     entite: plan.entite,
                     typeControle: plan.typeControle || 'Thématique',
                     dateDebutControle: plan.dateDebut || '',
                     dateFinControle: plan.dateFin || '',
                     controleurs: controleurLabel,
                     controleurId: currentUser ? currentUser.username : '',
-                    controleurRegion: controleurHomeRegion,
-                    auteurRegion: controleurHomeRegion,
+                    controleursAssignes: plan.controleursAssignes || [],
+                    controleurRegion: missionRegion,
+                    auteurRegion: missionRegion,
                     espaceSaisie: 'REGIONAL',
                     createdAt: new Date().toISOString()
                 },
@@ -1029,7 +1096,8 @@
             if (typeof FCIDatabase.marquerPlanificationStatut === 'function') {
                 FCIDatabase.marquerPlanificationStatut(plan.idPlanification, 'EN_COURS', {
                     idMissionExecution: idMission,
-                    executePar: controleurLabel
+                    executePar: controleurLabel,
+                    region: missionRegion
                 });
             }
 
