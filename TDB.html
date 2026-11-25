@@ -526,6 +526,41 @@
         .planif-mini-kpi .pk-label { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
         .planif-mini-kpi .pk-sub { font-size: 0.71rem; font-weight: 600; color: var(--text-muted); display: block; margin-top: 2px; }
         .planif-mini-kpi .pk-val { font-size: 1.25rem; font-weight: 800; color: var(--primary-blue); }
+        .planif-avancement-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        @media (max-width: 900px) {
+            .planif-avancement-grid { grid-template-columns: 1fr; }
+        }
+        .planif-avancement-box {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+        .planif-avancement-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+        }
+        .planif-avancement-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
 
         .table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.81rem; }
@@ -932,6 +967,34 @@
                 </div>
             </div>
 
+            <!-- Barres d'avancement séparées Contrôles (FC) & Vérifications (FV) -->
+            <div class="planif-avancement-grid">
+                <div class="planif-avancement-box" style="border-left: 4px solid #1D4ED8;">
+                    <div class="planif-avancement-head">
+                        <span><i class="fa-solid fa-clipboard-check" style="color:#1D4ED8;"></i> Avancement Contrôles (FC)</span>
+                        <span id="pkFcPct" style="color:#1D4ED8;">0.0 %</span>
+                    </div>
+                    <div class="participation-track" style="height:10px;">
+                        <div class="participation-fill" id="pkFcBar" style="width:0%; background:linear-gradient(90deg, #1D4ED8, #3B82F6);"></div>
+                    </div>
+                    <div class="planif-avancement-meta">
+                        <span id="pkFcCounts">0 planifié(s) · 0 en cours · 0 clôturé(s)</span>
+                    </div>
+                </div>
+                <div class="planif-avancement-box" style="border-left: 4px solid #059669;">
+                    <div class="planif-avancement-head">
+                        <span><i class="fa-solid fa-vault" style="color:#059669;"></i> Avancement Vérifications (FV)</span>
+                        <span id="pkFvPct" style="color:#059669;">0.0 %</span>
+                    </div>
+                    <div class="participation-track" style="height:10px;">
+                        <div class="participation-fill" id="pkFvBar" style="width:0%; background:linear-gradient(90deg, #059669, #10B981);"></div>
+                    </div>
+                    <div class="planif-avancement-meta">
+                        <span id="pkFvCounts">0 planifié(s) · 0 en cours · 0 clôturé(s)</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Tableau consolidé -->
             <div class="table-scroll">
                 <table>
@@ -1270,7 +1333,7 @@
         });
 
         window.addEventListener('storage', (e) => {
-            if (e.key === 'fci_database') {
+            if (e.key === 'fci_database' || e.key === 'fci_planification_pc') {
                 chargerEtPreparerDonnees();
             }
         });
@@ -1359,19 +1422,23 @@
         }
 
         /**
-         * Contrôle d'accès sur les planifications (FC & FV) :
-         * - Siège : visibilité globale de toutes les planifications.
-         * - Vérification (FV) en phase de planification : secret strict, visible uniquement par le contrôleur désigné (aucun repli régional).
-         * - Contrôle (FC) : visible par le contrôleur désigné ou par sa région si non nominatif.
+         * Contrôle d'accès sur l'espace de suivi des planifications (FC & FV) :
+         * - Siège : visibilité globale de toutes les régions (contrôles & vérifications).
+         * - Région : visibilité complète du suivi d'avancement des contrôles (FC) et vérifications (FV) de sa région
+         *   (ainsi que les missions interrégionales assignées à sa région ou au contrôleur connecté).
          */
         function aDroitConsultationPlanification(plan, isSiegeUser, homeReg, authUser) {
             if (!plan || typeof plan !== 'object') return false;
             if (isSiegeUser) return true;
             if (!authUser) return false;
 
-            const src = String(plan.sourceFeuille || '').toUpperCase().trim();
-            const nat = String(plan.natureMission || plan.typeMission || plan.typeControle || '').toLowerCase().trim();
-            const estVerification = src === 'FV' || nat.includes('vérif') || nat.includes('verif') || nat.includes('encaisse');
+            const regPlan = normaliserRegion(plan.region || '');
+            const ctrlRegPlan = normaliserRegion(plan.controleurRegion || plan.auteurRegion || '');
+
+            if (homeReg && homeReg !== '__NONE__') {
+                if (regPlan && regPlan === homeReg) return true;
+                if (ctrlRegPlan && ctrlRegPlan === homeReg) return true;
+            }
 
             const myId = String(authUser.username || authUser.identifiant || '').toUpperCase().trim();
             const myNom = String(authUser.fonction || authUser.nom || '').toUpperCase().trim();
@@ -1382,20 +1449,10 @@
                 ? plan.controleursAssignes.map(x => String(x || '').toUpperCase().trim()).filter(Boolean)
                 : [];
 
-            const estDesigne = Boolean(
+            return Boolean(
                 (myId && (cibleId === myId || cibleNom === myId || assignes.includes(myId))) ||
                 (myNom && (cibleNom === myNom || assignes.includes(myNom)))
             );
-
-            if (estVerification) {
-                return estDesigne;
-            }
-
-            if (cibleId || assignes.length > 0 || (cibleNom && cibleNom !== 'NON ASSIGNÉ' && cibleNom !== 'NON RENSEIGNÉ')) {
-                return estDesigne;
-            }
-
-            return Boolean(homeReg && homeReg !== '__NONE__' && normaliserRegion(plan.region) === homeReg);
         }
 
         function getRegionsAutoriseesUtilisateur() {
@@ -1450,6 +1507,30 @@
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
             if (!Array.isArray(db.planifications)) db.planifications = [];
+            try {
+                const rawPlanPC = localStorage.getItem('fci_planification_pc');
+                if (rawPlanPC) {
+                    const parsedPlanPC = JSON.parse(rawPlanPC);
+                    const extraPlans = Array.isArray(parsedPlanPC)
+                        ? parsedPlanPC
+                        : (parsedPlanPC && Array.isArray(parsedPlanPC.planifications) ? parsedPlanPC.planifications : []);
+                    if (extraPlans.length > 0) {
+                        const existingKeys = new Set(db.planifications.map(p =>
+                            String(p.idPlanification || p.id || '').trim() ||
+                            `${normaliserRegion(p.region || '')}|${String(p.site || p.centre || p.entite || '').trim().toUpperCase()}|${normaliserDateISO(p.datePrevue || p.date || '')}|${String(p.natureMission || p.typeControle || '').trim().toUpperCase()}|${String(p.controleurId || p.controleur || '').trim().toUpperCase()}`
+                        ));
+                        extraPlans.forEach(p => {
+                            if (!p || typeof p !== 'object') return;
+                            const key = String(p.idPlanification || p.id || '').trim() ||
+                                `${normaliserRegion(p.region || '')}|${String(p.site || p.centre || p.entite || '').trim().toUpperCase()}|${normaliserDateISO(p.datePrevue || p.date || '')}|${String(p.natureMission || p.typeControle || '').trim().toUpperCase()}|${String(p.controleurId || p.controleur || '').trim().toUpperCase()}`;
+                            if (!existingKeys.has(key)) {
+                                existingKeys.add(key);
+                                db.planifications.push(p);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
             return db;
         }
 
@@ -2220,12 +2301,24 @@
             const natFilter = selNat.value;
             const statFilter = selStat.value;
 
+            const homeReg = getUserHomeRegion();
             const regsDisponibles = [...new Set(toutesLesPlanifications.map(p => p.region).filter(Boolean))]
                 .sort((a, b) => a.localeCompare(b, 'fr'));
-            regFilter = remplirSelectOptions(selReg, regsDisponibles, '-- Toutes les régions --');
-            if (niveauActif !== 'NATIONAL' && etatGlobal.reg !== 'TOUS' && (isSiegeUser || regionsAutorisees.length > 1) && regsDisponibles.includes(etatGlobal.reg)) {
-                selReg.value = etatGlobal.reg;
-                regFilter = etatGlobal.reg;
+            if (!isSiegeUser && regsDisponibles.length <= 1) {
+                const regUnique = regsDisponibles[0] || (homeReg && homeReg !== '__NONE__' ? homeReg : '');
+                selReg.innerHTML = regUnique
+                    ? `<option value="${escapeHTML(regUnique)}" selected>${escapeHTML(regUnique)}</option>`
+                    : `<option value="TOUS">-- Aucune région --</option>`;
+                selReg.value = regUnique || 'TOUS';
+                selReg.disabled = true;
+                regFilter = regUnique || 'TOUS';
+            } else {
+                selReg.disabled = false;
+                regFilter = remplirSelectOptions(selReg, regsDisponibles, '-- Toutes les régions --');
+                if (niveauActif !== 'NATIONAL' && etatGlobal.reg !== 'TOUS' && (isSiegeUser || regionsAutorisees.length > 1) && regsDisponibles.includes(etatGlobal.reg)) {
+                    selReg.value = etatGlobal.reg;
+                    regFilter = etatGlobal.reg;
+                }
             }
 
             const baseCentres = toutesLesPlanifications.filter(p => regFilter === 'TOUS' || p.region === regFilter);
@@ -2269,6 +2362,16 @@
             const pctEnCours = totalPlan > 0 ? ((nbEnCours / totalPlan) * 100).toFixed(1) : '0.0';
             const pctClotures = totalPlan > 0 ? ((nbClotures / totalPlan) * 100).toFixed(1) : '0.0';
 
+            const fcItems = planifsFiltrees.filter(p => p.natureMission === 'Contrôle');
+            const fcEnCours = fcItems.filter(p => p.statutCode === 'EN_COURS').length;
+            const fcClotures = fcItems.filter(p => p.statutCode === 'CLOTURE').length;
+            const fcPct = totalFC > 0 ? ((fcClotures / totalFC) * 100) : 0;
+
+            const fvItems = planifsFiltrees.filter(p => p.natureMission === 'Vérification');
+            const fvEnCours = fvItems.filter(p => p.statutCode === 'EN_COURS').length;
+            const fvClotures = fvItems.filter(p => p.statutCode === 'CLOTURE').length;
+            const fvPct = totalFV > 0 ? ((fvClotures / totalFV) * 100) : 0;
+
             document.getElementById('pkTotalPlanifies').textContent = totalPlan;
             document.getElementById('pkDetailNature').textContent = `${totalFC} Contrôle(s) · ${totalFV} Vérification(s)`;
             document.getElementById('pkEnCours').textContent = nbEnCours;
@@ -2277,11 +2380,25 @@
             document.getElementById('pkPctClotures').textContent = `${pctClotures} % des missions`;
             document.getElementById('pkTauxAvancement').textContent = `${pctClotures} %`;
 
+            const elFcPct = document.getElementById('pkFcPct');
+            const elFcBar = document.getElementById('pkFcBar');
+            const elFcCounts = document.getElementById('pkFcCounts');
+            if (elFcPct) elFcPct.textContent = `${fcPct.toFixed(1)} %`;
+            if (elFcBar) elFcBar.style.width = `${Math.min(100, fcPct).toFixed(1)}%`;
+            if (elFcCounts) elFcCounts.textContent = `${totalFC} planifié(s) · ${fcEnCours} en cours · ${fcClotures} clôturé(s)`;
+
+            const elFvPct = document.getElementById('pkFvPct');
+            const elFvBar = document.getElementById('pkFvBar');
+            const elFvCounts = document.getElementById('pkFvCounts');
+            if (elFvPct) elFvPct.textContent = `${fvPct.toFixed(1)} %`;
+            if (elFvBar) elFvBar.style.width = `${Math.min(100, fvPct).toFixed(1)}%`;
+            if (elFvCounts) elFvCounts.textContent = `${totalFV} planifié(s) · ${fvEnCours} en cours · ${fvClotures} clôturé(s)`;
+
             const sousTitreEl = document.getElementById('sousTitrePlanifConsolidee');
             if (sousTitreEl) {
                 sousTitreEl.textContent = isSiegeUser
-                    ? `Espace Siège (Visibilité globale) · ${totalPlan} mission(s) planifiée(s)`
-                    : `Mes missions planifiées (Vérifications FV strictement nominatives) · ${totalPlan} mission(s)`;
+                    ? `Espace Siège (Visibilité globale — toutes régions) · ${totalPlan} mission(s) planifiée(s)`
+                    : `Suivi d'avancement — Région ${homeReg && homeReg !== '__NONE__' ? homeReg : 'assignée'} · ${totalPlan} mission(s) planifiée(s)`;
             }
 
             const mapGroupes = new Map();
