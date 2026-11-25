@@ -188,7 +188,7 @@
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler (Fiche de Contrôle)</p>
             </div>
             <div>
-                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et les missions planifiées">
+                <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et synchroniser les missions planifiées">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
                 </button>
             </div>
@@ -584,9 +584,30 @@
             }
         });
 
-        function actualiserPagePlanif() {
-            renderSectionPlanificationsSiege();
-            loadPlanificationData();
+        async function actualiserPagePlanif() {
+            const btn = document.getElementById('btnActualiserPlanif');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> Actualisation...';
+            }
+
+            try {
+                if (typeof FCIDatabase !== 'undefined') {
+                    const syncFn = FCIDatabase.forcerSynchronisation || FCIDatabase.syncDepuisCloud || FCIDatabase.chargerDepuisCloud || FCIDatabase.init;
+                    if (typeof syncFn === 'function') {
+                        await Promise.race([
+                            Promise.resolve(syncFn.call(FCIDatabase)),
+                            new Promise(resolve => setTimeout(resolve, 1500))
+                        ]);
+                    }
+                }
+                renderSectionPlanificationsSiege();
+                loadPlanificationData();
+            } catch (e) {
+                // Ignorer et recharger la page
+            } finally {
+                window.location.reload();
+            }
         }
 
         function onRegionChangePlanif() {
