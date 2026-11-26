@@ -690,9 +690,6 @@
             if (!box) return;
 
             const regNorm = normalizeRegionOption(region);
-            const chefsService = (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function')
-                ? window.FCIAuth.getChefsDeService()
-                : [];
 
             const renderChip = (c, isChef = false) => `
                 <label class="ctrl-chip-label" ${isChef ? 'style="border-color:#F59E0B; background:#FFFBEB;"' : ''} onchange="this.classList.toggle('is-checked', this.querySelector('input').checked)">
@@ -701,37 +698,33 @@
                 </label>
             `;
 
-            if (regNorm === 'SIEGE') {
-                box.innerHTML = `
-                    <div style="width:100%; font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-bottom:2px;">
-                        <i class="fa-solid fa-landmark"></i> Région SIÈGE — 5 Chefs de service
-                    </div>
-                    ${chefsService.map(c => renderChip(c, true)).join('')}
-                `;
+            if (!regNorm) {
+                box.innerHTML = '<span style="font-size:0.8rem; color:#64748B;">Sélectionnez d\'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) ou SIÈGE pour les 5 Chefs de service.</span>';
                 return;
             }
 
-            const ctrlsRegion = (regNorm && window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
+            if (regNorm === 'SIEGE') {
+                const chefsService = (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function')
+                    ? window.FCIAuth.getChefsDeService()
+                    : [];
+                if (chefsService.length === 0) {
+                    box.innerHTML = '<span style="font-size:0.8rem; color:#64748B;">Aucun compte Chef de service enregistré pour SIÈGE.</span>';
+                    return;
+                }
+                box.innerHTML = chefsService.map(c => renderChip(c, true)).join('');
+                return;
+            }
+
+            const ctrls = (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
                 ? window.FCIAuth.getControllersByRegion(regNorm)
                 : [];
 
-            let html = '';
-
-            if (!regNorm) {
-                html += `<div style="width:100%; font-size:0.78rem; color:#64748B; margin-bottom:4px;">Sélectionnez une région (dont SIÈGE pour les 5 Chefs de service, ou une région postale pour ses contrôleurs).</div>`;
-            } else if (ctrlsRegion.length > 0) {
-                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase; margin-bottom:2px;"><i class="fa-solid fa-map-location-dot"></i> Contrôleurs régionaux — ${escapeHtml(regNorm)}</div>`;
-                html += ctrlsRegion.map(c => renderChip(c, false)).join('');
-            } else {
-                html += `<div style="width:100%; font-size:0.78rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(regNorm)}.</div>`;
+            if (ctrls.length === 0) {
+                box.innerHTML = `<span style="font-size:0.8rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(regNorm)}.</span>`;
+                return;
             }
 
-            if (chefsService.length > 0) {
-                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-top:6px; margin-bottom:2px; padding-top:6px; border-top:1px dashed #CBD5E1;"><i class="fa-solid fa-landmark"></i> Chefs de service (SIÈGE — contrôles sur demande du Siège)</div>`;
-                html += chefsService.map(c => renderChip(c, true)).join('');
-            }
-
-            box.innerHTML = html;
+            box.innerHTML = ctrls.map(c => renderChip(c, false)).join('');
         }
 
         function getControleursCochesSiege() {

@@ -902,38 +902,29 @@
                 return a.localeCompare(b, 'fr');
             });
 
-            select.innerHTML = '<option value="">-- Contrôleur / Chef de service --</option>';
-
-            const ajouterGroupeChefs = () => {
-                if (chefsService.length === 0) return;
-                const optgroupChefs = document.createElement('optgroup');
-                optgroupChefs.label = 'SIÈGE (5 Chefs de service)';
-                chefsService.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.username;
-                    opt.dataset.fonction = c.fonction || '';
-                    opt.dataset.region = 'SIEGE';
-                    opt.dataset.role = 'CHEF_SERVICE';
-                    opt.textContent = `${c.username} — ${c.fonction}`;
-                    optgroupChefs.appendChild(opt);
-                });
-                select.appendChild(optgroupChefs);
-            };
+            select.innerHTML = '<option value="">-- Contrôleur (ex. CASA-001) --</option>';
 
             const regSelectionneeSaisie = normaliserRegion(document.getElementById('regionSite')?.value || '');
             if (regSelectionneeSaisie === 'SIEGE') {
-                // Région SIÈGE sélectionnée -> correspond directement aux 5 Chefs de service
-                ajouterGroupeChefs();
+                // Région SIÈGE sélectionnée -> correspond uniquement aux 5 Chefs de service
+                if (chefsService.length > 0) {
+                    const optgroupChefs = document.createElement('optgroup');
+                    optgroupChefs.label = 'SIÈGE (5 Chefs de service)';
+                    chefsService.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.username;
+                        opt.dataset.fonction = c.fonction || '';
+                        opt.dataset.region = 'SIEGE';
+                        opt.dataset.role = 'CHEF_SERVICE';
+                        opt.textContent = `${c.username} — ${c.fonction}`;
+                        optgroupChefs.appendChild(opt);
+                    });
+                    select.appendChild(optgroupChefs);
+                }
                 if (currentVal && chefsService.some(c => c.username.toLowerCase() === String(currentVal).toLowerCase())) {
                     setControleurSaisieValue(currentVal);
                 }
                 return;
-            }
-
-            // Si l'utilisateur connecté est du Siège (ex. Chef de service), afficher SIÈGE en premier
-            const isSiege = isCurrentUserSiege();
-            if (isSiege) {
-                ajouterGroupeChefs();
             }
 
             regionsOrdonnees.forEach(reg => {
@@ -950,10 +941,6 @@
                 });
                 select.appendChild(optgroup);
             });
-
-            if (!isSiege) {
-                ajouterGroupeChefs();
-            }
 
             if (currentVal) {
                 setControleurSaisieValue(currentVal);
@@ -1037,26 +1024,25 @@
                 chefsService = window.FCIAuth.getChefsDeService();
             }
 
-            select.innerHTML = '<option value="">-- Sélectionner un contrôleur ou chef de service --</option>';
+            select.innerHTML = '<option value="">-- Sélectionner un contrôleur (ex. CASA-001) --</option>';
 
-            if (chefsService.length > 0) {
-                const grpChefs = document.createElement('optgroup');
-                grpChefs.label = 'SIÈGE (5 Chefs de service)';
-                chefsService.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.username;
-                    opt.dataset.fonction = c.fonction || '';
-                    opt.dataset.region = 'SIEGE';
-                    opt.dataset.role = 'CHEF_SERVICE';
-                    opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
-                    grpChefs.appendChild(opt);
-                });
-                select.appendChild(grpChefs);
-            }
-
-            if (regNorm !== 'SIEGE' && controleurs.length > 0) {
-                const grpCtrls = document.createElement('optgroup');
-                grpCtrls.label = 'CONTRÔLEURS RÉGIONAUX';
+            if (regNorm === 'SIEGE') {
+                if (chefsService.length > 0) {
+                    const grpChefs = document.createElement('optgroup');
+                    grpChefs.label = 'SIÈGE (5 Chefs de service)';
+                    chefsService.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.username;
+                        opt.dataset.fonction = c.fonction || '';
+                        opt.dataset.region = 'SIEGE';
+                        opt.dataset.role = 'CHEF_SERVICE';
+                        opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
+                        grpChefs.appendChild(opt);
+                    });
+                    select.appendChild(grpChefs);
+                }
+            } else if (regNorm) {
+                // Les 10 autres régions restent identiques (uniquement les contrôleurs régionaux)
                 controleurs.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.username;
@@ -1064,9 +1050,38 @@
                     opt.dataset.region = c.region || '';
                     opt.dataset.role = 'CONTROLEUR';
                     opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
-                    grpCtrls.appendChild(opt);
+                    select.appendChild(opt);
                 });
-                select.appendChild(grpCtrls);
+            } else {
+                // Aucune région encore sélectionnée : contrôleurs régionaux + groupe SIÈGE
+                if (controleurs.length > 0) {
+                    const grpCtrls = document.createElement('optgroup');
+                    grpCtrls.label = 'CONTRÔLEURS RÉGIONAUX';
+                    controleurs.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.username;
+                        opt.dataset.fonction = c.fonction || '';
+                        opt.dataset.region = c.region || '';
+                        opt.dataset.role = 'CONTROLEUR';
+                        opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
+                        grpCtrls.appendChild(opt);
+                    });
+                    select.appendChild(grpCtrls);
+                }
+                if (chefsService.length > 0) {
+                    const grpChefs = document.createElement('optgroup');
+                    grpChefs.label = 'SIÈGE (5 Chefs de service)';
+                    chefsService.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.username;
+                        opt.dataset.fonction = c.fonction || '';
+                        opt.dataset.region = 'SIEGE';
+                        opt.dataset.role = 'CHEF_SERVICE';
+                        opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
+                        grpChefs.appendChild(opt);
+                    });
+                    select.appendChild(grpChefs);
+                }
             }
 
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
