@@ -917,25 +917,28 @@
                 return a.localeCompare(b, 'fr');
             });
 
-            select.innerHTML = '<option value="">-- Contrôleur (ex. CASA-001) --</option>';
+            select.innerHTML = '<option value="">-- Contrôleur / Chef de service --</option>';
+
+            const ajouterOptgroupChefs = () => {
+                if (chefsService.length === 0) return;
+                const optgroupChefs = document.createElement('optgroup');
+                optgroupChefs.label = 'SIÈGE (5 Chefs de service)';
+                chefsService.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = 'SIEGE';
+                    opt.dataset.role = 'CHEF_SERVICE';
+                    opt.textContent = `${c.username} — ${c.fonction}`;
+                    optgroupChefs.appendChild(opt);
+                });
+                select.appendChild(optgroupChefs);
+            };
 
             const regSelectionneeSaisie = normaliserRegion(document.getElementById('regionSite')?.value || '');
             if (regSelectionneeSaisie === 'SIEGE') {
-                // Région SIÈGE sélectionnée -> correspond uniquement aux 5 Chefs de service
-                if (chefsService.length > 0) {
-                    const optgroupChefs = document.createElement('optgroup');
-                    optgroupChefs.label = 'SIÈGE (5 Chefs de service)';
-                    chefsService.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.username;
-                        opt.dataset.fonction = c.fonction || '';
-                        opt.dataset.region = 'SIEGE';
-                        opt.dataset.role = 'CHEF_SERVICE';
-                        opt.textContent = `${c.username} — ${c.fonction}`;
-                        optgroupChefs.appendChild(opt);
-                    });
-                    select.appendChild(optgroupChefs);
-                }
+                // Région SIÈGE sélectionnée -> afficher les 5 Chefs de service en premier (uniquement)
+                ajouterOptgroupChefs();
                 if (currentVal && chefsService.some(c => c.username.toLowerCase() === String(currentVal).toLowerCase())) {
                     setControleurSaisieValue(currentVal);
                 }
@@ -956,6 +959,9 @@
                 });
                 select.appendChild(optgroup);
             });
+
+            // Toujours intégrer les 5 Chefs de service parmi les contrôleurs dans l'Espace Saisie FV
+            ajouterOptgroupChefs();
 
             if (currentVal) {
                 setControleurSaisieValue(currentVal);
