@@ -227,6 +227,7 @@
                         <label for="audit-region">Région de la mission *</label>
                         <select id="audit-region" autocomplete="off" onchange="onRegionChangePlanif()">
                             <option value="">-- Sélectionner une région --</option>
+                            <option value="SIEGE">SIÈGE</option>
                             <option value="MARRAKECH">MARRAKECH</option>
                             <option value="AGADIR">AGADIR</option>
                             <option value="CASA">CASA</option>
@@ -319,6 +320,11 @@
 
     <script>
         const CENTRES_PAR_REGION = {
+            "SIEGE": [
+                "SIÈGE - DIRECTION CONTRÔLE GÉNÉRALE",
+                "SIÈGE - DIVISION CONTRÔLE PERMANENT",
+                "SIÈGE CENTRAL"
+            ],
             "MARRAKECH": [
                 "MARRAKECH CTD",
                 "MARRAKECH CM",
@@ -503,6 +509,7 @@
             const up = String(reg).trim().toUpperCase();
             if (up === "OUJEDA" || up === "OUJDA") return "OUEJDA";
             if (up === "LAYOUNE") return "LAAYOUNE";
+            if (up === "SIÈGE" || up === "SIÉGE") return "SIEGE";
             return up;
         }
 
@@ -649,12 +656,25 @@
         }
 
         function onRegionChangePlanif() {
-            const region = document.getElementById('audit-region').value;
+            const region = normalizeRegionOption(document.getElementById('audit-region').value);
             const entiteSelect = document.getElementById('audit-entite');
 
             if (!region || !CENTRES_PAR_REGION[region]) {
                 entiteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
                 entiteSelect.disabled = true;
+            } else if (region === 'SIEGE') {
+                let optsHtml = '<option value="">-- Sélectionner le centre / entité --</option>';
+                optsHtml += `<optgroup label="SIÈGE">` +
+                    CENTRES_PAR_REGION['SIEGE'].map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
+                    `</optgroup>`;
+                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
+                    if (regKey === 'SIEGE') return;
+                    optsHtml += `<optgroup label="${escapeHtml(regKey)}">` +
+                        centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
+                        `</optgroup>`;
+                });
+                entiteSelect.innerHTML = optsHtml;
+                entiteSelect.disabled = false;
             } else {
                 const centres = CENTRES_PAR_REGION[region];
                 entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
@@ -669,10 +689,7 @@
             const box = document.getElementById('siege-controleurs-list');
             if (!box) return;
 
-            const ctrlsRegion = (region && window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
-                ? window.FCIAuth.getControllersByRegion(region)
-                : [];
-
+            const regNorm = normalizeRegionOption(region);
             const chefsService = (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function')
                 ? window.FCIAuth.getChefsDeService()
                 : [];
@@ -684,19 +701,33 @@
                 </label>
             `;
 
+            if (regNorm === 'SIEGE') {
+                box.innerHTML = `
+                    <div style="width:100%; font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-bottom:2px;">
+                        <i class="fa-solid fa-landmark"></i> Région SIÈGE — 5 Chefs de service
+                    </div>
+                    ${chefsService.map(c => renderChip(c, true)).join('')}
+                `;
+                return;
+            }
+
+            const ctrlsRegion = (regNorm && window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
+                ? window.FCIAuth.getControllersByRegion(regNorm)
+                : [];
+
             let html = '';
 
-            if (!region) {
-                html += `<div style="width:100%; font-size:0.78rem; color:#64748B; margin-bottom:4px;">Sélectionnez une région pour afficher aussi ses contrôleurs régionaux (ex. MARRAKECH-001, CASA-001).</div>`;
+            if (!regNorm) {
+                html += `<div style="width:100%; font-size:0.78rem; color:#64748B; margin-bottom:4px;">Sélectionnez une région (dont SIÈGE pour les 5 Chefs de service, ou une région postale pour ses contrôleurs).</div>`;
             } else if (ctrlsRegion.length > 0) {
-                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase; margin-bottom:2px;"><i class="fa-solid fa-map-location-dot"></i> Contrôleurs régionaux — ${escapeHtml(region)}</div>`;
+                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase; margin-bottom:2px;"><i class="fa-solid fa-map-location-dot"></i> Contrôleurs régionaux — ${escapeHtml(regNorm)}</div>`;
                 html += ctrlsRegion.map(c => renderChip(c, false)).join('');
             } else {
-                html += `<div style="width:100%; font-size:0.78rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(region)}.</div>`;
+                html += `<div style="width:100%; font-size:0.78rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(regNorm)}.</div>`;
             }
 
             if (chefsService.length > 0) {
-                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-top:6px; margin-bottom:2px; padding-top:6px; border-top:1px dashed #CBD5E1;"><i class="fa-solid fa-landmark"></i> Chefs de service (Siège — contrôles sur demande du Siège)</div>`;
+                html += `<div style="width:100%; font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-top:6px; margin-bottom:2px; padding-top:6px; border-top:1px dashed #CBD5E1;"><i class="fa-solid fa-landmark"></i> Chefs de service (SIÈGE — contrôles sur demande du Siège)</div>`;
                 html += chefsService.map(c => renderChip(c, true)).join('');
             }
 

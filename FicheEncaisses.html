@@ -441,6 +441,7 @@
                         <label for="planFvRegionSelect">Région concernée *</label>
                         <select id="planFvRegionSelect" class="form-control" onchange="onPlanFvRegionChange()">
                             <option value="">-- Région --</option>
+                            <option value="SIEGE">SIÈGE</option>
                             <option value="MARRAKECH">MARRAKECH</option>
                             <option value="AGADIR">AGADIR</option>
                             <option value="CASA">CASA</option>
@@ -511,6 +512,7 @@
                         <label>Région de la vérif. *</label>
                         <select class="form-control" id="regionSite" autocomplete="off" onchange="onRegionEncaisseChange()">
                             <option value="">-- Région --</option>
+                            <option value="SIEGE">SIÈGE</option>
                             <option value="MARRAKECH">MARRAKECH</option>
                             <option value="AGADIR">AGADIR</option>
                             <option value="CASA">CASA</option>
@@ -673,6 +675,11 @@
     <script src="fci-db-manager.js"></script>
     <script>
         const CENTRES_PAR_REGION = {
+            "SIEGE": [
+                "SIÈGE - DIRECTION CONTRÔLE GÉNÉRALE",
+                "SIÈGE - DIVISION CONTRÔLE PERMANENT",
+                "SIÈGE CENTRAL"
+            ],
             "MARRAKECH": [
                 "MARRAKECH CTD",
                 "MARRAKECH CM",
@@ -900,7 +907,7 @@
             const ajouterGroupeChefs = () => {
                 if (chefsService.length === 0) return;
                 const optgroupChefs = document.createElement('optgroup');
-                optgroupChefs.label = 'CHEFS DE SERVICE (SIÈGE)';
+                optgroupChefs.label = 'SIÈGE (5 Chefs de service)';
                 chefsService.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.username;
@@ -913,7 +920,17 @@
                 select.appendChild(optgroupChefs);
             };
 
-            // Si l'utilisateur connecté est du Siège (ex. Chef de service), afficher Chefs de service en premier
+            const regSelectionneeSaisie = normaliserRegion(document.getElementById('regionSite')?.value || '');
+            if (regSelectionneeSaisie === 'SIEGE') {
+                // Région SIÈGE sélectionnée -> correspond directement aux 5 Chefs de service
+                ajouterGroupeChefs();
+                if (currentVal && chefsService.some(c => c.username.toLowerCase() === String(currentVal).toLowerCase())) {
+                    setControleurSaisieValue(currentVal);
+                }
+                return;
+            }
+
+            // Si l'utilisateur connecté est du Siège (ex. Chef de service), afficher SIÈGE en premier
             const isSiege = isCurrentUserSiege();
             if (isSiege) {
                 ajouterGroupeChefs();
@@ -1004,9 +1021,12 @@
             renderPlanificationsFVTable();
         }
 
-        function peuplerListeControleursPlanFV() {
+        function peuplerListeControleursPlanFV(regionFiltre = '') {
             const select = document.getElementById('planFvControleurSelect');
             if (!select) return;
+
+            const currentVal = select.value;
+            const regNorm = normaliserRegion(regionFiltre);
 
             let controleurs = [];
             if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
@@ -1021,7 +1041,7 @@
 
             if (chefsService.length > 0) {
                 const grpChefs = document.createElement('optgroup');
-                grpChefs.label = 'CHEFS DE SERVICE (SIÈGE)';
+                grpChefs.label = 'SIÈGE (5 Chefs de service)';
                 chefsService.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.username;
@@ -1034,7 +1054,7 @@
                 select.appendChild(grpChefs);
             }
 
-            if (controleurs.length > 0) {
+            if (regNorm !== 'SIEGE' && controleurs.length > 0) {
                 const grpCtrls = document.createElement('optgroup');
                 grpCtrls.label = 'CONTRÔLEURS RÉGIONAUX';
                 controleurs.forEach(c => {
@@ -1048,6 +1068,10 @@
                 });
                 select.appendChild(grpCtrls);
             }
+
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
         }
 
         function onPlanFvRegionChange() {
@@ -1059,6 +1083,8 @@
             regSelect.value = region;
             siteSelect.innerHTML = '';
 
+            peuplerListeControleursPlanFV(region);
+
             if (!region || !CENTRES_PAR_REGION[region]) {
                 siteSelect.innerHTML = '<option value="">-- Région requise --</option>';
                 siteSelect.disabled = true;
@@ -1066,12 +1092,37 @@
             }
 
             siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
-            CENTRES_PAR_REGION[region].forEach(centre => {
-                const opt = document.createElement('option');
-                opt.value = centre;
-                opt.textContent = centre;
-                siteSelect.appendChild(opt);
-            });
+            if (region === 'SIEGE') {
+                const grpSiege = document.createElement('optgroup');
+                grpSiege.label = 'SIÈGE';
+                CENTRES_PAR_REGION['SIEGE'].forEach(centre => {
+                    const opt = document.createElement('option');
+                    opt.value = centre;
+                    opt.textContent = centre;
+                    grpSiege.appendChild(opt);
+                });
+                siteSelect.appendChild(grpSiege);
+
+                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
+                    if (regKey === 'SIEGE') return;
+                    const grp = document.createElement('optgroup');
+                    grp.label = regKey;
+                    centres.forEach(centre => {
+                        const opt = document.createElement('option');
+                        opt.value = centre;
+                        opt.textContent = centre;
+                        grp.appendChild(opt);
+                    });
+                    siteSelect.appendChild(grp);
+                });
+            } else {
+                CENTRES_PAR_REGION[region].forEach(centre => {
+                    const opt = document.createElement('option');
+                    opt.value = centre;
+                    opt.textContent = centre;
+                    siteSelect.appendChild(opt);
+                });
+            }
             siteSelect.disabled = false;
         }
 
@@ -1523,6 +1574,7 @@
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
             if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+            if (reg === 'SIÈGE' || reg === 'SIÉGE') reg = 'SIEGE';
             return reg;
         }
 
@@ -1634,14 +1686,43 @@
             }
 
             siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
-            CENTRES_PAR_REGION[region].forEach(centre => {
-                const opt = document.createElement('option');
-                opt.value = centre;
-                opt.textContent = centre;
-                siteSelect.appendChild(opt);
-            });
+            const tousCentresAjoutes = [];
+            if (region === 'SIEGE') {
+                const grpSiege = document.createElement('optgroup');
+                grpSiege.label = 'SIÈGE';
+                CENTRES_PAR_REGION['SIEGE'].forEach(centre => {
+                    const opt = document.createElement('option');
+                    opt.value = centre;
+                    opt.textContent = centre;
+                    grpSiege.appendChild(opt);
+                    tousCentresAjoutes.push(centre);
+                });
+                siteSelect.appendChild(grpSiege);
 
-            if (sitePreselectionne && !CENTRES_PAR_REGION[region].includes(sitePreselectionne)) {
+                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
+                    if (regKey === 'SIEGE') return;
+                    const grp = document.createElement('optgroup');
+                    grp.label = regKey;
+                    centres.forEach(centre => {
+                        const opt = document.createElement('option');
+                        opt.value = centre;
+                        opt.textContent = centre;
+                        grp.appendChild(opt);
+                        tousCentresAjoutes.push(centre);
+                    });
+                    siteSelect.appendChild(grp);
+                });
+            } else {
+                CENTRES_PAR_REGION[region].forEach(centre => {
+                    const opt = document.createElement('option');
+                    opt.value = centre;
+                    opt.textContent = centre;
+                    siteSelect.appendChild(opt);
+                    tousCentresAjoutes.push(centre);
+                });
+            }
+
+            if (sitePreselectionne && !tousCentresAjoutes.includes(sitePreselectionne)) {
                 const opt = document.createElement('option');
                 opt.value = sitePreselectionne;
                 opt.textContent = sitePreselectionne;
@@ -1655,8 +1736,10 @@
         function trouverRegionDuSite(siteName) {
             if (!siteName) return '';
             for (const [reg, centres] of Object.entries(CENTRES_PAR_REGION)) {
+                if (reg === 'SIEGE') continue;
                 if (centres.includes(siteName)) return reg;
             }
+            if ((CENTRES_PAR_REGION['SIEGE'] || []).includes(siteName)) return 'SIEGE';
             return '';
         }
 

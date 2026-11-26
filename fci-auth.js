@@ -90,6 +90,7 @@
         let reg = String(val || '').toUpperCase().trim();
         if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
         if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+        if (reg === 'SIÈGE' || reg === 'SIÉGE') reg = 'SIEGE';
         return reg;
     }
 
@@ -123,9 +124,13 @@
     /**
      * Retourne la liste des comptes contrôleurs régionaux (sans mot de passe),
      * filtrée par région si un code région est fourni.
+     * Si la région est 'SIEGE', retourne les 5 Chefs de service.
      */
     function getControllersByRegion(region = '') {
         const targetReg = normaliserRegion(region);
+        if (targetReg === 'SIEGE') {
+            return getChefsDeService();
+        }
         return FCI_USERS
             .filter(u => u.role === 'CONTROLEUR' && (!targetReg || normaliserRegion(u.region) === targetReg))
             .map(u => ({

@@ -361,6 +361,11 @@
     <script src="fci-db-manager.js"></script>
     <script>
         const CENTRES_PAR_REGION = {
+            "SIEGE": [
+                "SIÈGE - DIRECTION CONTRÔLE GÉNÉRALE",
+                "SIÈGE - DIVISION CONTRÔLE PERMANENT",
+                "SIÈGE CENTRAL"
+            ],
             "MARRAKECH": [
                 "MARRAKECH CTD",
                 "MARRAKECH CM",
@@ -655,6 +660,7 @@
             let reg = String(val || '').toUpperCase().trim();
             if (reg === 'OUJDA' || reg === 'OUJEDA') reg = 'OUEJDA';
             if (reg === 'LAYOUNE') reg = 'LAAYOUNE';
+            if (reg === 'SIÈGE' || reg === 'SIÉGE') reg = 'SIEGE';
             return reg;
         }
 
