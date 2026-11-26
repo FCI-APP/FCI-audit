@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js"></script>
+    <script src="fci-auth.js?v=20261126-siege"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -867,6 +867,22 @@
 
         // ==================== LISTE DÉROULANTE DES CONTRÔLEURS (ESPACE SAISIE) ====================
 
+        const CHEFS_SERVICE_SIEGE_FALLBACK = [
+            { username: 'chef service-001', fonction: 'Chef de service 1', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-002', fonction: 'Chef de service 2', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-003', fonction: 'Chef de service 3', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-004', fonction: 'Chef de service 4', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-005', fonction: 'Chef de service 5', region: 'SIEGE', role: 'CHEF_SERVICE' }
+        ];
+
+        function getChefsDeServiceListe() {
+            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
+                const list = window.FCIAuth.getChefsDeService();
+                if (Array.isArray(list) && list.length > 0) return list;
+            }
+            return CHEFS_SERVICE_SIEGE_FALLBACK;
+        }
+
         function peuplerListeControleursSaisie(valeurConservee = '') {
             const select = document.getElementById('nomControleur');
             if (!select) return;
@@ -877,10 +893,7 @@
             if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
                 controleurs = window.FCIAuth.getControllersByRegion('');
             }
-            let chefsService = [];
-            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
-                chefsService = window.FCIAuth.getChefsDeService();
-            }
+            const chefsService = getChefsDeServiceListe();
 
             const regPrioritaire = normaliserRegion(
                 document.getElementById('regionSite')?.value || getUserHomeRegion()
@@ -1019,10 +1032,7 @@
             if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
                 controleurs = window.FCIAuth.getControllersByRegion('');
             }
-            let chefsService = [];
-            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
-                chefsService = window.FCIAuth.getChefsDeService();
-            }
+            const chefsService = getChefsDeServiceListe();
 
             select.innerHTML = '<option value="">-- Sélectionner un contrôleur (ex. CASA-001) --</option>';
 

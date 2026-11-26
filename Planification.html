@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - Planification de la Mission de Contrôle</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js"></script>
+    <script src="fci-auth.js?v=20261126-siege"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -273,7 +273,7 @@
                     <div class="form-group">
                         <label><i class="fa-solid fa-user-check" style="color:var(--primary-blue);"></i> Contrôleur(s) régional(aux) &amp; Chef(s) de service désigné(s) pour cette mission *</label>
                         <div id="siege-controleurs-list" class="ctrl-chips-box">
-                            <span style="font-size:0.8rem; color:#64748B;">Sélectionnez une région pour afficher ses contrôleurs (ex. MARRAKECH-001, CASA-001) ainsi que les Chefs de service (chef service-001 à 005).</span>
+                            <span style="font-size:0.8rem; color:#64748B;">Sélectionnez d'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) ou SIÈGE pour les 5 Chefs de service.</span>
                         </div>
                     </div>
 
@@ -685,6 +685,22 @@
             renderControleursRegionCheckboxes(region);
         }
 
+        const CHEFS_SERVICE_SIEGE_FALLBACK = [
+            { username: 'chef service-001', fonction: 'Chef de service 1', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-002', fonction: 'Chef de service 2', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-003', fonction: 'Chef de service 3', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-004', fonction: 'Chef de service 4', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-005', fonction: 'Chef de service 5', region: 'SIEGE', role: 'CHEF_SERVICE' }
+        ];
+
+        function getChefsDeServiceListe() {
+            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
+                const list = window.FCIAuth.getChefsDeService();
+                if (Array.isArray(list) && list.length > 0) return list;
+            }
+            return CHEFS_SERVICE_SIEGE_FALLBACK;
+        }
+
         function renderControleursRegionCheckboxes(region) {
             const box = document.getElementById('siege-controleurs-list');
             if (!box) return;
@@ -704,13 +720,7 @@
             }
 
             if (regNorm === 'SIEGE') {
-                const chefsService = (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function')
-                    ? window.FCIAuth.getChefsDeService()
-                    : [];
-                if (chefsService.length === 0) {
-                    box.innerHTML = '<span style="font-size:0.8rem; color:#64748B;">Aucun compte Chef de service enregistré pour SIÈGE.</span>';
-                    return;
-                }
+                const chefsService = getChefsDeServiceListe();
                 box.innerHTML = chefsService.map(c => renderChip(c, true)).join('');
                 return;
             }
