@@ -769,21 +769,14 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreDate"><span><i class="fa-regular fa-calendar-check"></i> Date définie</span></label>
-                    <select id="filtreDate" class="filter-select" onchange="onFilterChange('DATE')">
-                        <option value="TOUS">-- Toutes les dates --</option>
-                    </select>
-                </div>
-
-                <div class="filter-group">
-                    <label for="filtreDateDebut"><span><i class="fa-solid fa-calendar-day"></i> Début période</span></label>
+                    <label for="filtreDateDebut"><span><i class="fa-solid fa-calendar-day"></i> Date début</span></label>
                     <select id="filtreDateDebut" class="filter-select" onchange="onFilterChange('DEBUT')">
                         <option value="TOUS">-- Date début --</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filtreDateFin"><span><i class="fa-solid fa-calendar-week"></i> Fin période</span></label>
+                    <label for="filtreDateFin"><span><i class="fa-solid fa-calendar-week"></i> Date fin</span></label>
                     <select id="filtreDateFin" class="filter-select" onchange="onFilterChange('FIN')">
                         <option value="TOUS">-- Date fin --</option>
                     </select>
@@ -821,6 +814,13 @@
                     <label for="filtreStatut"><span><i class="fa-solid fa-circle-dot"></i> Statut Constat</span></label>
                     <select id="filtreStatut" class="filter-select" onchange="onFilterChange('STATUT')">
                         <option value="TOUS">-- Tous les statuts --</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filtreControleur"><span><i class="fa-solid fa-user-tie"></i> Contrôleur</span></label>
+                    <select id="filtreControleur" class="filter-select" onchange="onFilterChange('CONTROLEUR')">
+                        <option value="TOUS">-- Tous les contrôleurs --</option>
                     </select>
                 </div>
             </div>
@@ -1566,7 +1566,76 @@
                 .filter(s => s && s !== '--' && s.toLowerCase() !== 'non renseigné');
         }
 
+        const REGEX_USERNAME_CTRL_TDB = /\b(?:CASA|SETTAT|RABAT|TANGER|MARRAKECH|AGADIR|FES|MEKNES|LAYOUNE|LAAYOUNE|OUJDA|OUEJDA)-\d{3}\b/gi;
+        const SIEGE_USERNAMES_TDB = [
+            'admin-siege',
+            'directeur-001',
+            'chef service-001',
+            'chef service-002',
+            'chef service-003',
+            'chef service-004',
+            'chef service-005'
+        ];
+
+        function trouverUsernamesDansTexteTDB(val) {
+            if (!val) return [];
+            const txt = Array.isArray(val) ? val.join(' / ') : String(val);
+            const cleanTxt = txt.trim();
+            if (!cleanTxt || cleanTxt === '--' || cleanTxt.toLowerCase() === 'non renseigné') return [];
+
+            const mapConnus = new Map();
+            SIEGE_USERNAMES_TDB.forEach(u => mapConnus.set(u.toLowerCase(), u));
+            if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+                window.FCIAuth.getControllersByRegion('').forEach(c => {
+                    if (c && c.username) mapConnus.set(String(c.username).toLowerCase(), String(c.username));
+                });
+            }
+
+            const trouves = [];
+            const ajouter = (u) => {
+                if (u && !trouves.includes(u)) trouves.push(u);
+            };
+
+            const matchesReg = cleanTxt.match(REGEX_USERNAME_CTRL_TDB);
+            if (matchesReg) {
+                matchesReg.forEach(m => {
+                    ajouter(mapConnus.get(m.toLowerCase()) || m.toUpperCase());
+                });
+            }
+
+            const lowerTxt = cleanTxt.toLowerCase();
+            SIEGE_USERNAMES_TDB.forEach(u => {
+                if (lowerTxt.includes(u.toLowerCase())) ajouter(u);
+            });
+
+            return trouves;
+        }
+
         function extraireControleurs(item, missionAssociee = {}) {
+            const brutItem = item && (item.controleur || item.controleurs || item.nomControleur || item.nomsControleurs || item.auditeur);
+            const brutMission = missionAssociee && (missionAssociee.controleur || missionAssociee.controleurs || missionAssociee.nomControleur || missionAssociee.nomsControleurs || missionAssociee.auditeur);
+
+            const depuisBrutItem = trouverUsernamesDansTexteTDB(brutItem);
+            if (depuisBrutItem.length > 0) return depuisBrutItem;
+
+            const depuisBrutMission = trouverUsernamesDansTexteTDB(brutMission);
+            if (depuisBrutMission.length > 0) return depuisBrutMission;
+
+            const depuisCtrlId = trouverUsernamesDansTexteTDB(
+                (item && item.controleurId) || (missionAssociee && missionAssociee.controleurId) || ''
+            );
+            if (depuisCtrlId.length > 0) return depuisCtrlId;
+
+            const depuisAssignes = trouverUsernamesDansTexteTDB(
+                (item && item.controleursAssignes) || (missionAssociee && missionAssociee.controleursAssignes) || ''
+            );
+            if (depuisAssignes.length > 0) return depuisAssignes;
+
+            const depuisCreeParId = trouverUsernamesDansTexteTDB(
+                (item && item.creeParId) || (missionAssociee && missionAssociee.creeParId) || ''
+            );
+            if (depuisCreeParId.length > 0) return depuisCreeParId;
+
             const champsPossibles = [
                 'controleur', 'controleurs', 'nomControleur', 'nomsControleurs',
                 'controleur1', 'controleur2', 'controleur3',
@@ -1958,20 +2027,31 @@
             actualiserFiltresDynamiquesEtAnalyse();
         }
 
-        function correspondFiltreTemporel(isoDate, dateSpecifique, dateDebut, dateFin) {
-            if (dateSpecifique !== 'TOUS') {
-                return isoDate === dateSpecifique;
+        function correspondFiltreTemporel(isoDate, dateDebut, dateFin) {
+            const hasDebut = Boolean(dateDebut && dateDebut !== 'TOUS');
+            const hasFin = Boolean(dateFin && dateFin !== 'TOUS');
+            if (!hasDebut && !hasFin) return true;
+            if (!isoDate) return false;
+            // Une seule date sélectionnée dans Date début -> filtre exact sur cette date
+            if (hasDebut && !hasFin) {
+                return isoDate === dateDebut;
             }
-            if (dateDebut !== 'TOUS' && (!isoDate || isoDate < dateDebut)) return false;
-            if (dateFin !== 'TOUS' && (!isoDate || isoDate > dateFin)) return false;
-            return true;
+            // Date fin seule -> toutes les dates jusqu'à Date fin incluse
+            if (!hasDebut && hasFin) {
+                return isoDate <= dateFin;
+            }
+            // Date début + Date fin -> toute la période (bornes incluses)
+            const minIso = dateDebut <= dateFin ? dateDebut : dateFin;
+            const maxIso = dateDebut <= dateFin ? dateFin : dateDebut;
+            return isoDate >= minIso && isoDate <= maxIso;
         }
 
-        function libelleFiltreTemporel(dateSpecifique, dateDebut, dateFin) {
-            if (dateSpecifique !== 'TOUS') return `Date : ${formaterDateFR(dateSpecifique)}`;
-            if (dateDebut !== 'TOUS' && dateFin !== 'TOUS') return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
-            if (dateDebut !== 'TOUS') return `Période : à partir du ${formaterDateFR(dateDebut)}`;
-            if (dateFin !== 'TOUS') return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
+        function libelleFiltreTemporel(dateDebut, dateFin) {
+            const hasDebut = Boolean(dateDebut && dateDebut !== 'TOUS');
+            const hasFin = Boolean(dateFin && dateFin !== 'TOUS');
+            if (hasDebut && hasFin) return `Période : du ${formaterDateFR(dateDebut)} au ${formaterDateFR(dateFin)}`;
+            if (hasDebut) return `Date : ${formaterDateFR(dateDebut)}`;
+            if (hasFin) return `Période : jusqu'au ${formaterDateFR(dateFin)}`;
             return 'Toutes les dates';
         }
 
@@ -1989,14 +2069,14 @@
             return {
                 reg: regVal,
                 centre: niveauActif === 'CENTRE' ? document.getElementById('filtreCentre').value : 'TOUS',
-                dateSpec: document.getElementById('filtreDate').value,
                 dateDebut: document.getElementById('filtreDateDebut').value,
                 dateFin: document.getElementById('filtreDateFin').value,
                 typeCtrl: document.getElementById('filtreType').value,
                 proc: document.getElementById('filtreProcessus').value,
                 ctrl: document.getElementById('filtreControle').value,
                 pc: document.getElementById('filtrePC').value,
-                statut: document.getElementById('filtreStatut').value
+                statut: document.getElementById('filtreStatut').value,
+                controleur: document.getElementById('filtreControleur').value
             };
         }
 
@@ -2010,12 +2090,13 @@
                 }
                 if (!exclure.includes('REGION') && etat.reg !== 'TOUS' && d.region !== etat.reg) return false;
                 if (!exclure.includes('CENTRE') && etat.centre !== 'TOUS' && d.site !== etat.centre) return false;
-                if (!exclure.includes('TEMPS') && !correspondFiltreTemporel(d.dateISO, etat.dateSpec, etat.dateDebut, etat.dateFin)) return false;
+                if (!exclure.includes('TEMPS') && !correspondFiltreTemporel(d.dateISO, etat.dateDebut, etat.dateFin)) return false;
                 if (!exclure.includes('TYPE') && etat.typeCtrl !== 'TOUS' && d.typeControle !== etat.typeCtrl) return false;
                 if (!exclure.includes('PROCESSUS') && etat.proc !== 'TOUS' && d.processus !== etat.proc) return false;
                 if (!exclure.includes('CONTROLE') && etat.ctrl !== 'TOUS' && d.controle !== etat.ctrl) return false;
                 if (!exclure.includes('PC') && etat.pc !== 'TOUS' && d.pc !== etat.pc) return false;
                 if (!exclure.includes('STATUT') && etat.statut !== 'TOUS' && d.statut !== etat.statut) return false;
+                if (!exclure.includes('CONTROLEUR') && etat.controleur !== 'TOUS' && !(d.controleurs || []).includes(etat.controleur)) return false;
                 return true;
             });
         }
@@ -2041,6 +2122,15 @@
             const isSiegeUser = estUtilisateurSiege();
             const regionsAutorisees = getRegionsAutoriseesUtilisateur();
 
+            // 1. Dates disponibles issues directement de la colonne Date de la BDD (tri chronologique croissant)
+            const datesAsc = [...new Set(toutesLesDonnees.map(d => d.dateISO).filter(Boolean))].sort();
+            etat.dateDebut = remplirSelectOptions(document.getElementById('filtreDateDebut'), datesAsc, '-- Date début --', formaterDateFR);
+
+            const datesFinAsc = etat.dateDebut !== 'TOUS'
+                ? datesAsc.filter(d => d >= etat.dateDebut)
+                : datesAsc;
+            etat.dateFin = remplirSelectOptions(document.getElementById('filtreDateFin'), datesFinAsc, '-- Date fin --', formaterDateFR);
+
             const selReg = document.getElementById('filtreRegion');
 
             if (!isSiegeUser && regionsAutorisees.length <= 1) {
@@ -2055,17 +2145,19 @@
                 selReg.value = 'TOUS';
                 etat.reg = 'TOUS';
             } else {
+                const baseRegs = filtrerSubset(etat, ['REGION']);
+                const regsDansPeriode = (etat.dateDebut !== 'TOUS' || etat.dateFin !== 'TOUS')
+                    ? [...new Set(baseRegs.map(d => d.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'))
+                    : regionsAutorisees;
                 const libTous = isSiegeUser
                     ? '-- Toutes les régions --'
-                    : `-- Toutes mes régions (${regionsAutorisees.length}) --`;
-                etat.reg = remplirSelectOptions(selReg, regionsAutorisees, libTous);
+                    : `-- Toutes mes régions (${regsDansPeriode.length}) --`;
+                etat.reg = remplirSelectOptions(selReg, regsDansPeriode, libTous);
             }
 
             const selCentre = document.getElementById('filtreCentre');
             if (niveauActif === 'CENTRE') {
-                const baseCentres = etat.reg !== 'TOUS'
-                    ? toutesLesDonnees.filter(d => d.region === etat.reg)
-                    : toutesLesDonnees;
+                const baseCentres = filtrerSubset(etat, ['CENTRE']);
                 const centresBDD = [...new Set(baseCentres.map(d => d.site).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
                 etat.centre = remplirSelectOptions(selCentre, centresBDD, '-- Tous les centres --');
             } else {
@@ -2073,14 +2165,6 @@
                 selCentre.value = 'TOUS';
                 etat.centre = 'TOUS';
             }
-
-            const baseDates = filtrerSubset(etat, ['TEMPS']);
-            const datesAsc = [...new Set(baseDates.map(d => d.dateISO).filter(Boolean))].sort();
-            const datesDesc = [...datesAsc].reverse();
-
-            etat.dateSpec = remplirSelectOptions(document.getElementById('filtreDate'), datesDesc, '-- Toutes les dates --', formaterDateFR);
-            etat.dateDebut = remplirSelectOptions(document.getElementById('filtreDateDebut'), datesAsc, '-- Date début --', formaterDateFR);
-            etat.dateFin = remplirSelectOptions(document.getElementById('filtreDateFin'), datesDesc, '-- Date fin --', formaterDateFR);
 
             const baseTypes = filtrerSubset(etat, ['TYPE']);
             const typesBDD = [...new Set(baseTypes.map(d => d.typeControle).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -2107,6 +2191,16 @@
             ];
             etat.statut = remplirSelectOptions(document.getElementById('filtreStatut'), statutsBDD, '-- Tous les statuts --', libelleStatut);
 
+            const baseControleurs = filtrerSubset(etat, ['CONTROLEUR']);
+            const controleursSet = new Set();
+            baseControleurs.forEach(d => {
+                (d.controleurs || []).forEach(c => {
+                    if (c && c !== '--' && c !== 'Non renseigné') controleursSet.add(c);
+                });
+            });
+            const controleursBDD = [...controleursSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            etat.controleur = remplirSelectOptions(document.getElementById('filtreControleur'), controleursBDD, '-- Tous les contrôleurs --');
+
             actualiserAnalyse(etat);
         }
 
@@ -2125,14 +2219,11 @@
                 }
                 document.getElementById('filtrePlanRegion').value = document.getElementById('filtreRegion').value;
                 document.getElementById('filtrePlanCentre').value = centreVal;
-            } else if (source === 'DATE') {
-                if (document.getElementById('filtreDate').value !== 'TOUS') {
-                    document.getElementById('filtreDateDebut').value = 'TOUS';
+            } else if (source === 'DEBUT') {
+                const dDebut = document.getElementById('filtreDateDebut').value;
+                const dFin = document.getElementById('filtreDateFin').value;
+                if (dDebut !== 'TOUS' && dFin !== 'TOUS' && dFin < dDebut) {
                     document.getElementById('filtreDateFin').value = 'TOUS';
-                }
-            } else if (source === 'DEBUT' || source === 'FIN') {
-                if (document.getElementById('filtreDateDebut').value !== 'TOUS' || document.getElementById('filtreDateFin').value !== 'TOUS') {
-                    document.getElementById('filtreDate').value = 'TOUS';
                 }
             }
 
@@ -2217,7 +2308,6 @@
                 ? regionsAutorisees[0]
                 : 'TOUS';
             document.getElementById('filtreCentre').value = 'TOUS';
-            document.getElementById('filtreDate').value = 'TOUS';
             document.getElementById('filtreDateDebut').value = 'TOUS';
             document.getElementById('filtreDateFin').value = 'TOUS';
             document.getElementById('filtreType').value = 'TOUS';
@@ -2225,6 +2315,7 @@
             document.getElementById('filtreControle').value = 'TOUS';
             document.getElementById('filtrePC').value = 'TOUS';
             document.getElementById('filtreStatut').value = 'TOUS';
+            document.getElementById('filtreControleur').value = 'TOUS';
 
             reinitialiserFiltresPlanification(false);
             appliquerEtatNiveau();
@@ -2493,29 +2584,30 @@
 
         function actualiserAnalyse(etatParam = null) {
             const etat = etatParam || lireEtatFiltres();
-            const { reg, centre, dateSpec, dateDebut, dateFin, proc, ctrl, pc } = etat;
+            const { reg, centre, dateDebut, dateFin, proc, ctrl, pc, controleur } = etat;
             const isSiegeUser = estUtilisateurSiege();
             const regionsAutorisees = getRegionsAutoriseesUtilisateur();
 
-            document.getElementById('filtreDate').classList.toggle('highlight-focus', dateSpec !== 'TOUS');
             document.getElementById('filtreDateDebut').classList.toggle('highlight-focus', dateDebut !== 'TOUS');
             document.getElementById('filtreDateFin').classList.toggle('highlight-focus', dateFin !== 'TOUS');
             document.getElementById('filtreProcessus').classList.toggle('highlight-focus', proc !== 'TOUS');
             document.getElementById('filtreControle').classList.toggle('highlight-focus', ctrl !== 'TOUS');
             document.getElementById('filtrePC').classList.toggle('highlight-focus', pc !== 'TOUS');
+            document.getElementById('filtreControleur').classList.toggle('highlight-focus', controleur !== 'TOUS');
 
-            const infoTemps = libelleFiltreTemporel(dateSpec, dateDebut, dateFin);
+            const infoTemps = libelleFiltreTemporel(dateDebut, dateFin);
+            const infoCtrl = controleur !== 'TOUS' ? ` · Contrôleur : ${escapeHTML(controleur)}` : '';
             const scopeEl = document.getElementById('scopeIndicator');
             if (niveauActif === 'NATIONAL') {
-                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-globe"></i> Périmètre National : 10 Régions · ${infoTemps}${infoCtrl}`;
             } else if (niveauActif === 'REGIONAL') {
                 const libReg = reg === 'TOUS'
                     ? (isSiegeUser ? 'Toutes les régions (10)' : `Périmètre Régional & Interrégional (${regionsAutorisees.length} région(s))`)
                     : escapeHTML(reg);
-                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${libReg} · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> Périmètre Régional : ${libReg} · ${infoTemps}${infoCtrl}`;
             } else {
                 const nomCentre = centre === 'TOUS' ? 'Tous les centres' : escapeHTML(centre);
-                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + escapeHTML(reg) + ')' : ''} · ${infoTemps}`;
+                scopeEl.innerHTML = `<i class="fa-solid fa-building"></i> Périmètre Centre / Site : ${nomCentre}${reg !== 'TOUS' ? ' (' + escapeHTML(reg) + ')' : ''} · ${infoTemps}${infoCtrl}`;
             }
 
             const donneesFiltrees = filtrerSubset(etat, []);
@@ -2534,7 +2626,7 @@
         }
 
         function calculerEtAfficherKPIs(donnees, etat) {
-            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
+            const { reg, centre, dateDebut, dateFin, controleur } = etat;
             const isSiegeUser = estUtilisateurSiege();
             const regionsAutorisees = getRegionsAutoriseesUtilisateur();
             const sitesUniques = new Set(donnees.map(d => d.site).filter(Boolean));
@@ -2547,7 +2639,8 @@
                 if (reg !== 'TOUS' && normaliserRegion(m.region) !== reg) return false;
                 if (niveauActif === 'CENTRE' && centre !== 'TOUS' && String(m.entite || '') !== centre) return false;
                 const mISO = normaliserDateISO(m.date);
-                if (!correspondFiltreTemporel(mISO, dateSpec, dateDebut, dateFin)) return false;
+                if (!correspondFiltreTemporel(mISO, dateDebut, dateFin)) return false;
+                if (controleur !== 'TOUS' && !extraireControleurs(m, m).includes(controleur)) return false;
                 return true;
             });
 
@@ -2728,7 +2821,7 @@
         }
 
         function calculerBenchmarkEtSynthese(donneesFiltrees, etat) {
-            const { reg, centre, dateSpec, dateDebut, dateFin } = etat;
+            const { reg, centre, dateDebut, dateFin } = etat;
             const isSiegeUser = estUtilisateurSiege();
             const homeReg = getUserHomeRegion();
             const baseTransverse = filtrerSubset(etat, ['REGION', 'CENTRE']);
@@ -2817,7 +2910,7 @@
 
             const libelleRef = isSiegeUser ? 'moyenne nationale' : 'moyenne de votre espace autorisé';
             box.innerHTML = `
-                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle (${libelleFiltreTemporel(dateSpec, dateDebut, dateFin)}) :</strong><br>
+                <strong><i class="fa-solid fa-file-signature" style="color:var(--primary-blue);"></i> Synthèse Décisionnelle (${libelleFiltreTemporel(dateDebut, dateFin)}) :</strong><br>
                 Sur le périmètre analysé (<strong>${donneesFiltrees.length}</strong> constats), le taux de conformité pondéré s'établit à <strong>${tcSelection.toFixed(1)}%</strong>
                 (soit <strong>${signeEcart} pts</strong> vs ${libelleRef} ${tcNational.toFixed(1)}%).
                 On relève <strong>${totalKO} anomalie(s) (KO)</strong> dont <strong>${nonClot} non clôturé(s)</strong>.
@@ -4184,9 +4277,9 @@
 
             const isSiegeUser = estUtilisateurSiege();
             const homeReg = getUserHomeRegion();
-            const dateSpec = document.getElementById('filtreDate').value;
             const dateDebut = document.getElementById('filtreDateDebut').value;
             const dateFin = document.getElementById('filtreDateFin').value;
+            const controleurFiltre = document.getElementById('filtreControleur').value;
 
             const wb = XLSX.utils.book_new();
 
@@ -4194,7 +4287,8 @@
                 { "Indicateur": "Espace d'accès", "Valeur": isSiegeUser ? "Espace Siège (Global)" : `Espace Régional & Interrégional (${homeReg})` },
                 { "Indicateur": "Niveau d'analyse actif", "Valeur": niveauActif },
                 { "Indicateur": "Périmètre", "Valeur": document.getElementById('scopeIndicator').textContent.trim() },
-                { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateSpec, dateDebut, dateFin) },
+                { "Indicateur": "Fenêtre temporelle", "Valeur": libelleFiltreTemporel(dateDebut, dateFin) },
+                { "Indicateur": "Contrôleur filtré", "Valeur": controleurFiltre === 'TOUS' ? 'Tous les contrôleurs' : controleurFiltre },
                 { "Indicateur": document.getElementById('lblKpiVolume').textContent, "Valeur": document.getElementById('kpiVolume').textContent },
                 { "Indicateur": "Détail Volume", "Valeur": document.getElementById('subKpiVolume').textContent },
                 { "Indicateur": "Taux de Conformité Pondéré (%)", "Valeur": document.getElementById('kpiTcGlobal').textContent },

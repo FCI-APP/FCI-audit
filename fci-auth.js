@@ -131,7 +131,23 @@
             .map(u => ({
                 username: u.username,
                 fonction: u.fonction,
-                region: normaliserRegion(u.region)
+                region: normaliserRegion(u.region),
+                role: u.role
+            }));
+    }
+
+    /**
+     * Retourne la liste des comptes Chefs de service du Siège (sans mot de passe)
+     * pouvant effectuer des contrôles ou vérifications à la demande du Siège.
+     */
+    function getChefsDeService() {
+        return FCI_USERS
+            .filter(u => u.role === 'CHEF_SERVICE')
+            .map(u => ({
+                username: u.username,
+                fonction: u.fonction,
+                region: normaliserRegion(u.region || 'SIEGE'),
+                role: u.role
             }));
     }
 
@@ -403,6 +419,7 @@
         tagRecordWithSpace,
         normaliserRegion,
         getControllersByRegion,
+        getChefsDeService,
         getAllUsersCount: () => FCI_USERS.length
     };
 })();

@@ -870,6 +870,10 @@
             if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
                 controleurs = window.FCIAuth.getControllersByRegion('');
             }
+            let chefsService = [];
+            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
+                chefsService = window.FCIAuth.getChefsDeService();
+            }
 
             const regPrioritaire = normaliserRegion(
                 document.getElementById('regionSite')?.value || getUserHomeRegion()
@@ -891,7 +895,29 @@
                 return a.localeCompare(b, 'fr');
             });
 
-            select.innerHTML = '<option value="">-- Contrôleur (ex. CASA-001) --</option>';
+            select.innerHTML = '<option value="">-- Contrôleur / Chef de service --</option>';
+
+            const ajouterGroupeChefs = () => {
+                if (chefsService.length === 0) return;
+                const optgroupChefs = document.createElement('optgroup');
+                optgroupChefs.label = 'CHEFS DE SERVICE (SIÈGE)';
+                chefsService.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = 'SIEGE';
+                    opt.dataset.role = 'CHEF_SERVICE';
+                    opt.textContent = `${c.username} — ${c.fonction}`;
+                    optgroupChefs.appendChild(opt);
+                });
+                select.appendChild(optgroupChefs);
+            };
+
+            // Si l'utilisateur connecté est du Siège (ex. Chef de service), afficher Chefs de service en premier
+            const isSiege = isCurrentUserSiege();
+            if (isSiege) {
+                ajouterGroupeChefs();
+            }
 
             regionsOrdonnees.forEach(reg => {
                 const optgroup = document.createElement('optgroup');
@@ -901,11 +927,16 @@
                     opt.value = c.username;
                     opt.dataset.fonction = c.fonction || '';
                     opt.dataset.region = normaliserRegion(c.region || '');
+                    opt.dataset.role = 'CONTROLEUR';
                     opt.textContent = `${c.username} — ${c.fonction}`;
                     optgroup.appendChild(opt);
                 });
                 select.appendChild(optgroup);
             });
+
+            if (!isSiege) {
+                ajouterGroupeChefs();
+            }
 
             if (currentVal) {
                 setControleurSaisieValue(currentVal);
@@ -922,7 +953,7 @@
                 return;
             }
 
-            // Recherche exacte par identifiant (ex. CASA-001) ou insensible à la casse
+            // Recherche exacte par identifiant (ex. CASA-001, chef service-001) ou insensible à la casse
             const match = Array.from(select.options).find(
                 o => o.value && o.value.toLowerCase() === clean.toLowerCase()
             );
@@ -981,16 +1012,42 @@
             if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
                 controleurs = window.FCIAuth.getControllersByRegion('');
             }
+            let chefsService = [];
+            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
+                chefsService = window.FCIAuth.getChefsDeService();
+            }
 
-            select.innerHTML = '<option value="">-- Sélectionner un contrôleur (ex. CASA-001) --</option>';
-            controleurs.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.username;
-                opt.dataset.fonction = c.fonction || '';
-                opt.dataset.region = c.region || '';
-                opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
-                select.appendChild(opt);
-            });
+            select.innerHTML = '<option value="">-- Sélectionner un contrôleur ou chef de service --</option>';
+
+            if (chefsService.length > 0) {
+                const grpChefs = document.createElement('optgroup');
+                grpChefs.label = 'CHEFS DE SERVICE (SIÈGE)';
+                chefsService.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = 'SIEGE';
+                    opt.dataset.role = 'CHEF_SERVICE';
+                    opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
+                    grpChefs.appendChild(opt);
+                });
+                select.appendChild(grpChefs);
+            }
+
+            if (controleurs.length > 0) {
+                const grpCtrls = document.createElement('optgroup');
+                grpCtrls.label = 'CONTRÔLEURS RÉGIONAUX';
+                controleurs.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = c.region || '';
+                    opt.dataset.role = 'CONTROLEUR';
+                    opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
+                    grpCtrls.appendChild(opt);
+                });
+                select.appendChild(grpCtrls);
+            }
         }
 
         function onPlanFvRegionChange() {
@@ -1284,7 +1341,9 @@
             const ctrlHomeReg = normaliserRegion(selectedOpt?.dataset?.region || getUserHomeRegion());
             const currentReg = normaliserRegion(regSelect.value);
 
-            if (ctrlHomeReg && currentReg && ctrlHomeReg !== currentReg) {
+            if (ctrlHomeReg === 'SIEGE' && currentReg) {
+                badge.innerHTML = `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-landmark"></i> Vérification Siège (Chef de service → ${currentReg})</span>`;
+            } else if (ctrlHomeReg && currentReg && ctrlHomeReg !== currentReg) {
                 badge.innerHTML = `<span class="date-modified-pill" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B;"><i class="fa-solid fa-right-left"></i> Vérification interrégionale (${ctrlHomeReg} → ${currentReg})</span>`;
             } else {
                 badge.innerHTML = '';
@@ -2502,18 +2561,8 @@
                     }
                 }
 
-                point._bddIdMission = idMissionPoint;
-                pairs.forEach(({ constatRef, record }) => {
-                    constatRef._bddIdEncaisse = record.idEncaisse;
-                    constatRef._bddIdMission = record.idMission;
-                    constatRef._espaceSaisie = record.espaceSaisie || constatRef._espaceSaisie || '';
-                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
-                    constatRef._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-                });
-                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-
+                clearForm();
                 remplirFiltresEncaissesBDD();
-                renderPoints();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
@@ -2725,11 +2774,8 @@
                     await FCIDatabase.enregistrerLotEncaisses(recordsMisAJour, site, idMissionPoint, true);
                 }
 
-                point._bddIdMission = idMissionPoint;
-                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
-
+                clearForm();
                 remplirFiltresEncaissesBDD();
-                renderPoints();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
@@ -2808,14 +2854,8 @@
                     await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
                 }
 
-                pairs.forEach(({ constatRef }) => {
-                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
-                    constatRef._lastActionFeedback = { type: 'SUIVI', text: 'Suivi enregistré en BDD' };
-                });
-                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi enregistré en BDD' };
-
+                clearForm();
                 remplirFiltresEncaissesBDD();
-                renderPoints();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
@@ -2889,8 +2929,7 @@
                 }
             }
 
-            addedPoints.splice(pIndex, 1);
-            renderPoints();
+            clearForm();
             remplirFiltresEncaissesBDD();
 
             const statusEl = document.getElementById('searchEncaisseStatus');

@@ -1563,15 +1563,8 @@
                     await FCIDatabase.enregistrerLotControle(constatsBDD, meta.entite || '', idMissionPoint);
                 }
 
-                point._bddIdConstat = constatArchive.idConstat;
-                point._bddIdMission = idMissionPoint;
-                point._espaceSaisie = constatArchive.espaceSaisie || point._espaceSaisie || '';
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-
-                sauvegarderLocalement();
+                viderFormulaireFC();
                 remplirFiltresBDD();
-                renderPage();
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
@@ -1756,15 +1749,8 @@
                     await FCIDatabase.enregistrerLotControle([enregistrementFinal], meta.entite || '', idMissionPoint);
                 }
 
-                point._bddIdConstat = enregistrementFinal.idConstat;
-                point._bddIdMission = idMissionPoint;
-                point._isModifie = true;
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
-
-                sauvegarderLocalement();
+                viderFormulaireFC();
                 remplirFiltresBDD();
-                renderPage();
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
@@ -1838,12 +1824,8 @@
                     await FCIDatabase.enregistrerLotControle(nouvellesLignesSuivi, meta.entite || '', idMissionSuivi);
                 }
 
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi enregistré en BDD' };
-
-                sauvegarderLocalement();
+                viderFormulaireFC();
                 remplirFiltresBDD();
-                renderPage();
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
@@ -1915,15 +1897,8 @@
                 }
             }
 
-            missionData.pointsControle.splice(index, 1);
-
-            if (missionData.pointsControle.length === 0) {
-                viderFormulaireFC();
-            } else {
-                sauvegarderLocalement();
-                renderPage();
-                remplirFiltresBDD();
-            }
+            viderFormulaireFC();
+            remplirFiltresBDD();
 
             const statusEl = document.getElementById('searchStatus');
             if (statusEl) {
