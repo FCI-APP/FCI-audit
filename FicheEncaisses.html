@@ -672,7 +672,7 @@
         </section>
     </main>
 
-    <script src="fci-db-manager.js"></script>
+    <script src="fci-db-manager.js?v=20261126-archive"></script>
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
@@ -2604,8 +2604,13 @@
 
                 sauvegarderDBSecurisee(db);
 
+                let ghSuffixe = '';
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMissionPoint, true);
+                    const resSave = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMissionPoint, true);
+                    const gh = resSave && resSave._githubArchive;
+                    if (gh && gh.success && gh.path) {
+                        ghSuffixe = ` | GitHub : ${gh.path}`;
+                    }
                 }
 
                 // Clôture automatique de la planification FV correspondante dans l'espace Siège et Contrôleur
@@ -2630,7 +2635,7 @@
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Région : ${region} | Contrôleur : ${controleur}`;
+                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Région : ${region} | Contrôleur : ${controleur}${ghSuffixe}`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnArchiverPCFV-${pIndex}`);
@@ -2990,6 +2995,10 @@
                         }
                     });
                     sauvegarderDBSecurisee(db);
+                    if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
+                        const dateRefDel = point.dateVerification || (point.constats && point.constats[0]?.dateVerification) || document.getElementById('dateVerification')?.value || '';
+                        FCIDatabase.supprimerDeArchiveGitHub('FV', [...idsToDelete], dateRefDel).catch(() => {});
+                    }
                 }
             }
 

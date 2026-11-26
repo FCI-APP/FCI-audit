@@ -358,7 +358,7 @@
         <div id="content-area"></div>
     </main>
 
-    <script src="fci-db-manager.js"></script>
+    <script src="fci-db-manager.js?v=20261126-archive"></script>
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
@@ -761,6 +761,10 @@
                 }
                 renderPage();
             }
+            remplirFiltresBDD();
+        });
+
+        window.addEventListener('fci-db-synced', () => {
             remplirFiltresBDD();
         });
 
@@ -1567,8 +1571,13 @@
 
                 sauvegarderDBSecurisee(db);
 
+                let ghSuffixe = '';
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
-                    await FCIDatabase.enregistrerLotControle(constatsBDD, meta.entite || '', idMissionPoint);
+                    const resSave = await FCIDatabase.enregistrerLotControle(constatsBDD, meta.entite || '', idMissionPoint);
+                    const gh = resSave && resSave._githubArchive;
+                    if (gh && gh.success && gh.path) {
+                        ghSuffixe = ` | GitHub : ${gh.path}`;
+                    }
                 }
 
                 viderFormulaireFC();
@@ -1576,7 +1585,7 @@
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${index + 1} archivé dans la BDD ("${pcName}") — Région : ${regionMission} | Contrôleur : ${controleur}`;
+                    statusEl.innerText = `PC #${index + 1} archivé dans la BDD ("${pcName}") — Région : ${regionMission} | Contrôleur : ${controleur}${ghSuffixe}`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnArchiverPC-${index}`);
@@ -1902,6 +1911,10 @@
 
                 if (supprimeEnBDD) {
                     sauvegarderDBSecurisee(db);
+                    if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
+                        const dateRefDel = point._bddDateControle || (missionData.metadata ? missionData.metadata.dateControle : '');
+                        FCIDatabase.supprimerDeArchiveGitHub('FC', [idConstatCible], dateRefDel).catch(() => {});
+                    }
                 }
             }
 

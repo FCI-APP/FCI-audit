@@ -377,12 +377,15 @@
                     Feuille 5 : Base de Données Centralisée (BDD)
                     <span id="badgeEspaceActifBDD" class="espace-pill espace-pill-regional"><i class="fa-solid fa-shield-halved"></i> Chargement espace...</span>
                 </h1>
-                <p id="sousTitreEspaceBDD">Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub</p>
+                <p id="sousTitreEspaceBDD">Table unifiée des constats d'audit (initiaux, modifiés et suivis) et synchronisation avec les archives GitHub (archives/AAAA/MM/)</p>
+                <div id="bddStorageStatusLine" style="font-size:0.74rem; color:#475569; margin-top:4px; font-weight:600;"></div>
             </div>
             <div class="header-actions-bdd" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
                 <button type="button" class="btn btn-refresh" id="btnActualiserBDD" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()"><i class="fa-solid fa-key"></i> Token GitHub</button>
-                <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
+                <button type="button" class="btn btn-neutral" onclick="configurerTokenDepuisBDD()" title="Configurer le Personal Access Token GitHub"><i class="fa-solid fa-key"></i> Token GitHub</button>
+                <button type="button" class="btn btn-outline" onclick="configurerDepotArchiveBDD()" title="Choisir le dépôt/branche d'archivage GitHub (espace multi-années)"><i class="fa-solid fa-server"></i> Dépôt Archive</button>
+                <button type="button" class="btn btn-primary" id="btnPushGitHubBDD" onclick="pousserBDDVersGitHub()" title="Archiver toutes les données de la BDD vers GitHub (archives/AAAA/MM/)"><i class="fa-solid fa-cloud-arrow-up"></i> Archiver BDD → GitHub</button>
+                <button type="button" class="btn btn-success" id="btnSyncGitHubBDD" onclick="synchroniserArchivesGitHub()" title="Charger toutes les archives GitHub (archives/AAAA/MM/) dans la BDD"><i class="fa-solid fa-cloud-arrow-down"></i> Charger Archives GitHub</button>
                 <button type="button" class="btn btn-danger" onclick="viderTouteLaBDD()"><i class="fa-solid fa-trash-can"></i> Vider la BDD</button>
                 <button type="button" class="btn btn-accent" onclick="exporterExcelBDD()"><i class="fa-solid fa-file-excel"></i> Télécharger fichier Excel</button>
                 <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
@@ -483,7 +486,7 @@
         </div>
     </main>
 
-    <script src="fci-db-manager.js"></script>
+    <script src="fci-db-manager.js?v=20261126-archive"></script>
     <script>
         let filtreDateDebutActif = 'TOUS';
         let filtreDateFinActif = 'TOUS';
@@ -769,15 +772,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             mettreAJourBadgeEspaceHeader();
             chargerBDDEnVisuel();
+            afficherStatutStockageBDD();
         });
 
         window.addEventListener('fci-auth-ready', () => {
             mettreAJourBadgeEspaceHeader();
             chargerBDDEnVisuel();
+            afficherStatutStockageBDD();
         });
 
         window.addEventListener('fci-db-synced', () => {
             chargerBDDEnVisuel();
+            afficherStatutStockageBDD();
         });
 
         window.addEventListener('storage', (e) => {
@@ -1381,11 +1387,63 @@
             XLSX.writeFile(wb, `FCI_BDD_Constats_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
+        async function afficherStatutStockageBDD() {
+            const el = document.getElementById('bddStorageStatusLine');
+            if (!el || typeof FCIDatabase === 'undefined' || typeof FCIDatabase.getStorageStats !== 'function') return;
+            try {
+                const stats = await FCIDatabase.getStorageStats();
+                const cfg = stats.githubConfig || { owner: 'FCI-APP', repo: 'FCI-audit', branch: 'main', archiveFolder: 'archives' };
+                const tailleKo = (stats.bytesApprox / 1024).toFixed(1);
+                const quotaMo = stats.quotaBytes ? `${Math.round(stats.quotaBytes / (1024 * 1024))} Mo` : 'Haute capacité';
+                const tokenTxt = stats.githubTokenConfigured
+                    ? '<span style="color:#059669;"><i class="fa-solid fa-circle-check"></i> Archivage GitHub actif</span>'
+                    : '<span style="color:#D97706;"><i class="fa-solid fa-triangle-exclamation"></i> Token GitHub non configuré</span>';
+                el.innerHTML = `<i class="fa-solid fa-hard-drive" style="color:var(--primary-blue);"></i> Stockage local : <strong>${stats.engine}</strong> (${tailleKo} Ko utilisés / quota ${quotaMo}) &nbsp;•&nbsp; <i class="fa-brands fa-github"></i> <code>${cfg.owner}/${cfg.repo}/${cfg.archiveFolder}/AAAA/MM/</code> (${cfg.branch}) &nbsp;•&nbsp; ${tokenTxt}`;
+            } catch (e) {}
+        }
+
         function configurerTokenDepuisBDD() {
             if (typeof FCIDatabase === 'undefined') { alert("Module fci-db-manager.js introuvable."); return; }
             const token = FCIDatabase.configurerGitHubToken();
+            afficherStatutStockageBDD();
             if (token) {
-                alert("✅ Token GitHub enregistré localement sur ce poste.");
+                alert("✅ Token GitHub enregistré localement sur ce poste. Les futurs archivages (Planification, FC, FV) seront synchronisés automatiquement dans archives/AAAA/MM/.");
+            }
+        }
+
+        function configurerDepotArchiveBDD() {
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.configurerStockageGitHub !== 'function') {
+                alert("Module fci-db-manager.js introuvable.");
+                return;
+            }
+            const cfg = FCIDatabase.configurerStockageGitHub();
+            afficherStatutStockageBDD();
+            if (cfg) {
+                alert(`✅ Dépôt d'archivage configuré : ${cfg.owner}/${cfg.repo} (branche ${cfg.branch}, dossier ${cfg.archiveFolder}/AAAA/MM/).`);
+            }
+        }
+
+        async function pousserBDDVersGitHub() {
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.archiverTouteLaBDDSurGitHub !== 'function') {
+                alert("Module fci-db-manager.js introuvable.");
+                return;
+            }
+            const btn = document.getElementById('btnPushGitHubBDD');
+            const texteOriginal = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage GitHub...';
+
+            try {
+                const resultat = await FCIDatabase.archiverTouteLaBDDSurGitHub((done, total) => {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Archivage (${done}/${total})...`;
+                });
+                afficherStatutStockageBDD();
+                alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
+            } catch (err) {
+                alert("❌ Erreur lors de l'archivage vers GitHub : " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = texteOriginal;
             }
         }
 
@@ -1399,6 +1457,7 @@
             try {
                 const resultat = await FCIDatabase.restaurerDepuisGitHub();
                 reinitialiserFiltresBDD();
+                afficherStatutStockageBDD();
                 alert(resultat.success ? `✅ ${resultat.message}` : `⚠️ ${resultat.message}`);
             } catch (err) {
                 alert("❌ Erreur lors de la récupération des archives GitHub : " + err.message);
