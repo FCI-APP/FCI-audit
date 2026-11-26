@@ -161,7 +161,7 @@
 
         .multi-filter-bar {
             display: grid;
-            grid-template-columns: repeat(7, minmax(145px, 1fr));
+            grid-template-columns: repeat(8, minmax(135px, 1fr));
             gap: 10px;
             align-items: end;
             background: #F8FAFC;
@@ -332,8 +332,11 @@
         .statut-cloture { background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981; }
         .statut-noncloture { background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444; }
 
-        @media (max-width: 1480px) {
-            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); }
+        @media (max-width: 1680px) {
+            .multi-filter-bar { grid-template-columns: repeat(4, minmax(180px, 1fr)); }
+        }
+        @media (max-width: 960px) {
+            .multi-filter-bar { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
         }
 
         @media print {
@@ -395,51 +398,58 @@
 
                 <div class="multi-filter-bar">
                     <div class="filter-select-group filter-date-theme">
-                        <label for="selectFiltreDate"><i class="fa-regular fa-calendar-days"></i> Date de contrôle</label>
-                        <select id="selectFiltreDate" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">-- Toutes les dates --</option>
+                        <label for="selectFiltreDateDebut"><i class="fa-regular fa-calendar-days"></i> Date début</label>
+                        <select id="selectFiltreDateDebut" class="filter-dropdown" onchange="appliquerMultiFiltre('DATE_DEBUT')">
+                            <option value="TOUS">-- Date début --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-date-theme">
+                        <label for="selectFiltreDateFin"><i class="fa-regular fa-calendar-check"></i> Date fin</label>
+                        <select id="selectFiltreDateFin" class="filter-dropdown" onchange="appliquerMultiFiltre('DATE_FIN')">
+                            <option value="TOUS">-- Date fin --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-region-theme">
                         <label for="selectFiltreRegion"><i class="fa-solid fa-map-location-dot"></i> Région</label>
-                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreRegion" class="filter-dropdown" onchange="appliquerMultiFiltre('REGION')">
                             <option value="TOUS">-- Toutes les régions --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-site-theme">
                         <label for="selectFiltreSite"><i class="fa-solid fa-building"></i> Site</label>
-                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreSite" class="filter-dropdown" onchange="appliquerMultiFiltre('SITE')">
                             <option value="TOUS">-- Tous les sites --</option>
-                        </select>
-                    </div>
-
-                    <div class="filter-select-group filter-controleur-theme">
-                        <label for="selectFiltreControleur"><i class="fa-solid fa-user-tie"></i> Contrôleur</label>
-                        <select id="selectFiltreControleur" class="filter-dropdown" onchange="appliquerMultiFiltre()">
-                            <option value="TOUS">-- Tous les contrôleurs --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-processus-theme">
                         <label for="selectFiltreProcessus"><i class="fa-solid fa-diagram-project"></i> Processus</label>
-                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreProcessus" class="filter-dropdown" onchange="appliquerMultiFiltre('PROCESSUS')">
                             <option value="TOUS">-- Tous les processus --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-statut-theme">
                         <label for="selectFiltreStatut"><i class="fa-solid fa-circle-dot"></i> Statut</label>
-                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreStatut" class="filter-dropdown" onchange="appliquerMultiFiltre('STATUT')">
                             <option value="TOUS">-- Tous les statuts --</option>
                         </select>
                     </div>
 
                     <div class="filter-select-group filter-type-theme">
                         <label for="selectFiltreType"><i class="fa-solid fa-filter"></i> Type de contrôle</label>
-                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre()">
+                        <select id="selectFiltreType" class="filter-dropdown" onchange="appliquerMultiFiltre('TYPE')">
                             <option value="TOUS">-- Tous les types --</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-select-group filter-controleur-theme">
+                        <label for="selectFiltreControleur"><i class="fa-solid fa-user-tie"></i> Contrôleur</label>
+                        <select id="selectFiltreControleur" class="filter-dropdown" onchange="appliquerMultiFiltre('CONTROLEUR')">
+                            <option value="TOUS">-- Tous les contrôleurs --</option>
                         </select>
                     </div>
                 </div>
@@ -475,7 +485,8 @@
 
     <script src="fci-db-manager.js"></script>
     <script>
-        let filtreDateActif = 'TOUS';
+        let filtreDateDebutActif = 'TOUS';
+        let filtreDateFinActif = 'TOUS';
         let filtreRegionActif = 'TOUS';
         let filtreSiteActif = 'TOUS';
         let filtreControleurActif = 'TOUS';
@@ -497,6 +508,60 @@
             { bg: '#FAE8FF', text: '#86198F' }
         ];
 
+        const REGEX_USERNAME_CTRL = /\b(?:CASA|SETTAT|RABAT|TANGER|MARRAKECH|AGADIR|FES|MEKNES|LAYOUNE|LAAYOUNE|OUJDA|OUEJDA)-\d{3}\b/gi;
+        const SIEGE_USERNAMES_CONNUS = [
+            'admin-siege',
+            'directeur-001',
+            'chef service-001',
+            'chef service-002',
+            'chef service-003',
+            'chef service-004',
+            'chef service-005'
+        ];
+
+        function getMapUsernamesConnus() {
+            const map = new Map();
+            SIEGE_USERNAMES_CONNUS.forEach(u => map.set(u.toLowerCase(), u));
+            if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+                window.FCIAuth.getControllersByRegion('').forEach(c => {
+                    if (c && c.username) {
+                        map.set(String(c.username).toLowerCase(), String(c.username));
+                    }
+                });
+            }
+            return map;
+        }
+
+        function trouverUsernamesDansTexte(val) {
+            if (!val) return [];
+            const txt = Array.isArray(val) ? val.join(' / ') : String(val);
+            const cleanTxt = txt.trim();
+            if (!cleanTxt || cleanTxt === '--') return [];
+
+            const mapConnus = getMapUsernamesConnus();
+            const trouves = [];
+            const ajouter = (u) => {
+                if (u && !trouves.includes(u)) trouves.push(u);
+            };
+
+            const matchesReg = cleanTxt.match(REGEX_USERNAME_CTRL);
+            if (matchesReg) {
+                matchesReg.forEach(m => {
+                    const canon = mapConnus.get(m.toLowerCase()) || m.toUpperCase();
+                    ajouter(canon);
+                });
+            }
+
+            const lowerTxt = cleanTxt.toLowerCase();
+            SIEGE_USERNAMES_CONNUS.forEach(u => {
+                if (lowerTxt.includes(u.toLowerCase())) {
+                    ajouter(u);
+                }
+            });
+
+            return trouves;
+        }
+
         function escapeHTML(str) {
             return String(str ?? '')
                 .replace(/&/g, '&amp;')
@@ -512,16 +577,47 @@
             return reg;
         }
 
-        function extraireNomControleur(item, missionAssociee = {}) {
-            const brut = (item && (item.controleur || item.controleurs || item.nomControleur || item.auditeur))
-                || (missionAssociee && (missionAssociee.controleur || missionAssociee.controleurs || missionAssociee.nomControleur || missionAssociee.auditeur))
-                || '';
+        function extraireControleursListe(item, missionAssociee = {}) {
+            const brutItem = item && (item.controleur || item.controleurs || item.nomControleur || item.auditeur);
+            const brutMission = missionAssociee && (missionAssociee.controleur || missionAssociee.controleurs || missionAssociee.nomControleur || missionAssociee.auditeur);
+
+            // 1. Priorité aux identifiants utilisateurs (ex. CASA-001) présents dans le champ contrôleur saisi (Planification / FV)
+            const depuisBrutItem = trouverUsernamesDansTexte(brutItem);
+            if (depuisBrutItem.length > 0) return depuisBrutItem;
+
+            const depuisBrutMission = trouverUsernamesDansTexte(brutMission);
+            if (depuisBrutMission.length > 0) return depuisBrutMission;
+
+            // 2. Identifiant contrôleur explicite (controleurId)
+            const depuisCtrlId = trouverUsernamesDansTexte(
+                (item && item.controleurId) || (missionAssociee && missionAssociee.controleurId) || ''
+            );
+            if (depuisCtrlId.length > 0) return depuisCtrlId;
+
+            // 3. Contrôleurs assignés en planification
+            const depuisAssignes = trouverUsernamesDansTexte(
+                (item && item.controleursAssignes) || (missionAssociee && missionAssociee.controleursAssignes) || ''
+            );
+            if (depuisAssignes.length > 0) return depuisAssignes;
+
+            // 4. Compte créateur (creeParId) si identifiant utilisateur FCI connu
+            const depuisCreeParId = trouverUsernamesDansTexte(
+                (item && item.creeParId) || (missionAssociee && missionAssociee.creeParId) || ''
+            );
+            if (depuisCreeParId.length > 0) return depuisCreeParId;
+
+            // 5. Fallback rétroactif si aucun identifiant FCI n'est associé
+            const brut = brutItem || brutMission || '';
             if (Array.isArray(brut)) {
-                const joined = brut.map(v => String(v || '').trim()).filter(Boolean).join(' / ');
-                return joined || '--';
+                return brut.map(v => String(v || '').trim()).filter(v => v && v !== '--');
             }
             const str = String(brut || '').trim();
-            return str || '--';
+            return (str && str !== '--') ? [str] : [];
+        }
+
+        function extraireNomControleur(item, missionAssociee = {}) {
+            const liste = extraireControleursListe(item, missionAssociee);
+            return liste.length > 0 ? liste.join(' / ') : '--';
         }
 
         function extraireRegionControleur(item, missionAssociee = {}) {
@@ -744,33 +840,71 @@
             else if (filtreTypeActif === 'Vérification') selType.classList.add('select-type-Verification');
         }
 
-        function appliquerMultiFiltre() {
-            filtreDateActif = document.getElementById('selectFiltreDate').value;
+        function ligneCorrespondPeriode(ligne, dateDebut = filtreDateDebutActif, dateFin = filtreDateFinActif) {
+            const hasDebut = Boolean(dateDebut && dateDebut !== 'TOUS');
+            const hasFin = Boolean(dateFin && dateFin !== 'TOUS');
+            if (!hasDebut && !hasFin) return true;
+
+            const isoLigne = ligne.dateISO;
+            if (!isoLigne || isoLigne === '9999-12-31') return false;
+
+            const isoDebut = hasDebut ? dateVersISOComparable(dateDebut) : '';
+            const isoFin = hasFin ? dateVersISOComparable(dateFin) : '';
+
+            // Une seule date choisie dans Date début -> filtre exact sur cette date
+            if (hasDebut && !hasFin) {
+                return isoLigne === isoDebut;
+            }
+            // Date fin seule -> toutes les dates jusqu'à Date fin incluse
+            if (!hasDebut && hasFin) {
+                return isoLigne <= isoFin;
+            }
+            // Date début + Date fin -> filtre sur toute la période (bornes incluses)
+            const minIso = isoDebut <= isoFin ? isoDebut : isoFin;
+            const maxIso = isoDebut <= isoFin ? isoFin : isoDebut;
+            return isoLigne >= minIso && isoLigne <= maxIso;
+        }
+
+        function appliquerMultiFiltre(source = '') {
+            filtreDateDebutActif = document.getElementById('selectFiltreDateDebut').value;
+            filtreDateFinActif = document.getElementById('selectFiltreDateFin').value;
             filtreRegionActif = document.getElementById('selectFiltreRegion').value;
             filtreSiteActif = document.getElementById('selectFiltreSite').value;
-            filtreControleurActif = document.getElementById('selectFiltreControleur').value;
             filtreProcessusActif = document.getElementById('selectFiltreProcessus').value;
             filtreStatutActif = document.getElementById('selectFiltreStatut').value;
             filtreTypeActif = document.getElementById('selectFiltreType').value;
+            filtreControleurActif = document.getElementById('selectFiltreControleur').value;
+
+            // Si Date début devient postérieure à Date fin, réinitialiser Date fin
+            if (filtreDateDebutActif !== 'TOUS' && filtreDateFinActif !== 'TOUS') {
+                const isoD = dateVersISOComparable(filtreDateDebutActif);
+                const isoF = dateVersISOComparable(filtreDateFinActif);
+                if (isoF < isoD && source === 'DATE_DEBUT') {
+                    filtreDateFinActif = 'TOUS';
+                }
+            }
+
             mettreAJourStylesSelectsFiltres();
             chargerBDDEnVisuel();
         }
 
         function reinitialiserFiltresBDD() {
-            filtreDateActif = 'TOUS';
+            filtreDateDebutActif = 'TOUS';
+            filtreDateFinActif = 'TOUS';
             filtreRegionActif = 'TOUS';
             filtreSiteActif = 'TOUS';
-            filtreControleurActif = 'TOUS';
             filtreProcessusActif = 'TOUS';
             filtreStatutActif = 'TOUS';
             filtreTypeActif = 'TOUS';
-            document.getElementById('selectFiltreDate').value = 'TOUS';
+            filtreControleurActif = 'TOUS';
+            document.getElementById('selectFiltreDateDebut').value = 'TOUS';
+            document.getElementById('selectFiltreDateFin').value = 'TOUS';
             document.getElementById('selectFiltreRegion').value = 'TOUS';
             document.getElementById('selectFiltreSite').value = 'TOUS';
-            document.getElementById('selectFiltreControleur').value = 'TOUS';
             document.getElementById('selectFiltreProcessus').value = 'TOUS';
             document.getElementById('selectFiltreStatut').value = 'TOUS';
             document.getElementById('selectFiltreType').value = 'TOUS';
+            document.getElementById('selectFiltreControleur').value = 'TOUS';
             mettreAJourStylesSelectsFiltres();
             chargerBDDEnVisuel();
         }
@@ -778,9 +912,6 @@
         function peuplerSelectDynamique(selectEl, valeursUniques, valeurActive, libelleTous, formatterLabelFn = null) {
             if (!selectEl) return;
             const liste = [...valeursUniques];
-            if (valeurActive !== 'TOUS' && !liste.includes(valeurActive)) {
-                liste.unshift(valeurActive);
-            }
 
             let html = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">${libelleTous} (${valeursUniques.length})</option>`;
             liste.forEach((val, idx) => {
@@ -793,14 +924,16 @@
         }
 
         function mettreAJourCompteursOptions(lignesUnifiees) {
-            const selDate = document.getElementById('selectFiltreDate');
+            const selDateDebut = document.getElementById('selectFiltreDateDebut');
+            const selDateFin = document.getElementById('selectFiltreDateFin');
             const selRegion = document.getElementById('selectFiltreRegion');
             const selSite = document.getElementById('selectFiltreSite');
-            const selControleur = document.getElementById('selectFiltreControleur');
             const selProcessus = document.getElementById('selectFiltreProcessus');
             const selStatut = document.getElementById('selectFiltreStatut');
             const selType = document.getElementById('selectFiltreType');
+            const selControleur = document.getElementById('selectFiltreControleur');
 
+            // 1. Dates disponibles issues directement de la colonne Date de la BDD
             const datesMap = new Map();
             lignesUnifiees.forEach(l => {
                 if (l.dateCtrlVerif && l.dateCtrlVerif !== '--' && !datesMap.has(l.dateCtrlVerif)) {
@@ -810,32 +943,89 @@
             const datesTriees = [...datesMap.entries()]
                 .sort((a, b) => a[1].localeCompare(b[1]))
                 .map(entry => entry[0]);
+
+            if (filtreDateDebutActif !== 'TOUS' && !datesTriees.includes(filtreDateDebutActif)) {
+                filtreDateDebutActif = 'TOUS';
+            }
             peuplerSelectDynamique(
-                selDate,
+                selDateDebut,
                 datesTriees,
-                filtreDateActif,
-                'Toutes les dates',
+                filtreDateDebutActif,
+                '-- Date début --',
                 (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
             );
 
-            selRegion.disabled = false;
-            const regionsTriees = [...new Set(
-                lignesUnifiees.map(l => l.region).filter(v => v && v !== '--')
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
-            if (filtreRegionActif !== 'TOUS' && !regionsTriees.includes(filtreRegionActif)) {
-                filtreRegionActif = 'TOUS';
+            const isoDebutActif = filtreDateDebutActif !== 'TOUS' ? dateVersISOComparable(filtreDateDebutActif) : '';
+            const datesFinTriees = isoDebutActif
+                ? datesTriees.filter(d => dateVersISOComparable(d) >= isoDebutActif)
+                : datesTriees;
+
+            if (filtreDateFinActif !== 'TOUS' && !datesFinTriees.includes(filtreDateFinActif)) {
+                filtreDateFinActif = 'TOUS';
             }
+            peuplerSelectDynamique(
+                selDateFin,
+                datesFinTriees,
+                filtreDateFinActif,
+                '-- Date fin --',
+                (d) => `📅 ${d} (${lignesUnifiees.filter(l => l.dateCtrlVerif === d).length})`
+            );
+
+            // 2. Filtrage de base selon la date unique (Date début seule) ou la période (Date début -> Date fin)
+            const lignesPeriode = lignesUnifiees.filter(l => ligneCorrespondPeriode(l));
+
+            const filtrerSousEnsemble = (exclure = '') => {
+                return lignesPeriode.filter(l => {
+                    if (exclure !== 'REGION' && filtreRegionActif !== 'TOUS' && l.region !== filtreRegionActif) return false;
+                    if (exclure !== 'SITE' && filtreSiteActif !== 'TOUS' && l.entite !== filtreSiteActif) return false;
+                    if (exclure !== 'PROCESSUS' && filtreProcessusActif !== 'TOUS' && l.processus !== filtreProcessusActif) return false;
+                    if (exclure !== 'STATUT' && filtreStatutActif !== 'TOUS' && l.statutInfo.code !== filtreStatutActif) return false;
+                    if (exclure !== 'TYPE' && filtreTypeActif !== 'TOUS' && l.typeInfo.label !== filtreTypeActif) return false;
+                    if (exclure !== 'CONTROLEUR' && filtreControleurActif !== 'TOUS' && !(l.controleursListe || []).includes(filtreControleurActif)) return false;
+                    return true;
+                });
+            };
+
+            // 3. Stabilisation : réinitialiser tout filtre devenu hors périmètre pour la date/période ou les autres filtres actifs
+            for (let pass = 0; pass < 3; pass++) {
+                let changed = false;
+
+                if (filtreRegionActif !== 'TOUS' && !filtrerSousEnsemble('REGION').some(l => l.region === filtreRegionActif)) {
+                    filtreRegionActif = 'TOUS'; changed = true;
+                }
+                if (filtreSiteActif !== 'TOUS' && !filtrerSousEnsemble('SITE').some(l => l.entite === filtreSiteActif)) {
+                    filtreSiteActif = 'TOUS'; changed = true;
+                }
+                if (filtreProcessusActif !== 'TOUS' && !filtrerSousEnsemble('PROCESSUS').some(l => l.processus === filtreProcessusActif)) {
+                    filtreProcessusActif = 'TOUS'; changed = true;
+                }
+                if (filtreStatutActif !== 'TOUS' && !filtrerSousEnsemble('STATUT').some(l => l.statutInfo.code === filtreStatutActif)) {
+                    filtreStatutActif = 'TOUS'; changed = true;
+                }
+                if (filtreTypeActif !== 'TOUS' && !filtrerSousEnsemble('TYPE').some(l => l.typeInfo.label === filtreTypeActif)) {
+                    filtreTypeActif = 'TOUS'; changed = true;
+                }
+                if (filtreControleurActif !== 'TOUS' && !filtrerSousEnsemble('CONTROLEUR').some(l => (l.controleursListe || []).includes(filtreControleurActif))) {
+                    filtreControleurActif = 'TOUS'; changed = true;
+                }
+                if (!changed) break;
+            }
+
+            // 4. Peuplement dynamique des 6 listes croisées sur la date / période sélectionnée
+            selRegion.disabled = false;
+            const sourceRegions = filtrerSousEnsemble('REGION');
+            const regionsTriees = [...new Set(
+                sourceRegions.map(l => l.region).filter(v => v && v !== '--')
+            )].sort((a, b) => a.localeCompare(b, 'fr'));
             peuplerSelectDynamique(
                 selRegion,
                 regionsTriees,
                 filtreRegionActif,
                 'Toutes les régions',
-                (r) => `📍 ${r} (${lignesUnifiees.filter(l => l.region === r).length})`
+                (r) => `📍 ${r} (${sourceRegions.filter(l => l.region === r).length})`
             );
 
-            const sourceSites = filtreRegionActif === 'TOUS'
-                ? lignesUnifiees
-                : lignesUnifiees.filter(l => l.region === filtreRegionActif);
+            const sourceSites = filtrerSousEnsemble('SITE');
             const sitesTries = [...new Set(
                 sourceSites.map(l => l.entite).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
@@ -847,62 +1037,69 @@
                 (s) => `🏢 ${s} (${sourceSites.filter(l => l.entite === s).length})`
             );
 
-            const sourceControleurs = sourceSites.filter(l =>
-                filtreSiteActif === 'TOUS' || l.entite === filtreSiteActif
-            );
-            const controleursTries = [...new Set(
-                sourceControleurs.map(l => l.controleur).filter(v => v && v !== '--')
-            )].sort((a, b) => a.localeCompare(b, 'fr'));
-            peuplerSelectDynamique(
-                selControleur,
-                controleursTries,
-                filtreControleurActif,
-                'Tous les contrôleurs',
-                (ctrl) => `👤 ${ctrl} (${sourceControleurs.filter(l => l.controleur === ctrl).length})`
-            );
-
+            const sourceProcessus = filtrerSousEnsemble('PROCESSUS');
             const processusTries = [...new Set(
-                lignesUnifiees.map(l => l.processus).filter(v => v && v !== '--')
+                sourceProcessus.map(l => l.processus).filter(v => v && v !== '--')
             )].sort((a, b) => a.localeCompare(b, 'fr'));
             peuplerSelectDynamique(
                 selProcessus,
                 processusTries,
                 filtreProcessusActif,
                 'Tous les processus',
-                (p) => `⚙️ ${p} (${lignesUnifiees.filter(l => l.processus === p).length})`
+                (p) => `⚙️ ${p} (${sourceProcessus.filter(l => l.processus === p).length})`
             );
 
+            const sourceStatuts = filtrerSousEnsemble('STATUT');
             const STATUTS_CONFIG = [
                 { code: 'EN_COURS', label: '🟡 En cours', bg: '#FEF3C7', color: '#92400E' },
                 { code: 'CLOTURE', label: '🟢 Clôturé', bg: '#D1FAE5', color: '#065F46' },
                 { code: 'NON_CLOTURE', label: '🔴 Non clôturé', bg: '#FEE2E2', color: '#991B1B' }
             ];
             const statutsPresents = STATUTS_CONFIG.filter(st =>
-                lignesUnifiees.some(l => l.statutInfo.code === st.code) || filtreStatutActif === st.code
+                sourceStatuts.some(l => l.statutInfo.code === st.code)
             );
-            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${lignesUnifiees.length})</option>`;
+            let htmlStatut = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les statuts (${sourceStatuts.length})</option>`;
             statutsPresents.forEach(st => {
-                const nb = lignesUnifiees.filter(l => l.statutInfo.code === st.code).length;
+                const nb = sourceStatuts.filter(l => l.statutInfo.code === st.code).length;
                 const sel = filtreStatutActif === st.code ? 'selected' : '';
                 htmlStatut += `<option value="${st.code}" ${sel} style="background-color:${st.bg}; color:${st.color}; font-weight:700;">${st.label} (${nb})</option>`;
             });
             selStatut.innerHTML = htmlStatut;
 
+            const sourceTypes = filtrerSousEnsemble('TYPE');
             const TYPES_CONFIG = [
                 { val: 'Thématique', label: '🔵 Thématique', bg: '#DBEAFE', color: '#1E40AF' },
                 { val: 'Systématique', label: '🟠 Systématique', bg: '#FEF3C7', color: '#92400E' },
                 { val: 'Vérification', label: '🟢 Vérification', bg: '#D1FAE5', color: '#065F46' }
             ];
             const typesPresents = TYPES_CONFIG.filter(tp =>
-                lignesUnifiees.some(l => l.typeInfo.label === tp.val) || filtreTypeActif === tp.val
+                sourceTypes.some(l => l.typeInfo.label === tp.val)
             );
-            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${lignesUnifiees.length})</option>`;
+            let htmlType = `<option value="TOUS" style="background-color:#FFFFFF; color:#1E293B;">Tous les types (${sourceTypes.length})</option>`;
             typesPresents.forEach(tp => {
-                const nb = lignesUnifiees.filter(l => l.typeInfo.label === tp.val).length;
+                const nb = sourceTypes.filter(l => l.typeInfo.label === tp.val).length;
                 const sel = filtreTypeActif === tp.val ? 'selected' : '';
                 htmlType += `<option value="${tp.val}" ${sel} style="background-color:${tp.bg}; color:${tp.color}; font-weight:700;">${tp.label} (${nb})</option>`;
             });
             selType.innerHTML = htmlType;
+
+            const sourceControleurs = filtrerSousEnsemble('CONTROLEUR');
+            const controleursSet = new Set();
+            sourceControleurs.forEach(l => {
+                (l.controleursListe || []).forEach(u => {
+                    if (u && u !== '--') controleursSet.add(u);
+                });
+            });
+            const controleursTries = [...controleursSet].sort((a, b) => a.localeCompare(b, 'fr'));
+            peuplerSelectDynamique(
+                selControleur,
+                controleursTries,
+                filtreControleurActif,
+                'Tous les contrôleurs',
+                (ctrl) => `👤 ${ctrl} (${sourceControleurs.filter(l => (l.controleursListe || []).includes(ctrl)).length})`
+            );
+
+            mettreAJourStylesSelectsFiltres();
         }
 
         function aDroitConsultationLigne(item, missionAssociee, isSiegeUser, homeReg, authUser) {
@@ -931,6 +1128,7 @@
                 const itemCtrlId = String((item && (item.controleurId || item.creeParId)) || (missionAssociee && (missionAssociee.controleurId || missionAssociee.creeParId)) || '').toLowerCase().trim();
                 const itemCtrlNom = extraireNomControleur(item, missionAssociee).toLowerCase().trim();
                 if (uId && itemCtrlId && uId === itemCtrlId) return true;
+                if (uId && itemCtrlNom && itemCtrlNom !== '--' && itemCtrlNom.includes(uId)) return true;
                 if (uNom && itemCtrlNom && itemCtrlNom !== '--' && itemCtrlNom.includes(uNom)) return true;
             }
 
@@ -979,6 +1177,7 @@
                 const dateBrute = c.date || c.dateControle || missionAssociee.date || missionAssociee.dateControle || '';
                 const isSuivi = estLigneSuivi(c, c.idConstat, c.idMission);
                 const isModifie = estLigneModifiee(c);
+                const controleursListe = extraireControleursListe(c, missionAssociee);
                 lignesUnifiees.push({
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
@@ -986,7 +1185,8 @@
                     controleurRegion: ctrlRegionNorm || '',
                     isInterRegional: isInterRegional,
                     entite: c.entite || c.site || missionAssociee.entite || '--',
-                    controleur: extraireNomControleur(c, missionAssociee),
+                    controleursListe: controleursListe,
+                    controleur: controleursListe.length > 0 ? controleursListe.join(' / ') : '--',
                     processus: c.processus || '--',
                     risque: c.risque || '--',
                     controle: c.controle || '--',
@@ -1019,6 +1219,7 @@
                 const dateBrute = e.date || e.dateVerification || missionAssociee.date || '';
                 const isSuivi = estLigneSuivi(e, e.idEncaisse, e.idMission);
                 const isModifie = estLigneModifiee(e);
+                const controleursListe = extraireControleursListe(e, missionAssociee);
                 lignesUnifiees.push({
                     dateISO: dateVersISOComparable(dateBrute),
                     dateCtrlVerif: formaterDateBDD(dateBrute),
@@ -1026,7 +1227,8 @@
                     controleurRegion: ctrlRegionNorm || '',
                     isInterRegional: isInterRegional,
                     entite: e.entite || e.site || e.agence || missionAssociee.entite || '--',
-                    controleur: extraireNomControleur(e, missionAssociee),
+                    controleursListe: controleursListe,
+                    controleur: controleursListe.length > 0 ? controleursListe.join(' / ') : '--',
                     processus: e.processus || '--',
                     risque: e.risque || '--',
                     controle: e.controle || '--',
@@ -1057,14 +1259,14 @@
             mettreAJourCompteursOptions(lignesUnifiees);
 
             const lignesAffichees = lignesUnifiees.filter(l => {
-                const matchDate = (filtreDateActif === 'TOUS') || (l.dateCtrlVerif === filtreDateActif);
+                const matchPeriode = ligneCorrespondPeriode(l);
                 const matchRegion = (filtreRegionActif === 'TOUS') || (l.region === filtreRegionActif);
                 const matchSite = (filtreSiteActif === 'TOUS') || (l.entite === filtreSiteActif);
-                const matchControleur = (filtreControleurActif === 'TOUS') || (l.controleur === filtreControleurActif);
                 const matchProcessus = (filtreProcessusActif === 'TOUS') || (l.processus === filtreProcessusActif);
                 const matchStatut = (filtreStatutActif === 'TOUS') || (l.statutInfo.code === filtreStatutActif);
                 const matchType = (filtreTypeActif === 'TOUS') || (l.typeInfo.label === filtreTypeActif);
-                return matchDate && matchRegion && matchSite && matchControleur && matchProcessus && matchStatut && matchType;
+                const matchControleur = (filtreControleurActif === 'TOUS') || (l.controleursListe || []).includes(filtreControleurActif);
+                return matchPeriode && matchRegion && matchSite && matchProcessus && matchStatut && matchType && matchControleur;
             });
 
             dernieresLignesAffichees = lignesAffichees;
@@ -1072,13 +1274,14 @@
 
             if (lignesAffichees.length === 0) {
                 const aucunFiltre = (
-                    filtreDateActif === 'TOUS' &&
+                    filtreDateDebutActif === 'TOUS' &&
+                    filtreDateFinActif === 'TOUS' &&
                     filtreRegionActif === 'TOUS' &&
                     filtreSiteActif === 'TOUS' &&
-                    filtreControleurActif === 'TOUS' &&
                     filtreProcessusActif === 'TOUS' &&
                     filtreStatutActif === 'TOUS' &&
-                    filtreTypeActif === 'TOUS'
+                    filtreTypeActif === 'TOUS' &&
+                    filtreControleurActif === 'TOUS'
                 );
                 const msgVide = aucunFiltre
                     ? 'Aucun constat enregistré dans votre espace autorisé.'
