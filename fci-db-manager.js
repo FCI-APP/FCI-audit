@@ -7,7 +7,7 @@
 (function () {
     const LOCAL_DB_KEY = 'fci_database';
     const GITHUB_TOKEN_KEY = 'fci_github_pat';
-    const GITHUB_CONFIG_KEY = 'fci_github_config_v2';
+    const GITHUB_CONFIG_KEY = 'fci_github_config_v3';
     const GITHUB_PROMPT_DISMISSED_KEY = 'fci_github_prompt_dismissed';
 
     const IDB_NAME = 'FCI_Audit_LargeDB';
@@ -22,7 +22,7 @@
 
     const DEFAULT_GITHUB_CONFIG = {
         owner: 'FCI-APP',
-        repo: 'FCI-audit',
+        repo: 'FCI-audit-archives',
         branch: 'main',
         archiveFolder: 'archives'
     };
@@ -405,8 +405,8 @@
         const saisieRepo = prompt(
             "Configuration de l'espace d'archivage GitHub (Multi-années / Haute capacité)\n\n" +
             "Dépôt cible au format proprietaire/depot :\n" +
-            "• Par défaut : FCI-APP/FCI-audit\n" +
-            "• Conseil gros volume : vous pouvez utiliser un dépôt dédié (ex. FCI-APP/FCI-audit-archives) pour disposer d'un espace dédié multi-années.",
+            "• Par défaut (recommandé, privé) : FCI-APP/FCI-audit-archives\n" +
+            "• Dépôt applicatif : FCI-APP/FCI-audit",
             repoActuel
         );
         if (saisieRepo === null) return cfg;

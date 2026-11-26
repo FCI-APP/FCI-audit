@@ -486,7 +486,7 @@
         </div>
     </main>
 
-    <script src="fci-db-manager.js?v=20261126-archive"></script>
+    <script src="fci-db-manager.js?v=20261126-archive2"></script>
     <script>
         let filtreDateDebutActif = 'TOUS';
         let filtreDateFinActif = 'TOUS';
@@ -1392,7 +1392,7 @@
             if (!el || typeof FCIDatabase === 'undefined' || typeof FCIDatabase.getStorageStats !== 'function') return;
             try {
                 const stats = await FCIDatabase.getStorageStats();
-                const cfg = stats.githubConfig || { owner: 'FCI-APP', repo: 'FCI-audit', branch: 'main', archiveFolder: 'archives' };
+                const cfg = stats.githubConfig || { owner: 'FCI-APP', repo: 'FCI-audit-archives', branch: 'main', archiveFolder: 'archives' };
                 const tailleKo = (stats.bytesApprox / 1024).toFixed(1);
                 const quotaMo = stats.quotaBytes ? `${Math.round(stats.quotaBytes / (1024 * 1024))} Mo` : 'Haute capacité';
                 const tokenTxt = stats.githubTokenConfigured
