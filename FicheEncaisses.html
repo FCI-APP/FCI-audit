@@ -676,9 +676,11 @@
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
-                "SIÈGE - DIRECTION CONTRÔLE GÉNÉRALE",
-                "SIÈGE - DIVISION CONTRÔLE PERMANENT",
-                "SIÈGE CENTRAL"
+                "chef service-001",
+                "chef service-002",
+                "chef service-003",
+                "chef service-004",
+                "chef service-005"
             ],
             "MARRAKECH": [
                 "MARRAKECH CTD",
@@ -1117,37 +1119,12 @@
             }
 
             siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
-            if (region === 'SIEGE') {
-                const grpSiege = document.createElement('optgroup');
-                grpSiege.label = 'SIÈGE';
-                CENTRES_PAR_REGION['SIEGE'].forEach(centre => {
-                    const opt = document.createElement('option');
-                    opt.value = centre;
-                    opt.textContent = centre;
-                    grpSiege.appendChild(opt);
-                });
-                siteSelect.appendChild(grpSiege);
-
-                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
-                    if (regKey === 'SIEGE') return;
-                    const grp = document.createElement('optgroup');
-                    grp.label = regKey;
-                    centres.forEach(centre => {
-                        const opt = document.createElement('option');
-                        opt.value = centre;
-                        opt.textContent = centre;
-                        grp.appendChild(opt);
-                    });
-                    siteSelect.appendChild(grp);
-                });
-            } else {
-                CENTRES_PAR_REGION[region].forEach(centre => {
-                    const opt = document.createElement('option');
-                    opt.value = centre;
-                    opt.textContent = centre;
-                    siteSelect.appendChild(opt);
-                });
-            }
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                siteSelect.appendChild(opt);
+            });
             siteSelect.disabled = false;
         }
 
@@ -1712,40 +1689,13 @@
 
             siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
             const tousCentresAjoutes = [];
-            if (region === 'SIEGE') {
-                const grpSiege = document.createElement('optgroup');
-                grpSiege.label = 'SIÈGE';
-                CENTRES_PAR_REGION['SIEGE'].forEach(centre => {
-                    const opt = document.createElement('option');
-                    opt.value = centre;
-                    opt.textContent = centre;
-                    grpSiege.appendChild(opt);
-                    tousCentresAjoutes.push(centre);
-                });
-                siteSelect.appendChild(grpSiege);
-
-                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
-                    if (regKey === 'SIEGE') return;
-                    const grp = document.createElement('optgroup');
-                    grp.label = regKey;
-                    centres.forEach(centre => {
-                        const opt = document.createElement('option');
-                        opt.value = centre;
-                        opt.textContent = centre;
-                        grp.appendChild(opt);
-                        tousCentresAjoutes.push(centre);
-                    });
-                    siteSelect.appendChild(grp);
-                });
-            } else {
-                CENTRES_PAR_REGION[region].forEach(centre => {
-                    const opt = document.createElement('option');
-                    opt.value = centre;
-                    opt.textContent = centre;
-                    siteSelect.appendChild(opt);
-                    tousCentresAjoutes.push(centre);
-                });
-            }
+            CENTRES_PAR_REGION[region].forEach(centre => {
+                const opt = document.createElement('option');
+                opt.value = centre;
+                opt.textContent = centre;
+                siteSelect.appendChild(opt);
+                tousCentresAjoutes.push(centre);
+            });
 
             if (sitePreselectionne && !tousCentresAjoutes.includes(sitePreselectionne)) {
                 const opt = document.createElement('option');

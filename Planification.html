@@ -321,9 +321,11 @@
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
-                "SIÈGE - DIRECTION CONTRÔLE GÉNÉRALE",
-                "SIÈGE - DIVISION CONTRÔLE PERMANENT",
-                "SIÈGE CENTRAL"
+                "chef service-001",
+                "chef service-002",
+                "chef service-003",
+                "chef service-004",
+                "chef service-005"
             ],
             "MARRAKECH": [
                 "MARRAKECH CTD",
@@ -662,19 +664,6 @@
             if (!region || !CENTRES_PAR_REGION[region]) {
                 entiteSelect.innerHTML = '<option value="">-- Choisir d\'abord une région --</option>';
                 entiteSelect.disabled = true;
-            } else if (region === 'SIEGE') {
-                let optsHtml = '<option value="">-- Sélectionner le centre / entité --</option>';
-                optsHtml += `<optgroup label="SIÈGE">` +
-                    CENTRES_PAR_REGION['SIEGE'].map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
-                    `</optgroup>`;
-                Object.entries(CENTRES_PAR_REGION).forEach(([regKey, centres]) => {
-                    if (regKey === 'SIEGE') return;
-                    optsHtml += `<optgroup label="${escapeHtml(regKey)}">` +
-                        centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('') +
-                        `</optgroup>`;
-                });
-                entiteSelect.innerHTML = optsHtml;
-                entiteSelect.disabled = false;
             } else {
                 const centres = CENTRES_PAR_REGION[region];
                 entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
