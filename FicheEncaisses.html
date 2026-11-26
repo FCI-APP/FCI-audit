@@ -301,7 +301,70 @@
         .btn-refresh:hover { background-color: #BAE6FD; }
         .btn-secondary { background-color: #FFFFFF; color: #4B5563; border-color: var(--border-color); }
         .btn-danger { background-color: #FEE2E2; color: #991B1B; border-color: #FCA5A5; }
+        .btn-danger:hover { background-color: #FECACA; }
         .btn-danger-icon { background: transparent; border: none; color: #EF4444; cursor: pointer; font-size: 1rem; }
+
+        .pc-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background-color: #F8FAFC;
+            border: 1px solid #CBD5E1;
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+        }
+        .pc-top-info {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pc-index-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background-color: var(--primary-blue);
+            color: #FFFFFF;
+            padding: 3px 9px;
+            border-radius: 5px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+        .pc-action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .pc-feedback-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.73rem;
+            font-weight: 800;
+        }
+        .pc-feedback-archive {
+            background-color: #DCFCE7;
+            color: #166534;
+            border: 1px solid #86EFAC;
+        }
+        .pc-feedback-modifier {
+            background-color: #FFEDD5;
+            color: #9A3412;
+            border: 1px solid #FDBA74;
+        }
+        .pc-feedback-suivi {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #93C5FD;
+        }
 
         @media (max-width: 1280px) {
             .single-row-saisie-fv { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
@@ -311,7 +374,7 @@
         }
 
         @media print {
-            .sidebar, .header-actions-wrapper, .modif-line-card, .plan-fv-card { display: none !important; }
+            .sidebar, .header-actions-wrapper, .pc-action-buttons, .modif-line-card, .plan-fv-card { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
         }
     </style>
@@ -350,10 +413,6 @@
                     <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
                     <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()"><i class="fa-solid fa-trash-can"></i> Vider</button>
-                    <button type="button" class="btn btn-primary" id="btnArchiverFV" onclick="archiverFicheEncaisse()"><i class="fa-solid fa-box-archive"></i> Archiver FV</button>
-                    <button type="button" class="btn btn-warning" id="btnModifierFV" onclick="modifierFicheEncaisse()" title="Met à jour uniquement le(s) point(s) de contrôle modifié(s) dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
-                    <button type="button" class="btn btn-suivi" id="btnSuiviFV" onclick="suiviFicheEncaisse()" title="Conserve la ligne initiale sans modification et crée une nouvelle ligne de suivi uniquement pour le(s) PC modifié(s)"><i class="fa-solid fa-code-branch"></i> Suivi</button>
-                    <button type="button" class="btn btn-danger" onclick="supprimerFicheEncaisse()" title="Supprime la ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
                 </div>
@@ -1495,7 +1554,7 @@
             const dateFR = formatDateToJJMMAAAA(valISO);
             addedPoints[pIndex].constats[cIndex].dateVerification = dateFR;
             if (cIndex === 0) addedPoints[pIndex].dateVerification = dateFR;
-            renderPoints();
+            rafraichirIndicateursConstatFV(pIndex, cIndex);
         }
 
         function onRegionEncaisseChange(sitePreselectionne = '') {
@@ -1886,6 +1945,123 @@
             });
         }
 
+        function escapeHtml(val) {
+            return String(val ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function genererBadgeEtatConstatFV(c) {
+            const estModifieDepuisChargement = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+            if (estModifieDepuisChargement) {
+                return `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`;
+            }
+            if (c._lastActionFeedback && c._lastActionFeedback.text) {
+                const typeClass = c._lastActionFeedback.type === 'ARCHIVE'
+                    ? 'pc-feedback-archive'
+                    : (c._lastActionFeedback.type === 'MODIFIER' ? 'pc-feedback-modifier' : 'pc-feedback-suivi');
+                const iconClass = c._lastActionFeedback.type === 'ARCHIVE'
+                    ? 'fa-circle-check'
+                    : (c._lastActionFeedback.type === 'MODIFIER' ? 'fa-pen' : 'fa-code-branch');
+                return `<span class="pc-feedback-pill ${typeClass}"><i class="fa-solid ${iconClass}"></i> ${c._lastActionFeedback.text}</span>`;
+            }
+            if (c._bddIdEncaisse) {
+                return `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>`;
+            }
+            return '';
+        }
+
+        function genererBadgeEtatPointFV(point) {
+            const constats = Array.isArray(point.constats) ? point.constats : [];
+            const estModifie = constats.some(c => Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c)));
+            if (estModifie) {
+                return `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`;
+            }
+            if (point._lastActionFeedback && point._lastActionFeedback.text) {
+                const typeClass = point._lastActionFeedback.type === 'ARCHIVE'
+                    ? 'pc-feedback-archive'
+                    : (point._lastActionFeedback.type === 'MODIFIER' ? 'pc-feedback-modifier' : 'pc-feedback-suivi');
+                const iconClass = point._lastActionFeedback.type === 'ARCHIVE'
+                    ? 'fa-circle-check'
+                    : (point._lastActionFeedback.type === 'MODIFIER' ? 'fa-pen' : 'fa-code-branch');
+                return `<span class="pc-feedback-pill ${typeClass}"><i class="fa-solid ${iconClass}"></i> ${point._lastActionFeedback.text}</span>`;
+            }
+            if (constats.some(c => Boolean(c._bddIdEncaisse))) {
+                return `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>`;
+            }
+            return '';
+        }
+
+        function rafraichirIndicateursConstatFV(pIndex, cIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) return;
+            const c = point.constats[cIndex];
+            const defaultDateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification').value);
+            const datePointFR = formatDateToJJMMAAAA(point.dateVerification) || defaultDateVerifFR;
+
+            const elHeaderDate = document.getElementById(`pc-fv-header-date-${pIndex}`);
+            if (elHeaderDate) {
+                elHeaderDate.innerHTML = datePointFR
+                    ? `<i class="fa-regular fa-calendar"></i> Date vérif. : ${datePointFR}`
+                    : '';
+                elHeaderDate.style.display = datePointFR ? 'inline-flex' : 'none';
+            }
+
+            const elPointState = document.getElementById(`pc-fv-state-badge-${pIndex}`);
+            if (elPointState) elPointState.innerHTML = genererBadgeEtatPointFV(point);
+
+            if (c) {
+                const statutVal = c.statut || 'EN_COURS';
+                const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
+                const dateConstatFR = formatDateToJJMMAAAA(c.dateVerification) || datePointFR;
+
+                const elRateBadge = document.getElementById(`constat-rate-badge-${pIndex}-${cIndex}`);
+                if (elRateBadge) {
+                    elRateBadge.className = `conformity-badge ${badgeClass}`;
+                    elRateBadge.innerText = `${c.rate.toFixed(1)} %`;
+                }
+
+                const elChipDate = document.getElementById(`constat-chip-date-${pIndex}-${cIndex}`);
+                if (elChipDate) elChipDate.innerHTML = `<i class="fa-regular fa-calendar-check"></i> Date : ${dateConstatFR || '--'}`;
+
+                const elChipPop = document.getElementById(`constat-chip-pop-${pIndex}-${cIndex}`);
+                if (elChipPop) elChipPop.innerText = c.population;
+
+                const elChipEch = document.getElementById(`constat-chip-ech-${pIndex}-${cIndex}`);
+                if (elChipEch) elChipEch.innerText = c.echantillon;
+
+                const elChipOk = document.getElementById(`constat-chip-ok-${pIndex}-${cIndex}`);
+                if (elChipOk) elChipOk.innerText = c.ok;
+
+                const elChipKo = document.getElementById(`constat-chip-ko-${pIndex}-${cIndex}`);
+                if (elChipKo) elChipKo.innerText = c.ko;
+
+                const elChipTc = document.getElementById(`constat-chip-tc-${pIndex}-${cIndex}`);
+                if (elChipTc) elChipTc.innerText = `${c.rate.toFixed(1)} %`;
+
+                const elChipStatut = document.getElementById(`constat-chip-statut-${pIndex}-${cIndex}`);
+                if (elChipStatut) elChipStatut.innerText = libelleStatutFV(statutVal);
+
+                const elConstatState = document.getElementById(`constat-state-badge-${pIndex}-${cIndex}`);
+                if (elConstatState) elConstatState.innerHTML = genererBadgeEtatConstatFV(c);
+
+                const inpEch = document.getElementById(`constat-input-ech-${pIndex}-${cIndex}`);
+                if (inpEch && String(inpEch.value) !== String(c.echantillon)) inpEch.value = c.echantillon;
+
+                const inpOk = document.getElementById(`constat-input-ok-${pIndex}-${cIndex}`);
+                if (inpOk && String(inpOk.value) !== String(c.ok)) inpOk.value = c.ok;
+
+                const inpKo = document.getElementById(`constat-input-ko-${pIndex}-${cIndex}`);
+                if (inpKo) inpKo.value = c.ko;
+
+                const selStatut = document.getElementById(`constat-select-statut-${pIndex}-${cIndex}`);
+                if (selStatut) selStatut.className = `form-control ${getStatutSelectClass(statutVal)}`;
+            }
+
+            updateKpisAndSummary();
+        }
+
         function renderPoints() {
             const container = document.getElementById('pointsEvaluationsContainer');
             container.innerHTML = '';
@@ -1894,7 +2070,9 @@
             addedPoints.forEach((point, pIndex) => {
                 const card = document.createElement('div');
                 card.className = 'pc-card';
+                card.id = `pc-card-${pIndex}`;
                 const datePointFR = formatDateToJJMMAAAA(point.dateVerification) || defaultDateVerifFR;
+                const badgeEtatPoint = genererBadgeEtatPointFV(point);
 
                 let constatsHTML = '';
                 point.constats.forEach((c, cIndex) => {
@@ -1902,11 +2080,7 @@
                     const badgeClass = c.rate >= 90 ? 'badge-success' : (c.rate >= 70 ? 'badge-warning' : 'badge-danger');
                     const dateConstatFR = formatDateToJJMMAAAA(c.dateVerification) || datePointFR;
                     const dateConstatISO = formatDateToISO(dateConstatFR);
-
-                    const estModifieDepuisChargement = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
-                    const badgeEtatLigne = estModifieDepuisChargement
-                        ? `<span class="date-modified-pill"><i class="fa-solid fa-pen"></i> Modifié (Prêt pour Modifier ou Suivi)</span>`
-                        : (c._bddIdEncaisse ? `<span style="font-size:0.72rem; color:var(--text-muted); font-weight:600;">(Chargé depuis BDD — inchangé)</span>` : '');
+                    const badgeEtatLigne = genererBadgeEtatConstatFV(c);
 
                     constatsHTML += `
                         <div class="constat-box">
@@ -1914,20 +2088,20 @@
                                 <strong style="font-size: 0.85rem; color: var(--primary-blue);"><i class="fa-solid fa-pen-to-square"></i> Constat #${cIndex + 1}</strong>
                                 <div style="display: flex; align-items: center; gap: 10px;">
                                     <span>TC (%) :</span>
-                                    <span class="conformity-badge ${badgeClass}">${c.rate.toFixed(1)} %</span>
-                                    ${point.constats.length > 1 ? `<button type="button" class="btn-danger-icon" title="Supprimer" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                    <span class="conformity-badge ${badgeClass}" id="constat-rate-badge-${pIndex}-${cIndex}">${c.rate.toFixed(1)} %</span>
+                                    ${point.constats.length > 1 ? `<button type="button" class="btn-danger-icon" title="Retirer ce constat" onclick="removeConstat(${pIndex}, ${cIndex})"><i class="fa-solid fa-xmark"></i></button>` : ''}
                                 </div>
                             </div>
 
                             <div class="imported-meta-strip">
-                                <span class="date-bdd-pill"><i class="fa-regular fa-calendar-check"></i> Date : ${dateConstatFR || '--'}</span>
-                                <span class="imported-chip">Pop : <strong>${c.population}</strong></span>
-                                <span class="imported-chip">Ech : <strong>${c.echantillon}</strong></span>
-                                <span class="imported-chip">OK : <strong style="color:var(--success);">${c.ok}</strong></span>
-                                <span class="imported-chip">KO : <strong style="color:var(--danger);">${c.ko}</strong></span>
-                                <span class="imported-chip">TC : <strong>${c.rate.toFixed(1)} %</strong></span>
-                                <span class="imported-chip">Statut : <strong>${libelleStatutFV(statutVal)}</strong></span>
-                                ${badgeEtatLigne}
+                                <span class="date-bdd-pill" id="constat-chip-date-${pIndex}-${cIndex}"><i class="fa-regular fa-calendar-check"></i> Date : ${dateConstatFR || '--'}</span>
+                                <span class="imported-chip">Pop : <strong id="constat-chip-pop-${pIndex}-${cIndex}">${c.population}</strong></span>
+                                <span class="imported-chip">Ech : <strong id="constat-chip-ech-${pIndex}-${cIndex}">${c.echantillon}</strong></span>
+                                <span class="imported-chip">OK : <strong id="constat-chip-ok-${pIndex}-${cIndex}" style="color:var(--success);">${c.ok}</strong></span>
+                                <span class="imported-chip">KO : <strong id="constat-chip-ko-${pIndex}-${cIndex}" style="color:var(--danger);">${c.ko}</strong></span>
+                                <span class="imported-chip">TC : <strong id="constat-chip-tc-${pIndex}-${cIndex}">${c.rate.toFixed(1)} %</strong></span>
+                                <span class="imported-chip">Statut : <strong id="constat-chip-statut-${pIndex}-${cIndex}">${libelleStatutFV(statutVal)}</strong></span>
+                                <span id="constat-state-badge-${pIndex}-${cIndex}">${badgeEtatLigne}</span>
                             </div>
 
                             <div class="metrics-statut-row">
@@ -1936,12 +2110,12 @@
                                     <input type="date" class="form-control" value="${dateConstatISO}" onchange="updateConstatDate(${pIndex}, ${cIndex}, this.value)" style="background:#EFF6FF; color:var(--primary-blue); font-weight:800;">
                                 </div>
                                 <div class="form-group"><label>Pop.</label><input type="number" min="0" class="form-control" value="${c.population}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'population', this.value)"></div>
-                                <div class="form-group"><label>Ech.</label><input type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
-                                <div class="form-group"><label>OK</label><input type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
-                                <div class="form-group"><label>KO</label><input type="number" min="0" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;"></div>
+                                <div class="form-group"><label>Ech.</label><input id="constat-input-ech-${pIndex}-${cIndex}" type="number" min="0" class="form-control" value="${c.echantillon}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'echantillon', this.value)"></div>
+                                <div class="form-group"><label>OK</label><input id="constat-input-ok-${pIndex}-${cIndex}" type="number" min="0" class="form-control" value="${c.ok}" onchange="updateConstatNumbers(${pIndex}, ${cIndex}, 'ok', this.value)"></div>
+                                <div class="form-group"><label>KO</label><input id="constat-input-ko-${pIndex}-${cIndex}" type="number" class="form-control" value="${c.ko}" readonly style="background: #F1F5F9;"></div>
                                 <div class="form-group">
                                     <label>Statut constat *</label>
-                                    <select class="form-control ${getStatutSelectClass(statutVal)}" onchange="updateConstatStatut(${pIndex}, ${cIndex}, this.value)">
+                                    <select id="constat-select-statut-${pIndex}-${cIndex}" class="form-control ${getStatutSelectClass(statutVal)}" onchange="updateConstatStatut(${pIndex}, ${cIndex}, this.value)">
                                         <option value="EN_COURS" ${statutVal === 'EN_COURS' ? 'selected' : ''}>🟡 En cours</option>
                                         <option value="CLOTURE" ${statutVal === 'CLOTURE' ? 'selected' : ''}>🟢 Clôturé</option>
                                         <option value="NON_CLOTURE" ${statutVal === 'NON_CLOTURE' ? 'selected' : ''}>🔴 Non clôturé</option>
@@ -1951,17 +2125,17 @@
 
                             <div class="form-group" style="margin-bottom: 12px;">
                                 <label>Constat / Anomalie observée *</label>
-                                <textarea class="form-control" rows="2" placeholder="Description du constat..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${c.constatText}</textarea>
+                                <textarea class="form-control" rows="2" placeholder="Description du constat..." oninput="updateConstatText(${pIndex}, ${cIndex}, 'constatText', this.value)">${escapeHtml(c.constatText)}</textarea>
                             </div>
 
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label>Recommandation *</label>
-                                    <textarea class="form-control" rows="2" placeholder="Recommandations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${c.recoText}</textarea>
+                                    <textarea class="form-control" rows="2" placeholder="Recommandations..." oninput="updateConstatText(${pIndex}, ${cIndex}, 'recoText', this.value)">${escapeHtml(c.recoText)}</textarea>
                                 </div>
                                 <div class="form-group">
                                     <label>Avis du chef de centre / responsable (Facultatif)</label>
-                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations..." onchange="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${c.avisText}</textarea>
+                                    <textarea class="form-control" rows="2" placeholder="Avis ou observations..." oninput="updateConstatText(${pIndex}, ${cIndex}, 'avisText', this.value)">${escapeHtml(c.avisText)}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -1975,11 +2149,22 @@
                             <h4><i class="fa-solid fa-list-check" style="color: var(--accent-gold);"></i> ${point.processus} &gt; ${point.risque}</h4>
                         </div>
                         <div style="display:flex; align-items:center; gap:12px;">
-                            ${datePointFR ? `<span style="background:rgba(255,255,255,0.16); padding:4px 10px; border-radius:12px; font-size:0.76rem; font-weight:700;"><i class="fa-regular fa-calendar"></i> Date vérif. : ${datePointFR}</span>` : ''}
-                            <button type="button" class="btn-danger-icon" style="color: #FFF;" onclick="removePoint(${pIndex})"><i class="fa-solid fa-trash-can"></i> Supprimer ce point</button>
+                            <span id="pc-fv-header-date-${pIndex}" style="background:rgba(255,255,255,0.16); padding:4px 10px; border-radius:12px; font-size:0.76rem; font-weight:700; ${datePointFR ? 'display:inline-flex; align-items:center; gap:5px;' : 'display:none;'}">${datePointFR ? `<i class="fa-regular fa-calendar"></i> Date vérif. : ${datePointFR}` : ''}</span>
                         </div>
                     </div>
                     <div class="pc-card-body">
+                        <div class="pc-top-bar">
+                            <div class="pc-top-info">
+                                <span class="pc-index-badge"><i class="fa-solid fa-clipboard-check"></i> PC #${pIndex + 1}</span>
+                                <span id="pc-fv-state-badge-${pIndex}">${badgeEtatPoint}</span>
+                            </div>
+                            <div class="pc-action-buttons">
+                                <button type="button" class="btn btn-sm btn-primary" id="btnArchiverPCFV-${pIndex}" onclick="archiverPointEncaisse(${pIndex})" title="Archiver uniquement ce point de contrôle dans la BDD"><i class="fa-solid fa-box-archive"></i> Archiver</button>
+                                <button type="button" class="btn btn-sm btn-warning" id="btnModifierPCFV-${pIndex}" onclick="modifierPointEncaisse(${pIndex})" title="Met à jour uniquement ce point de contrôle dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
+                                <button type="button" class="btn btn-sm btn-suivi" id="btnSuiviPCFV-${pIndex}" onclick="suiviPointEncaisse(${pIndex})" title="Conserve la ligne initiale de ce point de contrôle sans modification et crée une nouvelle ligne de suivi dans la BDD"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                                <button type="button" class="btn btn-sm btn-danger" id="btnSupprimerPCFV-${pIndex}" onclick="supprimerPointEncaisse(${pIndex})" title="Supprime uniquement ce point de contrôle et sa ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                            </div>
+                        </div>
                         <div style="background: #F1F5F9; padding: 12px; border-radius: 6px; margin-bottom: 16px; border-left: 4px solid var(--primary-blue);">
                             <strong style="color: var(--primary-blue); font-size: 0.85rem;">CONTRÔLE :</strong> ${point.controle}<br>
                             <strong style="color: var(--primary-blue); font-size: 0.85rem;">POINT DE CONTRÔLE :</strong>
@@ -2003,7 +2188,7 @@
 
         function updateConstatStatut(pIndex, cIndex, statutVal) {
             addedPoints[pIndex].constats[cIndex].statut = statutVal;
-            renderPoints();
+            rafraichirIndicateursConstatFV(pIndex, cIndex);
         }
 
         function updateConstatNumbers(pIndex, cIndex, field, value) {
@@ -2021,12 +2206,12 @@
                 c.ko = Math.max(0, c.echantillon - c.ok);
                 c.rate = (c.ok / c.echantillon) * 100;
             } else { c.ko = 0; c.rate = 100; }
-            renderPoints();
+            rafraichirIndicateursConstatFV(pIndex, cIndex);
         }
 
         function updateConstatText(pIndex, cIndex, field, value) {
             addedPoints[pIndex].constats[cIndex][field] = value;
-            renderPoints();
+            rafraichirIndicateursConstatFV(pIndex, cIndex);
         }
 
         function addConstatToPoint(pIndex) {
@@ -2121,9 +2306,10 @@
             reinitialiserFiltresBDDFV();
         }
 
-        function validateCohérenceEchantillon() {
-            for (let p of addedPoints) {
-                for (let c of p.constats) {
+        function validateCohérenceEchantillon(pointsCibles = addedPoints) {
+            const liste = Array.isArray(pointsCibles) ? pointsCibles : [];
+            for (let p of liste) {
+                for (let c of (p.constats || [])) {
                     if (c.echantillon > c.population && c.population > 0) {
                         alert(`⚠️ Pour le point "${p.pointDeControle}", l'échantillon (${c.echantillon}) doit être <= à la population (${c.population}).`);
                         return false;
@@ -2144,7 +2330,7 @@
             };
         }
 
-        function construireLotConstatsFV(idMission, mode = 'ARCHIVE') {
+        function construireLotConstatsPourPointFV(point, pIndex, idMission, mode = 'ARCHIVE') {
             const u = getCurrentAuthUser();
             const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
@@ -2158,80 +2344,83 @@
             const dateVerifGlobaleISO = document.getElementById('dateVerification').value.slice(0, 10);
             const periodeDebut = document.getElementById('periodeDebut').value;
             const periodeFin = document.getElementById('periodeFin').value;
-            const activePoints = addedPoints.filter(p => p.selected);
-            const timestampSuivi = Date.now();
+            const timestamp = Date.now();
             const traceUser = getUserTracePayload(mode);
-            const lot = [];
+            const pairs = [];
 
-            activePoints.forEach((p, pIdx) => {
-                p.constats.forEach((c, cIdx) => {
-                    const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
-                    const estModifie = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
+            (point.constats || []).forEach((c, cIdx) => {
+                const dateConstatISO = formatDateToISO(c.dateVerification) || dateVerifGlobaleISO;
+                const estModifie = Boolean(c._initialSnapshot && c._initialSnapshot !== getSnapshotConstat(c));
 
-                    if ((mode === 'MODIFIER' || mode === 'SUIVI') && c._initialSnapshot && !estModifie) {
-                        return;
-                    }
+                if ((mode === 'MODIFIER' || mode === 'SUIVI') && c._initialSnapshot && !estModifie) {
+                    return;
+                }
 
-                    const estSuivi = (mode === 'SUIVI') ? true : Boolean(c._isSuivi);
-                    const estMarqueModifie = (mode === 'MODIFIER')
-                        ? true
-                        : (mode === 'SUIVI' ? false : Boolean(c._isModifie));
+                const estSuivi = (mode === 'SUIVI') ? true : Boolean(c._isSuivi);
+                const estMarqueModifie = (mode === 'MODIFIER')
+                    ? true
+                    : (mode === 'SUIVI' ? false : Boolean(c._isModifie));
+                const idMissionLigne = (mode === 'SUIVI') ? idMission : (c._bddIdMission || point._bddIdMission || idMission);
 
-                    const rawRecord = {
-                        idEncaisse: mode === 'SUIVI'
-                            ? `ENC-SUIVI-${timestampSuivi}-${pIdx + 1}-${cIdx + 1}`
-                            : (c._bddIdEncaisse || `ENC-${idMission}-${pIdx + 1}-${cIdx + 1}`),
-                        idMission: idMission,
-                        idPlanification: activePlanificationFVId || '',
-                        sourceFeuille: 'FV',
-                        typeControle: typeControle,
-                        region: region,
-                        site: site,
-                        entite: site,
-                        centre: site,
-                        controleur: controleur,
-                        controleurId: controleurId,
-                        controleurRegion: controleurRegion,
-                        auteurRegion: controleurRegion,
-                        responsable: responsable,
-                        date: dateConstatISO,
-                        dateVerification: dateConstatISO,
-                        dateDebut: periodeDebut,
-                        dateFin: periodeFin,
-                        processus: p.processus || "Gestion des Encaisses",
-                        risque: p.risque || "Risque Encaisses",
-                        controle: p.controle || "Vérification physique",
-                        pc: p.pointDeControle || `Contrôle site: ${site}`,
-                        pop: c.population || 0,
-                        ech: c.echantillon || 0,
-                        ok: c.ok || 0,
-                        ko: c.ko || 0,
-                        tc: parseFloat(c.rate) || 0,
-                        statut: c.statut || 'EN_COURS',
-                        constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
-                        recommandation: c.recoText || '--',
-                        avisResponsable: c.avisText || '--',
-                        isModifie: estMarqueModifie,
-                        modifie: estMarqueModifie,
-                        isSuivi: estSuivi,
-                        suivi: estSuivi,
-                        dateArchivage: new Date().toISOString(),
-                        ...traceUser
-                    };
+                const rawRecord = {
+                    idEncaisse: mode === 'SUIVI'
+                        ? `ENC-SUIVI-${timestamp}-${pIndex + 1}-${cIdx + 1}`
+                        : (c._bddIdEncaisse || `ENC-${idMissionLigne}-${timestamp}-${pIndex + 1}-${cIdx + 1}`),
+                    idMission: idMissionLigne,
+                    idPlanification: activePlanificationFVId || '',
+                    sourceFeuille: 'FV',
+                    typeControle: typeControle,
+                    region: region,
+                    site: site,
+                    entite: site,
+                    centre: site,
+                    controleur: controleur,
+                    controleurId: controleurId,
+                    controleurRegion: controleurRegion,
+                    auteurRegion: controleurRegion,
+                    responsable: responsable,
+                    date: dateConstatISO,
+                    dateVerification: dateConstatISO,
+                    dateDebut: periodeDebut,
+                    dateFin: periodeFin,
+                    processus: point.processus || "Gestion des Encaisses",
+                    risque: point.risque || "Risque Encaisses",
+                    controle: point.controle || "Vérification physique",
+                    pc: point.pointDeControle || `Contrôle site: ${site}`,
+                    pop: c.population || 0,
+                    ech: c.echantillon || 0,
+                    ok: c.ok || 0,
+                    ko: c.ko || 0,
+                    tc: parseFloat(c.rate) || 0,
+                    statut: c.statut || 'EN_COURS',
+                    constat: c.constatText || `Site: ${site} - Contrôleur: ${controleur}`,
+                    recommandation: c.recoText || '--',
+                    avisResponsable: c.avisText || '--',
+                    isModifie: estMarqueModifie,
+                    modifie: estMarqueModifie,
+                    isSuivi: estSuivi,
+                    suivi: estSuivi,
+                    dateArchivage: new Date().toISOString(),
+                    ...traceUser
+                };
 
-                    if (mode === 'MODIFIER' && c._espaceSaisie) {
-                        lot.push({ ...rawRecord, espaceSaisie: c._espaceSaisie });
-                    } else {
-                        lot.push(etiqueterEnregistrement(rawRecord));
-                    }
-                });
+                const finalRecord = (mode === 'MODIFIER' && c._espaceSaisie)
+                    ? { ...rawRecord, espaceSaisie: c._espaceSaisie }
+                    : etiqueterEnregistrement(rawRecord);
+
+                pairs.push({ constatRef: c, record: finalRecord });
             });
 
-            return lot;
+            return pairs;
         }
 
-        async function archiverFicheEncaisse() {
-            if (!validateCohérenceEchantillon()) return;
+        async function archiverPointEncaisse(pIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) {
+                alert("Point de contrôle introuvable.");
+                return;
+            }
+            if (!validateCohérenceEchantillon([point])) return;
 
             const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
@@ -2247,21 +2436,21 @@
                 return;
             }
 
-            const activePoints = addedPoints.filter(p => p.selected);
-            if (activePoints.length === 0) {
-                alert("Veuillez sélectionner au moins un point de contrôle.");
-                return;
+            const btn = document.getElementById(`btnArchiverPCFV-${pIndex}`);
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
             }
 
-            const btn = document.getElementById('btnArchiverFV');
-            const texteOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
-
             try {
-                const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
-                const lotConstatsFV = construireLotConstatsFV(idMission, 'ARCHIVE');
+                const idMissionPoint = point._bddIdMission || currentMissionId || ("MIS-ENC-" + Date.now());
+                if (!currentMissionId) currentMissionId = idMissionPoint;
+
+                const pairs = construireLotConstatsPourPointFV(point, pIndex, idMissionPoint, 'ARCHIVE');
+                const lotConstatsFV = pairs.map(p => p.record);
                 const planIdToClose = activePlanificationFVId;
+                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
 
                 const db = lireDBSecurisee();
                 const listeExistante = db.constatsEncaisses || [];
@@ -2276,10 +2465,10 @@
                 db.constatsEncaisses = listeExistante;
 
                 upsertMissionFVEnBDD(db, {
-                    idMission,
+                    idMission: idMissionPoint,
                     region,
                     site,
-                    dateISO: dateVerifGlobaleISO,
+                    dateISO: lotConstatsFV[0]?.date || dateVerifGlobaleISO,
                     dateDebut: periodeDebut,
                     dateFin: periodeFin,
                     controleur,
@@ -2293,7 +2482,7 @@
                 sauvegarderDBSecurisee(db);
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMission, true);
+                    await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMissionPoint, true);
                 }
 
                 // Clôture automatique de la planification FV correspondante dans l'espace Siège et Contrôleur
@@ -2313,15 +2502,29 @@
                     }
                 }
 
-                clearForm();
+                point._bddIdMission = idMissionPoint;
+                pairs.forEach(({ constatRef, record }) => {
+                    constatRef._bddIdEncaisse = record.idEncaisse;
+                    constatRef._bddIdMission = record.idMission;
+                    constatRef._espaceSaisie = record.espaceSaisie || constatRef._espaceSaisie || '';
+                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                    constatRef._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
+                });
+                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
+
                 remplirFiltresEncaissesBDD();
+                renderPoints();
+
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `${lotConstatsFV.length} constat(s) FV archivé(s) dans la BDD — Région : ${region} | Contrôleur : ${controleur}`;
+                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Région : ${region} | Contrôleur : ${controleur}`;
                 }
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = texteOriginal;
+                const btnActuel = document.getElementById(`btnArchiverPCFV-${pIndex}`);
+                if (btnActuel && btnActuel === btn) {
+                    btnActuel.disabled = false;
+                    btnActuel.innerHTML = texteOriginal;
+                }
             }
         }
 
@@ -2386,8 +2589,10 @@
 
             addedPoints = constatsFV.map((c, idx) => {
                 const dLigne = getEncaisseDateFR(c, mapMissions) || dateVerifJJMMAAAA;
+                const idMissionConstat = c.idMission || currentMissionId;
                 const constatObj = {
                     _bddIdEncaisse: c.idEncaisse,
+                    _bddIdMission: idMissionConstat,
                     _espaceSaisie: c.espaceSaisie || '',
                     _initialDate: dLigne,
                     _isModifie: Boolean(c.isModifie || c.modifie),
@@ -2407,6 +2612,7 @@
                 return {
                     id: Date.now() + idx,
                     selected: true,
+                    _bddIdMission: idMissionConstat,
                     dateVerification: dLigne,
                     processus: getEncaisseProcessus(c),
                     risque: c.risque,
@@ -2420,13 +2626,13 @@
             renderPlanificationsFVTable();
         }
 
-        async function modifierFicheEncaisse() {
-            if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à modifier.");
+        async function modifierPointEncaisse(pIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) {
+                alert("Point de contrôle introuvable.");
                 return;
             }
-
-            if (!validateCohérenceEchantillon()) return;
+            if (!validateCohérenceEchantillon([point])) return;
 
             const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
@@ -2442,84 +2648,109 @@
                 return;
             }
 
-            const idMission = currentMissionId || ("MIS-ENC-" + Date.now());
-            const lotMisAJour = construireLotConstatsFV(idMission, 'MODIFIER');
+            const idMissionPoint = point._bddIdMission || currentMissionId || ("MIS-ENC-" + Date.now());
+            const pairs = construireLotConstatsPourPointFV(point, pIndex, idMissionPoint, 'MODIFIER');
 
-            if (lotMisAJour.length === 0) {
-                alert("⚠️ Aucune modification détectée sur les points de contrôle.\nModifiez d'abord le(s) point(s) de contrôle concerné(s) (date, statut, constat, chiffres...) avant de cliquer sur Modifier.");
+            if (pairs.length === 0) {
+                alert("⚠️ Aucune modification détectée sur ce point de contrôle.\nModifiez d'abord ce point de contrôle (date, statut, constat, chiffres...) avant de cliquer sur Modifier.");
                 return;
             }
 
-            const btn = document.getElementById('btnModifierFV');
-            const texteOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
+            const btn = document.getElementById(`btnModifierPCFV-${pIndex}`);
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
+            }
 
             try {
+                if (!currentMissionId) currentMissionId = idMissionPoint;
+                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
                 const db = lireDBSecurisee();
                 const listeExistante = db.constatsEncaisses || [];
+                const recordsMisAJour = [];
 
-                lotMisAJour.forEach(itemMaj => {
-                    const idxExistant = listeExistante.findIndex(e =>
-                        (itemMaj.idEncaisse && e.idEncaisse === itemMaj.idEncaisse) ||
-                        (e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle)
-                    );
-                    if (idxExistant !== -1) {
-                        listeExistante[idxExistant] = {
-                            ...listeExistante[idxExistant],
-                            ...itemMaj,
-                            isModifie: true,
-                            modifie: true,
-                            dateModification: new Date().toISOString()
-                        };
-                    } else {
-                        listeExistante.push({
-                            ...itemMaj,
-                            isModifie: true,
-                            modifie: true,
-                            dateModification: new Date().toISOString()
-                        });
+                pairs.forEach(({ constatRef, record: itemMaj }) => {
+                    let idxExistant = itemMaj.idEncaisse
+                        ? listeExistante.findIndex(e => e.idEncaisse === itemMaj.idEncaisse)
+                        : -1;
+                    if (idxExistant === -1) {
+                        idxExistant = listeExistante.findIndex(e =>
+                            e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle
+                        );
                     }
+
+                    const enregistrementFinal = {
+                        ...(idxExistant !== -1 ? listeExistante[idxExistant] : {}),
+                        ...itemMaj,
+                        isModifie: true,
+                        modifie: true,
+                        dateModification: new Date().toISOString()
+                    };
+
+                    if (idxExistant !== -1) {
+                        listeExistante[idxExistant] = enregistrementFinal;
+                    } else {
+                        listeExistante.push(enregistrementFinal);
+                    }
+
+                    recordsMisAJour.push(enregistrementFinal);
+                    constatRef._bddIdEncaisse = enregistrementFinal.idEncaisse;
+                    constatRef._bddIdMission = enregistrementFinal.idMission;
+                    constatRef._isModifie = true;
+                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                    constatRef._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
                 });
 
                 db.constatsEncaisses = listeExistante;
 
                 upsertMissionFVEnBDD(db, {
-                    idMission,
+                    idMission: idMissionPoint,
                     region,
                     site,
-                    dateISO: dateVerifGlobaleISO,
+                    dateISO: recordsMisAJour[0]?.date || dateVerifGlobaleISO,
                     dateDebut: periodeDebut,
                     dateFin: periodeFin,
                     controleur,
-                    controleurId: lotMisAJour[0]?.controleurId || loadedControleurId || '',
-                    controleurRegion: lotMisAJour[0]?.controleurRegion || getUserHomeRegion() || region,
+                    controleurId: recordsMisAJour[0]?.controleurId || loadedControleurId || '',
+                    controleurRegion: recordsMisAJour[0]?.controleurRegion || getUserHomeRegion() || region,
                     responsable,
                     typeControle,
-                    constats: lotMisAJour
+                    constats: recordsMisAJour
                 });
 
                 sauvegarderDBSecurisee(db);
 
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    await FCIDatabase.enregistrerLotEncaisses(lotMisAJour, site, idMission, true);
+                    await FCIDatabase.enregistrerLotEncaisses(recordsMisAJour, site, idMissionPoint, true);
                 }
 
-                clearForm();
+                point._bddIdMission = idMissionPoint;
+                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
+
                 remplirFiltresEncaissesBDD();
+                renderPoints();
+
+                const statusEl = document.getElementById('searchEncaisseStatus');
+                if (statusEl) {
+                    statusEl.innerText = `PC #${pIndex + 1} modifié dans la BDD ("${pcName}")`;
+                }
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = texteOriginal;
+                const btnActuel = document.getElementById(`btnModifierPCFV-${pIndex}`);
+                if (btnActuel && btnActuel === btn) {
+                    btnActuel.disabled = false;
+                    btnActuel.innerHTML = texteOriginal;
+                }
             }
         }
 
-        async function suiviFicheEncaisse() {
-            if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD pour créer un suivi.");
+        async function suiviPointEncaisse(pIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) {
+                alert("Point de contrôle introuvable.");
                 return;
             }
-
-            if (!validateCohérenceEchantillon()) return;
+            if (!validateCohérenceEchantillon([point])) return;
 
             const region = normaliserRegion(document.getElementById('regionSite').value);
             const site = document.getElementById('nomSite').value;
@@ -2536,19 +2767,23 @@
             }
 
             const idMissionSuivi = "MIS-ENC-SUIVI-" + Date.now();
-            const nouvellesLignesSuivi = construireLotConstatsFV(idMissionSuivi, 'SUIVI');
+            const pairs = construireLotConstatsPourPointFV(point, pIndex, idMissionSuivi, 'SUIVI');
 
-            if (nouvellesLignesSuivi.length === 0) {
-                alert("⚠️ Aucune modification détectée.\nEffectuez d'abord vos modifications (date, statut, constat, chiffres...) avant de cliquer sur Suivi : la ligne initiale sera conservée intacte et une nouvelle ligne de suivi sera ajoutée dans la BDD.");
+            if (pairs.length === 0) {
+                alert("⚠️ Aucune modification détectée sur ce point de contrôle.\nEffectuez d'abord vos modifications sur ce PC (date, statut, constat, chiffres...) avant de cliquer sur Suivi : la ligne initiale sera conservée intacte et une nouvelle ligne de suivi sera ajoutée dans la BDD.");
                 return;
             }
 
-            const btn = document.getElementById('btnSuiviFV');
-            const texteOriginal = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+            const btn = document.getElementById(`btnSuiviPCFV-${pIndex}`);
+            const texteOriginal = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+            }
 
             try {
+                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
+                const nouvellesLignesSuivi = pairs.map(p => p.record);
                 const db = lireDBSecurisee();
                 db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
 
@@ -2573,43 +2808,97 @@
                     await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
                 }
 
-                clearForm();
+                pairs.forEach(({ constatRef }) => {
+                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                    constatRef._lastActionFeedback = { type: 'SUIVI', text: 'Suivi enregistré en BDD' };
+                });
+                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi enregistré en BDD' };
+
                 remplirFiltresEncaissesBDD();
+                renderPoints();
+
+                const statusEl = document.getElementById('searchEncaisseStatus');
+                if (statusEl) {
+                    statusEl.innerText = `Nouvelle ligne de suivi créée dans la BDD pour PC #${pIndex + 1} ("${pcName}")`;
+                }
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = texteOriginal;
+                const btnActuel = document.getElementById(`btnSuiviPCFV-${pIndex}`);
+                if (btnActuel && btnActuel === btn) {
+                    btnActuel.disabled = false;
+                    btnActuel.innerHTML = texteOriginal;
+                }
             }
         }
 
-        function supprimerFicheEncaisse() {
-            if (!addedPoints || addedPoints.length === 0) {
-                alert("Aucune Fiche de Vérification n'est actuellement chargée depuis la BDD à supprimer.");
+        function supprimerPointEncaisse(pIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) {
+                alert("Point de contrôle introuvable.");
                 return;
             }
 
-            const db = lireDBSecurisee();
-            const idsPointsCharges = addedPoints
-                .flatMap(p => p.constats.map(c => c._bddIdEncaisse))
-                .filter(Boolean);
-            const idsToDelete = new Set([...(loadedEncaisseIds || []), ...idsPointsCharges]);
+            const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
+            const idsPoint = (point.constats || []).map(c => c._bddIdEncaisse).filter(Boolean);
+            const idsToDelete = new Set(idsPoint);
+            const missionIds = new Set(
+                [point._bddIdMission, ...(point.constats || []).map(c => c._bddIdMission), currentMissionId].filter(Boolean)
+            );
 
+            const msgConfirmation = idsToDelete.size > 0
+                ? `Voulez-vous vraiment supprimer ce point de contrôle de la fiche et de la BDD ?\n\n• PC #${pIndex + 1} : ${pcName}`
+                : `Voulez-vous vraiment retirer ce point de contrôle de la fiche en cours ?\n\n• PC #${pIndex + 1} : ${pcName}`;
+
+            if (!confirm(msgConfirmation)) return;
+
+            let supprimeEnBDD = false;
             if (idsToDelete.size > 0) {
+                const db = lireDBSecurisee();
+                const avant = (db.constatsEncaisses || []).length;
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
-            } else if (currentMissionId) {
-                db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => e.idMission !== currentMissionId);
-            }
+                supprimeEnBDD = db.constatsEncaisses.length < avant;
 
-            if (currentMissionId) {
-                const restePourMission = (db.constatsEncaisses || []).some(e => e.idMission === currentMissionId);
-                if (!restePourMission) {
-                    db.missions = (db.missions || []).filter(m => m.idMission !== currentMissionId);
+                if (Array.isArray(loadedEncaisseIds)) {
+                    loadedEncaisseIds = loadedEncaisseIds.filter(id => !idsToDelete.has(id));
+                }
+
+                if (supprimeEnBDD) {
+                    missionIds.forEach(idMissionPoint => {
+                        const restantsMission = (db.constatsEncaisses || []).filter(e => e.idMission === idMissionPoint);
+                        if (restantsMission.length === 0) {
+                            db.missions = (db.missions || []).filter(m => m.idMission !== idMissionPoint);
+                        } else {
+                            const idxMission = (db.missions || []).findIndex(m => m.idMission === idMissionPoint);
+                            if (idxMission !== -1) {
+                                const tauxMoyen = Number((restantsMission.reduce((acc, item) => acc + (parseFloat(item.tc) || 0), 0) / restantsMission.length).toFixed(2));
+                                let statutMission = 'EN_COURS';
+                                if (restantsMission.every(item => item.statut === 'CLOTURE')) {
+                                    statutMission = 'CLOTURE';
+                                } else if (restantsMission.some(item => item.statut === 'NON_CLOTURE')) {
+                                    statutMission = 'NON_CLOTURE';
+                                }
+                                db.missions[idxMission] = {
+                                    ...db.missions[idxMission],
+                                    tauxMoyen,
+                                    nbConstats: restantsMission.length,
+                                    statut: statutMission
+                                };
+                            }
+                        }
+                    });
+                    sauvegarderDBSecurisee(db);
                 }
             }
 
-            sauvegarderDBSecurisee(db);
-
-            clearForm();
+            addedPoints.splice(pIndex, 1);
+            renderPoints();
             remplirFiltresEncaissesBDD();
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = supprimeEnBDD
+                    ? `Point de contrôle supprimé de la BDD et de la fiche ("${pcName}")`
+                    : `Point de contrôle retiré de la fiche ("${pcName}")`;
+            }
         }
 
         function exportToExcel() {
