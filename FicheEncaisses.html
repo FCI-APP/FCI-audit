@@ -547,7 +547,7 @@
                 <div class="header-actions-row">
                     <span class="bdd-badge-total" id="bddStatusBadge"><i class="fa-solid fa-database"></i> Chargement...</span>
                     <button type="button" class="btn btn-refresh" id="btnActualiserFV" onclick="window.location.reload()" title="Actualiser la page"><i class="fa-solid fa-arrows-rotate"></i> Actualiser</button>
-                    <button type="button" class="btn btn-danger" id="btnViderGlobalFV" onclick="viderEspaceFVAction('FV', 'Fiche Vérification Encaisses (FV)')" title="Vider les données FV (Admin : tous comptes / Autres : mon compte)"><i class="fa-solid fa-trash-can"></i> Vider</button>
+                    <button type="button" class="btn btn-danger" id="btnViderGlobalFV" onclick="viderEspaceFVAction('FV', 'Fiche Vérification Encaisses (FV)', 'GLOBAL')" title="Vider les données FV (Admin : tous comptes / Autres : mon compte)"><i class="fa-solid fa-trash-can"></i> Vider</button>
                     <button type="button" class="btn btn-accent" onclick="exportToExcel()"><i class="fa-solid fa-file-excel"></i> Exporter Excel</button>
                     <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
                 </div>
@@ -561,7 +561,7 @@
                 <span id="planFvSectionTitle">Planification &amp; Suivi des Vérifications (FV)</span>
                 <span id="planFvCountBadge" style="background:#E0F2FE; color:#0369A1; border:1px solid #7DD3FC; padding:2px 8px; border-radius:10px; font-size:0.72rem; text-transform:none;">0 planification(s)</span>
                 <span id="activePlanFvBanner" style="margin-left:auto;"></span>
-                <button type="button" class="btn btn-danger btn-sm" id="btnViderPlanifFV" onclick="viderEspaceFVAction('PLANIFICATION_FV', 'Espace Planification &amp; Suivi des Vérifications (FV)')" title="Vider les données de planification FV">
+                <button type="button" class="btn btn-danger btn-sm" id="btnViderPlanifFV" onclick="viderEspaceFVAction('PLANIFICATION_FV', 'Espace Planification &amp; Suivi des Vérifications (FV)', 'PLANIF')" title="Vider uniquement les données de planification FV">
                     <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </div>
@@ -690,7 +690,7 @@
                 <span><i class="fa-solid fa-circle-info"></i> Espace Saisie de la Vérification</span>
                 <span id="badgeInterRegFV"></span>
                 <span style="margin-left:auto;" id="headerDateVerifBadge"></span>
-                <button type="button" class="btn btn-danger btn-sm" id="btnViderSaisieFV" onclick="viderEspaceFVAction('FV', 'Espace Saisie de la Vérification (FV)')" title="Vider l'espace Saisie FV">
+                <button type="button" class="btn btn-danger btn-sm" id="btnViderSaisieFV" onclick="viderEspaceFVAction('FV', 'Espace Saisie de la Vérification (FV)', 'SAISIE')" title="Vider uniquement l'espace Saisie FV">
                     <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </div>
@@ -758,7 +758,7 @@
                 <i class="fa-solid fa-database"></i> Espace Modification / Suivi &amp; Suppression (Source BDD Encaisses)
                 <span id="bddCountInfoFV" style="background:#FEF3C7; color:#92400E; border:1px solid #F59E0B; padding:2px 8px; border-radius:10px; font-size:0.72rem; text-transform:none;"></span>
                 <span id="searchEncaisseStatus" style="margin-left:auto; color:var(--primary-blue); font-weight:700; text-transform:none;"></span>
-                <button type="button" class="btn btn-danger btn-sm" id="btnViderModifFV" onclick="viderEspaceFVAction('FV', 'Espace Modification / Suivi FV (BDD)')" title="Vider l'espace Modification / Suivi FV">
+                <button type="button" class="btn btn-danger btn-sm" id="btnViderModifFV" onclick="viderEspaceFVAction('FV', 'Espace Modification / Suivi FV (BDD)', 'MODIF')" title="Vider uniquement l'espace Modification / Suivi FV">
                     <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </div>
@@ -824,7 +824,7 @@
         <section class="card">
             <h2 class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                 <span><i class="fa-solid fa-diagram-project"></i> Sélection de la Référence (Encaisses.json)</span>
-                <button type="button" class="btn btn-danger btn-sm" id="btnViderRefFV" onclick="viderEspaceFVAction('FV', 'Sélection Référence &amp; Points de Contrôle (FV)')" title="Vider la sélection et les données FV">
+                <button type="button" class="btn btn-danger btn-sm" id="btnViderRefFV" onclick="viderEspaceFVAction('FV', 'Sélection Référence (Encaisses.json)', 'REF')" title="Vider uniquement la sélection Référence">
                     <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </h2>
@@ -847,7 +847,7 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Tout sélectionner</button>
                 <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Tout désélectionner</button>
-                <button type="button" class="btn btn-danger btn-sm" onclick="viderEspaceFVAction('FV', 'Points de Contrôle FV')"><i class="fa-solid fa-trash-can"></i> Vider</button>
+                <button type="button" class="btn btn-danger btn-sm" id="btnViderPointsFV" onclick="viderEspaceFVAction('FV', 'Liste des Points de Contrôle FV', 'POINTS')"><i class="fa-solid fa-trash-can"></i> Vider</button>
             </div>
             <div style="font-size: 0.85rem; font-weight: 700; color: var(--primary-blue);"><span id="selectedCountDisplay">0</span> point(s) sélectionné(s)</div>
         </div>
@@ -3564,6 +3564,7 @@
                                 <button type="button" class="btn btn-sm btn-primary" id="btnArchiverPCFV-${pIndex}" onclick="archiverPointEncaisse(${pIndex})" title="Archiver uniquement ce point de contrôle dans la BDD"><i class="fa-solid fa-box-archive"></i> Archiver</button>
                                 <button type="button" class="btn btn-sm btn-warning" id="btnModifierPCFV-${pIndex}" onclick="modifierPointEncaisse(${pIndex})" title="Met à jour uniquement ce point de contrôle dans la BDD avec le symbole stylo orange"><i class="fa-solid fa-pen"></i> Modifier</button>
                                 <button type="button" class="btn btn-sm btn-suivi" id="btnSuiviPCFV-${pIndex}" onclick="suiviPointEncaisse(${pIndex})" title="Conserve la ligne initiale de ce point de contrôle sans modification et crée une nouvelle ligne de suivi dans la BDD"><i class="fa-solid fa-code-branch"></i> Suivi</button>
+                                <button type="button" class="btn btn-sm btn-outline" id="btnViderPCFV-${pIndex}" onclick="viderPointEncaisse(${pIndex})" title="Vider uniquement la saisie de ce point de contrôle"><i class="fa-solid fa-eraser"></i> Vider</button>
                                 <button type="button" class="btn btn-sm btn-danger" id="btnSupprimerPCFV-${pIndex}" onclick="supprimerPointEncaisse(${pIndex})" title="Supprime uniquement ce point de contrôle et sa ligne correspondante de la BDD"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
                             </div>
                         </div>
@@ -3708,12 +3709,37 @@
             reinitialiserFiltresBDDFV();
         }
 
-        function viderEspaceFVAction(scope = 'FV', label = 'Fiche Vérification Encaisses (FV)') {
+        function viderPointEncaisse(pIndex) {
+            const point = addedPoints[pIndex];
+            if (!point) return;
+            const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
+            const defaultDateVerifFR = formatDateToJJMMAAAA(document.getElementById('dateVerification')?.value || '');
+            point.constats = (Array.isArray(point.constats) && point.constats.length > 0 ? point.constats : [{}]).map(() => ({
+                dateVerification: defaultDateVerifFR,
+                statut: 'EN_COURS',
+                population: 0,
+                echantillon: 0,
+                ok: 0,
+                ko: 0,
+                rate: 0,
+                constatText: '',
+                recoText: '',
+                avisText: ''
+            }));
+            delete point._lastActionFeedback;
+            renderPoints();
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = `Saisie du PC #${pIndex + 1} ("${pcName}") vidée — Les autres PC restent intacts`;
+            }
+        }
+
+        function viderEspaceFVAction(scope = 'FV', label = 'Fiche Vérification Encaisses (FV)', spaceTarget = 'GLOBAL') {
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.viderDonneesEspace === 'function') {
                 const res = FCIDatabase.viderDonneesEspace(scope, { label });
                 if (res && res.cancelled) return;
             }
-            if (scope === 'PLANIFICATION_FV' || scope === 'NOTIFICATIONS_FV' || scope === 'CAMPAGNES_FV' || scope === 'SUIVI_PLANIF_FV') {
+            if (spaceTarget === 'PLANIF' || scope === 'PLANIFICATION_FV' || scope === 'NOTIFICATIONS_FV' || scope === 'CAMPAGNES_FV' || scope === 'SUIVI_PLANIF_FV') {
                 lotAffectationsFV = [];
                 const siteSelect = document.getElementById('planFvSiteSelect');
                 const ctrlSelect = document.getElementById('planFvControleurSelect');
@@ -3724,9 +3750,52 @@
                 refreshPlanificationFVAll();
                 return;
             }
+            if (spaceTarget === 'SAISIE') {
+                const homeReg = getUserHomeRegion();
+                const regSelect = document.getElementById('regionSite');
+                if (regSelect) {
+                    regSelect.disabled = false;
+                    regSelect.value = homeReg || '';
+                }
+                try { onRegionEncaisseChange(''); } catch (e) {}
+                try { reinitialiserChampsNomsVides(); } catch (e) {}
+                const pDeb = document.getElementById('periodeDebut');
+                const pFin = document.getElementById('periodeFin');
+                if (pDeb) pDeb.value = '';
+                if (pFin) pFin.value = '';
+                try { resetDateField(); } catch (e) {}
+                try { remplirFiltresEncaissesBDD(); } catch (e) {}
+                return;
+            }
+            if (spaceTarget === 'MODIF') {
+                try { reinitialiserFiltresBDDFV(); } catch (e) {}
+                try { remplirFiltresEncaissesBDD(); } catch (e) {}
+                if (Array.isArray(loadedEncaisseIds) && loadedEncaisseIds.length > 0) {
+                    addedPoints = [];
+                    loadedEncaisseIds = [];
+                    renderPoints();
+                }
+                const statusEl = document.getElementById('searchEncaisseStatus');
+                if (statusEl) statusEl.innerText = '';
+                return;
+            }
+            if (spaceTarget === 'REF') {
+                const selProc = document.getElementById('selectProcessus');
+                if (selProc) selProc.value = '';
+                try { onProcessusChange(); } catch (e) {}
+                try { remplirFiltresEncaissesBDD(); } catch (e) {}
+                return;
+            }
+            if (spaceTarget === 'POINTS') {
+                addedPoints = [];
+                loadedEncaisseIds = [];
+                renderPoints();
+                try { remplirFiltresEncaissesBDD(); } catch (e) {}
+                return;
+            }
             clearForm();
             refreshPlanificationFVAll();
-            try { rafraichirFiltresBDDFV(); } catch (e) {}
+            try { remplirFiltresEncaissesBDD(); } catch (e) {}
         }
 
         function validateCohérenceEchantillon(pointsCibles = addedPoints) {
@@ -3930,12 +3999,24 @@
                     }
                 }
 
-                clearForm();
+                pairs.forEach(({ constatRef, record }) => {
+                    constatRef._bddIdEncaisse = record.idEncaisse;
+                    constatRef._bddIdMission = record.idMission;
+                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                    constatRef._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
+                });
+                point._bddIdMission = idMissionPoint;
+                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
+
+                (point.constats || []).forEach((_, cIdx) => {
+                    rafraichirIndicateursConstatFV(pIndex, cIdx);
+                });
+                renderPlanificationsFVTable();
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Région : ${region} | Contrôleur : ${controleur}${ghSuffixe}`;
+                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Les autres PC restent intacts${ghSuffixe}`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnArchiverPCFV-${pIndex}`);
@@ -4143,12 +4224,16 @@
                     await FCIDatabase.enregistrerLotEncaisses(recordsMisAJour, site, idMissionPoint, true);
                 }
 
-                clearForm();
+                point._bddIdMission = idMissionPoint;
+                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
+                (point.constats || []).forEach((_, cIdx) => {
+                    rafraichirIndicateursConstatFV(pIndex, cIdx);
+                });
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} modifié dans la BDD ("${pcName}")`;
+                    statusEl.innerText = `PC #${pIndex + 1} modifié dans la BDD ("${pcName}") — Les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnModifierPCFV-${pIndex}`);
@@ -4223,12 +4308,20 @@
                     await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
                 }
 
-                clearForm();
+                pairs.forEach(({ constatRef }) => {
+                    constatRef._isSuivi = true;
+                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                    constatRef._lastActionFeedback = { type: 'SUIVI', text: 'Suivi ajouté en BDD' };
+                });
+                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi ajouté en BDD' };
+                (point.constats || []).forEach((_, cIdx) => {
+                    rafraichirIndicateursConstatFV(pIndex, cIdx);
+                });
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `Nouvelle ligne de suivi créée dans la BDD pour PC #${pIndex + 1} ("${pcName}")`;
+                    statusEl.innerText = `Nouvelle ligne de suivi créée dans la BDD pour PC #${pIndex + 1} ("${pcName}") — Les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnSuiviPCFV-${pIndex}`);
@@ -4302,14 +4395,16 @@
                 }
             }
 
-            clearForm();
+            // Retirer UNIQUEMENT le PC concerné sans toucher aux autres PC affichés
+            addedPoints.splice(pIndex, 1);
+            renderPoints();
             remplirFiltresEncaissesBDD();
 
             const statusEl = document.getElementById('searchEncaisseStatus');
             if (statusEl) {
                 statusEl.innerText = supprimeEnBDD
-                    ? `Point de contrôle supprimé de la BDD et de la fiche ("${pcName}")`
-                    : `Point de contrôle retiré de la fiche ("${pcName}")`;
+                    ? `Point de contrôle supprimé de la BDD et retiré de la fiche ("${pcName}") — Les autres PC restent intacts`
+                    : `Point de contrôle retiré de la fiche ("${pcName}") — Les autres PC restent intacts`;
             }
         }
 
