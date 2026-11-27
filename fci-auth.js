@@ -272,6 +272,19 @@
     }
 
     /**
+     * Vérifie si un enregistrement a été vidé/masqué individuellement pour un compte non-admin.
+     * L'administrateur voit toujours tous les enregistrements présents en base (son vidage est global).
+     */
+    function isRecordHiddenForUser(record, user = getCurrentUser()) {
+        if (!record || !user) return false;
+        if (isAdmin(user)) return false;
+        if (!Array.isArray(record.masquePar) || record.masquePar.length === 0) return false;
+        const uKey = String(user.username || user.identifiant || '').trim().toLowerCase();
+        if (!uKey) return false;
+        return record.masquePar.some(id => String(id || '').trim().toLowerCase() === uKey);
+    }
+
+    /**
      * Règle d'accès spécifique aux lignes de planification (Feuille 2 - Fiche de Contrôle) :
      * - Tous les membres du Siège (7 comptes) voient toutes les planifications (Siège + Régions).
      * - Une planification émise par le Siège (planifiePar === 'SIEGE') n'est visible côté régional
@@ -280,6 +293,7 @@
      */
     function canAccessPlanification(plan, user = getCurrentUser()) {
         if (!user || !plan) return false;
+        if (isRecordHiddenForUser(plan, user)) return false;
         if (isSiegeUser(user)) return true;
 
         // Une planification issue du circuit de validation Siège n'est visible par les contrôleurs
@@ -319,6 +333,7 @@
      */
     function canAccessRecord(record, user = getCurrentUser()) {
         if (!user || !record) return false;
+        if (isRecordHiddenForUser(record, user)) return false;
 
         if (isSiegeUser(user)) {
             return true;
@@ -343,7 +358,7 @@
     function filterVisibleRecords(records, user = getCurrentUser()) {
         if (!Array.isArray(records)) return [];
         if (!user) return [];
-        if (isSiegeUser(user)) return records;
+        if (isSiegeUser(user)) return records.filter(item => !isRecordHiddenForUser(item, user));
         return records.filter(item => canAccessRecord(item, user));
     }
 
@@ -353,6 +368,7 @@
         const userId = String(user.username || user.identifiant || '').toUpperCase().trim();
         return notifications.filter(n => {
             if (!n) return false;
+            if (isRecordHiddenForUser(n, user)) return false;
             const dest = String(n.destinataires || 'SIEGE').toUpperCase().trim();
             if (dest === 'SIEGE') return siege;
             if (dest === 'TOUS') return true;
@@ -366,13 +382,14 @@
     function filterDatabase(db, user = getCurrentUser()) {
         const safeDb = (db && typeof db === 'object') ? db : {};
         const siege = isSiegeUser(user);
+        const rawCamps = Array.isArray(safeDb.campagnesPlanification) ? safeDb.campagnesPlanification : [];
         return {
             ...safeDb,
             missions: filterVisibleRecords(safeDb.missions || [], user),
             constatsControle: filterVisibleRecords(safeDb.constatsControle || [], user),
             constatsEncaisses: filterVisibleRecords(safeDb.constatsEncaisses || [], user),
             planifications: (safeDb.planifications || []).filter(p => canAccessPlanification(p, user)),
-            campagnesPlanification: siege ? (Array.isArray(safeDb.campagnesPlanification) ? safeDb.campagnesPlanification : []) : [],
+            campagnesPlanification: siege ? rawCamps.filter(c => !isRecordHiddenForUser(c, user)) : [],
             notifications: filterNotifications(safeDb.notifications || [], user)
         };
     }
@@ -522,11 +539,12 @@
         getSpace,
         login,
         logout,
-        isSiege: () => isSiegeUser(),
-        isAdmin: () => isAdmin(),
-        isDirecteur: () => isDirecteur(),
-        isChefService: () => isChefService(),
-        isControleur: () => isControleur(),
+        isSiege: (u) => isSiegeUser(u),
+        isAdmin: (u) => isAdmin(u),
+        isDirecteur: (u) => isDirecteur(u),
+        isChefService: (u) => isChefService(u),
+        isControleur: (u) => isControleur(u),
+        isRecordHiddenForUser,
         isRecordFromSiege,
         canAccessRecord,
         canAccessPlanification,

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - BARID AL-MAGHRIB | Feuille 1 : Référentiel de contrôle</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261127-planif3"></script>
+    <script src="fci-auth.js?v=20261127-vider"></script>
     <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -62,7 +62,7 @@
         .page-header p { font-size: 0.85rem; color: var(--text-muted); }
 
         .filter-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 25px; width: 100%; }
-        .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; }
+        .filter-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin-bottom: 15px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         
         .filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; margin-bottom: 15px; width: 100%; }
         .filter-group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -74,9 +74,12 @@
         }
 
         .btn { padding: 9px 16px; border-radius: 6px; border: none; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn-sm { padding: 5px 10px; font-size: 0.76rem; gap: 5px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-refresh { background-color: #E0F2FE; color: #0369A1; border: 1px solid #7DD3FC; }
         .btn-refresh:hover { background-color: #BAE6FD; }
+        .btn-danger { background-color: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .btn-danger:hover { background-color: #FECACA; }
         .btn-accent { background: var(--accent); color: var(--primary); }
         .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
         .btn-excel { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
@@ -148,16 +151,24 @@
                 <h1>Feuille 1 : Référentiel de contrôle</h1>
                 <p>Référentiel National — BARID AL-MAGHRIB | DIVISION CONTRÔLE PERMANENT</p>
             </div>
-            <div class="btn-group" style="display:flex; align-items:center; gap:10px;">
+            <div class="btn-group" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <span class="selection-count" id="bdd-status">Chargement BDD...</span>
                 <button type="button" class="btn btn-refresh" onclick="window.location.reload()" title="Actualiser la page">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+                </button>
+                <button type="button" class="btn btn-danger" id="btnViderGlobalIndex" onclick="viderDonneesDepuisIndex('ALL', 'Feuille Référentiel &amp; Toutes les données')" title="Vider toutes les données (Admin, Siège et Régions)">
+                    <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </div>
         </div>
 
         <div class="filter-card">
-            <div class="filter-title"><i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique</div>
+            <div class="filter-title">
+                <span><i class="fa-solid fa-bolt"></i> Filtrage en cascade hiérarchique</span>
+                <button type="button" class="btn btn-danger btn-sm" onclick="viderDonneesDepuisIndex('ALL', 'Espace Filtrage Référentiel')" title="Vider les filtres et les données">
+                    <i class="fa-solid fa-trash-can"></i> Vider
+                </button>
+            </div>
             <div class="filter-grid">
                 <div class="filter-group">
                     <label>1. Processus <span id="count-proc">0</span></label>
@@ -181,7 +192,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 15px; flex-wrap: wrap; gap: 10px;">
                 <div style="font-size: 0.85rem; color: var(--text-muted);">Filtre actif : <strong id="filter-status-desc">Aucun processus sélectionné</strong></div>
                 <div style="display:flex; gap:10px;">
-                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                    <button type="button" class="btn btn-outline" onclick="reinitialiserFiltres()"><i class="fa-solid fa-rotate-left"></i> Vider filtres</button>
                     <button type="button" class="btn btn-primary" onclick="appliquerFiltre()"><i class="fa-solid fa-magnifying-glass"></i> Afficher PC (<span id="btn-count">0</span> PC)</button>
                 </div>
             </div>
@@ -195,6 +206,9 @@
                     <div class="selection-count"><span id="selected-count">0</span> points sélectionnés</div>
                 </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="viderDonneesDepuisIndex('ALL', 'Espace Tableau Référentiel')" title="Vider la sélection et les données">
+                        <i class="fa-solid fa-trash-can"></i> Vider
+                    </button>
                     <button type="button" class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
                     <button type="button" class="btn btn-excel" onclick="exporterExcel()"><i class="fa-solid fa-file-excel"></i> Télécharger format Excel</button>
                     <button type="button" class="btn btn-accent" onclick="redirigerVersPlanification()"><i class="fa-solid fa-calendar-plus"></i> Planification</button>
@@ -229,7 +243,7 @@
     </main>
 
     <!-- Inclusion du script BDD Centralisée -->
-    <script src="fci-db-manager.js?v=20261126-archive2"></script>
+    <script src="fci-db-manager.js?v=20261127-vider"></script>
 
     <script>
         let bddData = [];
@@ -238,6 +252,15 @@
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
         document.addEventListener('DOMContentLoaded', () => { chargerBDD(); });
+
+        function viderDonneesDepuisIndex(scope = 'ALL', label = 'Espace Référentiel') {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.viderDonneesEspace === 'function') {
+                const res = FCIDatabase.viderDonneesEspace(scope, { label });
+                if (res && res.cancelled) return;
+            }
+            try { localStorage.removeItem(PLANIFICATION_PC_KEY); } catch (e) {}
+            reinitialiserFiltres();
+        }
 
         function getItemVal(item, keys) {
             for (let k of keys) {

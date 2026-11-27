@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Analyse & Pilotage</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261127-planif3"></script>
+    <script src="fci-auth.js?v=20261127-vider"></script>
     <!-- FontAwesome v6.4.0 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Plus Jakarta Sans -->
@@ -1275,7 +1275,7 @@
         </section>
     </main>
 
-    <script src="fci-db-manager.js?v=20261127-planif2"></script>
+    <script src="fci-db-manager.js?v=20261127-vider"></script>
     <script>
         const SEUIL_ALERTE_TC = 75.0;
 
@@ -2369,19 +2369,31 @@
             actualiserFiltresDynamiquesEtAnalyse();
         }
 
-        function viderTDB() {
-            toutesLesDonnees = [];
-            toutesLesMissions = [];
-            toutesLesPlanifications = [];
-            dernieresDonneesFiltrees = [];
-            exportClassementPrincipal = [];
-            exportClassementSecondaire = [];
-            exportCouvertureDetail = [];
-            exportParticipationControleurs = [];
-            exportSuiviPlanifications = [];
-            derniersTypes = [];
-            derniersProcessus = [];
+        function viderEspaceTDBAction(scope = 'ALL', label = 'Tableau de Bord (TDB)') {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.viderDonneesEspace === 'function') {
+                const res = FCIDatabase.viderDonneesEspace(scope, { label });
+                if (res && res.cancelled) return;
+            }
+            if (scope === 'ALL') {
+                toutesLesDonnees = [];
+                toutesLesMissions = [];
+                toutesLesPlanifications = [];
+                dernieresDonneesFiltrees = [];
+                exportClassementPrincipal = [];
+                exportClassementSecondaire = [];
+                exportCouvertureDetail = [];
+                exportParticipationControleurs = [];
+                exportSuiviPlanifications = [];
+                derniersTypes = [];
+                derniersProcessus = [];
+            } else {
+                try { chargerEtPreparerDonnees(); } catch (e) {}
+            }
             reinitialiserFiltresTDB();
+        }
+
+        function viderTDB() {
+            viderEspaceTDBAction('ALL', 'Feuille Tableau de Bord (TDB)');
         }
 
         // ==================== SYNTHÈSE CONSOLIDÉE PLANIFICATION (FC + FV) ====================

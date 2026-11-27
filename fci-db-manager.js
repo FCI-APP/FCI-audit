@@ -144,11 +144,16 @@
 
     function mergeCollectionArrays(baseArr, incomingArr, keyField) {
         const result = Array.isArray(baseArr) ? baseArr.map(x => ({ ...x })) : [];
+        const getKey = (obj) => {
+            if (!obj || typeof obj !== 'object') return '';
+            if (keyField && obj[keyField]) return String(obj[keyField]);
+            return String(obj.idEncaisse || obj.idConstat || obj.idMission || obj.idPlanification || obj.idCampagne || obj.idNotification || obj.id || '');
+        };
         (Array.isArray(incomingArr) ? incomingArr : []).forEach(item => {
             if (!item || typeof item !== 'object') return;
-            const keyVal = keyField ? item[keyField] : (item.id || '');
+            const keyVal = getKey(item);
             const idx = keyVal
-                ? result.findIndex(e => (keyField && e[keyField] === keyVal) || (item.id && e.id === item.id))
+                ? result.findIndex(e => getKey(e) === keyVal)
                 : -1;
             if (idx === -1) {
                 result.push(item);
@@ -228,22 +233,34 @@
             if (fromIDB && typeof fromIDB === 'object') {
                 const idbNorm = normalizeDbObject(fromIDB);
                 if (forceReplace || !memoryRawDb) {
-                    memoryRawDb = idbNorm;
+                    const lsTs = fromLS ? String(fromLS.lastSync || '') : '';
+                    const idbTs = String(idbNorm.lastSync || '');
+                    if (!forceReplace && fromLS && lsTs && (!idbTs || lsTs > idbTs)) {
+                        memoryRawDb = fromLS;
+                        await idbSet(IDB_RECORD_KEY, fromLS);
+                    } else {
+                        memoryRawDb = idbNorm;
+                    }
                 } else {
                     const current = memoryRawDb;
                     const idbTs = String(idbNorm.lastSync || '');
                     const curTs = String(current.lastSync || '');
-                    const base = idbTs >= curTs ? current : idbNorm;
-                    const fresher = idbTs >= curTs ? idbNorm : current;
-                    memoryRawDb = {
-                        missions: mergeCollectionArrays(base.missions, fresher.missions, 'idMission'),
-                        constatsControle: mergeCollectionArrays(base.constatsControle, fresher.constatsControle, 'idConstat'),
-                        constatsEncaisses: mergeCollectionArrays(base.constatsEncaisses, fresher.constatsEncaisses, 'idEncaisse'),
-                        planifications: mergeCollectionArrays(base.planifications, fresher.planifications, 'idPlanification'),
-                        campagnesPlanification: mergeCollectionArrays(base.campagnesPlanification, fresher.campagnesPlanification, 'idCampagne'),
-                        notifications: mergeCollectionArrays(base.notifications, fresher.notifications, 'idNotification'),
-                        lastSync: fresher.lastSync || base.lastSync || new Date().toISOString()
-                    };
+                    if (curTs && (!idbTs || curTs > idbTs)) {
+                        memoryRawDb = current;
+                        await idbSet(IDB_RECORD_KEY, current);
+                    } else if (idbTs && (!curTs || idbTs >= curTs)) {
+                        memoryRawDb = idbNorm;
+                    } else {
+                        memoryRawDb = {
+                            missions: mergeCollectionArrays(current.missions, idbNorm.missions, 'idMission'),
+                            constatsControle: mergeCollectionArrays(current.constatsControle, idbNorm.constatsControle, 'idConstat'),
+                            constatsEncaisses: mergeCollectionArrays(current.constatsEncaisses, idbNorm.constatsEncaisses, 'idEncaisse'),
+                            planifications: mergeCollectionArrays(current.planifications, idbNorm.planifications, 'idPlanification'),
+                            campagnesPlanification: mergeCollectionArrays(current.campagnesPlanification, idbNorm.campagnesPlanification, 'idCampagne'),
+                            notifications: mergeCollectionArrays(current.notifications, idbNorm.notifications, 'idNotification'),
+                            lastSync: idbNorm.lastSync || current.lastSync || new Date().toISOString()
+                        };
+                    }
                 }
                 window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
             } else if (fromLS) {
@@ -323,12 +340,31 @@
         return rawDb;
     }
 
+    function isAdminUser(user = getCurrentUser()) {
+        if (!user) return false;
+        if (window.FCIAuth && typeof window.FCIAuth.isAdmin === 'function') {
+            return window.FCIAuth.isAdmin(user);
+        }
+        return String(user.role || '').toUpperCase() === 'ADMIN' ||
+               String(user.username || '').toLowerCase() === 'admin-siege';
+    }
+
+    function isHiddenForUser(record, user = getCurrentUser()) {
+        if (!record || !user) return false;
+        if (window.FCIAuth && typeof window.FCIAuth.isRecordHiddenForUser === 'function') {
+            return window.FCIAuth.isRecordHiddenForUser(record, user);
+        }
+        return false;
+    }
+
     /**
      * Sauvegarde la base dans IndexedDB (+ miroir localStorage) tout en préservant
-     * intactes les données hors périmètre (autres régions / données internes du Siège).
+     * intactes les données hors périmètre (autres régions / données internes du Siège /
+     * données masquées individuellement par un autre compte).
      */
     function saveDB(updatedScopedDb) {
         const user = getCurrentUser();
+        const admin = isAdminUser(user);
         const fullRawDb = readRawDatabase();
         const incoming = (updatedScopedDb && typeof updatedScopedDb === 'object') ? updatedScopedDb : {};
 
@@ -348,7 +384,7 @@
                 return tagRecord(item, user);
             });
 
-            if (!user || isSiegeUser(user)) {
+            if (!user || admin) {
                 mergedDb[colName] = taggedIncoming;
             } else {
                 const accessFn = colName === 'planifications' ? canAccessPlan : canAccess;
@@ -358,13 +394,24 @@
         });
 
         // Collections exclusives Siège (campagnesPlanification & notifications) :
-        // Un utilisateur régional ne peut jamais écraser les campagnes/notifications du Siège.
-        if (!user || isSiegeUser(user)) {
+        // - Admin : maîtrise totale
+        // - Directeur / Chefs de service : préserve les éléments masqués pour ce compte
+        // - Contrôleur régional : ne peut jamais écraser les campagnes/notifications du Siège
+        if (!user || admin) {
             if (Array.isArray(incoming.campagnesPlanification)) {
                 mergedDb.campagnesPlanification = incoming.campagnesPlanification;
             }
             if (Array.isArray(incoming.notifications)) {
                 mergedDb.notifications = incoming.notifications;
+            }
+        } else if (isSiegeUser(user)) {
+            if (Array.isArray(incoming.campagnesPlanification)) {
+                const hiddenCamps = (fullRawDb.campagnesPlanification || []).filter(existing => isHiddenForUser(existing, user));
+                mergedDb.campagnesPlanification = [...hiddenCamps, ...incoming.campagnesPlanification];
+            }
+            if (Array.isArray(incoming.notifications)) {
+                const hiddenNotifs = (fullRawDb.notifications || []).filter(existing => isHiddenForUser(existing, user));
+                mergedDb.notifications = [...hiddenNotifs, ...incoming.notifications];
             }
         } else {
             mergedDb.campagnesPlanification = Array.isArray(fullRawDb.campagnesPlanification) ? fullRawDb.campagnesPlanification : [];
@@ -378,15 +425,160 @@
         return getDB();
     }
 
+    function estItemFV(item) {
+        if (!item || typeof item !== 'object') return false;
+        const src = String(item.sourceFeuille || item.moduleSource || '').toUpperCase().trim();
+        if (src === 'FV') return true;
+        const nat = String(item.natureMission || item.typeMission || item.typeControle || '').toUpperCase().trim();
+        if (nat.includes('VERIF') || nat.includes('VÉRIF')) return true;
+        const idM = String(item.idMission || '').toUpperCase().trim();
+        if (idM.startsWith('MIS-ENC')) return true;
+        return false;
+    }
+
+    function matchScopeForVider(colName, item, scope) {
+        const sc = String(scope || 'ALL').toUpperCase().trim();
+        if (sc === 'ALL') return true;
+        if (sc === 'CONSTATS') {
+            return colName === 'missions' || colName === 'constatsControle' || colName === 'constatsEncaisses';
+        }
+        if (sc === 'FC') {
+            if (colName === 'constatsControle') return true;
+            if (colName === 'missions') return !estItemFV(item);
+            return false;
+        }
+        if (sc === 'FV') {
+            if (colName === 'constatsEncaisses') return true;
+            if (colName === 'missions') return estItemFV(item);
+            return false;
+        }
+        if (sc === 'PLANIFICATIONS_ALL') {
+            return colName === 'planifications' || colName === 'campagnesPlanification' || colName === 'notifications';
+        }
+        if (sc === 'PLANIFICATION_FC') {
+            if (colName === 'planifications' || colName === 'campagnesPlanification' || colName === 'notifications') {
+                return !estItemFV(item);
+            }
+            return false;
+        }
+        if (sc === 'NOTIFICATIONS_FC') {
+            return colName === 'notifications' && !estItemFV(item);
+        }
+        if (sc === 'CAMPAGNES_FC') {
+            return colName === 'campagnesPlanification' && !estItemFV(item);
+        }
+        if (sc === 'SUIVI_PLANIF_FC') {
+            return colName === 'planifications' && !estItemFV(item);
+        }
+        if (sc === 'PLANIFICATION_FV') {
+            if (colName === 'planifications' || colName === 'campagnesPlanification' || colName === 'notifications') {
+                return estItemFV(item);
+            }
+            return false;
+        }
+        if (sc === 'NOTIFICATIONS_FV') {
+            return colName === 'notifications' && estItemFV(item);
+        }
+        if (sc === 'CAMPAGNES_FV') {
+            return colName === 'campagnesPlanification' && estItemFV(item);
+        }
+        if (sc === 'SUIVI_PLANIF_FV') {
+            return colName === 'planifications' && estItemFV(item);
+        }
+        return false;
+    }
+
+    function markItemHiddenForUser(item, userKey) {
+        if (!item || typeof item !== 'object' || !userKey) return item;
+        const existing = Array.isArray(item.masquePar) ? item.masquePar : [];
+        if (existing.some(x => String(x || '').trim().toLowerCase() === userKey)) {
+            return item;
+        }
+        return { ...item, masquePar: [...existing, userKey] };
+    }
+
+    /**
+     * Vide les données d'un espace selon le profil connecté :
+     * - Compte ADMIN (admin-siege) : suppression définitive dans le compte Admin ET dans TOUS les autres comptes (Siège et Régions).
+     * - Autres comptes (Directeur, Chefs de service, Contrôleurs) : vidage STRICTEMENT limité au compte connecté (les autres comptes conservent leurs données intactes).
+     */
+    function viderDonneesEspace(scope = 'ALL', options = {}) {
+        const user = getCurrentUser();
+        if (!user) return { cleared: false, cancelled: true, isAdmin: false, scope };
+
+        const admin = isAdminUser(user);
+        const uName = String(user.username || user.identifiant || '').trim();
+        const uKey = uName.toLowerCase();
+        const label = options && options.label ? String(options.label) : 'cet espace';
+
+        if (!options || !options.skipConfirm) {
+            const msg = admin
+                ? `MODE ADMINISTRATEUR (${uName})\n\nVoulez-vous vraiment vider les données de « ${label} » ?\n\nCette action supprimera définitivement ces données dans le compte Administrateur ET dans TOUS les autres comptes (Siège et Régions).`
+                : `Compte connecté : ${uName}\n\nVoulez-vous vider les données de « ${label} » dans votre compte uniquement ?\n\nLes données des autres comptes (Administrateur, Directeur, Chefs de service, Contrôleurs) resteront intactes.`;
+            if (typeof window.confirm === 'function' && !window.confirm(msg)) {
+                return { cleared: false, cancelled: true, isAdmin: admin, scope };
+            }
+        }
+
+        const fullRawDb = readRawDatabase();
+        const allCols = ['missions', 'constatsControle', 'constatsEncaisses', 'planifications', 'campagnesPlanification', 'notifications'];
+        let countAffected = 0;
+
+        if (admin) {
+            // Administrateur : suppression globale sur tous les comptes (Siège + Régions)
+            allCols.forEach(colName => {
+                const list = Array.isArray(fullRawDb[colName]) ? fullRawDb[colName] : [];
+                const kept = list.filter(item => !matchScopeForVider(colName, item, scope));
+                countAffected += (list.length - kept.length);
+                fullRawDb[colName] = kept;
+            });
+
+            const sc = String(scope || 'ALL').toUpperCase();
+            if (sc === 'ALL' || sc === 'PLANIFICATION_FC' || sc === 'PLANIFICATIONS_ALL' || sc === 'SUIVI_PLANIF_FC') {
+                try {
+                    localStorage.removeItem('fci_planification_pc');
+                    localStorage.removeItem('fci_planification_active');
+                    localStorage.removeItem('fci_selected_points');
+                } catch (e) {}
+            }
+            if (sc === 'ALL' || sc === 'FC') {
+                try {
+                    localStorage.removeItem('fci_planification_active');
+                    localStorage.removeItem('fci_selected_points');
+                    localStorage.removeItem('fci_current_mission');
+                } catch (e) {}
+            }
+        } else {
+            // Compte non-admin (Directeur, Chef de service, Contrôleur) : vidage strictement isolé au compte connecté
+            allCols.forEach(colName => {
+                const list = Array.isArray(fullRawDb[colName]) ? fullRawDb[colName] : [];
+                fullRawDb[colName] = list.map(item => {
+                    if (!matchScopeForVider(colName, item, scope)) return item;
+                    let visiblePourCompte = false;
+                    if (colName === 'planifications') {
+                        visiblePourCompte = canAccessPlan(item, user);
+                    } else if (colName === 'campagnesPlanification' || colName === 'notifications') {
+                        visiblePourCompte = isSiegeUser(user) && !isHiddenForUser(item, user);
+                    } else {
+                        visiblePourCompte = canAccess(item, user);
+                    }
+                    if (!visiblePourCompte) return item;
+                    countAffected++;
+                    return markItemHiddenForUser(item, uKey);
+                });
+            });
+        }
+
+        fullRawDb.lastSync = new Date().toISOString();
+        persistRawDatabase(fullRawDb, true);
+        window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
+
+        return { cleared: true, cancelled: false, isAdmin: admin, scope, countAffected };
+    }
+
     function viderBDD() {
-        return saveDB({
-            missions: [],
-            constatsControle: [],
-            constatsEncaisses: [],
-            planifications: [],
-            campagnesPlanification: [],
-            notifications: []
-        });
+        viderDonneesEspace('ALL', { skipConfirm: true });
+        return getDB();
     }
 
     // =========================================================================
@@ -1574,6 +1766,8 @@
         getDB,
         saveDB,
         viderBDD,
+        viderDonneesEspace,
+        isAdminUser,
         getGitHubConfig,
         setGitHubConfig,
         configurerStockageGitHub,

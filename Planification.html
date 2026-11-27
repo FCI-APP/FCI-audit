@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - Planification de la Mission de Contrôle</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261127-planif3"></script>
+    <script src="fci-auth.js?v=20261127-vider"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -345,9 +345,12 @@
                 <h1>Planification des missions de contrôle</h1>
                 <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Circuit hiérarchique intégré : préparation multi-processus, validation Directeur, notification Siège et diffusion ciblée aux contrôleurs</p>
             </div>
-            <div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                 <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et synchroniser les contrôles planifiés">
                     <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+                </button>
+                <button type="button" class="btn btn-danger-outline" id="btnViderGlobalPlanif" onclick="viderEspacePlanifAction('PLANIFICATION_FC', 'Feuille Planification')" title="Vider les données de planification (Admin : tous comptes / Autres : mon compte)">
+                    <i class="fa-solid fa-trash-can"></i> Vider
                 </button>
             </div>
         </header>
@@ -362,7 +365,12 @@
         <section class="card" id="siege-workflow-card" style="display:none; border-left: 5px solid var(--primary-blue);">
             <div class="card-title">
                 <span><i class="fa-solid fa-calendar-check" style="color:var(--accent-gold);"></i> Planification des missions de contrôle</span>
-                <span id="badgeModeSaisiePlanifSiege"></span>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span id="badgeModeSaisiePlanifSiege"></span>
+                    <button type="button" class="btn btn-danger-outline btn-sm" id="btnViderWorkflowPlanif" onclick="viderEspacePlanifAction('PLANIFICATION_FC', 'Espace Planification des missions de contrôle')" title="Vider les données de cet espace">
+                        <i class="fa-solid fa-trash-can"></i> Vider
+                    </button>
+                </div>
             </div>
 
             <!-- NAVIGATION 2 ÉTAPES DISTINCTES -->
@@ -535,7 +543,12 @@
         <section class="card" id="regional-mission-card">
             <div class="card-title">
                 <span><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</span>
-                <span id="badgeModeSaisiePlanif"></span>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span id="badgeModeSaisiePlanif"></span>
+                    <button type="button" class="btn btn-danger-outline btn-sm" id="btnViderRegionalPlanif" onclick="viderEspacePlanifAction('SUIVI_PLANIF_FC', 'Espace Informations Générales de la Mission')" title="Vider cet espace">
+                        <i class="fa-solid fa-trash-can"></i> Vider
+                    </button>
+                </div>
             </div>
             <form autocomplete="off" onsubmit="return false;">
                 <div class="form-grid">
@@ -590,7 +603,7 @@
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
                 <button type="button" class="btn btn-secondary" onclick="selectAllPoints()"><i class="fa-solid fa-square-check"></i> Sélectionner tout</button>
                 <button type="button" class="btn btn-secondary" onclick="deselectAllPoints()"><i class="fa-solid fa-square"></i> Désélectionner tout</button>
-                <button type="button" class="btn btn-danger-outline" onclick="viderPlanification()"><i class="fa-solid fa-rotate-left"></i> Vider</button>
+                <button type="button" class="btn btn-danger-outline" onclick="viderEspacePlanifAction('PLANIFICATION_FC', 'Sélection &amp; Planification')"><i class="fa-solid fa-rotate-left"></i> Vider</button>
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
                 <button type="button" class="btn btn-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer PDF</button>
@@ -607,7 +620,7 @@
         </div>
     </main>
 
-    <script src="fci-db-manager.js?v=20261127-planif2"></script>
+    <script src="fci-db-manager.js?v=20261127-vider"></script>
 
     <script>
         const CENTRES_PAR_REGION = {
@@ -1730,9 +1743,14 @@
                             <i class="fa-solid fa-bell" style="color:#D97706;"></i> Notifications officielles du Directeur — Collaborateurs du Siège
                             <span class="pill pill-soumise" style="margin-left:6px;">${unread.length} non lue(s)</span>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleShowReadNotifs()">
-                            ${showReadNotifications ? 'Masquer les lues' : `Tout afficher (${notifs.length})`}
-                        </button>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleShowReadNotifs()">
+                                ${showReadNotifications ? 'Masquer les lues' : `Tout afficher (${notifs.length})`}
+                            </button>
+                            <button type="button" class="btn btn-danger-outline btn-sm" onclick="viderEspacePlanifAction('NOTIFICATIONS_FC', 'Notifications Planification')" title="Vider les notifications">
+                                <i class="fa-solid fa-trash-can"></i> Vider
+                            </button>
+                        </div>
                     </div>
                     ${toShow.map(n => {
                         const isRead = Array.isArray(n.lusPar) && n.lusPar.includes(uId);
@@ -1858,10 +1876,13 @@
                 <div class="directeur-card">
                     <div class="card-title" style="border-bottom-color:#BBF7D0;">
                         <span><i class="fa-solid fa-user-tie" style="color:#059669;"></i> Espace Directeur (directeur-001) — Validation &amp; Notification des Planifications</span>
-                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                             <span class="pill pill-soumise">${soumises.length} en attente de validation</span>
                             <span class="pill pill-validee">${validees.length} validée(s)</span>
                             <span class="pill pill-diffusee">${diffusees.length} diffusée(s)</span>
+                            <button type="button" class="btn btn-danger-outline btn-sm" onclick="viderEspacePlanifAction('CAMPAGNES_FC', 'Espace Directeur — Validation &amp; Notification')" title="Vider les campagnes de cet espace">
+                                <i class="fa-solid fa-trash-can"></i> Vider
+                            </button>
                         </div>
                     </div>
                     ${campagnes.length === 0 ? `
@@ -2686,7 +2707,12 @@
                     <div class="siege-card">
                         <div class="card-title" style="border-bottom-color:#FDE68A;">
                             <span><i class="fa-solid fa-landmark" style="color:var(--accent-gold);"></i> Suivi des Contrôles Planifiés par le Siège (Fiche de Contrôle uniquement)</span>
-                            <span class="pill pill-siege">${plansSiege.length} contrôle(s) planifié(s)</span>
+                            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <span class="pill pill-siege">${plansSiege.length} contrôle(s) planifié(s)</span>
+                                <button type="button" class="btn btn-danger-outline btn-sm" onclick="viderEspacePlanifAction('SUIVI_PLANIF_FC', 'Suivi des Contrôles Planifiés')" title="Vider les contrôles planifiés">
+                                    <i class="fa-solid fa-trash-can"></i> Vider
+                                </button>
+                            </div>
                         </div>
                         ${plansSiege.length === 0 ? `
                             <p style="font-size:0.84rem; color:#64748B;">Aucun contrôle planifié par le Siège pour le moment. Sélectionnez des points de contrôle dans le Référentiel puis affectez-les aux contrôleurs régionaux ci-dessous.</p>
@@ -2763,7 +2789,12 @@
                 <div class="siege-card">
                     <div class="card-title" style="border-bottom-color:#FDE68A;">
                         <span><i class="fa-solid fa-bell" style="color:var(--accent-gold);"></i> Suivi de vos Contrôles Planifiés par le Siège (Affectés à votre compte)</span>
-                        <span class="pill pill-siege">${plansControleur.length} contrôle(s) assigné(s)</span>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span class="pill pill-siege">${plansControleur.length} contrôle(s) assigné(s)</span>
+                            <button type="button" class="btn btn-danger-outline btn-sm" onclick="viderEspacePlanifAction('SUIVI_PLANIF_FC', 'Suivi de vos Contrôles Planifiés')" title="Vider vos contrôles planifiés">
+                                <i class="fa-solid fa-trash-can"></i> Vider
+                            </button>
+                        </div>
                     </div>
                     <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
                         <table>
@@ -3080,6 +3111,22 @@
             renderLotAffectationsSiege();
             initFormDefaults();
             saveAndRefresh();
+        }
+
+        function viderEspacePlanifAction(scope = 'PLANIFICATION_FC', label = 'Espace Planification') {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.viderDonneesEspace === 'function') {
+                const res = FCIDatabase.viderDonneesEspace(scope, { label });
+                if (res && res.cancelled) return;
+            }
+            if (scope === 'PLANIFICATION_FC' || scope === 'SUIVI_PLANIF_FC' || scope === 'ALL') {
+                viderPlanification();
+            }
+            try { renderSiegeNotificationsBanner(); } catch (e) {}
+            try { renderSectionDirecteur(); } catch (e) {}
+            try { renderPropositionsSoumisesEtape1(); } catch (e) {}
+            try { renderEtape2Diffusion(); } catch (e) {}
+            try { renderPlanificationsSiegeSection(); } catch (e) {}
+            try { peuplerCentresEligiblesSiege(); } catch (e) {}
         }
 
         function saveAndRefresh() {
