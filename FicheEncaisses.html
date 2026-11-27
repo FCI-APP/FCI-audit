@@ -3906,7 +3906,26 @@
             return pairs;
         }
 
-        async function archiverPointEncaisse(pIndex) {
+        function synchroniserGitHubEnArrierePlanFV(lotConstatsFV, site, idMission, planMaj = null) {
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.archiverSurGitHub !== 'function') return;
+            if (typeof FCIDatabase.getGitHubToken === 'function' && !FCIDatabase.getGitHubToken()) return;
+            FCIDatabase.archiverSurGitHub('FV', site || 'Encaisse', idMission || Date.now(), lotConstatsFV)
+                .then(gh => {
+                    if (gh && gh.success && gh.path) {
+                        const statusEl = document.getElementById('searchEncaisseStatus');
+                        if (statusEl && statusEl.innerText && !statusEl.innerText.includes('GitHub')) {
+                            statusEl.innerText += ` | GitHub : ${gh.path}`;
+                        }
+                    }
+                })
+                .catch(() => {});
+            if (planMaj && planMaj.idPlanification) {
+                FCIDatabase.archiverSurGitHub('PLAN', planMaj.entite || planMaj.site || site || 'Planification', planMaj.idPlanification, { planifications: [planMaj] })
+                    .catch(() => {});
+            }
+        }
+
+        function archiverPointEncaisse(pIndex) {
             const point = addedPoints[pIndex];
             if (!point) {
                 alert("Point de contrôle introuvable.");
@@ -3928,91 +3947,85 @@
                 return;
             }
 
-            const btn = document.getElementById(`btnArchiverPCFV-${pIndex}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
-            }
+            const idMissionPoint = point._bddIdMission || currentMissionId || ("MIS-ENC-" + Date.now());
+            if (!currentMissionId) currentMissionId = idMissionPoint;
 
-            try {
-                const idMissionPoint = point._bddIdMission || currentMissionId || ("MIS-ENC-" + Date.now());
-                if (!currentMissionId) currentMissionId = idMissionPoint;
+            const pairs = construireLotConstatsPourPointFV(point, pIndex, idMissionPoint, 'ARCHIVE');
+            const lotConstatsFV = pairs.map(p => p.record);
+            const planIdToClose = activePlanificationFVId;
+            const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
 
-                const pairs = construireLotConstatsPourPointFV(point, pIndex, idMissionPoint, 'ARCHIVE');
-                const lotConstatsFV = pairs.map(p => p.record);
-                const planIdToClose = activePlanificationFVId;
-                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
-
-                const db = lireDBSecurisee();
-                const listeExistante = db.constatsEncaisses || [];
-                lotConstatsFV.forEach(item => {
-                    const idx = listeExistante.findIndex(e => e.idEncaisse && e.idEncaisse === item.idEncaisse);
-                    if (idx !== -1) {
-                        listeExistante[idx] = { ...listeExistante[idx], ...item };
-                    } else {
-                        listeExistante.push(item);
-                    }
-                });
-                db.constatsEncaisses = listeExistante;
-
-                upsertMissionFVEnBDD(db, {
-                    idMission: idMissionPoint,
-                    region,
-                    site,
-                    dateISO: lotConstatsFV[0]?.date || dateVerifGlobaleISO,
-                    dateDebut: periodeDebut,
-                    dateFin: periodeFin,
-                    controleur,
-                    controleurId: lotConstatsFV[0]?.controleurId || '',
-                    controleurRegion: lotConstatsFV[0]?.controleurRegion || getUserHomeRegion() || region,
-                    responsable,
-                    typeControle,
-                    constats: lotConstatsFV
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                let ghSuffixe = '';
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    const resSave = await FCIDatabase.enregistrerLotEncaisses(lotConstatsFV, site, idMissionPoint, true);
-                    const gh = resSave && resSave._githubArchive;
-                    if (gh && gh.success && gh.path) {
-                        ghSuffixe = ` | GitHub : ${gh.path}`;
-                    }
-                }
-
-                // Clôture automatique de la planification FV correspondante dans l'espace Siège et Contrôleur
-                if (planIdToClose) {
-                    basculerStatutPlanificationFV(planIdToClose, 'CLOTURE');
+            const db = lireDBSecurisee();
+            const listeExistante = db.constatsEncaisses || [];
+            lotConstatsFV.forEach(item => {
+                const idx = listeExistante.findIndex(e => e.idEncaisse && e.idEncaisse === item.idEncaisse);
+                if (idx !== -1) {
+                    listeExistante[idx] = { ...listeExistante[idx], ...item };
                 } else {
-                    const u = getCurrentAuthUser();
-                    const ctrlUpper = String(lotConstatsFV[0]?.controleurId || controleur || '').toUpperCase().trim();
-                    const matchingPlan = getPlanificationsFVVisibles().find(p =>
-                        normaliserStatutPlanFV(p) !== 'CLOTURE' &&
-                        normaliserRegion(p.region) === region &&
-                        String(p.site || p.centre || '').trim() === site &&
-                        (!ctrlUpper || String(p.controleurId || '').toUpperCase().trim() === ctrlUpper || (u && String(p.controleurId || '').toUpperCase().trim() === String(u.username || '').toUpperCase().trim()))
-                    );
-                    if (matchingPlan) {
-                        basculerStatutPlanificationFV(matchingPlan.idPlanification, 'CLOTURE');
-                    }
+                    listeExistante.push(item);
                 }
+            });
+            db.constatsEncaisses = listeExistante;
 
-                retirerPointEncaisseDeLaFiche(pIndex);
-                remplirFiltresEncaissesBDD();
+            upsertMissionFVEnBDD(db, {
+                idMission: idMissionPoint,
+                region,
+                site,
+                dateISO: lotConstatsFV[0]?.date || dateVerifGlobaleISO,
+                dateDebut: periodeDebut,
+                dateFin: periodeFin,
+                controleur,
+                controleurId: lotConstatsFV[0]?.controleurId || '',
+                controleurRegion: lotConstatsFV[0]?.controleurRegion || getUserHomeRegion() || region,
+                responsable,
+                typeControle,
+                constats: lotConstatsFV
+            });
 
-                const statusEl = document.getElementById('searchEncaisseStatus');
-                if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} archivé et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts${ghSuffixe}`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnArchiverPCFV-${pIndex}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+            // Clôture automatique de la planification FV correspondante dans le même saveDB (1 seule écriture)
+            let planCloturee = null;
+            const plansList = Array.isArray(db.planifications) ? db.planifications : [];
+            let idxPlanCible = planIdToClose
+                ? plansList.findIndex(p => p && p.idPlanification === planIdToClose)
+                : -1;
+            if (idxPlanCible === -1) {
+                const u = getCurrentAuthUser();
+                const ctrlUpper = String(lotConstatsFV[0]?.controleurId || controleur || '').toUpperCase().trim();
+                idxPlanCible = plansList.findIndex(p =>
+                    p &&
+                    (String(p.sourceFeuille || '').toUpperCase() === 'FV' || String(p.natureMission || '').toUpperCase().includes('VERIF')) &&
+                    normaliserStatutPlanFV(p) !== 'CLOTURE' &&
+                    normaliserRegion(p.region) === region &&
+                    String(p.site || p.centre || '').trim() === site &&
+                    (!ctrlUpper || String(p.controleurId || '').toUpperCase().trim() === ctrlUpper || (u && String(p.controleurId || '').toUpperCase().trim() === String(u.username || '').toUpperCase().trim()))
+                );
             }
+            if (idxPlanCible !== -1) {
+                plansList[idxPlanCible] = {
+                    ...plansList[idxPlanCible],
+                    statutExecution: 'CLOTURE',
+                    statutAvancement: 'Clôturé',
+                    dateStatutMaj: new Date().toISOString()
+                };
+                db.planifications = plansList;
+                planCloturee = plansList[idxPlanCible];
+            }
+
+            // Suppression immédiate du PC concerné de la FV (avant toute synchro réseau)
+            retirerPointEncaisseDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
+                remplirFiltresEncaissesBDD();
+                renderPlanificationsFVTable();
+            }
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = `PC #${pIndex + 1} archivé et déplacé dans la BDD ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            // Synchro GitHub en arrière-plan (non bloquante)
+            synchroniserGitHubEnArrierePlanFV(lotConstatsFV, site, idMissionPoint, planCloturee);
         }
 
         function trouverFicheEncaisseBDD() {
@@ -4113,7 +4126,7 @@
             renderPlanificationsFVTable();
         }
 
-        async function modifierPointEncaisse(pIndex) {
+        function modifierPointEncaisse(pIndex) {
             const point = addedPoints[pIndex];
             if (!point) {
                 alert("Point de contrôle introuvable.");
@@ -4143,92 +4156,77 @@
                 return;
             }
 
-            const btn = document.getElementById(`btnModifierPCFV-${pIndex}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
-            }
+            if (!currentMissionId) currentMissionId = idMissionPoint;
+            const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
+            const db = lireDBSecurisee();
+            const listeExistante = db.constatsEncaisses || [];
+            const recordsMisAJour = [];
 
-            try {
-                if (!currentMissionId) currentMissionId = idMissionPoint;
-                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
-                const db = lireDBSecurisee();
-                const listeExistante = db.constatsEncaisses || [];
-                const recordsMisAJour = [];
-
-                pairs.forEach(({ constatRef, record: itemMaj }) => {
-                    let idxExistant = itemMaj.idEncaisse
-                        ? listeExistante.findIndex(e => e.idEncaisse === itemMaj.idEncaisse)
-                        : -1;
-                    if (idxExistant === -1) {
-                        idxExistant = listeExistante.findIndex(e =>
-                            e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle
-                        );
-                    }
-
-                    const enregistrementFinal = {
-                        ...(idxExistant !== -1 ? listeExistante[idxExistant] : {}),
-                        ...itemMaj,
-                        isModifie: true,
-                        modifie: true,
-                        dateModification: new Date().toISOString()
-                    };
-
-                    if (idxExistant !== -1) {
-                        listeExistante[idxExistant] = enregistrementFinal;
-                    } else {
-                        listeExistante.push(enregistrementFinal);
-                    }
-
-                    recordsMisAJour.push(enregistrementFinal);
-                    constatRef._bddIdEncaisse = enregistrementFinal.idEncaisse;
-                    constatRef._bddIdMission = enregistrementFinal.idMission;
-                    constatRef._isModifie = true;
-                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
-                    constatRef._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
-                });
-
-                db.constatsEncaisses = listeExistante;
-
-                upsertMissionFVEnBDD(db, {
-                    idMission: idMissionPoint,
-                    region,
-                    site,
-                    dateISO: recordsMisAJour[0]?.date || dateVerifGlobaleISO,
-                    dateDebut: periodeDebut,
-                    dateFin: periodeFin,
-                    controleur,
-                    controleurId: recordsMisAJour[0]?.controleurId || loadedControleurId || '',
-                    controleurRegion: recordsMisAJour[0]?.controleurRegion || getUserHomeRegion() || region,
-                    responsable,
-                    typeControle,
-                    constats: recordsMisAJour
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    await FCIDatabase.enregistrerLotEncaisses(recordsMisAJour, site, idMissionPoint, true);
+            pairs.forEach(({ constatRef, record: itemMaj }) => {
+                let idxExistant = itemMaj.idEncaisse
+                    ? listeExistante.findIndex(e => e.idEncaisse === itemMaj.idEncaisse)
+                    : -1;
+                if (idxExistant === -1) {
+                    idxExistant = listeExistante.findIndex(e =>
+                        e.idMission === itemMaj.idMission && e.pc === itemMaj.pc && e.controle === itemMaj.controle
+                    );
                 }
 
-                retirerPointEncaisseDeLaFiche(pIndex);
+                const enregistrementFinal = {
+                    ...(idxExistant !== -1 ? listeExistante[idxExistant] : {}),
+                    ...itemMaj,
+                    isModifie: true,
+                    modifie: true,
+                    dateModification: new Date().toISOString()
+                };
+
+                if (idxExistant !== -1) {
+                    listeExistante[idxExistant] = enregistrementFinal;
+                } else {
+                    listeExistante.push(enregistrementFinal);
+                }
+
+                recordsMisAJour.push(enregistrementFinal);
+                constatRef._bddIdEncaisse = enregistrementFinal.idEncaisse;
+                constatRef._bddIdMission = enregistrementFinal.idMission;
+                constatRef._isModifie = true;
+                constatRef._initialSnapshot = getSnapshotConstat(constatRef);
+                constatRef._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
+            });
+
+            db.constatsEncaisses = listeExistante;
+
+            upsertMissionFVEnBDD(db, {
+                idMission: idMissionPoint,
+                region,
+                site,
+                dateISO: recordsMisAJour[0]?.date || dateVerifGlobaleISO,
+                dateDebut: periodeDebut,
+                dateFin: periodeFin,
+                controleur,
+                controleurId: recordsMisAJour[0]?.controleurId || loadedControleurId || '',
+                controleurRegion: recordsMisAJour[0]?.controleurRegion || getUserHomeRegion() || region,
+                responsable,
+                typeControle,
+                constats: recordsMisAJour
+            });
+
+            retirerPointEncaisseDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
                 remplirFiltresEncaissesBDD();
-
-                const statusEl = document.getElementById('searchEncaisseStatus');
-                if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} modifié et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnModifierPCFV-${pIndex}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+                renderPlanificationsFVTable();
             }
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = `PC #${pIndex + 1} modifié et déplacé dans la BDD ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            synchroniserGitHubEnArrierePlanFV(recordsMisAJour, site, idMissionPoint);
         }
 
-        async function suiviPointEncaisse(pIndex) {
+        function suiviPointEncaisse(pIndex) {
             const point = addedPoints[pIndex];
             if (!point) {
                 alert("Point de contrôle introuvable.");
@@ -4258,54 +4256,39 @@
                 return;
             }
 
-            const btn = document.getElementById(`btnSuiviPCFV-${pIndex}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
-            }
+            const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
+            const nouvellesLignesSuivi = pairs.map(p => p.record);
+            const db = lireDBSecurisee();
+            db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
 
-            try {
-                const pcName = point.pointDeControle || `PC #${pIndex + 1}`;
-                const nouvellesLignesSuivi = pairs.map(p => p.record);
-                const db = lireDBSecurisee();
-                db.constatsEncaisses = [...(db.constatsEncaisses || []), ...nouvellesLignesSuivi];
+            upsertMissionFVEnBDD(db, {
+                idMission: idMissionSuivi,
+                region,
+                site,
+                dateISO: nouvellesLignesSuivi[0]?.date || dateVerifGlobaleISO,
+                dateDebut: periodeDebut,
+                dateFin: periodeFin,
+                controleur,
+                controleurId: nouvellesLignesSuivi[0]?.controleurId || loadedControleurId || '',
+                controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || region,
+                responsable,
+                typeControle,
+                constats: nouvellesLignesSuivi
+            });
 
-                upsertMissionFVEnBDD(db, {
-                    idMission: idMissionSuivi,
-                    region,
-                    site,
-                    dateISO: nouvellesLignesSuivi[0]?.date || dateVerifGlobaleISO,
-                    dateDebut: periodeDebut,
-                    dateFin: periodeFin,
-                    controleur,
-                    controleurId: nouvellesLignesSuivi[0]?.controleurId || loadedControleurId || '',
-                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || region,
-                    responsable,
-                    typeControle,
-                    constats: nouvellesLignesSuivi
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotEncaisses === 'function') {
-                    await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
-                }
-
-                retirerPointEncaisseDeLaFiche(pIndex);
+            retirerPointEncaisseDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
                 remplirFiltresEncaissesBDD();
-
-                const statusEl = document.getElementById('searchEncaisseStatus');
-                if (statusEl) {
-                    statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${pIndex + 1} ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnSuiviPCFV-${pIndex}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+                renderPlanificationsFVTable();
             }
+
+            const statusEl = document.getElementById('searchEncaisseStatus');
+            if (statusEl) {
+                statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${pIndex + 1} ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            synchroniserGitHubEnArrierePlanFV(nouvellesLignesSuivi, site, idMissionSuivi);
         }
 
         function supprimerPointEncaisse(pIndex) {
@@ -4324,13 +4307,14 @@
 
             const msgConfirmation = idsToDelete.size > 0
                 ? `Voulez-vous vraiment supprimer ce point de contrôle de la fiche et de la BDD ?\n\n• PC #${pIndex + 1} : ${pcName}`
-                : `Voulez-vous vraiment retirer ce point de contrôle de la fiche en cours ?\n\n• PC #${pIndex + 1} : ${pcName}`;
+                : `Voulez-vous vraiment supprimer ce point de contrôle de la fiche en cours ?\n\n• PC #${pIndex + 1} : ${pcName}`;
 
             if (!confirm(msgConfirmation)) return;
 
             let supprimeEnBDD = false;
+            let db = null;
             if (idsToDelete.size > 0) {
-                const db = lireDBSecurisee();
+                db = lireDBSecurisee();
                 const avant = (db.constatsEncaisses || []).length;
                 db.constatsEncaisses = (db.constatsEncaisses || []).filter(e => !idsToDelete.has(e.idEncaisse));
                 supprimeEnBDD = db.constatsEncaisses.length < avant;
@@ -4363,31 +4347,45 @@
                             }
                         }
                     });
-                    sauvegarderDBSecurisee(db);
-                    if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
+                }
+            }
+
+            // Supprimer UNIQUEMENT le PC concerné immédiatement sans toucher aux autres PC affichés
+            retirerPointEncaisseDeLaFiche(point, supprimeEnBDD);
+
+            if (supprimeEnBDD && db) {
+                sauvegarderDBSecurisee(db);
+                if (typeof FCIDatabase === 'undefined') {
+                    remplirFiltresEncaissesBDD();
+                    renderPlanificationsFVTable();
+                }
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
+                    if (typeof FCIDatabase.getGitHubToken !== 'function' || FCIDatabase.getGitHubToken()) {
                         const dateRefDel = point.dateVerification || (point.constats && point.constats[0]?.dateVerification) || document.getElementById('dateVerification')?.value || '';
                         FCIDatabase.supprimerDeArchiveGitHub('FV', [...idsToDelete], dateRefDel).catch(() => {});
                     }
                 }
             }
 
-            // Retirer UNIQUEMENT le PC concerné sans toucher aux autres PC affichés
-            retirerPointEncaisseDeLaFiche(pIndex);
-            remplirFiltresEncaissesBDD();
-
             const statusEl = document.getElementById('searchEncaisseStatus');
             if (statusEl) {
                 statusEl.innerText = supprimeEnBDD
-                    ? `Point de contrôle supprimé de la BDD et retiré de la fiche ("${pcName}") — Les autres PC restent intacts`
-                    : `Point de contrôle retiré de la fiche ("${pcName}") — Les autres PC restent intacts`;
+                    ? `Point de contrôle supprimé de la BDD et de la fiche ("${pcName}") — Les autres PC restent intacts`
+                    : `Point de contrôle supprimé de la fiche ("${pcName}") — Les autres PC restent intacts`;
             }
         }
 
-        function retirerPointEncaisseDeLaFiche(pIndex) {
-            if (!Array.isArray(addedPoints) || pIndex < 0 || pIndex >= addedPoints.length) return;
-            addedPoints.splice(pIndex, 1);
+        function retirerPointEncaisseDeLaFiche(pointOuIndex, skipSyncUI = false) {
+            if (!Array.isArray(addedPoints)) return;
+            const idx = (typeof pointOuIndex === 'number')
+                ? pointOuIndex
+                : addedPoints.indexOf(pointOuIndex);
+            if (idx < 0 || idx >= addedPoints.length) return;
+            addedPoints.splice(idx, 1);
             renderPoints();
-            renderPlanificationsFVTable();
+            if (!skipSyncUI) {
+                renderPlanificationsFVTable();
+            }
         }
 
         function exportToExcel() {

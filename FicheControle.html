@@ -931,6 +931,56 @@
             `;
         }
 
+        function getClePointPlanificationFC(pt) {
+            if (!pt) return '';
+            const proc = String(getItemVal(pt, ['Processus']) || '').trim();
+            const ctrl = String(getItemVal(pt, ['Intitulé Contrôle', 'Intitulé de contrôle']) || '').trim();
+            const pc = String(getItemVal(pt, ['Points de contrôle', 'Point de contrôle']) || '').trim();
+            return `${proc}||${ctrl}||${pc}`;
+        }
+
+        function getPointsRestantsPlanificationFC(plan) {
+            const pts = Array.isArray(plan && plan.pointsControle) ? plan.pointsControle : [];
+            const retiresSet = new Set(Array.isArray(plan && plan.pointsRetiresFiche) ? plan.pointsRetiresFiche : []);
+            if (retiresSet.size === 0) return pts;
+            return pts.filter(pt => !retiresSet.has(getClePointPlanificationFC(pt)));
+        }
+
+        function marquerPointRetireDansPlanification(db, idPlanification, point) {
+            if (!db || !idPlanification || !point || !Array.isArray(db.planifications)) return false;
+            const idxPlan = db.planifications.findIndex(p => p && p.idPlanification === idPlanification);
+            if (idxPlan === -1) return false;
+            const plan = db.planifications[idxPlan];
+            const cle = getClePointPlanificationFC(point);
+            if (!cle) return false;
+            const retires = Array.isArray(plan.pointsRetiresFiche) ? [...plan.pointsRetiresFiche] : [];
+            if (!retires.includes(cle)) {
+                retires.push(cle);
+            }
+            plan.pointsRetiresFiche = retires;
+            const totalPts = Array.isArray(plan.pointsControle) ? plan.pointsControle.length : 0;
+            if (totalPts > 0 && getPointsRestantsPlanificationFC(plan).length === 0) {
+                plan.statutExecution = 'REALISEE';
+            }
+            db.planifications[idxPlan] = plan;
+            return true;
+        }
+
+        function synchroniserGitHubEnArrierePlanFC(lotConstats, entite, idMission) {
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.archiverSurGitHub !== 'function') return;
+            if (typeof FCIDatabase.getGitHubToken === 'function' && !FCIDatabase.getGitHubToken()) return;
+            FCIDatabase.archiverSurGitHub('FC', entite || 'Controle', idMission || Date.now(), lotConstats)
+                .then(gh => {
+                    if (gh && gh.success && gh.path) {
+                        const statusEl = document.getElementById('searchStatus');
+                        if (statusEl && statusEl.innerText && !statusEl.innerText.includes('GitHub')) {
+                            statusEl.innerText += ` | GitHub : ${gh.path}`;
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+
         function chargerMissionPlanifieeControleur(idPlanification) {
             if (estUtilisateurSiegeFC()) return;
             const user = getCurrentAuthUser();
@@ -941,6 +991,16 @@
             fcVideManuellement = false;
             filtreProcessusControleur = 'TOUS';
 
+            const pointsNonRetires = getPointsRestantsPlanificationFC(plan);
+            if (pointsNonRetires.length === 0) {
+                viderFormulaireFC();
+                const statusEl = document.getElementById('searchStatus');
+                if (statusEl) {
+                    statusEl.innerText = `Tous les points de contrôle de la mission (${plan.entite || plan.site || '--'}) ont déjà été traités et déplacés dans la BDD.`;
+                }
+                return;
+            }
+
             const db = lireDBSecurisee();
             const constatsPlan = (db.constatsControle || []).filter(c => c && c.idPlanificationSiege === plan.idPlanification);
             const homeReg = getUserHomeRegion();
@@ -948,7 +1008,7 @@
             const idMission = plan.idMissionExecution || plan.idMission || ('MIS-' + Date.now());
             const dateCtrlToday = formatDateToFR(getTodayISO());
 
-            const pointsHydrates = (plan.pointsControle || []).map(pt => {
+            const pointsHydrates = pointsNonRetires.map(pt => {
                 const pProc = getItemVal(pt, ['Processus']);
                 const pPc = getItemVal(pt, ['Points de contrôle', 'Point de contrôle']);
                 const pCtrl = getItemVal(pt, ['Intitulé Contrôle', 'Intitulé de contrôle']);
@@ -1055,7 +1115,10 @@
             const missions = getMissionsPlanifieesDiffuseesControleur();
             if (missions.length === 0) return;
 
-            const cible = missions.find(m => String(m.statutExecution || '').toUpperCase() !== 'REALISEE') || missions[0];
+            const missionsAvecPcRestants = missions.filter(m => getPointsRestantsPlanificationFC(m).length > 0);
+            if (missionsAvecPcRestants.length === 0) return;
+
+            const cible = missionsAvecPcRestants.find(m => String(m.statutExecution || '').toUpperCase() !== 'REALISEE') || missionsAvecPcRestants[0];
             if (cible) {
                 chargerMissionPlanifieeControleur(cible.idPlanification);
             }
@@ -1872,7 +1935,7 @@
             });
         }
 
-        async function archiverPointControle(index) {
+        function archiverPointControle(index) {
             if (!missionData || !Array.isArray(missionData.pointsControle) || !missionData.pointsControle[index]) {
                 alert("Point de contrôle introuvable.");
                 return;
@@ -1882,78 +1945,64 @@
             const val = validerChampsObligatoires([point]);
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const btn = document.getElementById(`btnArchiverPC-${index}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Archivage...';
+            const meta = missionData.metadata || {};
+            const idMissionPoint = point._bddIdMission || meta.idMission || ("MIS-" + Date.now());
+            if (!meta.idMission) meta.idMission = idMissionPoint;
+            const typeControleMission = meta.typeControle || 'Thématique';
+            const regionMission = normaliserRegion(meta.region || '');
+            const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
+            const controleur = String(meta.controleurs || '').trim();
+            const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
+
+            const constatsBDD = construirePayloadConstatsFC(idMissionPoint, 'ARCHIVE', [point], index);
+            const constatArchive = constatsBDD[0];
+
+            const db = lireDBSecurisee();
+            const listeExistante = db.constatsControle || [];
+            const idxExistant = listeExistante.findIndex(c => c.idConstat && c.idConstat === constatArchive.idConstat);
+            if (idxExistant !== -1) {
+                listeExistante[idxExistant] = { ...listeExistante[idxExistant], ...constatArchive };
+            } else {
+                listeExistante.push(constatArchive);
+            }
+            db.constatsControle = listeExistante;
+
+            upsertMissionFCEnBDD(db, {
+                idMission: idMissionPoint,
+                idPlanificationSiege: meta.idPlanificationSiege || '',
+                planifiePar: meta.planifiePar || '',
+                region: regionMission,
+                entite: meta.entite || '',
+                dateFR: dateCtrl,
+                dateDebut: meta.periodeDebut || '',
+                dateFin: meta.periodeFin || '',
+                controleur,
+                controleurId: constatArchive?.controleurId || meta.controleurId || '',
+                controleurRegion: constatArchive?.controleurRegion || getUserHomeRegion() || regionMission,
+                typeControle: typeControleMission,
+                constats: constatsBDD,
+                pointsSelectionnes: missionData.pointsControle
+            });
+
+            if (meta.idPlanificationSiege) {
+                marquerPointRetireDansPlanification(db, meta.idPlanificationSiege, point);
             }
 
-            try {
-                const meta = missionData.metadata || {};
-                const idMissionPoint = point._bddIdMission || meta.idMission || ("MIS-" + Date.now());
-                if (!meta.idMission) meta.idMission = idMissionPoint;
-                const typeControleMission = meta.typeControle || 'Thématique';
-                const regionMission = normaliserRegion(meta.region || '');
-                const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
-                const controleur = String(meta.controleurs || '').trim();
-                const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
-
-                const constatsBDD = construirePayloadConstatsFC(idMissionPoint, 'ARCHIVE', [point], index);
-                const constatArchive = constatsBDD[0];
-
-                const db = lireDBSecurisee();
-                const listeExistante = db.constatsControle || [];
-                const idxExistant = listeExistante.findIndex(c => c.idConstat && c.idConstat === constatArchive.idConstat);
-                if (idxExistant !== -1) {
-                    listeExistante[idxExistant] = { ...listeExistante[idxExistant], ...constatArchive };
-                } else {
-                    listeExistante.push(constatArchive);
-                }
-                db.constatsControle = listeExistante;
-
-                upsertMissionFCEnBDD(db, {
-                    idMission: idMissionPoint,
-                    idPlanificationSiege: meta.idPlanificationSiege || '',
-                    planifiePar: meta.planifiePar || '',
-                    region: regionMission,
-                    entite: meta.entite || '',
-                    dateFR: dateCtrl,
-                    dateDebut: meta.periodeDebut || '',
-                    dateFin: meta.periodeFin || '',
-                    controleur,
-                    controleurId: constatArchive?.controleurId || meta.controleurId || '',
-                    controleurRegion: constatArchive?.controleurRegion || getUserHomeRegion() || regionMission,
-                    typeControle: typeControleMission,
-                    constats: constatsBDD,
-                    pointsSelectionnes: missionData.pointsControle
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                let ghSuffixe = '';
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
-                    const resSave = await FCIDatabase.enregistrerLotControle(constatsBDD, meta.entite || '', idMissionPoint);
-                    const gh = resSave && resSave._githubArchive;
-                    if (gh && gh.success && gh.path) {
-                        ghSuffixe = ` | GitHub : ${gh.path}`;
-                    }
-                }
-
-                retirerPointControleDeLaFiche(index);
+            // Suppression immédiate du PC concerné de la FC (avant toute synchro réseau)
+            retirerPointControleDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
                 remplirFiltresBDD();
-
-                const statusEl = document.getElementById('searchStatus');
-                if (statusEl) {
-                    statusEl.innerText = `PC #${index + 1} archivé et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts${ghSuffixe}`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnArchiverPC-${index}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+                if (!estUtilisateurSiegeFC()) renderMissionsPlanifieesControleur();
             }
+
+            const statusEl = document.getElementById('searchStatus');
+            if (statusEl) {
+                statusEl.innerText = `PC #${index + 1} archivé et déplacé dans la BDD ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            // Synchro GitHub en arrière-plan (non bloquante)
+            synchroniserGitHubEnArrierePlanFC(constatsBDD, meta.entite || '', idMissionPoint);
         }
 
         function trouverFicheControleBDD() {
@@ -2044,7 +2093,7 @@
             document.getElementById('searchStatus').innerText = `${constatsTrouves.length} ligne(s) FC importée(s) — Région : ${regionRecuperee || '--'} | Site : ${siteTrouve || '--'} | Date initiale : ${dateCtrlTrouvee}`;
         }
 
-        async function modifierPointControle(index) {
+        function modifierPointControle(index) {
             if (!missionData || !Array.isArray(missionData.pointsControle) || !missionData.pointsControle[index]) {
                 alert("Point de contrôle introuvable.");
                 return;
@@ -2059,90 +2108,79 @@
             const val = validerChampsObligatoires([point]);
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const btn = document.getElementById(`btnModifierPC-${index}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Modification...';
+            const db = lireDBSecurisee();
+            const meta = missionData.metadata || {};
+            const idMissionPoint = point._bddIdMission || meta.idMission || ("MIS-" + Date.now());
+            if (!meta.idMission) meta.idMission = idMissionPoint;
+            const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
+            const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
+
+            const constatsMisAJour = construirePayloadConstatsFC(idMissionPoint, 'MODIFIER', [point], index);
+            const itemMaj = constatsMisAJour[0];
+            const listeExistante = db.constatsControle || [];
+
+            let idxExistant = itemMaj.idConstat
+                ? listeExistante.findIndex(c => c.idConstat === itemMaj.idConstat)
+                : -1;
+            if (idxExistant === -1) {
+                idxExistant = listeExistante.findIndex(c =>
+                    c.idMission === itemMaj.idMission && c.pc === itemMaj.pc && c.controle === itemMaj.controle
+                );
             }
 
-            try {
-                const db = lireDBSecurisee();
-                const meta = missionData.metadata || {};
-                const idMissionPoint = point._bddIdMission || meta.idMission || ("MIS-" + Date.now());
-                if (!meta.idMission) meta.idMission = idMissionPoint;
-                const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
-                const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
+            const enregistrementFinal = {
+                ...(idxExistant !== -1 ? listeExistante[idxExistant] : {}),
+                ...itemMaj,
+                isModifie: true,
+                modifie: true,
+                dateModification: new Date().toISOString()
+            };
 
-                const constatsMisAJour = construirePayloadConstatsFC(idMissionPoint, 'MODIFIER', [point], index);
-                const itemMaj = constatsMisAJour[0];
-                const listeExistante = db.constatsControle || [];
+            if (idxExistant !== -1) {
+                listeExistante[idxExistant] = enregistrementFinal;
+            } else {
+                listeExistante.push(enregistrementFinal);
+            }
 
-                let idxExistant = itemMaj.idConstat
-                    ? listeExistante.findIndex(c => c.idConstat === itemMaj.idConstat)
-                    : -1;
-                if (idxExistant === -1) {
-                    idxExistant = listeExistante.findIndex(c =>
-                        c.idMission === itemMaj.idMission && c.pc === itemMaj.pc && c.controle === itemMaj.controle
-                    );
-                }
+            db.constatsControle = listeExistante;
 
-                const enregistrementFinal = {
-                    ...(idxExistant !== -1 ? listeExistante[idxExistant] : {}),
-                    ...itemMaj,
-                    isModifie: true,
-                    modifie: true,
-                    dateModification: new Date().toISOString()
-                };
+            upsertMissionFCEnBDD(db, {
+                idMission: idMissionPoint,
+                idPlanificationSiege: meta.idPlanificationSiege || '',
+                planifiePar: meta.planifiePar || '',
+                region: normaliserRegion(meta.region || ''),
+                entite: meta.entite || '',
+                dateFR: dateCtrl,
+                dateDebut: meta.periodeDebut || '',
+                dateFin: meta.periodeFin || '',
+                controleur: String(meta.controleurs || '').trim(),
+                controleurId: itemMaj?.controleurId || meta.controleurId || '',
+                controleurRegion: itemMaj?.controleurRegion || getUserHomeRegion() || meta.region || '',
+                typeControle: meta.typeControle || 'Thématique',
+                constats: [enregistrementFinal],
+                pointsSelectionnes: missionData.pointsControle
+            });
 
-                if (idxExistant !== -1) {
-                    listeExistante[idxExistant] = enregistrementFinal;
-                } else {
-                    listeExistante.push(enregistrementFinal);
-                }
+            if (meta.idPlanificationSiege) {
+                marquerPointRetireDansPlanification(db, meta.idPlanificationSiege, point);
+            }
 
-                db.constatsControle = listeExistante;
-
-                upsertMissionFCEnBDD(db, {
-                    idMission: idMissionPoint,
-                    idPlanificationSiege: meta.idPlanificationSiege || '',
-                    planifiePar: meta.planifiePar || '',
-                    region: normaliserRegion(meta.region || ''),
-                    entite: meta.entite || '',
-                    dateFR: dateCtrl,
-                    dateDebut: meta.periodeDebut || '',
-                    dateFin: meta.periodeFin || '',
-                    controleur: String(meta.controleurs || '').trim(),
-                    controleurId: itemMaj?.controleurId || meta.controleurId || '',
-                    controleurRegion: itemMaj?.controleurRegion || getUserHomeRegion() || meta.region || '',
-                    typeControle: meta.typeControle || 'Thématique',
-                    constats: [enregistrementFinal],
-                    pointsSelectionnes: missionData.pointsControle
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
-                    await FCIDatabase.enregistrerLotControle([enregistrementFinal], meta.entite || '', idMissionPoint);
-                }
-
-                retirerPointControleDeLaFiche(index);
+            retirerPointControleDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
                 remplirFiltresBDD();
-
-                const statusEl = document.getElementById('searchStatus');
-                if (statusEl) {
-                    statusEl.innerText = `PC #${index + 1} modifié et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnModifierPC-${index}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+                if (!estUtilisateurSiegeFC()) renderMissionsPlanifieesControleur();
             }
+
+            const statusEl = document.getElementById('searchStatus');
+            if (statusEl) {
+                statusEl.innerText = `PC #${index + 1} modifié et déplacé dans la BDD ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            synchroniserGitHubEnArrierePlanFC([enregistrementFinal], meta.entite || '', idMissionPoint);
         }
 
-        async function suiviPointControle(index) {
+        function suiviPointControle(index) {
             if (!missionData || !Array.isArray(missionData.pointsControle) || !missionData.pointsControle[index]) {
                 alert("Point de contrôle introuvable.");
                 return;
@@ -2157,64 +2195,53 @@
             const val = validerChampsObligatoires([point]);
             if (!val.valide) { alert(`⚠️ ${val.messageErreur}`); return; }
 
-            const btn = document.getElementById(`btnSuiviPC-${index}`);
-            const texteOriginal = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Suivi...';
+            const db = lireDBSecurisee();
+            const meta = missionData.metadata || {};
+            const idMissionSuivi = "MIS-SUIVI-" + Date.now();
+            const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
+            const typeControleMission = meta.typeControle || 'Thématique';
+            const regionMission = normaliserRegion(meta.region || '');
+            const controleur = String(meta.controleurs || '').trim();
+            const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
+
+            const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', [point], index);
+
+            db.constatsControle = [...(db.constatsControle || []), ...nouvellesLignesSuivi];
+
+            upsertMissionFCEnBDD(db, {
+                idMission: idMissionSuivi,
+                idPlanificationSiege: meta.idPlanificationSiege || '',
+                planifiePar: meta.planifiePar || '',
+                region: regionMission,
+                entite: meta.entite || '',
+                dateFR: dateCtrl,
+                dateDebut: meta.periodeDebut || '',
+                dateFin: meta.periodeFin || '',
+                controleur,
+                controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
+                controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || regionMission,
+                typeControle: typeControleMission,
+                constats: nouvellesLignesSuivi,
+                pointsSelectionnes: [point]
+            });
+
+            if (meta.idPlanificationSiege) {
+                marquerPointRetireDansPlanification(db, meta.idPlanificationSiege, point);
             }
 
-            try {
-                const db = lireDBSecurisee();
-                const meta = missionData.metadata || {};
-                const idMissionSuivi = "MIS-SUIVI-" + Date.now();
-                const dateCtrl = formatDateToFR(point._bddDateControle || meta.dateControle) || formatDateToFR(getTodayISO());
-                const typeControleMission = meta.typeControle || 'Thématique';
-                const regionMission = normaliserRegion(meta.region || '');
-                const controleur = String(meta.controleurs || '').trim();
-                const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
-
-                const nouvellesLignesSuivi = construirePayloadConstatsFC(idMissionSuivi, 'SUIVI', [point], index);
-
-                db.constatsControle = [...(db.constatsControle || []), ...nouvellesLignesSuivi];
-
-                upsertMissionFCEnBDD(db, {
-                    idMission: idMissionSuivi,
-                    idPlanificationSiege: meta.idPlanificationSiege || '',
-                    planifiePar: meta.planifiePar || '',
-                    region: regionMission,
-                    entite: meta.entite || '',
-                    dateFR: dateCtrl,
-                    dateDebut: meta.periodeDebut || '',
-                    dateFin: meta.periodeFin || '',
-                    controleur,
-                    controleurId: nouvellesLignesSuivi[0]?.controleurId || meta.controleurId || '',
-                    controleurRegion: nouvellesLignesSuivi[0]?.controleurRegion || getUserHomeRegion() || regionMission,
-                    typeControle: typeControleMission,
-                    constats: nouvellesLignesSuivi,
-                    pointsSelectionnes: [point]
-                });
-
-                sauvegarderDBSecurisee(db);
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerLotControle === 'function') {
-                    await FCIDatabase.enregistrerLotControle(nouvellesLignesSuivi, meta.entite || '', idMissionSuivi);
-                }
-
-                retirerPointControleDeLaFiche(index);
+            retirerPointControleDeLaFiche(point, true);
+            sauvegarderDBSecurisee(db);
+            if (typeof FCIDatabase === 'undefined') {
                 remplirFiltresBDD();
-
-                const statusEl = document.getElementById('searchStatus');
-                if (statusEl) {
-                    statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${index + 1} ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
-                }
-            } finally {
-                const btnActuel = document.getElementById(`btnSuiviPC-${index}`);
-                if (btnActuel && btnActuel === btn) {
-                    btnActuel.disabled = false;
-                    btnActuel.innerHTML = texteOriginal;
-                }
+                if (!estUtilisateurSiegeFC()) renderMissionsPlanifieesControleur();
             }
+
+            const statusEl = document.getElementById('searchStatus');
+            if (statusEl) {
+                statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${index + 1} ("${pcName}") — PC supprimé de la fiche, les autres PC restent intacts`;
+            }
+
+            synchroniserGitHubEnArrierePlanFC(nouvellesLignesSuivi, meta.entite || '', idMissionSuivi);
         }
 
         function supprimerPointControle(index) {
@@ -2224,22 +2251,27 @@
             }
 
             const point = missionData.pointsControle[index];
+            const meta = missionData.metadata || {};
             const pcName = getItemVal(point, ['Points de contrôle', 'Point de contrôle']) || `PC #${index + 1}`;
             const idConstatCible = point._bddIdConstat || '';
-            const idMissionPoint = point._bddIdMission || (missionData.metadata ? missionData.metadata.idMission : '');
+            const idMissionPoint = point._bddIdMission || meta.idMission || '';
+            const idPlanificationSiege = meta.idPlanificationSiege || '';
 
             const msgConfirmation = idConstatCible
                 ? `Voulez-vous vraiment supprimer ce point de contrôle de la fiche et de la BDD ?\n\n• PC #${index + 1} : ${pcName}`
-                : `Voulez-vous vraiment retirer ce point de contrôle de la fiche en cours ?\n\n• PC #${index + 1} : ${pcName}`;
+                : `Voulez-vous vraiment supprimer ce point de contrôle de la fiche en cours ?\n\n• PC #${index + 1} : ${pcName}`;
 
             if (!confirm(msgConfirmation)) return;
 
             let supprimeEnBDD = false;
-            if (idConstatCible) {
-                const db = lireDBSecurisee();
+            let dbModifiee = false;
+            const db = (idConstatCible || idPlanificationSiege) ? lireDBSecurisee() : null;
+
+            if (db && idConstatCible) {
                 const avant = (db.constatsControle || []).length;
                 db.constatsControle = (db.constatsControle || []).filter(c => c.idConstat !== idConstatCible);
                 supprimeEnBDD = db.constatsControle.length < avant;
+                if (supprimeEnBDD) dbModifiee = true;
 
                 if (Array.isArray(missionData._loadedConstatIds)) {
                     missionData._loadedConstatIds = missionData._loadedConstatIds.filter(id => id !== idConstatCible);
@@ -2268,31 +2300,46 @@
                         }
                     }
                 }
+            }
 
-                if (supprimeEnBDD) {
-                    sauvegarderDBSecurisee(db);
-                    if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
-                        const dateRefDel = point._bddDateControle || (missionData.metadata ? missionData.metadata.dateControle : '');
+            if (db && idPlanificationSiege) {
+                if (marquerPointRetireDansPlanification(db, idPlanificationSiege, point)) {
+                    dbModifiee = true;
+                }
+            }
+
+            // Supprimer UNIQUEMENT le PC concerné immédiatement sans toucher aux autres PC affichés
+            retirerPointControleDeLaFiche(point, dbModifiee);
+
+            if (db && dbModifiee) {
+                sauvegarderDBSecurisee(db);
+                if (typeof FCIDatabase === 'undefined') {
+                    remplirFiltresBDD();
+                    if (!estUtilisateurSiegeFC()) renderMissionsPlanifieesControleur();
+                }
+                if (supprimeEnBDD && typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.supprimerDeArchiveGitHub === 'function') {
+                    if (typeof FCIDatabase.getGitHubToken !== 'function' || FCIDatabase.getGitHubToken()) {
+                        const dateRefDel = point._bddDateControle || meta.dateControle || '';
                         FCIDatabase.supprimerDeArchiveGitHub('FC', [idConstatCible], dateRefDel).catch(() => {});
                     }
                 }
             }
 
-            // Retirer UNIQUEMENT le PC concerné sans toucher aux autres PC affichés
-            retirerPointControleDeLaFiche(index);
-            remplirFiltresBDD();
-
             const statusEl = document.getElementById('searchStatus');
             if (statusEl) {
                 statusEl.innerText = supprimeEnBDD
-                    ? `Point de contrôle supprimé de la BDD et retiré de la fiche ("${pcName}") — Les autres PC restent intacts`
-                    : `Point de contrôle retiré de la fiche ("${pcName}") — Les autres PC restent intacts`;
+                    ? `Point de contrôle supprimé de la BDD et de la fiche ("${pcName}") — Les autres PC restent intacts`
+                    : `Point de contrôle supprimé de la fiche ("${pcName}") — Les autres PC restent intacts`;
             }
         }
 
-        function retirerPointControleDeLaFiche(index) {
+        function retirerPointControleDeLaFiche(pointOuIndex, skipSyncUI = false) {
             if (!missionData || !Array.isArray(missionData.pointsControle)) return;
-            missionData.pointsControle.splice(index, 1);
+            const idx = (typeof pointOuIndex === 'number')
+                ? pointOuIndex
+                : missionData.pointsControle.indexOf(pointOuIndex);
+            if (idx < 0 || idx >= missionData.pointsControle.length) return;
+            missionData.pointsControle.splice(idx, 1);
             if (missionData.pointsControle.length === 0) {
                 viderFormulaireFC();
             } else {
@@ -2307,7 +2354,7 @@
                 }
                 sauvegarderLocalement();
                 renderPage();
-                if (!estUtilisateurSiegeFC()) {
+                if (!skipSyncUI && !estUtilisateurSiegeFC()) {
                     renderMissionsPlanifieesControleur();
                 }
             }
