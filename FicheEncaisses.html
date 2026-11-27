@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261127-planif2"></script>
+    <script src="fci-auth.js?v=20261127-planif3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -83,10 +83,145 @@
         }
         .single-row-plan-fv {
             display: grid;
-            grid-template-columns: 1.55fr 0.85fr 1.45fr 1.25fr auto;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
             gap: 10px;
             align-items: end;
         }
+        .fv-notif-banner {
+            background: linear-gradient(135deg, #EFF6FF 0%, #FFFBEB 100%);
+            border: 1px solid #93C5FD;
+            border-left: 4px solid #0284C7;
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+        }
+        .fv-notif-item {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 10px 12px;
+            margin-top: 8px;
+        }
+        .fv-notif-item.unread {
+            border-left: 4px solid #D97706;
+            background: #FFFDF5;
+        }
+        .fv-directeur-card {
+            background: #FFFFFF;
+            border: 1px solid #86EFAC;
+            border-left: 4px solid #059669;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        .fv-workflow-box {
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        .fv-workflow-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .fv-step-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 2px solid #E2E8F0;
+            background: #F8FAFC;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .fv-step-btn:hover { border-color: #93C5FD; background: #EFF6FF; }
+        .fv-step-btn.active { border-color: var(--primary-blue); background: #EFF6FF; }
+        .fv-step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #CBD5E1;
+            color: #1E293B;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .fv-step-btn.active .fv-step-num { background: var(--primary-blue); color: #FFFFFF; }
+        .fv-campaign-card {
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin-top: 10px;
+            background: #FAFCFF;
+        }
+        .fv-campaign-card.status-soumise { border-left: 4px solid #D97706; }
+        .fv-campaign-card.status-validee { border-left: 4px solid #059669; background: #F0FDF4; }
+        .fv-campaign-card.status-diffusee { border-left: 4px solid #2563EB; background: #F8FAFC; }
+        .fv-campaign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        .fv-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .fv-pill-soumise { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .fv-pill-validee { background: #DCFCE7; color: #166534; border: 1px solid #4ADE80; }
+        .fv-pill-diffusee { background: #DBEAFE; color: #1E40AF; border: 1px solid #60A5FA; }
+        .fv-pill-ctrl { background: #DBEAFE; color: #1E40AF; border: 1px solid #93C5FD; }
+        .fv-pill-reg { background: #E0F2FE; color: #0369A1; }
+        .fv-pill-interreg { background: #FCE7F3; color: #9D174D; border: 1px solid #F9A8D4; }
+        .fv-pill-notif { background: #D1FAE5; color: #065F46; }
+        .fv-inline-ctrl {
+            padding: 5px 7px;
+            border: 1px solid #CBD5E1;
+            border-radius: 5px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            background: #FFFFFF;
+            width: 100%;
+            min-width: 115px;
+        }
+        .fv-history-box {
+            margin-top: 10px;
+            background: #F8FAFC;
+            border: 1px dashed #CBD5E1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.74rem;
+        }
+        .fv-history-row {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #E2E8F0;
+            flex-wrap: wrap;
+        }
+        .fv-history-row:last-child { border-bottom: none; }
+        .btn-notify-fv { background-color: #D97706; color: #FFFFFF; border-color: #B45309; }
+        .btn-notify-fv:hover { background-color: #B45309; }
+        .btn-validate-fv { background-color: #059669; color: #FFFFFF; border-color: #047857; }
+        .btn-validate-fv:hover { background-color: #047857; }
         .plan-fv-table-wrap {
             margin-top: 12px;
             overflow-x: auto;
@@ -419,7 +554,7 @@
             </div>
         </header>
 
-        <!-- ESPACE PLANIFICATION DES VÉRIFICATIONS (SIÈGE : CRÉATION + SUIVI GLOBAL / CONTRÔLEUR : SES MISSIONS ATTRIBUÉES) -->
+        <!-- ESPACE PLANIFICATION DES VÉRIFICATIONS (SIÈGE : VALIDATION DIRECTEUR & DIFFUSION + SUIVI GLOBAL / CONTRÔLEUR : SES MISSIONS DIFFUSÉES) -->
         <section class="plan-fv-card" id="planificationFVSection">
             <div class="section-line-label" style="color:#0369A1;">
                 <i class="fa-solid fa-calendar-check"></i>
@@ -428,53 +563,105 @@
                 <span id="activePlanFvBanner" style="margin-left:auto;"></span>
             </div>
 
-            <!-- Formulaire de création visible UNIQUEMENT par les comptes du Siège (Informations fondamentales uniquement) -->
-            <div id="siegePlanFvCreator" style="display:none; margin-bottom:10px;">
-                <div class="single-row-plan-fv">
-                    <div class="form-group">
-                        <label for="planFvSiteSelect">Centre ciblé *</label>
-                        <select id="planFvSiteSelect" class="form-control" onchange="onPlanFvCentreChange()">
-                            <option value="">-- Sélectionner le centre ciblé --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvRegionAuto">Région (auto) *</label>
-                        <input type="text" id="planFvRegionAuto" class="form-control" readonly placeholder="Remplissage auto" style="background:#EEF2F6; color:var(--primary-blue); font-weight:800;">
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvControleurSelect">Contrôleur affecté *</label>
-                        <select id="planFvControleurSelect" class="form-control">
-                            <option value="">-- Sélectionner un utilisateur --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvPeriodeSelect">Période de vérification *</label>
-                        <select id="planFvPeriodeSelect" class="form-control" onchange="onPlanFvPeriodeChange()">
-                            <option value="">-- Sélectionner une période --</option>
-                        </select>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-primary" onclick="creerPlanificationFV()">
-                            <i class="fa-solid fa-plus"></i> Planifier
-                        </button>
-                    </div>
+            <!-- Notifications Siège FV (avec paragraphe + tableau de planification complet) -->
+            <div id="fv-siege-notifications-banner"></div>
+
+            <!-- Espace Directeur FV (directeur-001) : Modification inline, Validation & Notification -->
+            <div id="fv-directeur-validation-section"></div>
+
+            <!-- Workflow 2 étapes visible UNIQUEMENT par les comptes du Siège (Site, Région, Contrôleur, Date début / Date fin) -->
+            <div id="siegePlanFvCreator" class="fv-workflow-box" style="display:none;">
+                <div class="fv-workflow-steps">
+                    <button type="button" class="fv-step-btn active" id="fv-tab-step1" onclick="switchFvWorkflowStep(1)">
+                        <span class="fv-step-num">1</span>
+                        <div>
+                            <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">Étape 1 : Préparation &amp; Validation</div>
+                            <div style="font-size:0.72rem; color:var(--text-muted);">Site · Région (auto) · Contrôleur · Date début / Date fin → Soumission Directeur</div>
+                        </div>
+                    </button>
+                    <button type="button" class="fv-step-btn" id="fv-tab-step2" onclick="switchFvWorkflowStep(2)">
+                        <span class="fv-step-num">2</span>
+                        <div>
+                            <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">Étape 2 : Diffusion de la planification validée <span id="fv-step2-badge" class="fv-pill fv-pill-validee" style="margin-left:4px;">0</span></div>
+                            <div style="font-size:0.72rem; color:var(--text-muted);">Transmission individuelle officielle aux contrôleurs affectés</div>
+                        </div>
+                    </button>
                 </div>
-                <div id="planFvCustomDatesRow" style="display:none; margin-top:8px; grid-template-columns: 1fr 1fr 2fr; gap:10px; align-items:end;">
-                    <div class="form-group">
-                        <label for="planFvDateDebutCustom">Date début vérif. *</label>
-                        <input type="date" id="planFvDateDebutCustom" class="form-control">
+
+                <!-- ÉTAPE 1 : PRÉPARATION & SOUMISSION POUR VALIDATION -->
+                <div id="fv-panel-step1">
+                    <div class="single-row-plan-fv">
+                        <div class="form-group">
+                            <label for="planFvSiteSelect">Centre ciblé *</label>
+                            <select id="planFvSiteSelect" class="form-control" onchange="onPlanFvCentreChange()">
+                                <option value="">-- Sélectionner le centre ciblé --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="planFvRegionAuto">Région (auto) *</label>
+                            <input type="text" id="planFvRegionAuto" class="form-control" readonly placeholder="Remplissage auto" style="background:#EEF2F6; color:var(--primary-blue); font-weight:800;">
+                        </div>
+                        <div class="form-group">
+                            <label for="planFvControleurSelect">Contrôleur affecté *</label>
+                            <select id="planFvControleurSelect" class="form-control">
+                                <option value="">-- Sélectionner un utilisateur --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="planFvDateDebut">Date début vérif. *</label>
+                            <input type="date" id="planFvDateDebut" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="planFvDateFin">Date fin vérif. *</label>
+                            <input type="date" id="planFvDateFin" class="form-control">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="planFvDateFinCustom">Date fin vérif. *</label>
-                        <input type="date" id="planFvDateFinCustom" class="form-control">
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                        <span style="font-size:0.75rem; color:var(--text-muted);">
+                            <i class="fa-solid fa-circle-info"></i> Seules les données fondamentales (Site, Région, Contrôleur, Période) sont validées ; Processus, Risque, Contrôle et PC restent librement sélectionnés par le contrôleur.
+                        </span>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-suivi" id="btnAddAffFV" onclick="ajouterAffectationLotFV()">
+                                <i class="fa-solid fa-plus"></i> Ajouter une affectation
+                            </button>
+                            <button type="button" class="btn btn-primary" id="btnSubmitPlanFV" onclick="soumettrePlanificationFVValidation()">
+                                <i class="fa-solid fa-paper-plane"></i> Soumettre pour validation
+                            </button>
+                        </div>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--text-muted); padding-bottom:6px;">
-                        <i class="fa-solid fa-circle-info"></i> Les processus, risques, contrôles et PC restent librement sélectionnés par le contrôleur.
+
+                    <!-- Tableau du lot d'affectations en cours de préparation -->
+                    <div id="fv-lot-table-wrap" style="display:none; margin-top:10px; overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px;">
+                        <table class="plan-fv-table">
+                            <thead>
+                                <tr>
+                                    <th>Centre ciblé</th>
+                                    <th>Région</th>
+                                    <th>Contrôleur affecté</th>
+                                    <th>Date début</th>
+                                    <th>Date fin</th>
+                                    <th style="text-align:center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fv-lot-tbody"></tbody>
+                        </table>
                     </div>
+
+                    <!-- Propositions FV en attente de validation Directeur -->
+                    <div id="fv-step1-pending-list" style="margin-top:10px;"></div>
+                </div>
+
+                <!-- ÉTAPE 2 : DIFFUSION DES PLANIFICATIONS VALIDÉES -->
+                <div id="fv-panel-step2" style="display:none;">
+                    <div id="fv-step2-list"></div>
                 </div>
             </div>
 
             <!-- Tableau de suivi temps réel (Global pour le Siège / Strictement individuel pour le Contrôleur désigné) -->
+            <div id="planFvSuiviHeading" style="display:none; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:var(--primary-blue); margin-top:6px; margin-bottom:4px;">
+                <i class="fa-solid fa-table-list"></i> Tableau de suivi des vérifications planifiées &amp; diffusées
+            </div>
             <div class="plan-fv-table-wrap" id="planFvTableWrap">
                 <table class="plan-fv-table">
                     <thead>
@@ -1000,7 +1187,50 @@
             updateInterRegionalBadge();
         }
 
-        // ==================== PLANIFICATION & SUIVI DES VÉRIFICATIONS (FV) ====================
+        // ==================== PLANIFICATION & SUIVI DES VÉRIFICATIONS (FV — WORKFLOW 2 ÉTAPES) ====================
+
+        let lotAffectationsFV = [];
+        let fvActiveWorkflowStep = 1;
+        let fvExpandedPanels = {};
+        let fvShowReadNotifications = false;
+
+        function estDirecteurFV() {
+            const u = getCurrentAuthUser();
+            if (!u) return false;
+            return String(u.role || '').toUpperCase() === 'DIRECTEUR' ||
+                   String(u.username || '').toLowerCase() === 'directeur-001';
+        }
+
+        function estAdminFV() {
+            const u = getCurrentAuthUser();
+            if (!u) return false;
+            return String(u.role || '').toUpperCase() === 'ADMIN' ||
+                   String(u.username || '').toLowerCase() === 'admin-siege';
+        }
+
+        function estCampagneFV(c) {
+            return String(c?.sourceFeuille || '').toUpperCase().trim() === 'FV';
+        }
+
+        function estNotificationFV(n) {
+            return String(n?.sourceFeuille || '').toUpperCase().trim() === 'FV';
+        }
+
+        function escapeJsFV(str) {
+            return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        }
+
+        function formatDateHeureFV(iso) {
+            if (!iso) return '--';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return String(iso);
+            const jj = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const aaaa = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${jj}/${mm}/${aaaa} ${hh}:${min}`;
+        }
 
         function trouverRegionPourCentreFV(centreNom) {
             if (!centreNom) return '';
@@ -1013,69 +1243,129 @@
             return '';
         }
 
-        function genererPeriodesPlanFV() {
-            const y = new Date().getFullYear();
-            const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-            const lastDay = (year, mIdx) => {
-                const d = new Date(year, mIdx + 1, 0);
-                return `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            };
-            const list = [];
-            [y, y + 1].forEach(yr => {
-                const maxM = yr === y ? 12 : 6;
-                for (let m = 0; m < maxM; m++) {
-                    const mm = String(m + 1).padStart(2, '0');
-                    list.push({
-                        code: `M-${yr}-${mm}`,
-                        label: `${moisNoms[m]} ${yr}`,
-                        dateDebut: `${yr}-${mm}-01`,
-                        dateFin: lastDay(yr, m),
-                        groupe: `Mois ${yr}`
-                    });
-                }
-            });
-            [y, y + 1].forEach(yr => {
-                [
-                    { q: 1, m1: 0, m2: 2, lbl: `T1 ${yr} (Janv. - Mars)` },
-                    { q: 2, m1: 3, m2: 5, lbl: `T2 ${yr} (Avr. - Juin)` },
-                    { q: 3, m1: 6, m2: 8, lbl: `T3 ${yr} (Juil. - Sept.)` },
-                    { q: 4, m1: 9, m2: 11, lbl: `T4 ${yr} (Oct. - Déc.)` }
-                ].forEach(t => {
-                    list.push({
-                        code: `T${t.q}-${yr}`,
-                        label: t.lbl,
-                        dateDebut: `${yr}-${String(t.m1 + 1).padStart(2, '0')}-01`,
-                        dateFin: lastDay(yr, t.m2),
-                        groupe: `Trimestres ${yr}`
-                    });
-                });
-            });
-            list.push(
-                { code: `S1-${y}`, label: `S1 ${y} (1er Semestre)`, dateDebut: `${y}-01-01`, dateFin: `${y}-06-30`, groupe: `Semestres ${y}` },
-                { code: `S2-${y}`, label: `S2 ${y} (2e Semestre)`, dateDebut: `${y}-07-01`, dateFin: `${y}-12-31`, groupe: `Semestres ${y}` }
-            );
-            return list;
+        function getAllUsersAffectablesFV() {
+            let controleurs = [];
+            if (window.FCIAuth && typeof window.FCIAuth.getAllControllers === 'function') {
+                controleurs = window.FCIAuth.getAllControllers();
+            } else if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+                controleurs = window.FCIAuth.getControllersByRegion('');
+            }
+            const chefs = getChefsDeServiceListe().map(c => ({
+                username: c.username,
+                fonction: c.fonction || 'Chef de service',
+                region: 'SIEGE',
+                role: 'CHEF_SERVICE'
+            }));
+            return [
+                ...controleurs.map(c => ({
+                    username: c.username,
+                    fonction: c.fonction || 'Contrôleur',
+                    region: normaliserRegion(c.region || 'AUTRE'),
+                    role: 'CONTROLEUR'
+                })),
+                ...chefs
+            ];
         }
 
-        const PERIODES_VERIF_FV = genererPeriodesPlanFV();
+        function buildCentresOptionsHTMLFV(selectedCentre = '') {
+            const regionsOrdonnees = Object.keys(CENTRES_PAR_REGION).sort((a, b) => {
+                if (a === 'SIEGE') return 1;
+                if (b === 'SIEGE') return -1;
+                return a.localeCompare(b, 'fr');
+            });
+            let html = '<option value="">-- Centre --</option>';
+            regionsOrdonnees.forEach(reg => {
+                const centres = CENTRES_PAR_REGION[reg] || [];
+                if (centres.length === 0) return;
+                html += `<optgroup label="${escapeHtml(reg === 'SIEGE' ? 'SIÈGE' : 'RÉGION ' + reg)}">`;
+                centres.forEach(centre => {
+                    const sel = String(centre) === String(selectedCentre) ? 'selected' : '';
+                    html += `<option value="${escapeHtml(centre)}" data-region="${escapeHtml(normaliserRegion(reg))}" ${sel}>${escapeHtml(centre)}</option>`;
+                });
+                html += '</optgroup>';
+            });
+            return html;
+        }
+
+        function buildControleursOptionsHTMLFV(selectedCtrl = '') {
+            const users = getAllUsersAffectablesFV();
+            const parRegion = new Map();
+            const chefs = [];
+            users.forEach(u => {
+                if (u.role === 'CHEF_SERVICE') {
+                    chefs.push(u);
+                } else {
+                    const r = normaliserRegion(u.region || 'AUTRE');
+                    if (!parRegion.has(r)) parRegion.set(r, []);
+                    parRegion.get(r).push(u);
+                }
+            });
+
+            let html = '<option value="">-- Contrôleur --</option>';
+            [...parRegion.keys()].sort((a, b) => a.localeCompare(b, 'fr')).forEach(reg => {
+                html += `<optgroup label="RÉGION ${escapeHtml(reg)}">`;
+                parRegion.get(reg).forEach(c => {
+                    const sel = String(c.username).toLowerCase() === String(selectedCtrl).toLowerCase() ? 'selected' : '';
+                    html += `<option value="${escapeHtml(c.username)}" ${sel}>${escapeHtml(c.username)} — ${escapeHtml(c.fonction)} (${escapeHtml(reg)})</option>`;
+                });
+                html += '</optgroup>';
+            });
+            if (chefs.length > 0) {
+                html += '<optgroup label="SIÈGE (5 Chefs de service)">';
+                chefs.forEach(c => {
+                    const sel = String(c.username).toLowerCase() === String(selectedCtrl).toLowerCase() ? 'selected' : '';
+                    html += `<option value="${escapeHtml(c.username)}" ${sel}>${escapeHtml(c.username)} — ${escapeHtml(c.fonction)} (SIÈGE)</option>`;
+                });
+                html += '</optgroup>';
+            }
+            return html;
+        }
 
         function initPlanificationFVUI() {
             const siege = isCurrentUserSiege();
             const titleEl = document.getElementById('planFvSectionTitle');
             const creatorEl = document.getElementById('siegePlanFvCreator');
+            const suiviHeading = document.getElementById('planFvSuiviHeading');
 
             if (siege) {
-                if (titleEl) titleEl.innerText = "Planification & Suivi des Vérifications (Espace Siège — Informations fondamentales)";
+                if (titleEl) titleEl.innerText = "Planification & Suivi des Vérifications (Workflow Validation Directeur & Diffusion)";
                 if (creatorEl) creatorEl.style.display = 'block';
+                if (suiviHeading) suiviHeading.style.display = 'block';
                 peuplerCentresPlanFV();
                 peuplerListeControleursPlanFV();
-                peuplerPeriodesPlanFV();
+                initDatesPlanFV();
+                switchFvWorkflowStep(fvActiveWorkflowStep);
             } else {
-                if (titleEl) titleEl.innerText = "Mes Vérifications Planifiées par le Siège (Attribution Nominative)";
+                if (titleEl) titleEl.innerText = "Mes Vérifications Planifiées & Diffusées par le Siège";
                 if (creatorEl) creatorEl.style.display = 'none';
+                if (suiviHeading) suiviHeading.style.display = 'none';
+                const notifEl = document.getElementById('fv-siege-notifications-banner');
+                const dirEl = document.getElementById('fv-directeur-validation-section');
+                if (notifEl) notifEl.innerHTML = '';
+                if (dirEl) dirEl.innerHTML = '';
             }
 
-            renderPlanificationsFVTable();
+            refreshPlanificationFVAll();
+        }
+
+        function initDatesPlanFV() {
+            const today = new Date().toISOString().split('T')[0];
+            const dDeb = document.getElementById('planFvDateDebut');
+            const dFin = document.getElementById('planFvDateFin');
+            if (dDeb && !dDeb.value) dDeb.value = today;
+            if (dFin && !dFin.value) dFin.value = today;
+        }
+
+        function switchFvWorkflowStep(step) {
+            fvActiveWorkflowStep = step === 2 ? 2 : 1;
+            const tab1 = document.getElementById('fv-tab-step1');
+            const tab2 = document.getElementById('fv-tab-step2');
+            const pan1 = document.getElementById('fv-panel-step1');
+            const pan2 = document.getElementById('fv-panel-step2');
+            if (tab1) tab1.classList.toggle('active', fvActiveWorkflowStep === 1);
+            if (tab2) tab2.classList.toggle('active', fvActiveWorkflowStep === 2);
+            if (pan1) pan1.style.display = fvActiveWorkflowStep === 1 ? 'block' : 'none';
+            if (pan2) pan2.style.display = fvActiveWorkflowStep === 2 ? 'block' : 'none';
         }
 
         function peuplerCentresPlanFV() {
@@ -1129,22 +1419,20 @@
             if (!select) return;
 
             const currentVal = select.value;
-
-            let controleurs = [];
-            if (window.FCIAuth && typeof window.FCIAuth.getAllControllers === 'function') {
-                controleurs = window.FCIAuth.getAllControllers();
-            } else if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
-                controleurs = window.FCIAuth.getControllersByRegion('');
-            }
-            const chefsService = getChefsDeServiceListe();
+            const users = getAllUsersAffectablesFV();
 
             select.innerHTML = '<option value="">-- Sélectionner un contrôleur affecté --</option>';
 
             const parRegion = new Map();
-            controleurs.forEach(c => {
-                const r = normaliserRegion(c.region || 'AUTRE');
-                if (!parRegion.has(r)) parRegion.set(r, []);
-                parRegion.get(r).push(c);
+            const chefs = [];
+            users.forEach(c => {
+                if (c.role === 'CHEF_SERVICE') {
+                    chefs.push(c);
+                } else {
+                    const r = normaliserRegion(c.region || 'AUTRE');
+                    if (!parRegion.has(r)) parRegion.set(r, []);
+                    parRegion.get(r).push(c);
+                }
             });
 
             [...parRegion.keys()].sort((a, b) => a.localeCompare(b, 'fr')).forEach(reg => {
@@ -1162,10 +1450,10 @@
                 select.appendChild(grp);
             });
 
-            if (chefsService.length > 0) {
+            if (chefs.length > 0) {
                 const grpChefs = document.createElement('optgroup');
                 grpChefs.label = 'SIÈGE (5 Chefs de service)';
-                chefsService.forEach(c => {
+                chefs.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.username;
                     opt.dataset.fonction = c.fonction || '';
@@ -1182,80 +1470,994 @@
             }
         }
 
-        function peuplerPeriodesPlanFV() {
-            const sel = document.getElementById('planFvPeriodeSelect');
-            if (!sel) return;
-            const prev = sel.value;
-            sel.innerHTML = '<option value="">-- Sélectionner une période --</option>';
+        function lireAffectationFormFV() {
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            const regInput = document.getElementById('planFvRegionAuto');
+            const ctrlSelect = document.getElementById('planFvControleurSelect');
+            const dateDebut = String(document.getElementById('planFvDateDebut')?.value || '').trim();
+            const dateFin = String(document.getElementById('planFvDateFin')?.value || '').trim();
 
-            const groupes = new Map();
-            PERIODES_VERIF_FV.forEach(p => {
-                if (!groupes.has(p.groupe)) groupes.set(p.groupe, []);
-                groupes.get(p.groupe).push(p);
-            });
-            groupes.forEach((items, grpName) => {
-                const grp = document.createElement('optgroup');
-                grp.label = grpName;
-                items.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.code;
-                    opt.textContent = p.label;
-                    grp.appendChild(opt);
-                });
-                sel.appendChild(grp);
-            });
-            const optCustom = document.createElement('option');
-            optCustom.value = 'PERSONNALISEE';
-            optCustom.textContent = 'Période personnalisée (dates précises)...';
-            sel.appendChild(optCustom);
+            const site = String(siteSelect?.value || '').trim();
+            const region = normaliserRegion(regInput?.value || trouverRegionPourCentreFV(site));
+            const controleurId = String(ctrlSelect?.value || '').trim();
+            const selectedOpt = ctrlSelect ? ctrlSelect.options[ctrlSelect.selectedIndex] : null;
+            const controleurFonction = selectedOpt ? (selectedOpt.dataset.fonction || controleurId) : controleurId;
+            const controleurRegion = selectedOpt ? normaliserRegion(selectedOpt.dataset.region || '') : '';
 
-            if (prev && Array.from(sel.options).some(o => o.value === prev)) {
-                sel.value = prev;
-            }
-            onPlanFvPeriodeChange();
-        }
-
-        function onPlanFvPeriodeChange() {
-            const sel = document.getElementById('planFvPeriodeSelect');
-            const customRow = document.getElementById('planFvCustomDatesRow');
-            const dDeb = document.getElementById('planFvDateDebutCustom');
-            const dFin = document.getElementById('planFvDateFinCustom');
-            if (!sel || !customRow) return;
-
-            if (sel.value === 'PERSONNALISEE') {
-                customRow.style.display = 'grid';
-                const today = new Date().toISOString().split('T')[0];
-                if (dDeb && !dDeb.value) dDeb.value = today;
-                if (dFin && !dFin.value) dFin.value = today;
-            } else {
-                customRow.style.display = 'none';
-            }
-        }
-
-        function lirePeriodePlanFV() {
-            const sel = document.getElementById('planFvPeriodeSelect');
-            const code = sel ? sel.value : '';
-            if (!code) return null;
-            if (code === 'PERSONNALISEE') {
-                const dateDebut = document.getElementById('planFvDateDebutCustom')?.value || '';
-                const dateFin = document.getElementById('planFvDateFinCustom')?.value || '';
-                if (!dateDebut || !dateFin) return null;
-                return {
-                    periodeCode: 'PERSONNALISEE',
-                    periodeLabel: `${formatDateToJJMMAAAA(dateDebut)} → ${formatDateToJJMMAAAA(dateFin)}`,
-                    dateDebut,
-                    dateFin
-                };
-            }
-            const found = PERIODES_VERIF_FV.find(p => p.code === code);
-            if (!found) return null;
             return {
-                periodeCode: found.code,
-                periodeLabel: found.label,
-                dateDebut: found.dateDebut,
-                dateFin: found.dateFin
+                site,
+                centre: site,
+                entite: site,
+                region,
+                controleurId,
+                controleurFonction,
+                controleurRegion,
+                isInterregional: Boolean(controleurRegion && region && controleurRegion !== region),
+                dateDebut,
+                dateFin,
+                periodeLabel: (dateDebut && dateFin) ? `${formatDateToJJMMAAAA(dateDebut)} → ${formatDateToJJMMAAAA(dateFin)}` : ''
             };
         }
+
+        function ajouterAffectationLotFV() {
+            if (!isCurrentUserSiege()) return;
+            const aff = lireAffectationFormFV();
+            if (!aff.site || !aff.region || !aff.controleurId || !aff.dateDebut || !aff.dateFin) {
+                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté, la Date début et la Date fin de vérification.");
+                return;
+            }
+            if (aff.dateFin < aff.dateDebut) {
+                alert("La date de fin de vérification doit être postérieure ou égale à la date de début.");
+                return;
+            }
+
+            lotAffectationsFV.push({
+                idAffectation: 'AFF-FV-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                ...aff
+            });
+
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            const ctrlSelect = document.getElementById('planFvControleurSelect');
+            if (siteSelect) siteSelect.value = '';
+            onPlanFvCentreChange();
+            if (ctrlSelect) ctrlSelect.value = '';
+
+            renderLotAffectationsFV();
+        }
+
+        function supprimerAffectationLotFV(idx) {
+            lotAffectationsFV.splice(idx, 1);
+            renderLotAffectationsFV();
+        }
+
+        function renderLotAffectationsFV() {
+            const wrap = document.getElementById('fv-lot-table-wrap');
+            const tbody = document.getElementById('fv-lot-tbody');
+            if (!wrap || !tbody) return;
+
+            if (lotAffectationsFV.length === 0) {
+                wrap.style.display = 'none';
+                tbody.innerHTML = '';
+                return;
+            }
+
+            wrap.style.display = 'block';
+            tbody.innerHTML = lotAffectationsFV.map((a, idx) => `
+                <tr>
+                    <td><strong>${escapeHtml(a.site)}</strong></td>
+                    <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region)}</span></td>
+                    <td>
+                        <span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId)}</span>
+                        <small style="color:var(--text-muted);">${escapeHtml(a.controleurFonction || '')}</small>
+                        ${a.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
+                    </td>
+                    <td><strong>${formatDateToJJMMAAAA(a.dateDebut)}</strong></td>
+                    <td><strong>${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
+                    <td style="text-align:center;">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="supprimerAffectationLotFV(${idx})" title="Retirer"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getCampagnesFV() {
+            const db = lireDBSecurisee();
+            return (db.campagnesPlanification || [])
+                .filter(estCampagneFV)
+                .slice()
+                .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+        }
+
+        function getCampagneFVById(idCampagne) {
+            return getCampagnesFV().find(c => c.idCampagne === idCampagne) || null;
+        }
+
+        async function sauvegarderCampagneFV(campagne) {
+            campagne.updatedAt = new Date().toISOString();
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerCampagnePlanification === 'function') {
+                await FCIDatabase.enregistrerCampagnePlanification(campagne);
+            } else {
+                const db = lireDBSecurisee();
+                db.campagnesPlanification = Array.isArray(db.campagnesPlanification) ? db.campagnesPlanification : [];
+                const idx = db.campagnesPlanification.findIndex(c => c.idCampagne === campagne.idCampagne);
+                if (idx !== -1) db.campagnesPlanification[idx] = campagne;
+                else db.campagnesPlanification.push(campagne);
+                sauvegarderDBSecurisee(db);
+            }
+        }
+
+        async function soumettrePlanificationFVValidation() {
+            if (!isCurrentUserSiege()) return;
+
+            // Si l'utilisateur a rempli la ligne courante sans cliquer "Ajouter", l'ajouter automatiquement
+            const cur = lireAffectationFormFV();
+            if (cur.site && cur.controleurId && cur.dateDebut && cur.dateFin) {
+                if (cur.dateFin < cur.dateDebut) {
+                    alert("La date de fin de vérification doit être postérieure ou égale à la date de début.");
+                    return;
+                }
+                const dejaPresent = lotAffectationsFV.some(a =>
+                    a.site === cur.site &&
+                    a.controleurId === cur.controleurId &&
+                    a.dateDebut === cur.dateDebut &&
+                    a.dateFin === cur.dateFin
+                );
+                if (!dejaPresent) {
+                    lotAffectationsFV.push({
+                        idAffectation: 'AFF-FV-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                        ...cur
+                    });
+                }
+            }
+
+            if (lotAffectationsFV.length === 0) {
+                alert("Veuillez renseigner au moins une affectation (Centre ciblé, Contrôleur affecté, Date début et Date fin) avant de soumettre pour validation.");
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+            const idCampagne = 'CAMP-FV-' + Date.now();
+            const first = lotAffectationsFV[0];
+            const titreAuto = `Vérification Encaisses — ${lotAffectationsFV.length} affectation(s) (${formatDateToJJMMAAAA(first.dateDebut)} → ${formatDateToJJMMAAAA(first.dateFin)})`;
+
+            const campagne = {
+                idCampagne,
+                sourceFeuille: 'FV',
+                typeControle: 'Vérification',
+                titre: titreAuto,
+                statutWorkflow: 'SOUMISE',
+                soumisParId: u ? u.username : 'chef service-001',
+                soumisParFonction: u ? (u.fonction || u.username) : 'Chef de service',
+                soumisParRole: u ? u.role : 'CHEF_SERVICE',
+                dateSoumission: now,
+                valideParDirecteur: false,
+                valideParId: '',
+                valideParFonction: '',
+                dateValidation: '',
+                notifieSiege: false,
+                dateNotification: '',
+                diffuseParId: '',
+                dateDiffusion: '',
+                modifieeParDirecteur: false,
+                affectations: JSON.parse(JSON.stringify(lotAffectationsFV)),
+                historique: [
+                    {
+                        date: now,
+                        auteurId: u ? u.username : 'siege',
+                        auteurFonction: u ? (u.fonction || u.username) : 'Siège',
+                        action: 'SOUMISSION_FV',
+                        details: `Proposition de vérification soumise pour validation au Directeur (${lotAffectationsFV.length} affectation(s) : Site, Région, Contrôleur, Période).`
+                    }
+                ],
+                createdAt: now,
+                updatedAt: now
+            };
+
+            await sauvegarderCampagneFV(campagne);
+
+            lotAffectationsFV = [];
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            const ctrlSelect = document.getElementById('planFvControleurSelect');
+            if (siteSelect) siteSelect.value = '';
+            onPlanFvCentreChange();
+            if (ctrlSelect) ctrlSelect.value = '';
+            renderLotAffectationsFV();
+
+            refreshPlanificationFVAll();
+            alert("Proposition de vérification soumise pour validation au Directeur (directeur-001). Les contrôleurs ne verront ces missions qu'après validation et diffusion à l'Étape 2.");
+        }
+
+        function toggleFvPanel(key) {
+            fvExpandedPanels[key] = !fvExpandedPanels[key];
+            renderDirecteurFVSection();
+            renderStep1PendingFV();
+            renderStep2DiffusionFV();
+        }
+
+        function buildHistoryHTMLFV(camp) {
+            const hist = Array.isArray(camp.historique) ? camp.historique : [];
+            if (hist.length === 0) return '<div class="fv-history-box">Aucun historique enregistré.</div>';
+            return `
+                <div class="fv-history-box">
+                    <div style="font-weight:800; color:var(--primary-blue); margin-bottom:4px;"><i class="fa-solid fa-clock-rotate-left"></i> Historique &amp; traçabilité</div>
+                    ${hist.map(h => `
+                        <div class="fv-history-row">
+                            <span style="color:#64748B; font-weight:700;">${formatDateHeureFV(h.date)}</span>
+                            <span style="color:var(--primary-blue); font-weight:800;">${escapeHtml(h.auteurFonction || h.auteurId || '')}</span>
+                            <span>${escapeHtml(h.details || h.action || '')}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- NOTIFICATIONS SIÈGE FV (PARAGRAPHE + TABLEAU DE PLANIFICATION COMPLET) ---
+
+        function renderSiegeNotificationsBannerFV() {
+            const container = document.getElementById('fv-siege-notifications-banner');
+            if (!container) return;
+
+            if (!isCurrentUserSiege()) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const myId = u ? String(u.username || '').toLowerCase() : '';
+            const db = lireDBSecurisee();
+            const allNotifs = (db.notifications || [])
+                .filter(estNotificationFV)
+                .slice()
+                .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+
+            const unreadNotifs = allNotifs.filter(n => !(Array.isArray(n.lusPar) && n.lusPar.map(x => String(x).toLowerCase()).includes(myId)));
+            const visibleNotifs = fvShowReadNotifications ? allNotifs : unreadNotifs;
+
+            if (allNotifs.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            if (visibleNotifs.length === 0) {
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleShowReadNotifsFV()">
+                            <i class="fa-regular fa-bell"></i> Afficher les notifications Vérification lues (${allNotifs.length})
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const campagnes = db.campagnesPlanification || [];
+
+            container.innerHTML = `
+                <div class="fv-notif-banner">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.86rem;">
+                            <i class="fa-solid fa-bell" style="color:#D97706;"></i> Notifications Siège — Planifications de Vérification validées
+                            <span class="fv-pill fv-pill-soumise" style="margin-left:6px;">${unreadNotifs.length} non lue(s)</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleShowReadNotifsFV()">
+                            ${fvShowReadNotifications ? 'Masquer les lues' : `Voir toutes (${allNotifs.length})`}
+                        </button>
+                    </div>
+                    ${visibleNotifs.map(n => {
+                        const isUnread = !(Array.isArray(n.lusPar) && n.lusPar.map(x => String(x).toLowerCase()).includes(myId));
+                        const campAssoc = campagnes.find(c => c.idCampagne === n.idCampagne) || null;
+                        const affs = (Array.isArray(n.affectations) && n.affectations.length > 0)
+                            ? n.affectations
+                            : (campAssoc && Array.isArray(campAssoc.affectations) ? campAssoc.affectations : []);
+                        const soumisPar = n.soumisParFonction || n.soumisParId || (campAssoc ? (campAssoc.soumisParFonction || campAssoc.soumisParId) : '');
+
+                        return `
+                            <div class="fv-notif-item ${isUnread ? 'unread' : ''}">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                                    <div style="flex:1; min-width:240px;">
+                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">
+                                            ${isUnread ? '<span class="fv-pill fv-pill-soumise" style="margin-right:6px;">Nouveau</span>' : ''}
+                                            ${escapeHtml(n.titre || 'Planification de vérification validée')}
+                                        </div>
+                                        <p style="font-size:0.78rem; color:#334155; margin-top:4px; line-height:1.45;">
+                                            ${escapeHtml(n.message || '')}
+                                        </p>
+                                        <div style="font-size:0.72rem; color:#64748B; margin-top:4px;">
+                                            Émis par <b>${escapeHtml(n.emetteurFonction || n.emetteurId || 'Directeur')}</b> · ${formatDateHeureFV(n.date)}
+                                            ${soumisPar ? ` · Initiée par <b>${escapeHtml(soumisPar)}</b>` : ''}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        ${isUnread
+                                            ? `<button type="button" class="btn btn-sm btn-secondary" onclick="marquerNotifSiegeFVLue('${escapeJsFV(n.idNotification)}')"><i class="fa-solid fa-check"></i> Marquer comme lue</button>`
+                                            : `<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-check-double"></i> Lue</span>`
+                                        }
+                                    </div>
+                                </div>
+                                ${affs.length > 0 ? `
+                                    <div style="margin-top:8px; overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFFFFF;">
+                                        <table class="plan-fv-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Centre ciblé</th>
+                                                    <th>Région</th>
+                                                    <th>Contrôleur affecté</th>
+                                                    <th>Période de vérification (Début → Fin)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${affs.map(a => `
+                                                    <tr>
+                                                        <td><strong>${escapeHtml(a.site || a.centre || a.entite || '--')}</strong></td>
+                                                        <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region || '--')}</span></td>
+                                                        <td>
+                                                            <span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId || '--')}</span>
+                                                            <small style="color:var(--text-muted);">${escapeHtml(a.controleurFonction || '')}</small>
+                                                            ${a.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
+                                                        </td>
+                                                        <td><strong>${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function toggleShowReadNotifsFV() {
+            fvShowReadNotifications = !fvShowReadNotifications;
+            renderSiegeNotificationsBannerFV();
+        }
+
+        function marquerNotifSiegeFVLue(idNotification) {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.marquerNotificationLue === 'function') {
+                FCIDatabase.marquerNotificationLue(idNotification);
+            } else {
+                const db = lireDBSecurisee();
+                const u = getCurrentAuthUser();
+                const uid = u ? u.username : '';
+                const n = (db.notifications || []).find(x => x.idNotification === idNotification);
+                if (n && uid) {
+                    if (!Array.isArray(n.lusPar)) n.lusPar = [];
+                    if (!n.lusPar.includes(uid)) n.lusPar.push(uid);
+                    sauvegarderDBSecurisee(db);
+                }
+            }
+            renderSiegeNotificationsBannerFV();
+        }
+
+        // --- ESPACE DIRECTEUR FV (directeur-001) : MODIFICATION INLINE, VALIDATION & NOTIFICATION ---
+
+        function renderDirecteurFVSection() {
+            const container = document.getElementById('fv-directeur-validation-section');
+            if (!container) return;
+
+            const isDir = estDirecteurFV();
+            const isAdm = estAdminFV();
+            if (!isDir && !isAdm) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const campagnes = getCampagnesFV();
+            if (!isDir && campagnes.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const soumises = campagnes.filter(c => c.statutWorkflow === 'SOUMISE');
+            const validees = campagnes.filter(c => c.statutWorkflow === 'VALIDEE');
+            const diffusees = campagnes.filter(c => c.statutWorkflow === 'DIFFUSEE');
+
+            container.innerHTML = `
+                <div class="fv-directeur-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #BBF7D0;">
+                        <span style="font-weight:800; color:#065F46; font-size:0.88rem;">
+                            <i class="fa-solid fa-user-tie"></i> Espace Directeur (directeur-001) — Validation &amp; Notification des Vérifications (FV)
+                        </span>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <span class="fv-pill fv-pill-soumise">${soumises.length} en attente</span>
+                            <span class="fv-pill fv-pill-validee">${validees.length} validée(s)</span>
+                            <span class="fv-pill fv-pill-diffusee">${diffusees.length} diffusée(s)</span>
+                        </div>
+                    </div>
+                    ${campagnes.length === 0 ? `
+                        <p style="font-size:0.8rem; color:var(--text-muted);">Aucune proposition de vérification transmise par les chefs de service pour le moment.</p>
+                    ` : campagnes.map(camp => {
+                        const st = camp.statutWorkflow || 'SOUMISE';
+                        const statusClass = st === 'SOUMISE' ? 'status-soumise' : (st === 'VALIDEE' ? 'status-validee' : 'status-diffusee');
+                        const statusPill = st === 'SOUMISE'
+                            ? '<span class="fv-pill fv-pill-soumise"><i class="fa-regular fa-clock"></i> En attente de validation</span>'
+                            : (st === 'VALIDEE'
+                                ? '<span class="fv-pill fv-pill-validee"><i class="fa-solid fa-circle-check"></i> Validée — Prête à diffuser</span>'
+                                : '<span class="fv-pill fv-pill-diffusee"><i class="fa-solid fa-paper-plane"></i> Diffusée aux contrôleurs</span>');
+                        const canEdit = isDir && (st === 'SOUMISE' || st === 'VALIDEE');
+                        const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+                        const histKey = 'fv_dir_hist_' + camp.idCampagne;
+
+                        return `
+                            <div class="fv-campaign-card ${statusClass}" id="fv-dir-camp-${escapeHtml(camp.idCampagne)}">
+                                <div class="fv-campaign-header">
+                                    <div>
+                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.88rem;">
+                                            ${escapeHtml(camp.titre || camp.idCampagne)}
+                                        </div>
+                                        <div style="font-size:0.75rem; color:#475569; margin-top:3px;">
+                                            Proposée par <b>${escapeHtml(camp.soumisParFonction || '')} (${escapeHtml(camp.soumisParId || '')})</b> le ${formatDateHeureFV(camp.dateSoumission || camp.createdAt)}
+                                            · Données validées : <b>Site, Région, Contrôleur, Période</b>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                        ${statusPill}
+                                        ${camp.notifieSiege
+                                            ? `<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-bell"></i> Collaborateurs Siège notifiés</span>`
+                                            : (st === 'VALIDEE' ? '<span class="fv-pill fv-pill-soumise"><i class="fa-regular fa-bell"></i> Notification non envoyée</span>' : '')
+                                        }
+                                        ${camp.modifieeParDirecteur ? '<span class="fv-pill fv-pill-interreg"><i class="fa-solid fa-pen"></i> Ajustée par le Directeur</span>' : ''}
+                                    </div>
+                                </div>
+
+                                <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFFFFF;">
+                                    <table class="plan-fv-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width:25%;">Centre ciblé</th>
+                                                <th style="width:12%;">Région (auto)</th>
+                                                <th style="width:27%;">Contrôleur affecté</th>
+                                                <th style="width:14%;">Date début</th>
+                                                <th style="width:14%;">Date fin</th>
+                                                ${canEdit ? '<th style="width:8%; text-align:center;">Action</th>' : ''}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${affs.map((aff, idx) => {
+                                                if (!canEdit) {
+                                                    return `
+                                                        <tr>
+                                                            <td><strong>${escapeHtml(aff.site || aff.centre || '--')}</strong></td>
+                                                            <td><span class="fv-pill fv-pill-reg">${escapeHtml(aff.region || '--')}</span></td>
+                                                            <td>
+                                                                <span class="fv-pill fv-pill-ctrl">${escapeHtml(aff.controleurId || '--')}</span>
+                                                                <small style="color:var(--text-muted);">${escapeHtml(aff.controleurFonction || '')}</small>
+                                                                ${aff.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
+                                                            </td>
+                                                            <td><strong>${formatDateToJJMMAAAA(aff.dateDebut)}</strong></td>
+                                                            <td><strong>${formatDateToJJMMAAAA(aff.dateFin)}</strong></td>
+                                                        </tr>
+                                                    `;
+                                                }
+                                                return `
+                                                    <tr>
+                                                        <td>
+                                                            <select class="fv-inline-ctrl" onchange="onDirFvCentreInlineChange('${escapeJsFV(camp.idCampagne)}', ${idx}, this.value)">
+                                                                ${buildCentresOptionsHTMLFV(aff.site || aff.centre || '')}
+                                                            </select>
+                                                        </td>
+                                                        <td><span class="fv-pill fv-pill-reg">${escapeHtml(aff.region || '--')}</span></td>
+                                                        <td>
+                                                            <select class="fv-inline-ctrl" onchange="onDirFvCtrlInlineChange('${escapeJsFV(camp.idCampagne)}', ${idx}, this.value)">
+                                                                ${buildControleursOptionsHTMLFV(aff.controleurId || '')}
+                                                            </select>
+                                                            ${aff.isInterregional ? '<div style="margin-top:3px;"><span class="fv-pill fv-pill-interreg">Interrégional</span></div>' : ''}
+                                                        </td>
+                                                        <td>
+                                                            <input type="date" class="fv-inline-ctrl" value="${escapeHtml(aff.dateDebut || '')}" onchange="onDirFvDateInlineChange('${escapeJsFV(camp.idCampagne)}', ${idx}, 'dateDebut', this.value)">
+                                                        </td>
+                                                        <td>
+                                                            <input type="date" class="fv-inline-ctrl" value="${escapeHtml(aff.dateFin || '')}" onchange="onDirFvDateInlineChange('${escapeJsFV(camp.idCampagne)}', ${idx}, 'dateFin', this.value)">
+                                                        </td>
+                                                        <td style="text-align:center;">
+                                                            <button type="button" class="btn btn-sm btn-danger" onclick="supprimerAffectationDirFV('${escapeJsFV(camp.idCampagne)}', ${idx})" ${affs.length <= 1 ? 'disabled title="Au moins une affectation requise"' : 'title="Supprimer cette ligne"'}>
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                        ${canEdit ? `
+                                            <button type="button" class="btn btn-sm btn-suivi" onclick="ajouterLigneDirFV('${escapeJsFV(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-plus"></i> Ajouter une affectation
+                                            </button>
+                                        ` : ''}
+                                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleFvPanel('${escapeJsFV(histKey)}')">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> ${fvExpandedPanels[histKey] ? 'Masquer historique' : `Historique (${(camp.historique || []).length})`}
+                                        </button>
+                                    </div>
+                                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                        ${isDir && st === 'SOUMISE' ? `
+                                            <button type="button" class="btn btn-sm btn-validate-fv" id="btnValiderCampFV-${escapeHtml(camp.idCampagne)}" onclick="validerCampagneDirFV('${escapeJsFV(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-circle-check"></i> Valider la planification
+                                            </button>
+                                        ` : ''}
+                                        ${isDir && (st === 'VALIDEE' || st === 'DIFFUSEE') ? `
+                                            <button type="button" class="btn btn-sm btn-notify-fv" id="btnNotifierCampFV-${escapeHtml(camp.idCampagne)}" onclick="notifierCollaborateursSiegeFV('${escapeJsFV(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-bell"></i> ${camp.notifieSiege ? 'Re-notifier les collaborateurs' : 'Notifier les collaborateurs'}
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+
+                                ${fvExpandedPanels[histKey] ? buildHistoryHTMLFV(camp) : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        async function onDirFvCentreInlineChange(idCampagne, idx, newCentre) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp || !camp.affectations[idx]) return;
+            const aff = camp.affectations[idx];
+            const oldCentre = aff.site || aff.centre || '';
+            const newRegion = trouverRegionPourCentreFV(newCentre);
+            aff.site = newCentre;
+            aff.centre = newCentre;
+            aff.entite = newCentre;
+            aff.region = newRegion;
+            aff.isInterregional = Boolean(aff.controleurRegion && newRegion && aff.controleurRegion !== newRegion);
+            camp.modifieeParDirecteur = true;
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIF_CENTRE_FV',
+                details: `Affectation #${idx + 1} — Centre modifié : "${oldCentre}" → "${newCentre}" (Région : ${newRegion}).`
+            });
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function onDirFvCtrlInlineChange(idCampagne, idx, newCtrlId) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp || !camp.affectations[idx]) return;
+            const aff = camp.affectations[idx];
+            const oldCtrl = aff.controleurId || '';
+            const found = getAllUsersAffectablesFV().find(u => u.username.toLowerCase() === String(newCtrlId).toLowerCase());
+            aff.controleurId = found ? found.username : newCtrlId;
+            aff.controleurFonction = found ? found.fonction : newCtrlId;
+            aff.controleurRegion = found ? normaliserRegion(found.region) : '';
+            aff.isInterregional = Boolean(aff.controleurRegion && aff.region && aff.controleurRegion !== aff.region);
+            camp.modifieeParDirecteur = true;
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIF_CONTROLEUR_FV',
+                details: `Affectation #${idx + 1} (${aff.site || '--'}) — Contrôleur modifié : "${oldCtrl}" → "${aff.controleurId}".`
+            });
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function onDirFvDateInlineChange(idCampagne, idx, field, newVal) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp || !camp.affectations[idx] || !newVal) return;
+            const aff = camp.affectations[idx];
+            const oldStr = `${formatDateToJJMMAAAA(aff.dateDebut)} → ${formatDateToJJMMAAAA(aff.dateFin)}`;
+            aff[field] = newVal;
+            if (aff.dateDebut && aff.dateFin && aff.dateFin < aff.dateDebut) {
+                aff.dateFin = aff.dateDebut;
+            }
+            aff.periodeLabel = `${formatDateToJJMMAAAA(aff.dateDebut)} → ${formatDateToJJMMAAAA(aff.dateFin)}`;
+            camp.modifieeParDirecteur = true;
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIF_PERIODE_FV',
+                details: `Affectation #${idx + 1} (${aff.site || '--'}) — Période modifiée : "${oldStr}" → "${aff.periodeLabel}".`
+            });
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function ajouterLigneDirFV(idCampagne) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp) return;
+            const today = new Date().toISOString().split('T')[0];
+            const ref = (camp.affectations && camp.affectations[0]) || {};
+            camp.affectations = Array.isArray(camp.affectations) ? camp.affectations : [];
+            camp.affectations.push({
+                idAffectation: 'AFF-FV-' + Date.now(),
+                site: '',
+                centre: '',
+                entite: '',
+                region: '',
+                controleurId: '',
+                controleurFonction: '',
+                controleurRegion: '',
+                isInterregional: false,
+                dateDebut: ref.dateDebut || today,
+                dateFin: ref.dateFin || today,
+                periodeLabel: `${formatDateToJJMMAAAA(ref.dateDebut || today)} → ${formatDateToJJMMAAAA(ref.dateFin || today)}`
+            });
+            camp.modifieeParDirecteur = true;
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function supprimerAffectationDirFV(idCampagne, idx) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp || !Array.isArray(camp.affectations) || camp.affectations.length <= 1) return;
+            const removed = camp.affectations.splice(idx, 1)[0];
+            camp.modifieeParDirecteur = true;
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'SUPPR_AFFECTATION_FV',
+                details: `Affectation supprimée : ${removed.site || '--'} (${removed.controleurId || '--'}).`
+            });
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function validerCampagneDirFV(idCampagne) {
+            if (!estDirecteurFV()) return;
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp) return;
+
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            if (affs.length === 0) {
+                alert("Impossible de valider une planification vide.");
+                return;
+            }
+            for (let i = 0; i < affs.length; i++) {
+                const a = affs[i];
+                if (!a.site || !a.region || !a.controleurId || !a.dateDebut || !a.dateFin) {
+                    alert(`Veuillez compléter tous les champs (Site, Région, Contrôleur, Date début, Date fin) sur la ligne #${i + 1}.`);
+                    return;
+                }
+                if (a.dateFin < a.dateDebut) {
+                    alert(`La date de fin doit être postérieure ou égale à la date de début sur la ligne #${i + 1}.`);
+                    return;
+                }
+                a.periodeLabel = `${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}`;
+            }
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+            camp.statutWorkflow = 'VALIDEE';
+            camp.valideParDirecteur = true;
+            camp.valideParId = u ? u.username : 'directeur-001';
+            camp.valideParFonction = u ? (u.fonction || 'Directeur') : 'Directeur';
+            camp.dateValidation = now;
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: now,
+                auteurId: camp.valideParId,
+                auteurFonction: camp.valideParFonction,
+                action: 'VALIDATION_DIRECTEUR_FV',
+                details: `Planification de vérification validée par ${camp.valideParId} (${affs.length} affectation(s)). Version officielle retournée au Chef de service pour diffusion.`
+            });
+
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        async function notifierCollaborateursSiegeFV(idCampagne) {
+            if (!estDirecteurFV()) return;
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp) return;
+            if (camp.statutWorkflow !== 'VALIDEE' && camp.statutWorkflow !== 'DIFFUSEE') {
+                alert("Veuillez d'abord valider la planification avant de notifier les collaborateurs.");
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            const resumeCentres = affs.map(a => `${a.site || a.centre} (${a.region} — ${a.controleurId}, du ${formatDateToJJMMAAAA(a.dateDebut)} au ${formatDateToJJMMAAAA(a.dateFin)})`).join(' ; ');
+
+            const notif = {
+                idNotification: 'NOTIF-FV-' + Date.now(),
+                sourceFeuille: 'FV',
+                idCampagne: camp.idCampagne,
+                type: 'VALIDATION_PLANIFICATION_FV',
+                titre: `Vérification validée — ${camp.titre || camp.idCampagne}`,
+                message: `La planification de vérification des encaisses initiée par ${camp.soumisParFonction || camp.soumisParId} a été validée par le Directeur (${u ? u.username : 'directeur-001'}). ${affs.length} mission(s) validée(s) : ${resumeCentres}. Consultez le tableau récapitulatif ci-dessous ; la diffusion aux contrôleurs s'effectue depuis l'Étape 2.`,
+                soumisParId: camp.soumisParId || '',
+                soumisParFonction: camp.soumisParFonction || '',
+                affectations: JSON.parse(JSON.stringify(affs)),
+                emetteurId: u ? u.username : 'directeur-001',
+                emetteurFonction: u ? (u.fonction || 'Directeur') : 'Directeur',
+                destinataires: 'SIEGE',
+                date: now,
+                lusPar: []
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.ajouterNotification === 'function') {
+                await FCIDatabase.ajouterNotification(notif);
+            } else {
+                const db = lireDBSecurisee();
+                db.notifications = Array.isArray(db.notifications) ? db.notifications : [];
+                db.notifications.push(notif);
+                sauvegarderDBSecurisee(db);
+            }
+
+            camp.notifieSiege = true;
+            camp.dateNotification = now;
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: now,
+                auteurId: notif.emetteurId,
+                auteurFonction: notif.emetteurFonction,
+                action: 'NOTIFICATION_SIEGE_FV',
+                details: "Notification transmise à l'ensemble des collaborateurs Siège (chefs de service et administrateur) avec le tableau complet de planification."
+            });
+
+            await sauvegarderCampagneFV(camp);
+            refreshPlanificationFVAll();
+        }
+
+        // --- ÉTAPE 1 : PROPOSITIONS EN ATTENTE ---
+
+        function renderStep1PendingFV() {
+            const wrap = document.getElementById('fv-step1-pending-list');
+            if (!wrap) return;
+            const soumises = getCampagnesFV().filter(c => c.statutWorkflow === 'SOUMISE');
+            if (soumises.length === 0) {
+                wrap.innerHTML = '';
+                return;
+            }
+            wrap.innerHTML = `
+                <div style="font-size:0.74rem; font-weight:800; color:#92400E; text-transform:uppercase; margin-bottom:4px;">
+                    <i class="fa-regular fa-clock"></i> Propositions FV en attente de validation par directeur-001 (${soumises.length})
+                </div>
+                ${soumises.map(c => `
+                    <div class="fv-campaign-card status-soumise">
+                        <div class="fv-campaign-header">
+                            <div>
+                                <strong style="color:var(--primary-blue); font-size:0.84rem;">${escapeHtml(c.titre)}</strong>
+                                <div style="font-size:0.73rem; color:var(--text-muted); margin-top:2px;">
+                                    Soumise par <b>${escapeHtml(c.soumisParFonction || c.soumisParId)}</b> le ${formatDateHeureFV(c.dateSoumission)}
+                                </div>
+                            </div>
+                            <span class="fv-pill fv-pill-soumise"><i class="fa-regular fa-clock"></i> En attente Directeur</span>
+                        </div>
+                        <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFF;">
+                            <table class="plan-fv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Centre ciblé</th>
+                                        <th>Région</th>
+                                        <th>Contrôleur affecté</th>
+                                        <th>Période (Début → Fin)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(c.affectations || []).map(a => `
+                                        <tr>
+                                            <td><strong>${escapeHtml(a.site || a.centre)}</strong></td>
+                                            <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region)}</span></td>
+                                            <td><span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId)}</span></td>
+                                            <td><strong>${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // --- ÉTAPE 2 : DIFFUSION DES PLANIFICATIONS VALIDÉES ---
+
+        function renderStep2DiffusionFV() {
+            const wrap = document.getElementById('fv-step2-list');
+            const badge = document.getElementById('fv-step2-badge');
+            if (!wrap) return;
+
+            const campagnes = getCampagnesFV().filter(c => c.statutWorkflow === 'VALIDEE' || c.statutWorkflow === 'DIFFUSEE');
+            const nbPretes = campagnes.filter(c => c.statutWorkflow === 'VALIDEE').length;
+            if (badge) badge.innerText = String(nbPretes);
+
+            if (campagnes.length === 0) {
+                wrap.innerHTML = `
+                    <div style="text-align:center; padding:18px; color:var(--text-muted); font-size:0.8rem;">
+                        <i class="fa-solid fa-inbox" style="font-size:1.4rem; display:block; margin-bottom:6px; color:#94A3B8;"></i>
+                        Aucune planification de vérification validée disponible pour diffusion.<br>
+                        Soumettez une proposition à l'Étape 1 ; dès validation par <b>directeur-001</b>, elle apparaîtra ici prête à être diffusée.
+                    </div>
+                `;
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            wrap.innerHTML = campagnes.map(camp => {
+                const isValidee = camp.statutWorkflow === 'VALIDEE';
+                const estAuteurOuDir = Boolean(
+                    u && (
+                        estAdminFV() ||
+                        estDirecteurFV() ||
+                        String(u.username || '').toLowerCase() === String(camp.soumisParId || '').toLowerCase()
+                    )
+                );
+                const histKey = 'fv_s2_hist_' + camp.idCampagne;
+
+                return `
+                    <div class="fv-campaign-card ${isValidee ? 'status-validee' : 'status-diffusee'}">
+                        <div class="fv-campaign-header">
+                            <div>
+                                <div style="font-weight:800; color:var(--primary-blue); font-size:0.88rem;">${escapeHtml(camp.titre)}</div>
+                                <div style="font-size:0.74rem; color:#475569; margin-top:3px;">
+                                    Chef de service : <b>${escapeHtml(camp.soumisParFonction || camp.soumisParId)}</b>
+                                    · Validée par <b>${escapeHtml(camp.valideParId || 'directeur-001')}</b> le ${formatDateHeureFV(camp.dateValidation)}
+                                    ${camp.dateDiffusion ? ` · Diffusée le <b>${formatDateHeureFV(camp.dateDiffusion)}</b> par ${escapeHtml(camp.diffuseParId || '')}` : ''}
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                ${isValidee
+                                    ? '<span class="fv-pill fv-pill-validee"><i class="fa-solid fa-certificate"></i> Validée — Prête à diffuser</span>'
+                                    : '<span class="fv-pill fv-pill-diffusee"><i class="fa-solid fa-check-double"></i> Diffusée aux contrôleurs</span>'
+                                }
+                                ${camp.modifieeParDirecteur ? '<span class="fv-pill fv-pill-interreg"><i class="fa-solid fa-pen"></i> Ajustée par le Directeur</span>' : ''}
+                                ${camp.notifieSiege ? '<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-bell"></i> Siège notifié</span>' : ''}
+                            </div>
+                        </div>
+
+                        <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFFFFF;">
+                            <table class="plan-fv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Centre ciblé</th>
+                                        <th>Région</th>
+                                        <th>Contrôleur affecté (version validée)</th>
+                                        <th>Période de vérification (Début → Fin)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(camp.affectations || []).map(a => `
+                                        <tr>
+                                            <td><strong>${escapeHtml(a.site || a.centre)}</strong></td>
+                                            <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region)}</span></td>
+                                            <td>
+                                                <span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId)}</span>
+                                                <small style="color:var(--text-muted);">${escapeHtml(a.controleurFonction || '')}</small>
+                                                ${a.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
+                                            </td>
+                                            <td><strong>${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:10px;">
+                            <button type="button" class="btn btn-sm btn-secondary" onclick="toggleFvPanel('${escapeJsFV(histKey)}')">
+                                <i class="fa-solid fa-clock-rotate-left"></i> ${fvExpandedPanels[histKey] ? 'Masquer historique' : `Historique (${(camp.historique || []).length})`}
+                            </button>
+                            <div>
+                                ${isValidee ? (
+                                    estAuteurOuDir
+                                        ? `<button type="button" class="btn btn-primary" id="btnDiffCampFV-${escapeHtml(camp.idCampagne)}" onclick="diffuserCampagneValideeFV('${escapeJsFV(camp.idCampagne)}')">
+                                            <i class="fa-solid fa-paper-plane"></i> Diffuser les missions
+                                           </button>`
+                                        : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Diffusion réservée à ${escapeHtml(camp.soumisParId)}</span>`
+                                ) : `
+                                    <span class="fv-pill fv-pill-notif"><i class="fa-solid fa-circle-check"></i> Transmise aux ${(camp.affectations || []).length} contrôleur(s)</span>
+                                `}
+                            </div>
+                        </div>
+
+                        ${fvExpandedPanels[histKey] ? buildHistoryHTMLFV(camp) : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function diffuserCampagneValideeFV(idCampagne) {
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp) return;
+            if (camp.statutWorkflow !== 'VALIDEE') {
+                alert("Seule une planification validée par le Directeur peut être diffusée.");
+                return;
+            }
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            if (affs.length === 0) return;
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+
+            for (let i = 0; i < affs.length; i++) {
+                const aff = affs[i];
+                const idPlanification = `PLAN-FV-${Date.now()}-${i + 1}`;
+                const periodeLabel = `${formatDateToJJMMAAAA(aff.dateDebut)} → ${formatDateToJJMMAAAA(aff.dateFin)}`;
+                const planRecord = {
+                    idPlanification,
+                    idCampagne: camp.idCampagne,
+                    sourceFeuille: 'FV',
+                    natureMission: 'Vérification',
+                    planifiePar: 'SIEGE',
+                    espaceSaisie: 'SIEGE',
+                    statutWorkflow: 'DIFFUSEE',
+                    valideParDirecteur: true,
+                    valideParId: camp.valideParId || 'directeur-001',
+                    dateValidation: camp.dateValidation || now,
+                    diffuseParId: u ? u.username : camp.soumisParId,
+                    dateDiffusion: now,
+                    creeParId: camp.soumisParId || (u ? u.username : 'siege'),
+                    creeParRole: camp.soumisParRole || 'CHEF_SERVICE',
+                    auteurFonction: camp.soumisParFonction || 'Chef de service',
+                    controleurId: aff.controleurId,
+                    controleur: aff.controleurId,
+                    controleurFonction: aff.controleurFonction || aff.controleurId,
+                    controleurRegion: aff.controleurRegion || '',
+                    controleursAssignes: [aff.controleurId],
+                    region: normaliserRegion(aff.region),
+                    site: aff.site || aff.centre,
+                    centre: aff.site || aff.centre,
+                    entite: aff.site || aff.centre,
+                    date: aff.dateDebut,
+                    datePrevue: aff.dateDebut,
+                    dateDebut: aff.dateDebut,
+                    dateFin: aff.dateFin,
+                    periodeCode: 'DATES_PRECISES',
+                    periodeLabel,
+                    referentiel: 'Sélection libre par le contrôleur (Encaisses)',
+                    statutExecution: 'EN_COURS',
+                    statutAvancement: 'En cours',
+                    createdAt: now
+                };
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
+                    await FCIDatabase.enregistrerPlanification(planRecord);
+                } else {
+                    const db = lireDBSecurisee();
+                    db.planifications = [...(db.planifications || []), planRecord];
+                    sauvegarderDBSecurisee(db);
+                }
+            }
+
+            camp.statutWorkflow = 'DIFFUSEE';
+            camp.diffuseParId = u ? u.username : camp.soumisParId;
+            camp.dateDiffusion = now;
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: now,
+                auteurId: camp.diffuseParId,
+                auteurFonction: u ? (u.fonction || u.username) : 'Chef de service',
+                action: 'DIFFUSION_FV',
+                details: `${affs.length} mission(s) de vérification diffusée(s) officiellement aux contrôleurs affectés.`
+            });
+            await sauvegarderCampagneFV(camp);
+
+            refreshPlanificationFVAll();
+        }
+
+        function refreshPlanificationFVAll() {
+            if (isCurrentUserSiege()) {
+                renderSiegeNotificationsBannerFV();
+                renderDirecteurFVSection();
+                renderLotAffectationsFV();
+                renderStep1PendingFV();
+                renderStep2DiffusionFV();
+            }
+            renderPlanificationsFVTable();
+        }
+
+        // --- TABLEAU DE SUIVI DES VÉRIFICATIONS DIFFUSÉES (CONSERVÉ INTACT) ---
 
         function getPlanificationsFVVisibles() {
             const db = lireDBSecurisee();
@@ -1269,6 +2471,11 @@
                 if (!isFV) return false;
 
                 if (siege) return true;
+
+                // Les contrôleurs ne voient que les vérifications officiellement diffusées (ou plans historiques sans statutWorkflow)
+                if (p.statutWorkflow && String(p.statutWorkflow).toUpperCase() !== 'DIFFUSEE') {
+                    return false;
+                }
 
                 const cibleId = String(p.controleurId || '').toUpperCase().trim();
                 const assignes = Array.isArray(p.controleursAssignes)
@@ -1284,78 +2491,6 @@
                 return 'CLOTURE';
             }
             return 'EN_COURS';
-        }
-
-        async function creerPlanificationFV() {
-            if (!isCurrentUserSiege()) return;
-
-            const siteSelect = document.getElementById('planFvSiteSelect');
-            const regInput = document.getElementById('planFvRegionAuto');
-            const ctrlSelect = document.getElementById('planFvControleurSelect');
-            const periode = lirePeriodePlanFV();
-
-            const site = String(siteSelect?.value || '').trim();
-            const region = normaliserRegion(regInput?.value || trouverRegionPourCentreFV(site));
-            const controleurId = String(ctrlSelect?.value || '').trim();
-            const selectedOpt = ctrlSelect ? ctrlSelect.options[ctrlSelect.selectedIndex] : null;
-            const controleurFonction = selectedOpt ? (selectedOpt.dataset.fonction || controleurId) : controleurId;
-            const controleurHomeRegion = selectedOpt ? normaliserRegion(selectedOpt.dataset.region || '') : '';
-
-            if (!site || !region || !controleurId || !periode) {
-                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté et la Période de vérification.");
-                return;
-            }
-            if (periode.dateFin < periode.dateDebut) {
-                alert("La date de fin de période doit être postérieure ou égale à la date de début.");
-                return;
-            }
-
-            const u = getCurrentAuthUser();
-            const idPlanification = 'PLAN-FV-' + Date.now();
-            const planRecord = {
-                idPlanification,
-                sourceFeuille: 'FV',
-                natureMission: 'Vérification',
-                planifiePar: 'SIEGE',
-                espaceSaisie: 'SIEGE',
-                creeParId: u ? u.username : 'admin-siege',
-                creeParRole: u ? u.role : 'ADMIN',
-                auteurFonction: u ? u.fonction : 'Siège',
-                controleurId,
-                controleur: controleurId,
-                controleurFonction,
-                controleurRegion: controleurHomeRegion,
-                controleursAssignes: [controleurId],
-                region,
-                site,
-                centre: site,
-                entite: site,
-                date: periode.dateDebut,
-                datePrevue: periode.dateDebut,
-                dateDebut: periode.dateDebut,
-                dateFin: periode.dateFin,
-                periodeCode: periode.periodeCode,
-                periodeLabel: periode.periodeLabel,
-                referentiel: 'Sélection libre par le contrôleur (Encaisses)',
-                statutExecution: 'EN_COURS',
-                statutAvancement: 'En cours',
-                createdAt: new Date().toISOString()
-            };
-
-            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
-                await FCIDatabase.enregistrerPlanification(planRecord);
-            } else {
-                const db = lireDBSecurisee();
-                db.planifications = [...(db.planifications || []), planRecord];
-                sauvegarderDBSecurisee(db);
-            }
-
-            siteSelect.value = '';
-            onPlanFvCentreChange();
-            ctrlSelect.value = '';
-            document.getElementById('planFvPeriodeSelect').value = '';
-            onPlanFvPeriodeChange();
-            renderPlanificationsFVTable();
         }
 
         function renderPlanificationsFVTable() {
@@ -1376,7 +2511,7 @@
                 if (activePlanificationFVId) {
                     const activePlan = plans.find(p => p.idPlanification === activePlanificationFVId);
                     activeBanner.innerHTML = activePlan
-                        ? `<span class="date-bdd-pill"><i class="fa-solid fa-link"></i> Mission planifiée active : ${activePlan.site} (${activePlan.controleurId})</span>`
+                        ? `<span class="date-bdd-pill"><i class="fa-solid fa-link"></i> Mission planifiée active : ${escapeHtml(activePlan.site)} (${escapeHtml(activePlan.controleurId)})</span>`
                         : '';
                 } else {
                     activeBanner.innerHTML = '';
@@ -1384,7 +2519,7 @@
             }
 
             if (plans.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Aucune vérification planifiée attribuée.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:12px;">Aucune vérification diffusée pour le moment.</td></tr>`;
                 return;
             }
 
@@ -1398,12 +2533,12 @@
                 const isSelected = activePlanificationFVId === p.idPlanification;
                 const dDebAff = formatDateToJJMMAAAA(p.dateDebut || p.datePrevue || p.date || '');
                 const dFinAff = formatDateToJJMMAAAA(p.dateFin || '');
-                const periodeAff = p.periodeLabel
-                    ? `<strong>${p.periodeLabel}</strong>${dDebAff && dFinAff ? `<br><span style="font-size:0.7rem; color:var(--text-muted);">${dDebAff} → ${dFinAff}</span>` : ''}`
-                    : (dDebAff || '--');
+                const periodeAff = (dDebAff && dFinAff)
+                    ? `<strong>${dDebAff} → ${dFinAff}</strong>`
+                    : (p.periodeLabel ? `<strong>${escapeHtml(p.periodeLabel)}</strong>` : (dDebAff || '--'));
                 const ctrlLabel = p.controleurFonction && p.controleurFonction !== p.controleurId
-                    ? `<strong>${p.controleurId}</strong> <span style="color:var(--text-muted); font-size:0.72rem;">(${p.controleurFonction})</span>`
-                    : `<strong>${p.controleurId || p.controleur || '--'}</strong>`;
+                    ? `<strong>${escapeHtml(p.controleurId)}</strong> <span style="color:var(--text-muted); font-size:0.72rem;">(${escapeHtml(p.controleurFonction)})</span>`
+                    : `<strong>${escapeHtml(p.controleurId || p.controleur || '--')}</strong>`;
 
                 const nextStatut = etat === 'CLOTURE' ? 'EN_COURS' : 'CLOTURE';
                 const toggleBtnLabel = etat === 'CLOTURE' ? 'Remettre En cours' : 'Clôturer';
@@ -1412,19 +2547,19 @@
                 return `
                     <tr class="${isSelected ? 'plan-fv-row-active' : ''}">
                         <td>${ctrlLabel}</td>
-                        <td><strong>${normaliserRegion(p.region)}</strong></td>
-                        <td>${p.site || p.centre || '--'}</td>
+                        <td><strong>${escapeHtml(normaliserRegion(p.region))}</strong></td>
+                        <td>${escapeHtml(p.site || p.centre || '--')}</td>
                         <td>${periodeAff}</td>
                         <td><span style="font-size:0.72rem; color:#475569; font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Sélection par le contrôleur</span></td>
                         <td>${badgeEtat}</td>
                         <td style="display:flex; gap:5px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${p.idPlanification}')" title="Alimenter les informations fondamentales de la mission (Centre, Région, Contrôleur, Période)">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${escapeJsFV(p.idPlanification)}')" title="Alimenter les informations fondamentales de la mission (Centre, Région, Contrôleur, Période)">
                                 <i class="fa-solid fa-play"></i> Ouvrir
                             </button>
-                            <button type="button" class="btn btn-sm ${toggleBtnClass}" onclick="basculerStatutPlanificationFV('${p.idPlanification}', '${nextStatut}')">
+                            <button type="button" class="btn btn-sm ${toggleBtnClass}" onclick="basculerStatutPlanificationFV('${escapeJsFV(p.idPlanification)}', '${nextStatut}')">
                                 <i class="fa-solid fa-check-double"></i> ${toggleBtnLabel}
                             </button>
-                            ${siege ? `<button type="button" class="btn btn-sm btn-danger" onclick="supprimerPlanificationFV('${p.idPlanification}')" title="Supprimer cette planification"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                            ${siege ? `<button type="button" class="btn btn-sm btn-danger" onclick="supprimerPlanificationFV('${escapeJsFV(p.idPlanification)}')" title="Supprimer cette planification"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </td>
                     </tr>
                 `;
@@ -1464,7 +2599,9 @@
             renderPlanificationsFVTable();
             const statusEl = document.getElementById('searchEncaisseStatus');
             if (statusEl) {
-                const periodeTxt = plan.periodeLabel ? ` | Période : ${plan.periodeLabel}` : '';
+                const periodeTxt = (dateDebutISO && dateFinISO)
+                    ? ` | Période : ${formatDateToJJMMAAAA(dateDebutISO)} → ${formatDateToJJMMAAAA(dateFinISO)}`
+                    : (plan.periodeLabel ? ` | Période : ${plan.periodeLabel}` : '');
                 statusEl.innerText = `Informations fondamentales chargées — ${plan.controleurId} | ${regVal} | ${siteVal}${periodeTxt} (Sélectionnez Processus / Risque / Contrôle / PC ci-dessous)`;
             }
         }
@@ -1582,7 +2719,7 @@
         }
 
         function lireDBSecurisee() {
-            let db = { missions: [], constatsControle: [], constatsEncaisses: [], planifications: [] };
+            let db = { missions: [], constatsControle: [], constatsEncaisses: [], planifications: [], campagnesPlanification: [], notifications: [] };
             try {
                 if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.getDB === 'function') {
                     const loaded = FCIDatabase.getDB();
@@ -1607,6 +2744,8 @@
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
             if (!Array.isArray(db.planifications)) db.planifications = [];
+            if (!Array.isArray(db.campagnesPlanification)) db.campagnesPlanification = [];
+            if (!Array.isArray(db.notifications)) db.notifications = [];
             return db;
         }
 
@@ -1615,6 +2754,8 @@
             if (!Array.isArray(db.constatsControle)) db.constatsControle = [];
             if (!Array.isArray(db.constatsEncaisses)) db.constatsEncaisses = [];
             if (!Array.isArray(db.planifications)) db.planifications = [];
+            if (!Array.isArray(db.campagnesPlanification)) db.campagnesPlanification = [];
+            if (!Array.isArray(db.notifications)) db.notifications = [];
             if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.saveDB === 'function') {
                 return FCIDatabase.saveDB(db);
             }

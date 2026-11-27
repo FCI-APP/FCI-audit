@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - Planification de la Mission de Contrôle</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261127-planif2"></script>
+    <script src="fci-auth.js?v=20261127-planif3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -426,11 +426,7 @@
                         <span id="eligibilitySummaryBadge" class="pill pill-siege">Analyse couverture en cours...</span>
                     </div>
 
-                    <div class="form-grid" style="margin-bottom:14px;">
-                        <div class="form-group">
-                            <label for="wf-campagne-titre">Intitulé / Référence de la campagne</label>
-                            <input type="text" id="wf-campagne-titre" placeholder="Ex. Campagne Contrôle Permanent — T4 2026 (auto si vide)">
-                        </div>
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom:14px; align-items:end;">
                         <div class="form-group">
                             <label for="wf-type-controle">Type de contrôle *</label>
                             <select id="wf-type-controle">
@@ -446,7 +442,7 @@
                         </div>
                     </div>
 
-                    <div class="form-grid" style="grid-template-columns: 1.5fr 0.9fr 1.4fr 1.2fr; gap:14px; align-items:end;">
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px; align-items:end;">
                         <div class="form-group">
                             <label for="wf-centre-cible">Centre ciblé (non contrôlé cette année) *</label>
                             <select id="wf-centre-cible" onchange="onWfCentreCibleChange()">
@@ -463,34 +459,26 @@
                                 <option value="">-- Sélectionner un utilisateur --</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="wf-periode-controle">Période de contrôle *</label>
-                            <select id="wf-periode-controle" onchange="onWfPeriodeChange()">
-                                <option value="">-- Sélectionner une période --</option>
-                            </select>
-                        </div>
                     </div>
 
-                    <!-- DATES PERSONNALISÉES (AFFICHÉES SI PÉRIODE PERSONNALISÉE OU AJUSTEMENT) -->
-                    <div id="wf-custom-dates-row" class="form-grid" style="margin-top:12px; grid-template-columns: 1fr 1fr 1.5fr; display:none; align-items:end;">
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-top:12px; align-items:end;">
                         <div class="form-group">
-                            <label for="wf-date-debut">Date début de la période *</label>
+                            <label for="wf-date-debut">Date début de contrôle *</label>
                             <input type="date" id="wf-date-debut">
                         </div>
                         <div class="form-group">
-                            <label for="wf-date-fin">Date fin de la période *</label>
+                            <label for="wf-date-fin">Date fin de contrôle *</label>
                             <input type="date" id="wf-date-fin">
                         </div>
-                        <div class="form-group">
-                            <span style="font-size:0.78rem; color:#475569; padding:8px 0;"><i class="fa-solid fa-circle-info"></i> Vous pouvez ajuster précisément les dates de début et de fin de cette affectation.</span>
+                        <div class="form-group" style="justify-content:flex-end;">
+                            <button type="button" class="btn btn-info-outline" id="btnAjouterAffectation" style="justify-content:center; padding:10px 16px;" onclick="ajouterAffectationCampagne()">
+                                <i class="fa-solid fa-user-plus"></i> Ajouter une affectation
+                            </button>
                         </div>
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px;">
+                    <div style="margin-top:10px;">
                         <div id="wf-interreg-indicator" style="font-size:0.8rem; color:#475569;"></div>
-                        <button type="button" class="btn btn-info-outline" id="btnAjouterAffectation" onclick="ajouterAffectationCampagne()">
-                            <i class="fa-solid fa-user-plus"></i> Ajouter une affectation
-                        </button>
                     </div>
 
                     <!-- TABLEAU DES AFFECTATIONS DE LA CAMPAGNE EN PRÉPARATION -->
@@ -1327,58 +1315,33 @@
         }
 
         function peuplerPeriodesWorkflow() {
-            const sel = document.getElementById('wf-periode-controle');
-            if (!sel) return;
-            const prev = sel.value;
-            sel.innerHTML = buildOptionsPeriodesHTML(prev);
+            const today = new Date().toISOString().split('T')[0];
+            const dDebut = document.getElementById('wf-date-debut');
+            const dFin = document.getElementById('wf-date-fin');
+            if (dDebut && !dDebut.value) dDebut.value = today;
+            if (dFin && !dFin.value) dFin.value = today;
         }
 
         function onWfPeriodeChange() {
-            const sel = document.getElementById('wf-periode-controle');
-            const customRow = document.getElementById('wf-custom-dates-row');
-            const dDebut = document.getElementById('wf-date-debut');
-            const dFin = document.getElementById('wf-date-fin');
-            if (!sel) return;
-
-            const code = sel.value;
-            if (code === 'PERSONNALISEE') {
-                if (customRow) customRow.style.display = 'grid';
-                const today = new Date().toISOString().split('T')[0];
-                if (dDebut && !dDebut.value) dDebut.value = today;
-                if (dFin && !dFin.value) dFin.value = today;
-                return;
-            }
-            if (customRow) customRow.style.display = 'none';
-            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
-            if (found) {
-                if (dDebut) dDebut.value = found.dateDebut;
-                if (dFin) dFin.value = found.dateFin;
-            }
+            // Compatibilité : les champs date début et date fin sont désormais directement affichés
+            peuplerPeriodesWorkflow();
         }
 
         function lirePeriodeWorkflowSelectionnee() {
-            const sel = document.getElementById('wf-periode-controle');
-            const code = sel ? sel.value : '';
-            if (!code) return null;
-            if (code === 'PERSONNALISEE') {
-                const dateDebut = document.getElementById('wf-date-debut')?.value || '';
-                const dateFin = document.getElementById('wf-date-fin')?.value || '';
-                if (!dateDebut || !dateFin) return null;
-                return {
-                    periodeCode: 'PERSONNALISEE',
-                    periodeLabel: `${formatDateFR(dateDebut)} → ${formatDateFR(dateFin)}`,
-                    dateDebut,
-                    dateFin
-                };
-            }
-            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
-            if (!found) return null;
+            const dateDebut = document.getElementById('wf-date-debut')?.value || '';
+            const dateFin = document.getElementById('wf-date-fin')?.value || '';
+            if (!dateDebut || !dateFin) return null;
             return {
-                periodeCode: found.code,
-                periodeLabel: found.label,
-                dateDebut: found.dateDebut,
-                dateFin: found.dateFin
+                periodeCode: 'DATES',
+                periodeLabel: `${formatDateFR(dateDebut)} → ${formatDateFR(dateFin)}`,
+                dateDebut,
+                dateFin
             };
+        }
+
+        function estCampagneControleFC(c) {
+            if (!c) return false;
+            return String(c.sourceFeuille || 'FC').toUpperCase().trim() !== 'FV';
         }
 
         // =========================================================================
@@ -1423,11 +1386,11 @@
         function ajouterAffectationCampagne() {
             const cur = extraireAffectationEnCoursForm();
             if (!cur.centre || !cur.region || !cur.controleurId || !cur.periode) {
-                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté et la Période de contrôle avant d'ajouter l'affectation.");
+                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté, la Date début et la Date fin avant d'ajouter l'affectation.");
                 return;
             }
             if (cur.periode.dateFin < cur.periode.dateDebut) {
-                alert("La date de fin de période doit être postérieure ou égale à la date de début.");
+                alert("La date fin de contrôle doit être postérieure ou égale à la date début.");
                 return;
             }
 
@@ -1481,7 +1444,7 @@
                                 <th>Centre ciblé</th>
                                 <th>Région (auto)</th>
                                 <th>Contrôleur affecté</th>
-                                <th>Période de contrôle</th>
+                                <th>Période (Date début → Date fin)</th>
                                 <th style="text-align:center;">Action</th>
                             </tr>
                         </thead>
@@ -1497,8 +1460,7 @@
                                         ${item.isInterregional ? `<span class="pill pill-interreg" style="margin-top:3px;"><i class="fa-solid fa-right-left"></i> Hors région (${escapeHtml(item.controleurRegion)})</span>` : ''}
                                     </td>
                                     <td>
-                                        <b>${escapeHtml(item.periodeLabel || '')}</b><br>
-                                        <small style="color:#64748B;">${formatDateFR(item.dateDebut)} → ${formatDateFR(item.dateFin)}</small>
+                                        <b>${formatDateFR(item.dateDebut)} → ${formatDateFR(item.dateFin)}</b>
                                     </td>
                                     <td style="text-align:center;">
                                         <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationLotSiege(${idx})" title="Retirer cette affectation">
@@ -1530,7 +1492,11 @@
             const cur = extraireAffectationEnCoursForm();
             if (cur.centre || cur.controleurId) {
                 if (!cur.centre || !cur.region || !cur.controleurId || !cur.periode) {
-                    alert("Veuillez compléter la ligne d'affectation en cours (Centre, Contrôleur, Période) ou la vider avant de soumettre.");
+                    alert("Veuillez compléter la ligne d'affectation en cours (Centre, Contrôleur, Date début et Date fin) ou la vider avant de soumettre.");
+                    return;
+                }
+                if (cur.periode.dateFin < cur.periode.dateDebut) {
+                    alert("La date fin de contrôle doit être postérieure ou égale à la date début.");
                     return;
                 }
                 affectationsFinales.push({
@@ -1550,7 +1516,7 @@
             }
 
             if (affectationsFinales.length === 0) {
-                alert("Veuillez ajouter au moins une affectation (Centre ciblé, Contrôleur affecté, Période) avant de soumettre pour validation.");
+                alert("Veuillez ajouter au moins une affectation (Centre ciblé, Contrôleur affecté, Date début et Date fin) avant de soumettre pour validation.");
                 return;
             }
 
@@ -1564,7 +1530,6 @@
             try {
                 const currentUser = getCurrentAuthUser();
                 const typeControle = document.getElementById('wf-type-controle')?.value || 'Thématique';
-                const titreSaisi = (document.getElementById('wf-campagne-titre')?.value || '').trim();
 
                 const processusList = [...new Set(activeItems.map(i => getItemVal(i, ['Processus'])).filter(Boolean))];
                 const risquesList = [...new Set(activeItems.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])).filter(Boolean))];
@@ -1572,10 +1537,11 @@
 
                 const nowIso = new Date().toISOString();
                 const idCampagne = 'CAMP-' + Date.now();
-                const titre = titreSaisi || `Campagne ${typeControle} — ${processusList.length} processus (${affectationsFinales.length} affectation(s))`;
+                const titre = `Planification Contrôle ${typeControle} (${formatDateFR(nowIso)}) — ${processusList.length} processus · ${affectationsFinales.length} affectation(s)`;
 
                 const campagne = {
                     idCampagne,
+                    sourceFeuille: 'FC',
                     titre,
                     typeControle,
                     statutWorkflow: 'SOUMISE',
@@ -1613,17 +1579,17 @@
 
                 // Réinitialiser le formulaire de préparation
                 lotAffectationsSiege = [];
-                if (document.getElementById('wf-campagne-titre')) document.getElementById('wf-campagne-titre').value = '';
+                const today = new Date().toISOString().split('T')[0];
                 if (document.getElementById('wf-centre-cible')) document.getElementById('wf-centre-cible').value = '';
                 if (document.getElementById('wf-region-auto')) document.getElementById('wf-region-auto').value = '';
                 if (document.getElementById('wf-controleur-affecte')) document.getElementById('wf-controleur-affecte').value = '';
-                if (document.getElementById('wf-periode-controle')) document.getElementById('wf-periode-controle').value = '';
-                onWfPeriodeChange();
+                if (document.getElementById('wf-date-debut')) document.getElementById('wf-date-debut').value = today;
+                if (document.getElementById('wf-date-fin')) document.getElementById('wf-date-fin').value = today;
                 renderLotAffectationsSiege();
                 viderPlanification();
                 renderAllWorkflowViews();
 
-                alert(`✅ Planification « ${titre} » soumise avec succès au compte directeur-001 pour examen et validation.`);
+                alert(`✅ Planification soumise avec succès au compte directeur-001 pour examen et validation.`);
             } finally {
                 if (btn) {
                     btn.disabled = false;
@@ -1732,7 +1698,9 @@
             const user = getCurrentAuthUser();
             const uId = user ? user.username : '';
             const db = FCIDatabase.getDB();
+            const allCamps = Array.isArray(db.campagnesPlanification) ? db.campagnesPlanification : [];
             const notifs = (db.notifications || [])
+                .filter(n => String(n?.sourceFeuille || 'FC').toUpperCase() !== 'FV')
                 .slice()
                 .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
 
@@ -1768,23 +1736,71 @@
                     </div>
                     ${toShow.map(n => {
                         const isRead = Array.isArray(n.lusPar) && n.lusPar.includes(uId);
+                        const campAssociee = allCamps.find(c => c.idCampagne === n.idCampagne) || null;
+                        const affsNotif = Array.isArray(n.affectations) && n.affectations.length > 0
+                            ? n.affectations
+                            : (campAssociee && Array.isArray(campAssociee.affectations) ? campAssociee.affectations : []);
+                        const procsNotif = Array.isArray(n.processusList) && n.processusList.length > 0
+                            ? n.processusList
+                            : (campAssociee && Array.isArray(campAssociee.processusList) ? campAssociee.processusList : []);
+                        const nbPcNotif = n.nbPoints !== undefined
+                            ? n.nbPoints
+                            : (campAssociee && Array.isArray(campAssociee.pointsControle) ? campAssociee.pointsControle.length : 0);
+                        const typeNotif = n.typeControle || (campAssociee ? campAssociee.typeControle : 'Thématique');
+
                         return `
-                            <div class="notif-item ${isRead ? '' : 'unread'}">
-                                <div style="flex:1; min-width:240px;">
-                                    <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">
-                                        <i class="fa-solid fa-bullhorn" style="color:#D97706;"></i> ${escapeHtml(n.titre || 'Nouvelle campagne de contrôle validée')}
+                            <div class="notif-item ${isRead ? '' : 'unread'}" style="flex-direction:column; align-items:stretch;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                                    <div style="flex:1; min-width:240px;">
+                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.86rem;">
+                                            <i class="fa-solid fa-bullhorn" style="color:#D97706;"></i> ${escapeHtml(n.titre || 'Nouvelle campagne de contrôle validée')}
+                                        </div>
+                                        <div style="font-size:0.8rem; color:#334155; margin-top:4px; line-height:1.45;">${escapeHtml(n.message || '')}</div>
+                                        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;">
+                                            <span class="pill pill-siege">${escapeHtml(typeNotif)}</span>
+                                            ${procsNotif.map(p => `<span class="pill pill-proc">${escapeHtml(p)}</span>`).join('')}
+                                        </div>
+                                        <div style="font-size:0.72rem; color:#64748B; margin-top:5px;">
+                                            Émis par <b>${escapeHtml(n.emetteurFonction || 'Directeur')} (${escapeHtml(n.emetteurId || 'directeur-001')})</b> le ${formatDateHeureFR(n.createdAt)}
+                                        </div>
                                     </div>
-                                    <div style="font-size:0.8rem; color:#334155; margin-top:3px;">${escapeHtml(n.message || '')}</div>
-                                    <div style="font-size:0.72rem; color:#64748B; margin-top:3px;">
-                                        Émis par <b>${escapeHtml(n.emetteurFonction || 'Directeur')} (${escapeHtml(n.emetteurId || 'directeur-001')})</b> le ${formatDateHeureFR(n.createdAt)}
+                                    <div>
+                                        ${isRead
+                                            ? '<span class="pill pill-realisee"><i class="fa-solid fa-check"></i> Lue</span>'
+                                            : `<button type="button" class="btn btn-secondary btn-sm" onclick="marquerNotifSiegeLue('${escapeJsString(n.idNotification)}')"><i class="fa-solid fa-check"></i> Marquer comme lue</button>`
+                                        }
                                     </div>
                                 </div>
-                                <div>
-                                    ${isRead
-                                        ? '<span class="pill pill-realisee"><i class="fa-solid fa-check"></i> Lue</span>'
-                                        : `<button type="button" class="btn btn-secondary btn-sm" onclick="marquerNotifSiegeLue('${escapeJsString(n.idNotification)}')"><i class="fa-solid fa-check"></i> Marquer comme lue</button>`
-                                    }
-                                </div>
+                                ${affsNotif.length > 0 ? `
+                                    <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFF; margin-top:8px;">
+                                        <table style="font-size:0.78rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Centre ciblé</th>
+                                                    <th>Région</th>
+                                                    <th>Contrôleur affecté</th>
+                                                    <th>Date début → Date fin</th>
+                                                    <th style="text-align:center;">PC partagés</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${affsNotif.map(a => `
+                                                    <tr>
+                                                        <td><b>${escapeHtml(a.centre || a.entite || '--')}</b></td>
+                                                        <td><span class="pill pill-planifiee">${escapeHtml(a.region || '--')}</span></td>
+                                                        <td>
+                                                            <span class="pill pill-ctrl"><i class="fa-solid fa-user"></i> ${escapeHtml(a.controleurId || '--')}</span>
+                                                            <small style="color:#64748B;">${escapeHtml(a.controleurFonction || '')}</small>
+                                                            ${a.isInterregional ? `<span class="pill pill-interreg">Interrégional</span>` : ''}
+                                                        </td>
+                                                        <td><b>${formatDateFR(a.dateDebut)} → ${formatDateFR(a.dateFin)}</b></td>
+                                                        <td style="text-align:center;"><b>${nbPcNotif}</b></td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                     }).join('')}
@@ -1823,6 +1839,7 @@
 
             const db = FCIDatabase.getDB();
             const campagnes = (db.campagnesPlanification || [])
+                .filter(estCampagneControleFC)
                 .slice()
                 .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
 
@@ -1867,7 +1884,7 @@
                             <div class="campaign-card ${statusClass}" id="dir-camp-${escapeHtml(camp.idCampagne)}">
                                 <div class="campaign-header">
                                     <div>
-                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.98rem;">
+                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.96rem;">
                                             ${escapeHtml(camp.titre || camp.idCampagne)}
                                         </div>
                                         <div style="font-size:0.78rem; color:#475569; margin-top:4px;">
@@ -1893,10 +1910,11 @@
                                     <table>
                                         <thead>
                                             <tr>
-                                                <th style="width:28%;">Centre ciblé</th>
-                                                <th style="width:13%;">Région (auto)</th>
-                                                <th style="width:28%;">Contrôleur affecté</th>
-                                                <th style="width:23%;">Période de contrôle</th>
+                                                <th style="width:26%;">Centre ciblé</th>
+                                                <th style="width:12%;">Région (auto)</th>
+                                                <th style="width:26%;">Contrôleur affecté</th>
+                                                <th style="width:14%;">Date début</th>
+                                                <th style="width:14%;">Date fin</th>
                                                 ${canEdit ? '<th style="width:8%; text-align:center;">Action</th>' : ''}
                                             </tr>
                                         </thead>
@@ -1912,7 +1930,8 @@
                                                                 <span class="pill pill-ctrl">${escapeHtml(aff.controleurId)}</span>
                                                                 ${isInter ? `<span class="pill pill-interreg">Interrégional</span>` : ''}
                                                             </td>
-                                                            <td><b>${escapeHtml(aff.periodeLabel || '')}</b> <small style="color:#64748B;">(${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)})</small></td>
+                                                            <td><b>${formatDateFR(aff.dateDebut)}</b></td>
+                                                            <td><b>${formatDateFR(aff.dateFin)}</b></td>
                                                         </tr>
                                                     `;
                                                 }
@@ -1933,10 +1952,10 @@
                                                             ${isInter ? `<span class="pill pill-interreg" style="margin-top:3px;"><i class="fa-solid fa-right-left"></i> Hors région (${escapeHtml(aff.controleurRegion)})</span>` : ''}
                                                         </td>
                                                         <td>
-                                                            <select class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="periodeCode" onchange="onDirPeriodeInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, this)">
-                                                                ${buildOptionsPeriodesHTML(aff.periodeCode || 'PERSONNALISEE')}
-                                                            </select>
-                                                            <div style="font-size:0.72rem; color:#64748B; margin-top:3px;">${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)}</div>
+                                                            <input type="date" class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="dateDebut" value="${escapeHtml(aff.dateDebut || '')}" onchange="onDirDateInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, 'dateDebut', this.value)">
+                                                        </td>
+                                                        <td>
+                                                            <input type="date" class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="dateFin" value="${escapeHtml(aff.dateFin || '')}" onchange="onDirDateInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, 'dateFin', this.value)">
                                                         </td>
                                                         <td style="text-align:center;">
                                                             <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationDirecteur('${escapeJsString(camp.idCampagne)}', ${idx})" title="Retirer cette affectation">
@@ -2059,17 +2078,17 @@
             }
         }
 
-        async function onDirPeriodeInlineChange(idCampagne, idx, selectEl) {
+        async function onDirDateInlineChange(idCampagne, idx, field, newVal) {
             const camp = getCampagneById(idCampagne);
-            if (!camp || !camp.affectations || !camp.affectations[idx]) return;
-            const code = selectEl.value;
-            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
-            if (!found) return;
-            const oldLbl = camp.affectations[idx].periodeLabel;
-            camp.affectations[idx].periodeCode = found.code;
-            camp.affectations[idx].periodeLabel = found.label;
-            camp.affectations[idx].dateDebut = found.dateDebut;
-            camp.affectations[idx].dateFin = found.dateFin;
+            if (!camp || !camp.affectations || !camp.affectations[idx] || !newVal) return;
+            const aff = camp.affectations[idx];
+            const oldStr = `${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)}`;
+            aff[field] = newVal;
+            if (aff.dateDebut && aff.dateFin && aff.dateFin < aff.dateDebut) {
+                aff.dateFin = aff.dateDebut;
+            }
+            aff.periodeCode = 'DATES';
+            aff.periodeLabel = `${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)}`;
             camp.modifieeParDirecteur = true;
 
             const u = getCurrentAuthUser();
@@ -2079,7 +2098,7 @@
                 auteurId: u ? u.username : 'directeur-001',
                 auteurFonction: u ? u.fonction : 'Directeur',
                 action: 'MODIFICATION_DIRECTEUR',
-                details: `Affectation #${idx + 1} (${camp.affectations[idx].centre}) — Période modifiée : "${oldLbl || '--'}" → "${found.label}".`
+                details: `Affectation #${idx + 1} (${aff.centre || '--'}) — Période modifiée : "${oldStr}" → "${aff.periodeLabel}".`
             });
 
             await FCIDatabase.enregistrerCampagnePlanification(camp, false);
@@ -2089,8 +2108,10 @@
         async function ajouterLigneAffectationDirecteur(idCampagne) {
             const camp = getCampagneById(idCampagne);
             if (!camp) return;
-            const defP = PERIODES_DISPONIBLES[0] || { code: 'PERSONNALISEE', label: 'Période', dateDebut: new Date().toISOString().split('T')[0], dateFin: new Date().toISOString().split('T')[0] };
+            const today = new Date().toISOString().split('T')[0];
             const lastAff = (camp.affectations && camp.affectations.length > 0) ? camp.affectations[camp.affectations.length - 1] : null;
+            const dDeb = lastAff && lastAff.dateDebut ? lastAff.dateDebut : today;
+            const dFin = lastAff && lastAff.dateFin ? lastAff.dateFin : dDeb;
             camp.affectations = Array.isArray(camp.affectations) ? camp.affectations : [];
             camp.affectations.push({
                 idAffectation: 'AFF-DIR-' + Date.now(),
@@ -2101,10 +2122,10 @@
                 controleurFonction: '',
                 controleurRegion: '',
                 isInterregional: false,
-                periodeCode: lastAff ? lastAff.periodeCode : defP.code,
-                periodeLabel: lastAff ? lastAff.periodeLabel : defP.label,
-                dateDebut: lastAff ? lastAff.dateDebut : defP.dateDebut,
-                dateFin: lastAff ? lastAff.dateFin : defP.dateFin
+                periodeCode: 'DATES',
+                periodeLabel: `${formatDateFR(dDeb)} → ${formatDateFR(dFin)}`,
+                dateDebut: dDeb,
+                dateFin: dFin
             });
             camp.modifieeParDirecteur = true;
             await FCIDatabase.enregistrerCampagnePlanification(camp, false);
@@ -2141,8 +2162,8 @@
             if (!camp) return;
 
             const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
-            if (affs.length === 0 || affs.some(a => !a.centre || !a.region || !a.controleurId)) {
-                alert("Veuillez vérifier que chaque ligne d'affectation comporte un Centre ciblé, une Région et un Contrôleur affecté avant de valider.");
+            if (affs.length === 0 || affs.some(a => !a.centre || !a.region || !a.controleurId || !a.dateDebut || !a.dateFin)) {
+                alert("Veuillez vérifier que chaque ligne d'affectation comporte un Centre ciblé, une Région, un Contrôleur affecté, une Date début et une Date fin avant de valider.");
                 return;
             }
 
@@ -2163,7 +2184,7 @@
 
             await FCIDatabase.enregistrerCampagnePlanification(camp, true);
             renderAllWorkflowViews();
-            alert(`✅ Planification « ${camp.titre} » validée et retournée à ${camp.soumisParFonction || camp.soumisParId}.\n\nVous pouvez maintenant cliquer sur « Notifier les collaborateurs » pour informer l'ensemble des collaborateurs du Siège.`);
+            alert(`✅ Planification validée et retournée à ${camp.soumisParFonction || camp.soumisParId}.\n\nVous pouvez maintenant cliquer sur « Notifier les collaborateurs » pour informer l'ensemble des collaborateurs du Siège.`);
         }
 
         async function notifierCollaborateursSiege(idCampagne) {
@@ -2187,8 +2208,15 @@
             const notif = {
                 idNotification: 'NOTIF-' + Date.now(),
                 idCampagne: camp.idCampagne,
-                titre: `Nouvelle campagne de contrôle validée et en cours : ${camp.titre}`,
-                message: `Campagne ${camp.typeControle || 'Thématique'} validée par le Directeur (${affs.length} centre(s) sur ${regionsConc || 'réseau'} — Processus : ${procsText || '--'}). Retournée à ${camp.soumisParFonction || camp.soumisParId} pour diffusion aux contrôleurs.`,
+                sourceFeuille: 'FC',
+                typeControle: camp.typeControle || 'Thématique',
+                titre: `Nouvelle campagne de contrôle validée et en cours (${camp.typeControle || 'Thématique'})`,
+                message: `Mission de contrôle ${camp.typeControle || 'Thématique'} validée par le Directeur (${affs.length} centre(s) sur ${regionsConc || 'réseau'} — Processus : ${procsText || '--'}). Retournée à ${camp.soumisParFonction || camp.soumisParId} pour diffusion aux contrôleurs.`,
+                processusList: camp.processusList || [],
+                nbPoints: (camp.pointsControle || []).length,
+                affectations: JSON.parse(JSON.stringify(affs)),
+                soumisParId: camp.soumisParId || '',
+                soumisParFonction: camp.soumisParFonction || '',
                 emetteurId: u ? u.username : 'directeur-001',
                 emetteurFonction: u ? u.fonction : 'Directeur',
                 destinataires: 'SIEGE',
@@ -2206,7 +2234,7 @@
                 auteurId: u ? u.username : 'directeur-001',
                 auteurFonction: u ? u.fonction : 'Directeur',
                 action: 'NOTIFICATION_SIEGE',
-                details: `Notification transmise à l'ensemble des collaborateurs du Siège (7 comptes) : campagne validée et en cours.`
+                details: `Notification transmise à l'ensemble des collaborateurs du Siège (7 comptes) avec le tableau de planification validé.`
             });
 
             await FCIDatabase.enregistrerCampagnePlanification(camp, true);
@@ -2224,7 +2252,7 @@
 
             const db = FCIDatabase.getDB();
             const soumises = (db.campagnesPlanification || [])
-                .filter(c => c.statutWorkflow === 'SOUMISE')
+                .filter(c => estCampagneControleFC(c) && c.statutWorkflow === 'SOUMISE')
                 .sort((a, b) => String(b.dateSoumission || b.createdAt || '').localeCompare(String(a.dateSoumission || a.createdAt || '')));
 
             if (soumises.length === 0) {
@@ -2258,7 +2286,7 @@
                                     </div>
                                 </div>
                                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                                    ${(c.affectations || []).map(a => `<span class="pill pill-ctrl">${escapeHtml(a.controleurId)} → ${escapeHtml(a.centre)} (${escapeHtml(a.region)})</span>`).join('')}
+                                    ${(c.affectations || []).map(a => `<span class="pill pill-ctrl">${escapeHtml(a.controleurId)} → ${escapeHtml(a.centre)} (${escapeHtml(a.region)}) · ${formatDateFR(a.dateDebut)} → ${formatDateFR(a.dateFin)}</span>`).join('')}
                                 </div>
                                 ${expandedPanelsState[histKey] ? buildHistoryHTML(c) : ''}
                             </div>
@@ -2276,7 +2304,7 @@
             const db = FCIDatabase.getDB();
             const user = getCurrentAuthUser();
             const campagnes = (db.campagnesPlanification || [])
-                .filter(c => c.statutWorkflow === 'VALIDEE' || c.statutWorkflow === 'DIFFUSEE')
+                .filter(c => estCampagneControleFC(c) && (c.statutWorkflow === 'VALIDEE' || c.statutWorkflow === 'DIFFUSEE'))
                 .sort((a, b) => String(b.dateValidation || b.updatedAt || '').localeCompare(String(a.dateValidation || a.updatedAt || '')));
 
             const pretesADiffuser = campagnes.filter(c => c.statutWorkflow === 'VALIDEE');
@@ -2356,7 +2384,7 @@
                                                 <small style="color:#64748B;">${escapeHtml(a.controleurFonction || '')}</small>
                                                 ${a.isInterregional ? `<span class="pill pill-interreg">Interrégional</span>` : ''}
                                             </td>
-                                            <td><b>${escapeHtml(a.periodeLabel || '')}</b> <small style="color:#64748B;">(${formatDateFR(a.dateDebut)} → ${formatDateFR(a.dateFin)})</small></td>
+                                            <td><b>${a.dateDebut || a.dateFin ? `${formatDateFR(a.dateDebut)} → ${formatDateFR(a.dateFin)}` : escapeHtml(a.periodeLabel || '--')}</b></td>
                                             <td style="text-align:center;"><b>${(camp.pointsControle || []).length}</b></td>
                                         </tr>
                                     `).join('')}

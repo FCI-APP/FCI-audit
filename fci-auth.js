@@ -482,13 +482,36 @@
         document.getElementById('btnFciLogout').addEventListener('click', logout);
     }
 
-    const isLoginPage = window.location.pathname.toLowerCase().endsWith('login.html');
+    function masquerReferentielSiNonAdmin(user) {
+        if (!user || isAdmin(user)) return;
+        try {
+            const links = document.querySelectorAll('.sidebar a[href]');
+            links.forEach(a => {
+                const href = String(a.getAttribute('href') || '').trim().toLowerCase();
+                if (href === 'index.html' || href.endsWith('/index.html')) {
+                    const li = a.closest('li');
+                    if (li) {
+                        li.style.display = 'none';
+                    } else {
+                        a.style.display = 'none';
+                    }
+                }
+            });
+        } catch (e) {}
+    }
+
+    const pathLower = window.location.pathname.toLowerCase();
+    const isLoginPage = pathLower.endsWith('login.html');
+    const isReferentielPage = pathLower.endsWith('index.html') || pathLower.endsWith('/');
     const currentUser = getCurrentUser();
 
     if (!isLoginPage && !currentUser) {
         window.location.replace('login.html');
+    } else if (!isLoginPage && currentUser && isReferentielPage && !isAdmin(currentUser)) {
+        window.location.replace('Planification.html');
     } else if (!isLoginPage && currentUser) {
         document.addEventListener('DOMContentLoaded', () => {
+            masquerReferentielSiNonAdmin(currentUser);
             injecterProfilSidebar(currentUser);
             window.dispatchEvent(new CustomEvent('fci-auth-ready', { detail: currentUser }));
         });
