@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Feuille 4 : Fiche de la vérification des encaisses</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261126-siege"></script>
+    <script src="fci-auth.js?v=20261127-planif2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -83,7 +83,7 @@
         }
         .single-row-plan-fv {
             display: grid;
-            grid-template-columns: 1.35fr 1fr 1.45fr 0.95fr 0.9fr auto;
+            grid-template-columns: 1.55fr 0.85fr 1.45fr 1.25fr auto;
             gap: 10px;
             align-items: end;
         }
@@ -428,53 +428,48 @@
                 <span id="activePlanFvBanner" style="margin-left:auto;"></span>
             </div>
 
-            <!-- Formulaire de création visible UNIQUEMENT par les comptes du Siège (Admin, Directeur, Chefs de service) -->
+            <!-- Formulaire de création visible UNIQUEMENT par les comptes du Siège (Informations fondamentales uniquement) -->
             <div id="siegePlanFvCreator" style="display:none; margin-bottom:10px;">
                 <div class="single-row-plan-fv">
                     <div class="form-group">
-                        <label for="planFvControleurSelect">Contrôleur désigné *</label>
+                        <label for="planFvSiteSelect">Centre ciblé *</label>
+                        <select id="planFvSiteSelect" class="form-control" onchange="onPlanFvCentreChange()">
+                            <option value="">-- Sélectionner le centre ciblé --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvRegionAuto">Région (auto) *</label>
+                        <input type="text" id="planFvRegionAuto" class="form-control" readonly placeholder="Remplissage auto" style="background:#EEF2F6; color:var(--primary-blue); font-weight:800;">
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvControleurSelect">Contrôleur affecté *</label>
                         <select id="planFvControleurSelect" class="form-control">
-                            <option value="">-- Sélectionner un contrôleur --</option>
+                            <option value="">-- Sélectionner un utilisateur --</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="planFvRegionSelect">Région concernée *</label>
-                        <select id="planFvRegionSelect" class="form-control" onchange="onPlanFvRegionChange()">
-                            <option value="">-- Région --</option>
-                            <option value="SIEGE">SIÈGE</option>
-                            <option value="MARRAKECH">MARRAKECH</option>
-                            <option value="AGADIR">AGADIR</option>
-                            <option value="CASA">CASA</option>
-                            <option value="SETTAT">SETTAT</option>
-                            <option value="RABAT">RABAT</option>
-                            <option value="TANGER">TANGER</option>
-                            <option value="LAAYOUNE">LAAYOUNE</option>
-                            <option value="FES">FES</option>
-                            <option value="MEKNES">MEKNES</option>
-                            <option value="OUEJDA">OUEJDA</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvSiteSelect">Centre concerné *</label>
-                        <select id="planFvSiteSelect" class="form-control" disabled>
-                            <option value="">-- Région requise --</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvDateInput">Date prévue *</label>
-                        <input type="date" id="planFvDateInput" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label for="planFvStatutSelect">État d'avancement</label>
-                        <select id="planFvStatutSelect" class="form-control">
-                            <option value="EN_COURS" selected>🟡 En cours</option>
-                            <option value="CLOTURE">🟢 Clôturé</option>
+                        <label for="planFvPeriodeSelect">Période de vérification *</label>
+                        <select id="planFvPeriodeSelect" class="form-control" onchange="onPlanFvPeriodeChange()">
+                            <option value="">-- Sélectionner une période --</option>
                         </select>
                     </div>
                     <div>
                         <button type="button" class="btn btn-primary" onclick="creerPlanificationFV()">
                             <i class="fa-solid fa-plus"></i> Planifier
                         </button>
+                    </div>
+                </div>
+                <div id="planFvCustomDatesRow" style="display:none; margin-top:8px; grid-template-columns: 1fr 1fr 2fr; gap:10px; align-items:end;">
+                    <div class="form-group">
+                        <label for="planFvDateDebutCustom">Date début vérif. *</label>
+                        <input type="date" id="planFvDateDebutCustom" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="planFvDateFinCustom">Date fin vérif. *</label>
+                        <input type="date" id="planFvDateFinCustom" class="form-control">
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); padding-bottom:6px;">
+                        <i class="fa-solid fa-circle-info"></i> Les processus, risques, contrôles et PC restent librement sélectionnés par le contrôleur.
                     </div>
                 </div>
             </div>
@@ -484,11 +479,11 @@
                 <table class="plan-fv-table">
                     <thead>
                         <tr>
-                            <th>Contrôleur désigné</th>
+                            <th>Contrôleur affecté</th>
                             <th>Région</th>
-                            <th>Centre concerné</th>
-                            <th>Périmètre</th>
-                            <th>Date prévue</th>
+                            <th>Centre ciblé</th>
+                            <th>Période de vérification</th>
+                            <th>Processus / PC</th>
                             <th>État d'avancement</th>
                             <th>Actions</th>
                         </tr>
@@ -672,7 +667,7 @@
         </section>
     </main>
 
-    <script src="fci-db-manager.js?v=20261126-archive2"></script>
+    <script src="fci-db-manager.js?v=20261127-planif2"></script>
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
@@ -1007,20 +1002,74 @@
 
         // ==================== PLANIFICATION & SUIVI DES VÉRIFICATIONS (FV) ====================
 
+        function trouverRegionPourCentreFV(centreNom) {
+            if (!centreNom) return '';
+            const norm = String(centreNom).trim().toUpperCase();
+            for (const [reg, centres] of Object.entries(CENTRES_PAR_REGION)) {
+                if (centres.some(c => String(c).trim().toUpperCase() === norm)) {
+                    return normaliserRegion(reg);
+                }
+            }
+            return '';
+        }
+
+        function genererPeriodesPlanFV() {
+            const y = new Date().getFullYear();
+            const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const lastDay = (year, mIdx) => {
+                const d = new Date(year, mIdx + 1, 0);
+                return `${year}-${String(mIdx + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            };
+            const list = [];
+            [y, y + 1].forEach(yr => {
+                const maxM = yr === y ? 12 : 6;
+                for (let m = 0; m < maxM; m++) {
+                    const mm = String(m + 1).padStart(2, '0');
+                    list.push({
+                        code: `M-${yr}-${mm}`,
+                        label: `${moisNoms[m]} ${yr}`,
+                        dateDebut: `${yr}-${mm}-01`,
+                        dateFin: lastDay(yr, m),
+                        groupe: `Mois ${yr}`
+                    });
+                }
+            });
+            [y, y + 1].forEach(yr => {
+                [
+                    { q: 1, m1: 0, m2: 2, lbl: `T1 ${yr} (Janv. - Mars)` },
+                    { q: 2, m1: 3, m2: 5, lbl: `T2 ${yr} (Avr. - Juin)` },
+                    { q: 3, m1: 6, m2: 8, lbl: `T3 ${yr} (Juil. - Sept.)` },
+                    { q: 4, m1: 9, m2: 11, lbl: `T4 ${yr} (Oct. - Déc.)` }
+                ].forEach(t => {
+                    list.push({
+                        code: `T${t.q}-${yr}`,
+                        label: t.lbl,
+                        dateDebut: `${yr}-${String(t.m1 + 1).padStart(2, '0')}-01`,
+                        dateFin: lastDay(yr, t.m2),
+                        groupe: `Trimestres ${yr}`
+                    });
+                });
+            });
+            list.push(
+                { code: `S1-${y}`, label: `S1 ${y} (1er Semestre)`, dateDebut: `${y}-01-01`, dateFin: `${y}-06-30`, groupe: `Semestres ${y}` },
+                { code: `S2-${y}`, label: `S2 ${y} (2e Semestre)`, dateDebut: `${y}-07-01`, dateFin: `${y}-12-31`, groupe: `Semestres ${y}` }
+            );
+            return list;
+        }
+
+        const PERIODES_VERIF_FV = genererPeriodesPlanFV();
+
         function initPlanificationFVUI() {
             const siege = isCurrentUserSiege();
             const titleEl = document.getElementById('planFvSectionTitle');
             const creatorEl = document.getElementById('siegePlanFvCreator');
-            const dateInput = document.getElementById('planFvDateInput');
-
-            if (dateInput && !dateInput.value) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
 
             if (siege) {
-                if (titleEl) titleEl.innerText = "Planification & Suivi des Vérifications (Espace Siège — Visibilité Globale)";
+                if (titleEl) titleEl.innerText = "Planification & Suivi des Vérifications (Espace Siège — Informations fondamentales)";
                 if (creatorEl) creatorEl.style.display = 'block';
+                peuplerCentresPlanFV();
                 peuplerListeControleursPlanFV();
+                peuplerPeriodesPlanFV();
             } else {
                 if (titleEl) titleEl.innerText = "Mes Vérifications Planifiées par le Siège (Attribution Nominative)";
                 if (creatorEl) creatorEl.style.display = 'none';
@@ -1029,77 +1078,103 @@
             renderPlanificationsFVTable();
         }
 
-        function peuplerListeControleursPlanFV(regionFiltre = '') {
+        function peuplerCentresPlanFV() {
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            if (!siteSelect) return;
+            const prev = siteSelect.value;
+            siteSelect.innerHTML = '<option value="">-- Sélectionner le centre ciblé --</option>';
+
+            const regionsOrdonnees = Object.keys(CENTRES_PAR_REGION).sort((a, b) => {
+                if (a === 'SIEGE') return 1;
+                if (b === 'SIEGE') return -1;
+                return a.localeCompare(b, 'fr');
+            });
+
+            regionsOrdonnees.forEach(reg => {
+                const centres = CENTRES_PAR_REGION[reg] || [];
+                if (centres.length === 0) return;
+                const grp = document.createElement('optgroup');
+                grp.label = reg === 'SIEGE' ? 'SIÈGE' : `RÉGION ${reg}`;
+                centres.forEach(centre => {
+                    const opt = document.createElement('option');
+                    opt.value = centre;
+                    opt.dataset.region = normaliserRegion(reg);
+                    opt.textContent = centre;
+                    grp.appendChild(opt);
+                });
+                siteSelect.appendChild(grp);
+            });
+
+            if (prev && Array.from(siteSelect.options).some(o => o.value === prev)) {
+                siteSelect.value = prev;
+            }
+            onPlanFvCentreChange();
+        }
+
+        function onPlanFvCentreChange() {
+            const siteSelect = document.getElementById('planFvSiteSelect');
+            const regInput = document.getElementById('planFvRegionAuto');
+            if (!siteSelect || !regInput) return;
+
+            const centre = String(siteSelect.value || '').trim();
+            const opt = siteSelect.options[siteSelect.selectedIndex];
+            const region = (opt && opt.dataset && opt.dataset.region)
+                ? normaliserRegion(opt.dataset.region)
+                : trouverRegionPourCentreFV(centre);
+            regInput.value = region || '';
+        }
+
+        function peuplerListeControleursPlanFV() {
             const select = document.getElementById('planFvControleurSelect');
             if (!select) return;
 
             const currentVal = select.value;
-            const regNorm = normaliserRegion(regionFiltre);
 
             let controleurs = [];
-            if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
+            if (window.FCIAuth && typeof window.FCIAuth.getAllControllers === 'function') {
+                controleurs = window.FCIAuth.getAllControllers();
+            } else if (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function') {
                 controleurs = window.FCIAuth.getControllersByRegion('');
             }
             const chefsService = getChefsDeServiceListe();
 
-            select.innerHTML = '<option value="">-- Sélectionner un contrôleur (ex. CASA-001) --</option>';
+            select.innerHTML = '<option value="">-- Sélectionner un contrôleur affecté --</option>';
 
-            if (regNorm === 'SIEGE') {
-                if (chefsService.length > 0) {
-                    const grpChefs = document.createElement('optgroup');
-                    grpChefs.label = 'SIÈGE (5 Chefs de service)';
-                    chefsService.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.username;
-                        opt.dataset.fonction = c.fonction || '';
-                        opt.dataset.region = 'SIEGE';
-                        opt.dataset.role = 'CHEF_SERVICE';
-                        opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
-                        grpChefs.appendChild(opt);
-                    });
-                    select.appendChild(grpChefs);
-                }
-            } else if (regNorm) {
-                // Les 10 autres régions restent identiques (uniquement les contrôleurs régionaux)
-                controleurs.forEach(c => {
+            const parRegion = new Map();
+            controleurs.forEach(c => {
+                const r = normaliserRegion(c.region || 'AUTRE');
+                if (!parRegion.has(r)) parRegion.set(r, []);
+                parRegion.get(r).push(c);
+            });
+
+            [...parRegion.keys()].sort((a, b) => a.localeCompare(b, 'fr')).forEach(reg => {
+                const grp = document.createElement('optgroup');
+                grp.label = `RÉGION ${reg}`;
+                parRegion.get(reg).forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.username;
                     opt.dataset.fonction = c.fonction || '';
-                    opt.dataset.region = c.region || '';
+                    opt.dataset.region = reg;
                     opt.dataset.role = 'CONTROLEUR';
-                    opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
-                    select.appendChild(opt);
+                    opt.textContent = `${c.username} — ${c.fonction} (${reg})`;
+                    grp.appendChild(opt);
                 });
-            } else {
-                // Aucune région encore sélectionnée : contrôleurs régionaux + groupe SIÈGE
-                if (controleurs.length > 0) {
-                    const grpCtrls = document.createElement('optgroup');
-                    grpCtrls.label = 'CONTRÔLEURS RÉGIONAUX';
-                    controleurs.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.username;
-                        opt.dataset.fonction = c.fonction || '';
-                        opt.dataset.region = c.region || '';
-                        opt.dataset.role = 'CONTROLEUR';
-                        opt.textContent = `${c.username} — ${c.fonction} (${c.region})`;
-                        grpCtrls.appendChild(opt);
-                    });
-                    select.appendChild(grpCtrls);
-                }
-                if (chefsService.length > 0) {
-                    const grpChefs = document.createElement('optgroup');
-                    grpChefs.label = 'SIÈGE (5 Chefs de service)';
-                    chefsService.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.username;
-                        opt.dataset.fonction = c.fonction || '';
-                        opt.dataset.region = 'SIEGE';
-                        opt.dataset.role = 'CHEF_SERVICE';
-                        opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
-                        grpChefs.appendChild(opt);
-                    });
-                    select.appendChild(grpChefs);
-                }
+                select.appendChild(grp);
+            });
+
+            if (chefsService.length > 0) {
+                const grpChefs = document.createElement('optgroup');
+                grpChefs.label = 'SIÈGE (5 Chefs de service)';
+                chefsService.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.username;
+                    opt.dataset.fonction = c.fonction || '';
+                    opt.dataset.region = 'SIEGE';
+                    opt.dataset.role = 'CHEF_SERVICE';
+                    opt.textContent = `${c.username} — ${c.fonction} (SIÈGE)`;
+                    grpChefs.appendChild(opt);
+                });
+                select.appendChild(grpChefs);
             }
 
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
@@ -1107,31 +1182,79 @@
             }
         }
 
-        function onPlanFvRegionChange() {
-            const regSelect = document.getElementById('planFvRegionSelect');
-            const siteSelect = document.getElementById('planFvSiteSelect');
-            if (!regSelect || !siteSelect) return;
+        function peuplerPeriodesPlanFV() {
+            const sel = document.getElementById('planFvPeriodeSelect');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = '<option value="">-- Sélectionner une période --</option>';
 
-            const region = normaliserRegion(regSelect.value);
-            regSelect.value = region;
-            siteSelect.innerHTML = '';
-
-            peuplerListeControleursPlanFV(region);
-
-            if (!region || !CENTRES_PAR_REGION[region]) {
-                siteSelect.innerHTML = '<option value="">-- Région requise --</option>';
-                siteSelect.disabled = true;
-                return;
-            }
-
-            siteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>';
-            CENTRES_PAR_REGION[region].forEach(centre => {
-                const opt = document.createElement('option');
-                opt.value = centre;
-                opt.textContent = centre;
-                siteSelect.appendChild(opt);
+            const groupes = new Map();
+            PERIODES_VERIF_FV.forEach(p => {
+                if (!groupes.has(p.groupe)) groupes.set(p.groupe, []);
+                groupes.get(p.groupe).push(p);
             });
-            siteSelect.disabled = false;
+            groupes.forEach((items, grpName) => {
+                const grp = document.createElement('optgroup');
+                grp.label = grpName;
+                items.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.code;
+                    opt.textContent = p.label;
+                    grp.appendChild(opt);
+                });
+                sel.appendChild(grp);
+            });
+            const optCustom = document.createElement('option');
+            optCustom.value = 'PERSONNALISEE';
+            optCustom.textContent = 'Période personnalisée (dates précises)...';
+            sel.appendChild(optCustom);
+
+            if (prev && Array.from(sel.options).some(o => o.value === prev)) {
+                sel.value = prev;
+            }
+            onPlanFvPeriodeChange();
+        }
+
+        function onPlanFvPeriodeChange() {
+            const sel = document.getElementById('planFvPeriodeSelect');
+            const customRow = document.getElementById('planFvCustomDatesRow');
+            const dDeb = document.getElementById('planFvDateDebutCustom');
+            const dFin = document.getElementById('planFvDateFinCustom');
+            if (!sel || !customRow) return;
+
+            if (sel.value === 'PERSONNALISEE') {
+                customRow.style.display = 'grid';
+                const today = new Date().toISOString().split('T')[0];
+                if (dDeb && !dDeb.value) dDeb.value = today;
+                if (dFin && !dFin.value) dFin.value = today;
+            } else {
+                customRow.style.display = 'none';
+            }
+        }
+
+        function lirePeriodePlanFV() {
+            const sel = document.getElementById('planFvPeriodeSelect');
+            const code = sel ? sel.value : '';
+            if (!code) return null;
+            if (code === 'PERSONNALISEE') {
+                const dateDebut = document.getElementById('planFvDateDebutCustom')?.value || '';
+                const dateFin = document.getElementById('planFvDateFinCustom')?.value || '';
+                if (!dateDebut || !dateFin) return null;
+                return {
+                    periodeCode: 'PERSONNALISEE',
+                    periodeLabel: `${formatDateToJJMMAAAA(dateDebut)} → ${formatDateToJJMMAAAA(dateFin)}`,
+                    dateDebut,
+                    dateFin
+                };
+            }
+            const found = PERIODES_VERIF_FV.find(p => p.code === code);
+            if (!found) return null;
+            return {
+                periodeCode: found.code,
+                periodeLabel: found.label,
+                dateDebut: found.dateDebut,
+                dateFin: found.dateFin
+            };
         }
 
         function getPlanificationsFVVisibles() {
@@ -1166,23 +1289,24 @@
         async function creerPlanificationFV() {
             if (!isCurrentUserSiege()) return;
 
-            const ctrlSelect = document.getElementById('planFvControleurSelect');
-            const regSelect = document.getElementById('planFvRegionSelect');
             const siteSelect = document.getElementById('planFvSiteSelect');
-            const dateInput = document.getElementById('planFvDateInput');
-            const statutSelect = document.getElementById('planFvStatutSelect');
+            const regInput = document.getElementById('planFvRegionAuto');
+            const ctrlSelect = document.getElementById('planFvControleurSelect');
+            const periode = lirePeriodePlanFV();
 
-            const controleurId = String(ctrlSelect.value || '').trim();
-            const selectedOpt = ctrlSelect.options[ctrlSelect.selectedIndex];
+            const site = String(siteSelect?.value || '').trim();
+            const region = normaliserRegion(regInput?.value || trouverRegionPourCentreFV(site));
+            const controleurId = String(ctrlSelect?.value || '').trim();
+            const selectedOpt = ctrlSelect ? ctrlSelect.options[ctrlSelect.selectedIndex] : null;
             const controleurFonction = selectedOpt ? (selectedOpt.dataset.fonction || controleurId) : controleurId;
             const controleurHomeRegion = selectedOpt ? normaliserRegion(selectedOpt.dataset.region || '') : '';
-            const region = normaliserRegion(regSelect.value);
-            const site = String(siteSelect.value || '').trim();
-            const datePrevue = String(dateInput.value || '').trim();
-            const statut = statutSelect.value === 'CLOTURE' ? 'CLOTURE' : 'EN_COURS';
 
-            if (!controleurId || !region || !site || !datePrevue) {
-                alert("Veuillez renseigner le contrôleur désigné, la région, le centre concerné et la date prévue.");
+            if (!site || !region || !controleurId || !periode) {
+                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté et la Période de vérification.");
+                return;
+            }
+            if (periode.dateFin < periode.dateDebut) {
+                alert("La date de fin de période doit être postérieure ou égale à la date de début.");
                 return;
             }
 
@@ -1206,11 +1330,15 @@
                 site,
                 centre: site,
                 entite: site,
-                date: datePrevue,
-                datePrevue,
-                referentiel: 'Encaisses.json (Tous les PC)',
-                statutExecution: statut,
-                statutAvancement: statut === 'CLOTURE' ? 'Clôturé' : 'En cours',
+                date: periode.dateDebut,
+                datePrevue: periode.dateDebut,
+                dateDebut: periode.dateDebut,
+                dateFin: periode.dateFin,
+                periodeCode: periode.periodeCode,
+                periodeLabel: periode.periodeLabel,
+                referentiel: 'Sélection libre par le contrôleur (Encaisses)',
+                statutExecution: 'EN_COURS',
+                statutAvancement: 'En cours',
                 createdAt: new Date().toISOString()
             };
 
@@ -1222,9 +1350,11 @@
                 sauvegarderDBSecurisee(db);
             }
 
+            siteSelect.value = '';
+            onPlanFvCentreChange();
             ctrlSelect.value = '';
-            regSelect.value = '';
-            onPlanFvRegionChange();
+            document.getElementById('planFvPeriodeSelect').value = '';
+            onPlanFvPeriodeChange();
             renderPlanificationsFVTable();
         }
 
@@ -1235,7 +1365,7 @@
             if (!tbody) return;
 
             const plans = getPlanificationsFVVisibles().sort((a, b) =>
-                String(b.datePrevue || b.date || '').localeCompare(String(a.datePrevue || a.date || ''))
+                String(b.datePrevue || b.dateDebut || b.date || '').localeCompare(String(a.datePrevue || a.dateDebut || a.date || ''))
             );
 
             if (countBadge) {
@@ -1266,7 +1396,11 @@
                     ? `<span class="badge-etat-plan etat-plan-cloture">🟢 Clôturé</span>`
                     : `<span class="badge-etat-plan etat-plan-encours">🟡 En cours</span>`;
                 const isSelected = activePlanificationFVId === p.idPlanification;
-                const dateAff = formatDateToJJMMAAAA(p.datePrevue || p.date || '');
+                const dDebAff = formatDateToJJMMAAAA(p.dateDebut || p.datePrevue || p.date || '');
+                const dFinAff = formatDateToJJMMAAAA(p.dateFin || '');
+                const periodeAff = p.periodeLabel
+                    ? `<strong>${p.periodeLabel}</strong>${dDebAff && dFinAff ? `<br><span style="font-size:0.7rem; color:var(--text-muted);">${dDebAff} → ${dFinAff}</span>` : ''}`
+                    : (dDebAff || '--');
                 const ctrlLabel = p.controleurFonction && p.controleurFonction !== p.controleurId
                     ? `<strong>${p.controleurId}</strong> <span style="color:var(--text-muted); font-size:0.72rem;">(${p.controleurFonction})</span>`
                     : `<strong>${p.controleurId || p.controleur || '--'}</strong>`;
@@ -1280,11 +1414,11 @@
                         <td>${ctrlLabel}</td>
                         <td><strong>${normaliserRegion(p.region)}</strong></td>
                         <td>${p.site || p.centre || '--'}</td>
-                        <td><span style="font-size:0.72rem; color:var(--primary-blue); font-weight:700;">Encaisses.json (Pop / Éch / OK / KO / TC / Constat / Reco)</span></td>
-                        <td>${dateAff || '--'}</td>
+                        <td>${periodeAff}</td>
+                        <td><span style="font-size:0.72rem; color:#475569; font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Sélection par le contrôleur</span></td>
                         <td>${badgeEtat}</td>
                         <td style="display:flex; gap:5px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${p.idPlanification}')" title="Charger cette vérification dans la feuille FV">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${p.idPlanification}')" title="Alimenter les informations fondamentales de la mission (Centre, Région, Contrôleur, Période)">
                                 <i class="fa-solid fa-play"></i> Ouvrir
                             </button>
                             <button type="button" class="btn btn-sm ${toggleBtnClass}" onclick="basculerStatutPlanificationFV('${p.idPlanification}', '${nextStatut}')">
@@ -1307,50 +1441,31 @@
             loadedEncaisseIds = [];
             loadedControleurId = plan.controleurId || '';
 
-            const regVal = normaliserRegion(plan.region);
+            const regVal = normaliserRegion(plan.region || trouverRegionPourCentreFV(plan.site || plan.centre || ''));
             const siteVal = plan.site || plan.centre || '';
-            const dateISO = formatDateToISO(plan.datePrevue || plan.date) || new Date().toISOString().split('T')[0];
-            const dateVerifFR = formatDateToJJMMAAAA(dateISO);
+            const todayISO = new Date().toISOString().split('T')[0];
+            const dateDebutISO = formatDateToISO(plan.dateDebut || plan.datePrevue || plan.date) || todayISO;
+            const dateFinISO = formatDateToISO(plan.dateFin || plan.datePrevue || plan.date) || dateDebutISO;
 
+            // Alimenter UNIQUEMENT les informations fondamentales de la mission
+            // (Processus, Risque, Contrôle et Point de contrôle restent sélectionnés par le contrôleur)
             const regSelect = document.getElementById('regionSite');
             regSelect.disabled = false;
             regSelect.value = regVal;
             onRegionEncaisseChange(siteVal);
 
-            document.getElementById('dateVerification').value = dateISO;
+            document.getElementById('dateVerification').value = todayISO;
+            document.getElementById('periodeDebut').value = dateDebutISO;
+            document.getElementById('periodeFin').value = dateFinISO;
             updateHeaderDateVerifBadge();
 
             setControleurSaisieValue(plan.controleurId || plan.controleur || '');
 
-            if (Array.isArray(rawJsonData) && rawJsonData.length > 0) {
-                addedPoints = rawJsonData.map((item, idx) => ({
-                    id: Date.now() + idx,
-                    selected: true,
-                    dateVerification: dateVerifFR,
-                    processus: getItemVal(item, ['Processus']),
-                    risque: getItemVal(item, ['Intitulé du risque', 'Intitulé risque']),
-                    controle: getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']),
-                    pointDeControle: getItemVal(item, ['Points de contrôle', 'Point de contrôle']),
-                    constats: [{
-                        dateVerification: dateVerifFR,
-                        statut: 'EN_COURS',
-                        population: 0,
-                        echantillon: 0,
-                        ok: 0,
-                        ko: 0,
-                        rate: 100,
-                        constatText: '',
-                        recoText: '',
-                        avisText: ''
-                    }]
-                }));
-                renderPoints();
-            }
-
             renderPlanificationsFVTable();
             const statusEl = document.getElementById('searchEncaisseStatus');
             if (statusEl) {
-                statusEl.innerText = `Mission planifiée chargée — ${plan.controleurId} | ${regVal} | ${siteVal}`;
+                const periodeTxt = plan.periodeLabel ? ` | Période : ${plan.periodeLabel}` : '';
+                statusEl.innerText = `Informations fondamentales chargées — ${plan.controleurId} | ${regVal} | ${siteVal}${periodeTxt} (Sélectionnez Processus / Risque / Contrôle / PC ci-dessous)`;
             }
         }
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI v1.0 - Fiche de Contrôle Terrain (FC)</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261126-siege"></script>
+    <script src="fci-auth.js?v=20261127-planif2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -269,13 +269,71 @@
 
         .empty-state { text-align: center; padding: 50px 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); }
 
+        .ctrl-missions-card {
+            background: #FFFFFF;
+            border-radius: 8px;
+            padding: 14px 18px;
+            border: 1px solid #93C5FD;
+            border-left: 4px solid #0284C7;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 5px rgba(2, 132, 199, 0.06);
+        }
+        .ctrl-missions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .ctrl-mission-tile {
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background: #F8FAFC;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .ctrl-mission-tile.active-tile {
+            border-color: var(--primary);
+            border-width: 2px;
+            background: #EFF6FF;
+        }
+        .ctrl-proc-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 10px 14px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        .ctrl-proc-tab {
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid #CBD5E1;
+            background: #F8FAFC;
+            color: var(--primary);
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ctrl-proc-tab.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+        }
+
         @media (max-width: 1280px) {
             .single-row-7 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
             .single-row-modif { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
         }
 
         @media print {
-            .sidebar, .action-buttons, .pc-action-buttons, .modif-line-card { display: none !important; }
+            .sidebar, .action-buttons, .pc-action-buttons, .modif-line-card, .ctrl-missions-card, .ctrl-proc-tabs { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
         }
     </style>
@@ -314,6 +372,8 @@
                 <button type="button" class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Imprimer / PDF</button>
             </div>
         </div>
+
+        <div id="controleur-missions-diffusees-container"></div>
 
         <div id="saisie-bar-container"></div>
 
@@ -358,7 +418,7 @@
         <div id="content-area"></div>
     </main>
 
-    <script src="fci-db-manager.js?v=20261126-archive2"></script>
+    <script src="fci-db-manager.js?v=20261127-planif2"></script>
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
@@ -748,8 +808,259 @@
             });
         }
 
+        let filtreProcessusControleur = 'TOUS';
+        let fcVideManuellement = false;
+
+        function estUtilisateurSiegeFC() {
+            return Boolean(window.FCIAuth && typeof window.FCIAuth.isSiege === 'function' && window.FCIAuth.isSiege());
+        }
+
+        function estPlanificationFCDiffuseePourControleur(p, user) {
+            if (!p || !user) return false;
+            const src = String(p.sourceFeuille || p.module || '').trim().toUpperCase();
+            const typeCtrl = String(p.typeControle || '').trim().toUpperCase();
+            const idPlan = String(p.idPlanification || '').trim().toUpperCase();
+            if (src === 'FV' || src === 'ENCAISSES' || src === 'VERIFICATION') return false;
+            if (typeCtrl === 'VÉRIFICATION' || typeCtrl === 'VERIFICATION' || typeCtrl === 'FV') return false;
+            if (idPlan.startsWith('PLAN-FV') || idPlan.startsWith('FV-')) return false;
+
+            const wf = String(p.statutWorkflow || '').trim().toUpperCase();
+            if (wf && wf !== 'DIFFUSEE') return false;
+
+            const uName = String(user.username || user.identifiant || '').trim().toUpperCase();
+            if (!uName) return false;
+            const ctrlId = String(p.controleurId || '').trim().toUpperCase();
+            const assignes = Array.isArray(p.controleursAssignes)
+                ? p.controleursAssignes.map(x => String(x || '').trim().toUpperCase())
+                : [];
+            return ctrlId === uName || assignes.includes(uName);
+        }
+
+        function getMissionsPlanifieesDiffuseesControleur() {
+            if (estUtilisateurSiegeFC()) return [];
+            const user = getCurrentAuthUser();
+            if (!user) return [];
+            const db = lireDBSecurisee();
+            return (db.planifications || [])
+                .filter(p => estPlanificationFCDiffuseePourControleur(p, user))
+                .sort((a, b) => String(b.dateDiffusion || b.createdAt || '').localeCompare(String(a.dateDiffusion || a.createdAt || '')));
+        }
+
+        function renderMissionsPlanifieesControleur() {
+            const container = document.getElementById('controleur-missions-diffusees-container');
+            if (!container) return;
+
+            // Consigne impérative : la fiche de contrôle des collaborateurs du Siège reste strictement inchangée.
+            if (estUtilisateurSiegeFC()) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const user = getCurrentAuthUser();
+            const missions = getMissionsPlanifieesDiffuseesControleur();
+            if (!user || missions.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const db = lireDBSecurisee();
+            const constatsBDD = db.constatsControle || [];
+            const activePlanId = missionData && missionData.metadata ? (missionData.metadata.idPlanificationSiege || '') : '';
+
+            container.innerHTML = `
+                <div class="ctrl-missions-card">
+                    <div class="section-line-label" style="color:#0369A1; margin-bottom:4px;">
+                        <span><i class="fa-solid fa-briefcase"></i> Mes Missions Planifiées &amp; Diffusées par le Siège (${escapeHtml(user.username)})</span>
+                        <span class="date-bdd-pill">${missions.length} mission(s) affectée(s)</span>
+                    </div>
+                    <div style="font-size:0.76rem; color:var(--text-muted);">
+                        Seuls les centres et missions qui vous ont été nominativement affectés après validation Directeur s'affichent ici. Sélectionnez une mission pour précharger automatiquement la fiche.
+                    </div>
+                    <div class="ctrl-missions-grid">
+                        ${missions.map(p => {
+                            const isActive = Boolean(activePlanId && activePlanId === p.idPlanification);
+                            const pts = Array.isArray(p.pointsControle) ? p.pointsControle : [];
+                            const procs = Array.isArray(p.processusList) && p.processusList.length > 0
+                                ? p.processusList
+                                : [...new Set(pts.map(pt => getItemVal(pt, ['Processus'])).filter(Boolean))];
+                            const nbArchives = constatsBDD.filter(c => c && c.idPlanificationSiege === p.idPlanification).length;
+                            const st = String(p.statutExecution || 'PLANIFIEE').toUpperCase();
+                            const badgeSt = (st === 'REALISEE' || (pts.length > 0 && nbArchives >= pts.length))
+                                ? '<span class="pc-feedback-pill pc-feedback-archive"><i class="fa-solid fa-circle-check"></i> Réalisée</span>'
+                                : (st === 'EN_COURS' || nbArchives > 0
+                                    ? `<span class="pc-feedback-pill pc-feedback-modifier"><i class="fa-solid fa-spinner"></i> En cours (${nbArchives}/${pts.length} PC)</span>`
+                                    : '<span class="pc-feedback-pill pc-feedback-suivi"><i class="fa-regular fa-clock"></i> À exécuter</span>');
+                            const periodeTxt = p.periodeLabel
+                                ? `${p.periodeLabel} (${formatDateToFR(p.dateDebut)} → ${formatDateToFR(p.dateFin)})`
+                                : `${formatDateToFR(p.dateDebut)} → ${formatDateToFR(p.dateFin)}`;
+
+                            return `
+                                <div class="ctrl-mission-tile ${isActive ? 'active-tile' : ''}">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:6px;">
+                                        <div>
+                                            <div style="font-weight:800; color:var(--primary); font-size:0.86rem;">${escapeHtml(p.entite || p.site || p.centre || '--')}</div>
+                                            <div style="font-size:0.74rem; color:var(--text-muted);">
+                                                Région : <b>${escapeHtml(normaliserRegion(p.region || ''))}</b> · Type : <b>${escapeHtml(p.typeControle || 'Thématique')}</b>
+                                            </div>
+                                        </div>
+                                        ${badgeSt}
+                                    </div>
+                                    <div style="font-size:0.74rem; color:#334155;">
+                                        <i class="fa-regular fa-calendar"></i> ${escapeHtml(periodeTxt)}
+                                    </div>
+                                    <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                                        ${procs.map(pr => `<span style="font-size:0.68rem; font-weight:700; padding:2px 6px; border-radius:4px; background:#DBEAFE; color:#1E40AF;">${escapeHtml(pr)}</span>`).join('')}
+                                        <span style="font-size:0.68rem; font-weight:700; padding:2px 6px; border-radius:4px; background:#FEF3C7; color:#92400E;">${pts.length} PC</span>
+                                    </div>
+                                    <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+                                        <button type="button" class="btn btn-sm ${isActive ? 'btn-accent' : 'btn-primary'}" onclick="chargerMissionPlanifieeControleur('${String(p.idPlanification || '').replace(/'/g, "\\'")}')">
+                                            <i class="fa-solid ${isActive ? 'fa-check' : 'fa-download'}"></i> ${isActive ? 'Mission active' : 'Charger cette mission'}
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function chargerMissionPlanifieeControleur(idPlanification) {
+            if (estUtilisateurSiegeFC()) return;
+            const user = getCurrentAuthUser();
+            const missions = getMissionsPlanifieesDiffuseesControleur();
+            const plan = missions.find(p => p.idPlanification === idPlanification);
+            if (!plan) return;
+
+            fcVideManuellement = false;
+            filtreProcessusControleur = 'TOUS';
+
+            const db = lireDBSecurisee();
+            const constatsPlan = (db.constatsControle || []).filter(c => c && c.idPlanificationSiege === plan.idPlanification);
+            const homeReg = getUserHomeRegion();
+            const missionRegion = normaliserRegion(plan.region || homeReg);
+            const idMission = plan.idMissionExecution || plan.idMission || ('MIS-' + Date.now());
+            const dateCtrlToday = formatDateToFR(getTodayISO());
+
+            const pointsHydrates = (plan.pointsControle || []).map(pt => {
+                const pProc = getItemVal(pt, ['Processus']);
+                const pPc = getItemVal(pt, ['Points de contrôle', 'Point de contrôle']);
+                const pCtrl = getItemVal(pt, ['Intitulé Contrôle', 'Intitulé de contrôle']);
+                const existant = constatsPlan.find(c =>
+                    String(c.processus || '').trim() === String(pProc || '').trim() &&
+                    String(c.pc || '').trim() === String(pPc || '').trim() &&
+                    String(c.controle || '').trim() === String(pCtrl || '').trim()
+                );
+
+                if (existant) {
+                    const objEx = {
+                        ...pt,
+                        _bddIdConstat: existant.idConstat,
+                        _bddIdMission: existant.idMission || idMission,
+                        _espaceSaisie: existant.espaceSaisie || 'REGIONAL',
+                        _bddDateControle: formatDateToFR(existant.date || existant.dateControle) || dateCtrlToday,
+                        _isModifie: Boolean(existant.isModifie || existant.modifie),
+                        _isSuivi: Boolean(existant.isSuivi || existant.suivi),
+                        eval: {
+                            population: existant.pop || 0,
+                            echantillon: existant.ech || 0,
+                            nombreOk: existant.ok || 0,
+                            nombreKo: existant.ko || 0,
+                            tauxConformite: (existant.tc !== undefined ? existant.tc : 0).toString(),
+                            statutConstat: existant.statut || 'EN_COURS',
+                            constat: existant.constat || '',
+                            recommandation: existant.recommandation || '',
+                            avisResponsable: existant.avisResponsable || ''
+                        }
+                    };
+                    objEx._initialSnapshot = getSnapshotPointFC(objEx);
+                    return objEx;
+                }
+
+                return {
+                    ...pt,
+                    _bddDateControle: dateCtrlToday,
+                    eval: {
+                        population: 0,
+                        echantillon: 0,
+                        nombreOk: 0,
+                        nombreKo: 0,
+                        tauxConformite: "0.00",
+                        statutConstat: 'EN_COURS',
+                        constat: '',
+                        recommandation: '',
+                        avisResponsable: ''
+                    }
+                };
+            });
+
+            missionData = {
+                metadata: {
+                    idMission,
+                    idPlanificationSiege: plan.idPlanification,
+                    campagneSiegeId: plan.campagneSiegeId || plan.idCampagne || '',
+                    titreCampagne: plan.titreCampagne || '',
+                    valideParDirecteur: Boolean(plan.valideParDirecteur),
+                    periodeLabel: plan.periodeLabel || '',
+                    planifiePar: 'SIEGE',
+                    auteurSiege: plan.auteurSiege || '',
+                    region: missionRegion,
+                    entite: plan.entite || plan.site || plan.centre || '',
+                    typeControle: plan.typeControle || 'Thématique',
+                    dateControle: dateCtrlToday,
+                    periodeDebut: formatDateToFR(plan.dateDebut || ''),
+                    periodeFin: formatDateToFR(plan.dateFin || ''),
+                    dateDebutControle: plan.dateDebut || '',
+                    dateFinControle: plan.dateFin || '',
+                    controleurs: user ? user.username : (plan.controleurId || ''),
+                    controleurId: user ? user.username : (plan.controleurId || ''),
+                    controleursAssignes: plan.controleursAssignes || [user ? user.username : ''],
+                    controleurRegion: homeReg || missionRegion,
+                    auteurRegion: homeReg || missionRegion,
+                    espaceSaisie: 'REGIONAL',
+                    createdAt: new Date().toISOString()
+                },
+                pointsControle: pointsHydrates
+            };
+
+            if (String(plan.statutExecution || 'PLANIFIEE').toUpperCase() === 'PLANIFIEE' &&
+                typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.marquerPlanificationStatut === 'function') {
+                FCIDatabase.marquerPlanificationStatut(plan.idPlanification, 'EN_COURS', {
+                    idMissionExecution: idMission,
+                    executePar: user ? user.username : ''
+                });
+            }
+
+            sauvegarderLocalement();
+            renderPage();
+            renderMissionsPlanifieesControleur();
+        }
+
+        function selectionnerProcessusFiltreControleur(procName) {
+            if (estUtilisateurSiegeFC()) return;
+            filtreProcessusControleur = procName || 'TOUS';
+            renderPage();
+        }
+
+        function autoPrechargerMissionControleurSiNecessaire() {
+            if (estUtilisateurSiegeFC() || fcVideManuellement) return;
+            if (missionData && Array.isArray(missionData.pointsControle) && missionData.pointsControle.length > 0) return;
+
+            const missions = getMissionsPlanifieesDiffuseesControleur();
+            if (missions.length === 0) return;
+
+            const cible = missions.find(m => String(m.statutExecution || '').toUpperCase() !== 'REALISEE') || missions[0];
+            if (cible) {
+                chargerMissionPlanifieeControleur(cible.idPlanification);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             chargerDonneesMission();
+            if (!estUtilisateurSiegeFC()) {
+                autoPrechargerMissionControleurSiNecessaire();
+                renderMissionsPlanifieesControleur();
+            }
             remplirFiltresBDD();
         });
 
@@ -760,19 +1071,34 @@
                     missionData.metadata.region = homeReg;
                 }
                 renderPage();
+            } else if (!estUtilisateurSiegeFC()) {
+                autoPrechargerMissionControleurSiNecessaire();
+            }
+            if (!estUtilisateurSiegeFC()) {
+                renderMissionsPlanifieesControleur();
             }
             remplirFiltresBDD();
         });
 
         window.addEventListener('fci-db-synced', () => {
+            if (!estUtilisateurSiegeFC()) {
+                autoPrechargerMissionControleurSiNecessaire();
+                renderMissionsPlanifieesControleur();
+            }
             remplirFiltresBDD();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
+                if (!estUtilisateurSiegeFC()) {
+                    renderMissionsPlanifieesControleur();
+                }
                 remplirFiltresBDD();
             } else if (e.key === 'fci_fiche_controle_active') {
                 chargerDonneesMission();
+                if (!estUtilisateurSiegeFC()) {
+                    renderMissionsPlanifieesControleur();
+                }
             }
         });
 
@@ -1252,7 +1578,31 @@
                 </div>
             `;
 
-            for (const [proc, items] of Object.entries(parProcessus)) {
+            const nomsProcessus = Object.keys(parProcessus);
+            if (!estUtilisateurSiegeFC() && nomsProcessus.length > 1) {
+                if (filtreProcessusControleur !== 'TOUS' && !parProcessus[filtreProcessusControleur]) {
+                    filtreProcessusControleur = 'TOUS';
+                }
+                html += `
+                    <div class="ctrl-proc-tabs">
+                        <span style="font-size:0.76rem; font-weight:800; color:var(--primary); text-transform:uppercase;"><i class="fa-solid fa-layer-group"></i> Processus de la campagne (${nomsProcessus.length}) :</span>
+                        <button type="button" class="ctrl-proc-tab ${filtreProcessusControleur === 'TOUS' ? 'active' : ''}" onclick="selectionnerProcessusFiltreControleur('TOUS')">
+                            Tous les processus (${points.length} PC)
+                        </button>
+                        ${nomsProcessus.map(np => `
+                            <button type="button" class="ctrl-proc-tab ${filtreProcessusControleur === np ? 'active' : ''}" onclick="selectionnerProcessusFiltreControleur('${String(np).replace(/'/g, "\\'")}')">
+                                ${escapeHtml(np)} (${parProcessus[np].length} PC)
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            const entriesAAfficher = (!estUtilisateurSiegeFC() && filtreProcessusControleur !== 'TOUS' && parProcessus[filtreProcessusControleur])
+                ? [[filtreProcessusControleur, parProcessus[filtreProcessusControleur]]]
+                : Object.entries(parProcessus);
+
+            for (const [proc, items] of entriesAAfficher) {
                 html += `<div class="process-group"><div class="process-header"><span><i class="fa-solid fa-diagram-project"></i> Processus : ${proc}</span><span style="background:var(--primary); color:white; padding:4px 10px; border-radius:12px; font-size:0.75rem;">${items.length} Point(s)</span></div>`;
                 items.forEach((item) => {
                     const idx = points.indexOf(item);
@@ -1932,11 +2282,18 @@
         function sauvegarderLocalement() { localStorage.setItem('fci_fiche_controle_active', JSON.stringify(missionData)); }
 
         function viderFormulaireFC() {
+            if (!estUtilisateurSiegeFC()) {
+                fcVideManuellement = true;
+                filtreProcessusControleur = 'TOUS';
+            }
             localStorage.removeItem('fci_fiche_controle_active');
             missionData = null;
             afficherEtatVide();
             document.getElementById('searchStatus').innerText = '';
             reinitialiserFiltresBDD();
+            if (!estUtilisateurSiegeFC()) {
+                renderMissionsPlanifieesControleur();
+            }
         }
 
         function exporterExcel() {

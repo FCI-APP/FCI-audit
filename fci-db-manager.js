@@ -33,6 +33,8 @@
             constatsControle: [],
             constatsEncaisses: [],
             planifications: [],
+            campagnesPlanification: [],
+            notifications: [],
             lastSync: null
         };
     }
@@ -44,7 +46,9 @@
             missions: Array.isArray(parsed?.missions) ? parsed.missions : [],
             constatsControle: Array.isArray(parsed?.constatsControle) ? parsed.constatsControle : [],
             constatsEncaisses: Array.isArray(parsed?.constatsEncaisses) ? parsed.constatsEncaisses : [],
-            planifications: Array.isArray(parsed?.planifications) ? parsed.planifications : []
+            planifications: Array.isArray(parsed?.planifications) ? parsed.planifications : [],
+            campagnesPlanification: Array.isArray(parsed?.campagnesPlanification) ? parsed.campagnesPlanification : [],
+            notifications: Array.isArray(parsed?.notifications) ? parsed.notifications : []
         };
     }
 
@@ -190,7 +194,9 @@
                         missions: normalized.missions.length,
                         constatsControle: normalized.constatsControle.length,
                         constatsEncaisses: normalized.constatsEncaisses.length,
-                        planifications: normalized.planifications.length
+                        planifications: normalized.planifications.length,
+                        campagnesPlanification: normalized.campagnesPlanification.length,
+                        notifications: normalized.notifications.length
                     }
                 }));
             }
@@ -234,6 +240,8 @@
                         constatsControle: mergeCollectionArrays(base.constatsControle, fresher.constatsControle, 'idConstat'),
                         constatsEncaisses: mergeCollectionArrays(base.constatsEncaisses, fresher.constatsEncaisses, 'idEncaisse'),
                         planifications: mergeCollectionArrays(base.planifications, fresher.planifications, 'idPlanification'),
+                        campagnesPlanification: mergeCollectionArrays(base.campagnesPlanification, fresher.campagnesPlanification, 'idCampagne'),
+                        notifications: mergeCollectionArrays(base.notifications, fresher.notifications, 'idNotification'),
                         lastSync: fresher.lastSync || base.lastSync || new Date().toISOString()
                     };
                 }
@@ -349,6 +357,20 @@
             }
         });
 
+        // Collections exclusives Siège (campagnesPlanification & notifications) :
+        // Un utilisateur régional ne peut jamais écraser les campagnes/notifications du Siège.
+        if (!user || isSiegeUser(user)) {
+            if (Array.isArray(incoming.campagnesPlanification)) {
+                mergedDb.campagnesPlanification = incoming.campagnesPlanification;
+            }
+            if (Array.isArray(incoming.notifications)) {
+                mergedDb.notifications = incoming.notifications;
+            }
+        } else {
+            mergedDb.campagnesPlanification = Array.isArray(fullRawDb.campagnesPlanification) ? fullRawDb.campagnesPlanification : [];
+            mergedDb.notifications = Array.isArray(fullRawDb.notifications) ? fullRawDb.notifications : [];
+        }
+
         mergedDb.lastSync = new Date().toISOString();
         persistRawDatabase(mergedDb, true);
 
@@ -361,7 +383,9 @@
             missions: [],
             constatsControle: [],
             constatsEncaisses: [],
-            planifications: []
+            planifications: [],
+            campagnesPlanification: [],
+            notifications: []
         });
     }
 
@@ -635,7 +659,10 @@
 
     function compterEnregistrementsArchive(typeFiche, donnees) {
         if (typeFiche === 'PLAN' && donnees && !Array.isArray(donnees)) {
-            return (donnees.missions?.length || 0) + (donnees.planifications?.length || 0);
+            return (donnees.missions?.length || 0) +
+                   (donnees.planifications?.length || 0) +
+                   (donnees.campagnesPlanification?.length || 0) +
+                   (donnees.notifications?.length || 0);
         }
         return Array.isArray(donnees) ? donnees.length : (donnees ? 1 : 0);
     }
@@ -651,22 +678,34 @@
             const incArr = Array.isArray(entrant) ? entrant : (entrant ? [entrant] : []);
             return mergeCollectionArrays(baseArr, incArr, 'idEncaisse');
         }
-        // PLAN : missions + planifications regroupées proprement
-        const baseObj = (existant && !Array.isArray(existant) && (Array.isArray(existant.missions) || Array.isArray(existant.planifications)))
+        // PLAN : missions + planifications + campagnesPlanification + notifications regroupées proprement
+        const isPlanContainer = (obj) => obj && !Array.isArray(obj) && (
+            Array.isArray(obj.missions) ||
+            Array.isArray(obj.planifications) ||
+            Array.isArray(obj.campagnesPlanification) ||
+            Array.isArray(obj.notifications)
+        );
+        const baseObj = isPlanContainer(existant)
             ? existant
             : {
                 missions: existant && existant.idMission ? [existant] : [],
-                planifications: existant && existant.idPlanification ? [existant] : []
+                planifications: existant && existant.idPlanification ? [existant] : [],
+                campagnesPlanification: existant && existant.idCampagne ? [existant] : [],
+                notifications: existant && existant.idNotification ? [existant] : []
             };
-        const incObj = (entrant && !Array.isArray(entrant) && (Array.isArray(entrant.missions) || Array.isArray(entrant.planifications)))
+        const incObj = isPlanContainer(entrant)
             ? entrant
             : {
                 missions: entrant && entrant.idMission ? [entrant] : [],
-                planifications: entrant && entrant.idPlanification ? [entrant] : []
+                planifications: entrant && entrant.idPlanification ? [entrant] : [],
+                campagnesPlanification: entrant && entrant.idCampagne ? [entrant] : [],
+                notifications: entrant && entrant.idNotification ? [entrant] : []
             };
         return {
             missions: mergeCollectionArrays(baseObj.missions || [], incObj.missions || [], 'idMission'),
-            planifications: mergeCollectionArrays(baseObj.planifications || [], incObj.planifications || [], 'idPlanification')
+            planifications: mergeCollectionArrays(baseObj.planifications || [], incObj.planifications || [], 'idPlanification'),
+            campagnesPlanification: mergeCollectionArrays(baseObj.campagnesPlanification || [], incObj.campagnesPlanification || [], 'idCampagne'),
+            notifications: mergeCollectionArrays(baseObj.notifications || [], incObj.notifications || [], 'idNotification')
         };
     }
 
@@ -772,9 +811,13 @@
 
         if (typeNorm === 'PLAN') {
             const info = extraireAnneeMois(donnees);
-            const payload = (donnees && (donnees.missions || donnees.planifications))
+            const payload = (donnees && (donnees.missions || donnees.planifications || donnees.campagnesPlanification || donnees.notifications))
                 ? donnees
-                : (donnees?.idPlanification ? { planifications: [donnees] } : { missions: [donnees] });
+                : (donnees?.idCampagne
+                    ? { campagnesPlanification: [donnees] }
+                    : (donnees?.idNotification
+                        ? { notifications: [donnees] }
+                        : (donnees?.idPlanification ? { planifications: [donnees] } : { missions: [donnees] })));
             const res = await enfilerEcritureGitHub(() =>
                 upsertMensuelGitHub('PLAN', info, payload, entite || identifiant || '')
             );
@@ -977,15 +1020,23 @@
                 const d = archive.donnees;
 
                 if (typeArch === 'PLAN') {
-                    if (d && !Array.isArray(d) && (Array.isArray(d.missions) || Array.isArray(d.planifications))) {
+                    if (d && !Array.isArray(d) && (Array.isArray(d.missions) || Array.isArray(d.planifications) || Array.isArray(d.campagnesPlanification) || Array.isArray(d.notifications))) {
                         const incM = d.missions || [];
                         const incP = d.planifications || [];
+                        const incC = d.campagnesPlanification || [];
+                        const incN = d.notifications || [];
                         fullRawDb.missions = mergeCollectionArrays(fullRawDb.missions, incM, 'idMission');
                         fullRawDb.planifications = mergeCollectionArrays(fullRawDb.planifications, incP, 'idPlanification');
+                        fullRawDb.campagnesPlanification = mergeCollectionArrays(fullRawDb.campagnesPlanification, incC, 'idCampagne');
+                        fullRawDb.notifications = mergeCollectionArrays(fullRawDb.notifications, incN, 'idNotification');
                         stats.missions += incM.length;
                         stats.planifications += incP.length;
                     } else if (d && typeof d === 'object') {
-                        if (d.idPlanification) {
+                        if (d.idCampagne) {
+                            fullRawDb.campagnesPlanification = mergeCollectionArrays(fullRawDb.campagnesPlanification, [d], 'idCampagne');
+                        } else if (d.idNotification) {
+                            fullRawDb.notifications = mergeCollectionArrays(fullRawDb.notifications, [d], 'idNotification');
+                        } else if (d.idPlanification) {
                             fullRawDb.planifications = mergeCollectionArrays(fullRawDb.planifications, [d], 'idPlanification');
                             stats.planifications += 1;
                         } else {
@@ -1050,7 +1101,7 @@
                 buckets.set(k, {
                     type,
                     info,
-                    data: type === 'PLAN' ? { missions: [], planifications: [] } : []
+                    data: type === 'PLAN' ? { missions: [], planifications: [], campagnesPlanification: [], notifications: [] } : []
                 });
             }
             const entry = buckets.get(k);
@@ -1065,6 +1116,8 @@
         (db.constatsEncaisses || []).forEach(e => addBucket('FV', e));
         (db.missions || []).forEach(m => addBucket('PLAN', m, 'missions'));
         (db.planifications || []).forEach(p => addBucket('PLAN', p, 'planifications'));
+        (db.campagnesPlanification || []).forEach(c => addBucket('PLAN', c, 'campagnesPlanification'));
+        (db.notifications || []).forEach(n => addBucket('PLAN', n, 'notifications'));
 
         if (buckets.size === 0) {
             return { success: true, filesUpdated: 0, paths: [], message: "Aucune donnée en BDD locale à archiver." };
@@ -1310,6 +1363,104 @@
         return getDB();
     }
 
+    /**
+     * Enregistre ou met à jour une campagne de planification hiérarchique
+     * (séparant campagne, processus/référentiel partagés et affectations individuelles + historique).
+     */
+    async function enregistrerCampagnePlanification(campagne, syncGitHub = true) {
+        if (!campagne || typeof campagne !== 'object') return getDB();
+        const db = getDB();
+        const list = Array.isArray(db.campagnesPlanification) ? [...db.campagnesPlanification] : [];
+        const nowIso = new Date().toISOString();
+
+        const item = {
+            ...campagne,
+            idCampagne: campagne.idCampagne || ('CAMP-' + Date.now()),
+            espaceSaisie: 'SIEGE',
+            updatedAt: nowIso,
+            createdAt: campagne.createdAt || nowIso
+        };
+
+        const idx = list.findIndex(c => c.idCampagne === item.idCampagne);
+        if (idx !== -1) {
+            list[idx] = { ...list[idx], ...item };
+        } else {
+            list.push(item);
+        }
+
+        db.campagnesPlanification = list;
+        const saved = saveDB(db);
+
+        if (syncGitHub && getGitHubToken()) {
+            const label = item.titre || item.idCampagne;
+            const ghRes = await archiverSurGitHub('PLAN', label, item.idCampagne, { campagnesPlanification: [item] });
+            saved._githubArchive = ghRes;
+        }
+        return saved;
+    }
+
+    function supprimerCampagnePlanification(idCampagne) {
+        if (!idCampagne) return getDB();
+        const db = getDB();
+        db.campagnesPlanification = (db.campagnesPlanification || []).filter(c => c.idCampagne !== idCampagne);
+        return saveDB(db);
+    }
+
+    /**
+     * Ajoute une notification (ex. notification Directeur -> tous les collaborateurs du Siège).
+     */
+    async function ajouterNotification(notif, syncGitHub = true) {
+        if (!notif || typeof notif !== 'object') return getDB();
+        const db = getDB();
+        const list = Array.isArray(db.notifications) ? [...db.notifications] : [];
+        const nowIso = new Date().toISOString();
+
+        const item = {
+            idNotification: notif.idNotification || ('NOTIF-' + Date.now()),
+            destinataires: notif.destinataires || 'SIEGE',
+            lusPar: Array.isArray(notif.lusPar) ? notif.lusPar : [],
+            ...notif,
+            createdAt: notif.createdAt || nowIso,
+            updatedAt: nowIso
+        };
+
+        const idx = list.findIndex(n => n.idNotification === item.idNotification);
+        if (idx !== -1) {
+            list[idx] = { ...list[idx], ...item };
+        } else {
+            list.push(item);
+        }
+
+        db.notifications = list;
+        const saved = saveDB(db);
+
+        if (syncGitHub && getGitHubToken()) {
+            archiverSurGitHub('PLAN', 'Notification', item.idNotification, { notifications: [item] }).catch(() => {});
+        }
+        return saved;
+    }
+
+    function marquerNotificationLue(idNotification, username = '') {
+        if (!idNotification) return getDB();
+        const user = getCurrentUser();
+        const uId = String(username || user?.username || '').trim();
+        if (!uId) return getDB();
+
+        const db = getDB();
+        const list = Array.isArray(db.notifications) ? [...db.notifications] : [];
+        const idx = list.findIndex(n => n.idNotification === idNotification);
+        if (idx !== -1) {
+            const lus = Array.isArray(list[idx].lusPar) ? [...list[idx].lusPar] : [];
+            if (!lus.includes(uId)) {
+                lus.push(uId);
+                list[idx] = { ...list[idx], lusPar: lus, updatedAt: new Date().toISOString() };
+                db.notifications = list;
+                return saveDB(db);
+            }
+        }
+        return db;
+    }
+
     function exporterBDD() {
         const scopedDb = getDB();
         const payload = {
@@ -1317,6 +1468,8 @@
             constatsControle: scopedDb.constatsControle || [],
             constatsEncaisses: scopedDb.constatsEncaisses || [],
             planifications: scopedDb.planifications || [],
+            campagnesPlanification: scopedDb.campagnesPlanification || [],
+            notifications: scopedDb.notifications || [],
             exportDate: new Date().toISOString()
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -1356,12 +1509,29 @@
             return result;
         };
 
-        return saveDB({
+        const payloadSave = {
             missions: mergeByKey(currentScoped.missions, importedData.missions, 'idMission', canAccess),
             constatsControle: mergeByKey(currentScoped.constatsControle, importedData.constatsControle, 'idConstat', canAccess),
             constatsEncaisses: mergeByKey(currentScoped.constatsEncaisses, importedData.constatsEncaisses, 'idEncaisse', canAccess),
             planifications: mergeByKey(currentScoped.planifications, importedData.planifications, 'idPlanification', canAccessPlan)
-        });
+        };
+        if (!user || isSiegeUser(user)) {
+            if (Array.isArray(importedData.campagnesPlanification)) {
+                payloadSave.campagnesPlanification = mergeCollectionArrays(
+                    currentScoped.campagnesPlanification || [],
+                    importedData.campagnesPlanification,
+                    'idCampagne'
+                );
+            }
+            if (Array.isArray(importedData.notifications)) {
+                payloadSave.notifications = mergeCollectionArrays(
+                    currentScoped.notifications || [],
+                    importedData.notifications,
+                    'idNotification'
+                );
+            }
+        }
+        return saveDB(payloadSave);
     }
 
     async function getStorageStats() {
@@ -1381,12 +1551,14 @@
 
         return {
             engine: storedInIndexedDBOnly ? 'IndexedDB (Haute Capacité)' : 'IndexedDB + Cache Local',
-            totalRecords: raw.missions.length + raw.constatsControle.length + raw.constatsEncaisses.length + raw.planifications.length,
+            totalRecords: raw.missions.length + raw.constatsControle.length + raw.constatsEncaisses.length + raw.planifications.length + raw.campagnesPlanification.length,
             counts: {
                 missions: raw.missions.length,
                 constatsControle: raw.constatsControle.length,
                 constatsEncaisses: raw.constatsEncaisses.length,
-                planifications: raw.planifications.length
+                planifications: raw.planifications.length,
+                campagnesPlanification: raw.campagnesPlanification.length,
+                notifications: raw.notifications.length
             },
             bytesApprox,
             quotaBytes,
@@ -1422,6 +1594,10 @@
         enregistrerPlanification,
         supprimerPlanification,
         marquerPlanificationStatut,
+        enregistrerCampagnePlanification,
+        supprimerCampagnePlanification,
+        ajouterNotification,
+        marquerNotificationLue,
         exporterBDD,
         importerBDD,
         getStorageStats,

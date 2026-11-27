@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FCI - Planification de la Mission de Contrôle</title>
     <!-- Protection de session FCI -->
-    <script src="fci-auth.js?v=20261126-siege"></script>
+    <script src="fci-auth.js?v=20261127-planif2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -141,6 +141,160 @@
         .pill-planifiee { background: #E0F2FE; color: #0369A1; }
         .pill-encours { background: #FEF3C7; color: #92400E; }
         .pill-realisee { background: #D1FAE5; color: #065F46; }
+        .pill-soumise { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+        .pill-validee { background: #DCFCE7; color: #166534; border: 1px solid #4ADE80; }
+        .pill-diffusee { background: #DBEAFE; color: #1E40AF; border: 1px solid #60A5FA; }
+        .pill-interreg { background: #FCE7F3; color: #9D174D; border: 1px solid #F9A8D4; }
+        .pill-proc { background: #EFF6FF; color: var(--primary-blue); border: 1px solid #BFDBFE; }
+
+        .btn-success { background-color: #059669; color: #FFFFFF; }
+        .btn-success:hover { background-color: #047857; }
+        .btn-notify { background-color: #D97706; color: #FFFFFF; }
+        .btn-notify:hover { background-color: #B45309; }
+        .btn-info-outline { background-color: #EFF6FF; color: #1D4ED8; border-color: #93C5FD; }
+        .btn-info-outline:hover { background-color: #DBEAFE; }
+
+        .notif-banner {
+            background: linear-gradient(135deg, #EFF6FF 0%, #FFFBEB 100%);
+            border: 1px solid #93C5FD;
+            border-left: 5px solid #0284C7;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+        }
+        .notif-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .notif-item.unread {
+            border-left: 4px solid #D97706;
+            background: #FFFDF5;
+        }
+
+        .directeur-card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 22px 25px;
+            margin-bottom: 25px;
+            border: 1px solid #86EFAC;
+            border-left: 5px solid #059669;
+            box-shadow: 0 3px 10px rgba(5, 150, 105, 0.08);
+        }
+        .campaign-card {
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 16px;
+            background: #FAFCFF;
+        }
+        .campaign-card.status-soumise { border-left: 4px solid #D97706; }
+        .campaign-card.status-validee { border-left: 4px solid #059669; background: #F0FDF4; }
+        .campaign-card.status-diffusee { border-left: 4px solid #2563EB; background: #F8FAFC; }
+        .campaign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .workflow-steps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .workflow-step-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background: #F8FAFC;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .workflow-step-btn:hover { border-color: var(--primary-blue); background: #EFF6FF; }
+        .workflow-step-btn.active {
+            border-color: var(--primary-blue);
+            background: linear-gradient(135deg, #003366 0%, #002244 100%);
+            color: #FFFFFF;
+            box-shadow: 0 4px 10px rgba(0, 51, 102, 0.18);
+        }
+        .workflow-step-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            color: var(--blue-dark);
+            font-weight: 800;
+            font-size: 0.92rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .workflow-step-title { font-weight: 800; font-size: 0.92rem; }
+        .workflow-step-sub { font-size: 0.76rem; opacity: 0.85; margin-top: 2px; }
+
+        .sub-panel {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-bottom: 18px;
+        }
+        .sub-panel-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .inline-control {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #CBD5E1;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            background: #FFFFFF;
+            color: var(--text-dark);
+        }
+        .ref-preview-box, .history-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+        .history-item {
+            display: flex;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #E2E8F0;
+            font-size: 0.78rem;
+        }
+        .history-item:last-child { border-bottom: none; }
 
         .processus-block { background: var(--white); border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); overflow: hidden; }
         .processus-header { background-color: var(--primary-blue); color: var(--white); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
@@ -153,10 +307,14 @@
         .empty-state { text-align: center; padding: 50px 20px; background: var(--white); border-radius: 8px; border: 2px dashed var(--border-color); }
         .action-bar { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 30px; padding-top: 20px; border-top: 2px solid var(--border-color); }
 
+        @media (max-width: 900px) {
+            .workflow-steps { grid-template-columns: 1fr; }
+        }
+
         @media print {
-            .sidebar, .toolbar, .action-bar, .top-header button, .processus-header button, th:last-child, td:last-child { display: none !important; }
+            .sidebar, .toolbar, .action-bar, .top-header button, .processus-header button, th:last-child, td:last-child, .notif-banner { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            .card, .siege-card, .processus-block { border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 15px !important; }
+            .card, .siege-card, .directeur-card, .processus-block { border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 15px !important; }
         }
     </style>
 </head>
@@ -184,8 +342,8 @@
     <main class="main-content">
         <header class="top-header">
             <div>
-                <h1>Planification de la mission de contrôle</h1>
-                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Préparation du périmètre d'intervention et sélection des points à contrôler (Fiche de Contrôle)</p>
+                <h1>Planification des missions de contrôle</h1>
+                <p style="font-size: 0.85rem; color: #666; margin-top: 3px;">Circuit hiérarchique intégré : préparation multi-processus, validation Directeur, notification Siège et diffusion ciblée aux contrôleurs</p>
             </div>
             <div>
                 <button type="button" class="btn btn-refresh" id="btnActualiserPlanif" onclick="actualiserPagePlanif()" title="Actualiser la page et synchroniser les contrôles planifiés">
@@ -194,7 +352,176 @@
             </div>
         </header>
 
-        <!-- SECTION DIFFUSION / SUIVI DES CONTRÔLES PLANIFIÉS (FICHE DE CONTRÔLE UNIQUEMENT) -->
+        <!-- BANNIÈRE NOTIFICATIONS COLLABORATEURS SIÈGE -->
+        <section id="siege-notifications-banner"></section>
+
+        <!-- ESPACE DIRECTEUR (directeur-001) : CONSULTATION, MODIFICATION, VALIDATION & NOTIFICATION -->
+        <section id="directeur-validation-section"></section>
+
+        <!-- NOUVEL ESPACE SIÈGE : PLANIFICATION DES MISSIONS DE CONTRÔLE (2 ÉTAPES DISTINCTES) -->
+        <section class="card" id="siege-workflow-card" style="display:none; border-left: 5px solid var(--primary-blue);">
+            <div class="card-title">
+                <span><i class="fa-solid fa-calendar-check" style="color:var(--accent-gold);"></i> Planification des missions de contrôle</span>
+                <span id="badgeModeSaisiePlanifSiege"></span>
+            </div>
+
+            <!-- NAVIGATION 2 ÉTAPES DISTINCTES -->
+            <div class="workflow-steps">
+                <button type="button" class="workflow-step-btn active" id="btnStep1Prep" onclick="switcherEtapePlanifSiege(1)">
+                    <span class="workflow-step-num">1</span>
+                    <div>
+                        <div class="workflow-step-title">Préparation et validation de la planification</div>
+                        <div class="workflow-step-sub">Centres non contrôlés (année en cours), multi-processus, affectations &amp; soumission au Directeur</div>
+                    </div>
+                </button>
+                <button type="button" class="workflow-step-btn" id="btnStep2Diff" onclick="switcherEtapePlanifSiege(2)">
+                    <span class="workflow-step-num">2</span>
+                    <div>
+                        <div class="workflow-step-title">Diffusion de la planification validée <span id="badgeCountValideesStep2" class="pill pill-validee" style="margin-left:6px; display:none;">0</span></div>
+                        <div class="workflow-step-sub">Campagnes validées par le Directeur (référence officielle) &amp; diffusion individuelle aux contrôleurs</div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- ÉTAPE 1 : PRÉPARATION ET VALIDATION -->
+            <div id="siege-step1-panel">
+                <!-- 1A. SÉLECTION MULTI-PROCESSUS DEPUIS LE RÉFÉRENTIEL (COMMUN À LA CAMPAGNE) -->
+                <div class="sub-panel">
+                    <div class="sub-panel-title">
+                        <span><i class="fa-solid fa-diagram-project" style="color:var(--accent-gold);"></i> 1. Processus &amp; Référentiel de la campagne (communs à tous les contrôleurs)</span>
+                        <span id="refLoadStatusPlanif" class="pill pill-planifiee">Chargement référentiel...</span>
+                    </div>
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); align-items:end;">
+                        <div class="form-group">
+                            <label for="wf-select-processus">Processus (Référentiel) *</label>
+                            <select id="wf-select-processus" onchange="onWfProcessusChange()">
+                                <option value="">-- Sélectionner un processus --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-select-risque">Risque (Optionnel — tous par défaut)</label>
+                            <select id="wf-select-risque" onchange="onWfRisqueChange()" disabled>
+                                <option value="">-- Tous les risques du processus --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-select-controle">Contrôle (Optionnel — tous par défaut)</label>
+                            <select id="wf-select-controle" disabled>
+                                <option value="">-- Tous les contrôles --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-siege" style="padding:10px 14px; font-size:0.84rem; justify-content:center;" onclick="ajouterProcessusDepuisReferentiel()">
+                                <i class="fa-solid fa-plus-circle"></i> Ajouter ce processus à la campagne
+                            </button>
+                        </div>
+                    </div>
+                    <div id="wf-active-processus-pills" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div>
+                </div>
+
+                <!-- 1B. PARAMÈTRES GÉNÉRAUX & AFFECTATIONS MULTI-CONTRÔLEURS -->
+                <div class="sub-panel">
+                    <div class="sub-panel-title">
+                        <span><i class="fa-solid fa-users-gear" style="color:var(--accent-gold);"></i> 2. Affectation des contrôleurs aux centres éligibles</span>
+                        <span id="eligibilitySummaryBadge" class="pill pill-siege">Analyse couverture en cours...</span>
+                    </div>
+
+                    <div class="form-grid" style="margin-bottom:14px;">
+                        <div class="form-group">
+                            <label for="wf-campagne-titre">Intitulé / Référence de la campagne</label>
+                            <input type="text" id="wf-campagne-titre" placeholder="Ex. Campagne Contrôle Permanent — T4 2026 (auto si vide)">
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-type-controle">Type de contrôle *</label>
+                            <select id="wf-type-controle">
+                                <option value="Thématique">Thématique</option>
+                                <option value="Systématique">Systématique</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="justify-content:flex-end;">
+                            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:0.8rem; cursor:pointer; padding:9px 10px; background:#FFF; border:1px solid var(--border-color); border-radius:5px;">
+                                <input type="checkbox" id="wf-inclure-deja-controles" onchange="peuplerCentresEligiblesSiege()">
+                                <span>Afficher aussi les centres déjà contrôlés cette année</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-grid" style="grid-template-columns: 1.5fr 0.9fr 1.4fr 1.2fr; gap:14px; align-items:end;">
+                        <div class="form-group">
+                            <label for="wf-centre-cible">Centre ciblé (non contrôlé cette année) *</label>
+                            <select id="wf-centre-cible" onchange="onWfCentreCibleChange()">
+                                <option value="">-- Sélectionner un centre éligible --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-region-auto">Région (auto) *</label>
+                            <input type="text" id="wf-region-auto" readonly placeholder="Remplissage auto" style="background:#EEF2F6; color:var(--primary-blue); font-weight:800;">
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-controleur-affecte">Contrôleur affecté (toutes régions autorisées) *</label>
+                            <select id="wf-controleur-affecte" onchange="onWfControleurChange()">
+                                <option value="">-- Sélectionner un utilisateur --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-periode-controle">Période de contrôle *</label>
+                            <select id="wf-periode-controle" onchange="onWfPeriodeChange()">
+                                <option value="">-- Sélectionner une période --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- DATES PERSONNALISÉES (AFFICHÉES SI PÉRIODE PERSONNALISÉE OU AJUSTEMENT) -->
+                    <div id="wf-custom-dates-row" class="form-grid" style="margin-top:12px; grid-template-columns: 1fr 1fr 1.5fr; display:none; align-items:end;">
+                        <div class="form-group">
+                            <label for="wf-date-debut">Date début de la période *</label>
+                            <input type="date" id="wf-date-debut">
+                        </div>
+                        <div class="form-group">
+                            <label for="wf-date-fin">Date fin de la période *</label>
+                            <input type="date" id="wf-date-fin">
+                        </div>
+                        <div class="form-group">
+                            <span style="font-size:0.78rem; color:#475569; padding:8px 0;"><i class="fa-solid fa-circle-info"></i> Vous pouvez ajuster précisément les dates de début et de fin de cette affectation.</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:14px;">
+                        <div id="wf-interreg-indicator" style="font-size:0.8rem; color:#475569;"></div>
+                        <button type="button" class="btn btn-info-outline" id="btnAjouterAffectation" onclick="ajouterAffectationCampagne()">
+                            <i class="fa-solid fa-user-plus"></i> Ajouter une affectation
+                        </button>
+                    </div>
+
+                    <!-- TABLEAU DES AFFECTATIONS DE LA CAMPAGNE EN PRÉPARATION -->
+                    <div style="margin-top:16px; padding-top:14px; border-top:1px dashed #CBD5E1;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                            <span style="font-size:0.82rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase;">
+                                <i class="fa-solid fa-layer-group" style="color:var(--accent-gold);"></i> Affectations de la campagne en cours (<span id="countLotSiege">0</span> affectation(s))
+                            </span>
+                            <span style="font-size:0.76rem; color:#64748B;">Les processus, risques, contrôles et PC ci-dessous sont automatiquement partagés entre toutes les affectations.</span>
+                        </div>
+                        <div id="lot-siege-table-wrap"></div>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding-top:14px; border-top:1px solid #E2E8F0;">
+                        <button type="button" class="btn btn-siege" id="btnSoumettreValidation" onclick="soumettrePlanificationPourValidation()">
+                            <i class="fa-solid fa-paper-plane"></i> Soumettre pour validation
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PROPOSITION(S) SOUMISES EN ATTENTE DE VALIDATION DIRECTEUR -->
+                <div id="siege-propositions-soumises-wrap"></div>
+            </div>
+
+            <!-- ÉTAPE 2 : DIFFUSION DE LA PLANIFICATION VALIDÉE -->
+            <div id="siege-step2-panel" style="display:none;">
+                <div id="siege-campagnes-validees-wrap"></div>
+            </div>
+        </section>
+
+        <!-- SECTION SUIVI DES CONTRÔLES DIFFUSÉS (SIÈGE : SUIVI GLOBAL / CONTRÔLEUR : SES MISSIONS DIFFUSÉES) -->
         <section id="siege-planification-section"></section>
 
         <div class="kpi-row">
@@ -216,7 +543,8 @@
             </div>
         </div>
 
-        <section class="card">
+        <!-- ESPACE PLANIFICATION DIRECTE (CONSERVÉ INTÉGRALEMENT POUR LES CONTRÔLEURS RÉGIONAUX & EXÉCUTION DIRECTE) -->
+        <section class="card" id="regional-mission-card">
             <div class="card-title">
                 <span><i class="fa-solid fa-pen-to-square"></i> Informations Générales de la Mission de Contrôle</span>
                 <span id="badgeModeSaisiePlanif"></span>
@@ -267,28 +595,6 @@
                         <input type="text" id="audit-controleurs" name="fci_planif_ctrl_empty" value="" autocomplete="new-password" readonly onfocus="this.removeAttribute('readonly');" placeholder="Saisir le nom du contrôleur">
                     </div>
                 </div>
-
-                <!-- BLOC D'AFFECTATION AUX CONTRÔLEURS RÉGIONAUX (VISIBLE UNIQUEMENT POUR LE SIÈGE) -->
-                <div id="siege-affectation-box" style="display:none; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
-                    <div class="form-group">
-                        <label><i class="fa-solid fa-user-check" style="color:var(--primary-blue);"></i> Contrôleur(s) régional(aux) &amp; Chef(s) de service désigné(s) pour cette mission *</label>
-                        <div id="siege-controleurs-list" class="ctrl-chips-box">
-                            <span style="font-size:0.8rem; color:#64748B;">Sélectionnez d'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) ou SIÈGE pour les 5 Chefs de service.</span>
-                        </div>
-                    </div>
-
-                    <div class="lot-siege-panel">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-                            <span style="font-size:0.82rem; font-weight:800; color:var(--primary-blue); text-transform:uppercase;">
-                                <i class="fa-solid fa-layer-group" style="color:var(--accent-gold);"></i> Campagne Multi-Régions / Multi-Contrôleurs Siège (<span id="countLotSiege">0</span> affectation(s))
-                            </span>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="ajouterAffectationLotSiege()">
-                                <i class="fa-solid fa-plus"></i> Ajouter cette région / contrôleur au lot
-                            </button>
-                        </div>
-                        <div id="lot-siege-table-wrap"></div>
-                    </div>
-                </div>
             </form>
         </section>
 
@@ -307,16 +613,13 @@
         <section id="planification-container"></section>
 
         <div class="action-bar">
-            <button type="button" class="btn btn-siege" id="btnDiffuserSiege" style="display:none;" onclick="diffuserPlanificationSiege()">
-                <i class="fa-solid fa-paper-plane"></i> Diffuser la planification aux contrôleurs concernés
-            </button>
             <button type="button" class="btn btn-primary" id="btnLancerFC" onclick="lancerFicheControle()">
                 <i class="fa-solid fa-play"></i> Lancer la Fiche de Contrôle
             </button>
         </div>
     </main>
 
-    <script src="fci-db-manager.js?v=20261126-archive2"></script>
+    <script src="fci-db-manager.js?v=20261127-planif2"></script>
 
     <script>
         const CENTRES_PAR_REGION = {
@@ -484,13 +787,52 @@
             ]
         };
 
+        // Table inverse Centre normalisé -> Région (remplissage automatique)
+        function normaliserCleCentre(nom) {
+            return String(nom || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase()
+                .replace(/[^A-Z0-9]+/g, ' ')
+                .trim();
+        }
+
+        const CENTRE_TO_REGION_MAP = {};
+        const LISTE_10_REGIONS_RESEAU = ['MARRAKECH', 'AGADIR', 'CASA', 'SETTAT', 'RABAT', 'TANGER', 'LAAYOUNE', 'FES', 'MEKNES', 'OUEJDA'];
+        Object.entries(CENTRES_PAR_REGION).forEach(([reg, centres]) => {
+            centres.forEach(c => {
+                CENTRE_TO_REGION_MAP[normaliserCleCentre(c)] = reg;
+            });
+        });
+
+        function trouverRegionPourCentre(centreNom) {
+            if (!centreNom) return '';
+            const direct = CENTRE_TO_REGION_MAP[normaliserCleCentre(centreNom)];
+            if (direct) return direct;
+            for (const [reg, centres] of Object.entries(CENTRES_PAR_REGION)) {
+                if (centres.includes(centreNom)) return reg;
+            }
+            return '';
+        }
+
         let selectedData = [];
         let checkedKeys = new Set();
         let lotAffectationsSiege = [];
+        let referentielDataPlanif = [];
+        let etapeActiveSiege = 1;
+        let showReadNotifications = false;
+        const expandedPanelsState = {};
         const PLANIFICATION_PC_KEY = "fci_planification_pc";
 
         function estUtilisateurSiege() {
             return Boolean(window.FCIAuth && typeof window.FCIAuth.isSiege === 'function' && window.FCIAuth.isSiege());
+        }
+
+        function estDirecteurConnecte() {
+            return Boolean(window.FCIAuth && typeof window.FCIAuth.isDirecteur === 'function' && window.FCIAuth.isDirecteur());
+        }
+
+        function estAdminConnecte() {
+            return Boolean(window.FCIAuth && typeof window.FCIAuth.isAdmin === 'function' && window.FCIAuth.isAdmin());
         }
 
         function getCurrentAuthUser() {
@@ -523,6 +865,26 @@
                 return `${d}/${m}/${y}`;
             }
             return s;
+        }
+
+        function formatDateHeureFR(iso) {
+            if (!iso) return '--';
+            try {
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return formatDateFR(iso);
+                return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            } catch (e) {
+                return formatDateFR(iso);
+            }
+        }
+
+        function extraireAnneeDate(val) {
+            if (!val) return '';
+            let s = String(val).trim();
+            if (s.includes('T')) s = s.split('T')[0];
+            if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) return s.slice(0, 4);
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s.split('/')[2];
+            return '';
         }
 
         // Filtre strict : uniquement les contrôles (FC), jamais les vérifications d'encaisses (FV)
@@ -562,30 +924,1609 @@
             return false;
         }
 
+        // =========================================================================
+        // RÉFÉRENTIEL MULTI-PROCESSUS (CHARGEMENT DIRECT DANS PLANIFICATION)
+        // =========================================================================
+
+        async function chargerReferentielPlanif() {
+            const badge = document.getElementById('refLoadStatusPlanif');
+            const paths = [
+                './referentiel.json?v=' + Date.now(),
+                './referentiel_controle_redresse-vf_Référentiel Redressé.json?v=' + Date.now()
+            ];
+            for (const p of paths) {
+                try {
+                    const res = await fetch(p);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (Array.isArray(data) && data.length > 0) {
+                            referentielDataPlanif = data;
+                            peuplerSelectProcessusWorkflow();
+                            if (badge) {
+                                badge.className = 'pill pill-realisee';
+                                badge.innerHTML = `<i class="fa-solid fa-check-circle"></i> Référentiel prêt (${data.length} PC)`;
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            }
+            if (badge) {
+                badge.className = 'pill pill-soumise';
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Sélectionnez les PC depuis la Feuille 1`;
+            }
+        }
+
+        function peuplerSelectProcessusWorkflow() {
+            const sel = document.getElementById('wf-select-processus');
+            if (!sel) return;
+            const procs = [...new Set(referentielDataPlanif.map(d => getItemVal(d, ['Processus'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            sel.innerHTML = '<option value="">-- Sélectionner un processus --</option>' +
+                procs.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+        }
+
+        function onWfProcessusChange() {
+            const proc = document.getElementById('wf-select-processus')?.value || '';
+            const selRisque = document.getElementById('wf-select-risque');
+            const selCtrl = document.getElementById('wf-select-controle');
+            if (!selRisque || !selCtrl) return;
+
+            selRisque.innerHTML = '<option value="">-- Tous les risques du processus --</option>';
+            selCtrl.innerHTML = '<option value="">-- Tous les contrôles --</option>';
+            selCtrl.disabled = true;
+
+            if (!proc) {
+                selRisque.disabled = true;
+                return;
+            }
+            const itemsProc = referentielDataPlanif.filter(d => getItemVal(d, ['Processus']) === proc);
+            const risques = [...new Set(itemsProc.map(d => getItemVal(d, ['Intitulé du risque', 'Intitulé risque'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            selRisque.innerHTML += risques.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
+            selRisque.disabled = false;
+        }
+
+        function onWfRisqueChange() {
+            const proc = document.getElementById('wf-select-processus')?.value || '';
+            const risque = document.getElementById('wf-select-risque')?.value || '';
+            const selCtrl = document.getElementById('wf-select-controle');
+            if (!selCtrl) return;
+
+            selCtrl.innerHTML = '<option value="">-- Tous les contrôles --</option>';
+            if (!risque) {
+                selCtrl.disabled = true;
+                return;
+            }
+            const items = referentielDataPlanif.filter(d =>
+                getItemVal(d, ['Processus']) === proc &&
+                getItemVal(d, ['Intitulé du risque', 'Intitulé risque']) === risque
+            );
+            const ctrls = [...new Set(items.map(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+            selCtrl.innerHTML += ctrls.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+            selCtrl.disabled = false;
+        }
+
+        function ajouterProcessusDepuisReferentiel() {
+            const proc = document.getElementById('wf-select-processus')?.value || '';
+            const risque = document.getElementById('wf-select-risque')?.value || '';
+            const ctrl = document.getElementById('wf-select-controle')?.value || '';
+
+            if (!proc) {
+                alert("Veuillez sélectionner un Processus dans la liste issue du Référentiel.");
+                return;
+            }
+
+            const matching = referentielDataPlanif.filter(item => {
+                if (getItemVal(item, ['Processus']) !== proc) return false;
+                if (risque && getItemVal(item, ['Intitulé du risque', 'Intitulé risque']) !== risque) return false;
+                if (ctrl && getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']) !== ctrl) return false;
+                return true;
+            });
+
+            if (matching.length === 0) {
+                alert("Aucun point de contrôle trouvé pour cette sélection.");
+                return;
+            }
+
+            const existingKeys = new Set(selectedData.map(getPointKey));
+            let added = 0;
+            matching.forEach(item => {
+                const k = getPointKey(item);
+                if (!existingKeys.has(k)) {
+                    selectedData.push(item);
+                    existingKeys.add(k);
+                    added++;
+                }
+                checkedKeys.add(k);
+            });
+
+            saveAndRefresh();
+            renderActiveProcessusPills();
+            document.getElementById('wf-select-processus').value = '';
+            onWfProcessusChange();
+        }
+
+        function renderActiveProcessusPills() {
+            const wrap = document.getElementById('wf-active-processus-pills');
+            if (!wrap) return;
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            if (activeItems.length === 0) {
+                wrap.innerHTML = `<span style="font-size:0.78rem; color:#64748B;"><i class="fa-solid fa-info-circle"></i> Aucun processus encore ajouté à la campagne. Sélectionnez un ou plusieurs processus ci-dessus (ou depuis la Feuille 1 Référentiel).</span>`;
+                return;
+            }
+            const counts = {};
+            activeItems.forEach(item => {
+                const p = getItemVal(item, ['Processus']) || 'Non spécifié';
+                counts[p] = (counts[p] || 0) + 1;
+            });
+            wrap.innerHTML = Object.entries(counts).map(([proc, nb]) => `
+                <span class="pill pill-proc" style="padding:5px 10px; font-size:0.76rem;">
+                    <i class="fa-solid fa-gears"></i> ${escapeHtml(proc)} <b>(${nb} PC)</b>
+                    <button type="button" onclick="removeProcessus('${escapeJsString(proc)}')" style="background:none; border:none; color:#DC2626; cursor:pointer; margin-left:4px; font-weight:800;" title="Retirer ce processus">×</button>
+                </span>
+            `).join('');
+        }
+
+        // =========================================================================
+        // CENTRES ÉLIGIBLES (NON ENCORE CONTRÔLÉS DURANT L'ANNÉE EN COURS)
+        // =========================================================================
+
+        function getCentresControlesAnneeEnCours() {
+            const anneeCourante = String(new Date().getFullYear());
+            const touches = new Set();
+            if (typeof FCIDatabase === 'undefined' || typeof FCIDatabase.getDB !== 'function') return touches;
+            const db = FCIDatabase.getDB();
+
+            (db.constatsControle || []).forEach(c => {
+                if (!c) return;
+                const an = extraireAnneeDate(c.date || c.dateControle || c.dateArchivage || '');
+                if (an === anneeCourante) {
+                    const site = c.entite || c.site || c.centre || '';
+                    if (site) touches.add(normaliserCleCentre(site));
+                }
+            });
+
+            (db.missions || []).forEach(m => {
+                if (!m) return;
+                const src = String(m.sourceFeuille || '').toUpperCase();
+                if (src === 'FV') return;
+                const an = extraireAnneeDate(m.date || m.dateControle || m.dateDebut || '');
+                if (an === anneeCourante) {
+                    const site = m.entite || m.site || m.centre || '';
+                    if (site) touches.add(normaliserCleCentre(site));
+                }
+            });
+
+            return touches;
+        }
+
+        function peuplerCentresEligiblesSiege() {
+            const sel = document.getElementById('wf-centre-cible');
+            const badge = document.getElementById('eligibilitySummaryBadge');
+            if (!sel) return;
+
+            const currentVal = sel.value;
+            const inclureDeja = Boolean(document.getElementById('wf-inclure-deja-controles')?.checked);
+            const anneeCourante = new Date().getFullYear();
+            const dejaControles = getCentresControlesAnneeEnCours();
+
+            let totalCentresReseau = 0;
+            let nbNonControles = 0;
+
+            const htmlParts = ['<option value="">-- Sélectionner un centre ciblé --</option>'];
+
+            LISTE_10_REGIONS_RESEAU.forEach(reg => {
+                const centres = CENTRES_PAR_REGION[reg] || [];
+                totalCentresReseau += centres.length;
+                const optionsReg = [];
+                centres.forEach(c => {
+                    const estDeja = dejaControles.has(normaliserCleCentre(c));
+                    if (!estDeja) nbNonControles++;
+                    if (!estDeja || inclureDeja) {
+                        const tag = estDeja ? ` [Déjà contrôlé en ${anneeCourante}]` : '';
+                        optionsReg.push(`<option value="${escapeHtml(c)}" data-region="${escapeHtml(reg)}">${escapeHtml(c)}${tag}</option>`);
+                    }
+                });
+                if (optionsReg.length > 0) {
+                    htmlParts.push(`<optgroup label="RÉGION ${escapeHtml(reg)} (${optionsReg.length})">${optionsReg.join('')}</optgroup>`);
+                }
+            });
+
+            // Inclure également les entités SIÈGE si besoin
+            const centresSiege = CENTRES_PAR_REGION['SIEGE'] || [];
+            if (centresSiege.length > 0) {
+                const optsSiege = centresSiege.map(c => `<option value="${escapeHtml(c)}" data-region="SIEGE">${escapeHtml(c)}</option>`).join('');
+                htmlParts.push(`<optgroup label="SIÈGE (${centresSiege.length})">${optsSiege}</optgroup>`);
+            }
+
+            sel.innerHTML = htmlParts.join('');
+            if (currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+                sel.value = currentVal;
+            }
+            onWfCentreCibleChange();
+
+            if (badge) {
+                badge.innerHTML = `<i class="fa-solid fa-map-location-dot"></i> ${nbNonControles} / ${totalCentresReseau} centres non encore contrôlés en ${anneeCourante}`;
+            }
+        }
+
+        function onWfCentreCibleChange() {
+            const sel = document.getElementById('wf-centre-cible');
+            const regInput = document.getElementById('wf-region-auto');
+            if (!sel || !regInput) return;
+
+            const centre = sel.value;
+            const opt = sel.options[sel.selectedIndex];
+            const reg = (opt && opt.dataset && opt.dataset.region)
+                ? normalizeRegionOption(opt.dataset.region)
+                : normalizeRegionOption(trouverRegionPourCentre(centre));
+            regInput.value = reg || '';
+            updateInterregionalIndicator();
+        }
+
+        // =========================================================================
+        // CONTRÔLEURS AFFECTABLES (TOUTES RÉGIONS + CHEFS DE SERVICE, HORS RÉGION AUTORISÉ)
+        // =========================================================================
+
+        const CHEFS_SERVICE_SIEGE_FALLBACK = [
+            { username: 'chef service-001', fonction: 'Chef de service 1', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-002', fonction: 'Chef de service 2', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-003', fonction: 'Chef de service 3', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-004', fonction: 'Chef de service 4', region: 'SIEGE', role: 'CHEF_SERVICE' },
+            { username: 'chef service-005', fonction: 'Chef de service 5', region: 'SIEGE', role: 'CHEF_SERVICE' }
+        ];
+
+        function getChefsDeServiceListe() {
+            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
+                const list = window.FCIAuth.getChefsDeService();
+                if (Array.isArray(list) && list.length > 0) return list;
+            }
+            return CHEFS_SERVICE_SIEGE_FALLBACK;
+        }
+
+        function getTousControleursEtUtilisateurs() {
+            if (window.FCIAuth && typeof window.FCIAuth.getAllAssignableUsers === 'function') {
+                return window.FCIAuth.getAllAssignableUsers();
+            }
+            const ctrls = (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
+                ? window.FCIAuth.getControllersByRegion('')
+                : [];
+            return [...ctrls, ...getChefsDeServiceListe()];
+        }
+
+        function buildOptionsControleursHTML(selectedUsername = '') {
+            const users = getTousControleursEtUtilisateurs();
+            const parRegion = new Map();
+            users.forEach(u => {
+                const r = normalizeRegionOption(u.region || 'AUTRE');
+                if (!parRegion.has(r)) parRegion.set(r, []);
+                parRegion.get(r).push(u);
+            });
+
+            const parts = ['<option value="">-- Sélectionner un contrôleur --</option>'];
+            const regionsTriees = [...parRegion.keys()].sort((a, b) => {
+                if (a === 'SIEGE') return 1;
+                if (b === 'SIEGE') return -1;
+                return a.localeCompare(b, 'fr');
+            });
+
+            regionsTriees.forEach(reg => {
+                const list = parRegion.get(reg) || [];
+                const labelGrp = reg === 'SIEGE' ? 'SIÈGE (Chefs de service)' : `RÉGION ${reg}`;
+                const opts = list.map(u => {
+                    const selAttr = (selectedUsername && u.username.toUpperCase() === String(selectedUsername).toUpperCase()) ? 'selected' : '';
+                    return `<option value="${escapeHtml(u.username)}" data-fonction="${escapeHtml(u.fonction)}" data-region="${escapeHtml(reg)}" ${selAttr}>${escapeHtml(u.username)} — ${escapeHtml(u.fonction)} (${escapeHtml(reg)})</option>`;
+                }).join('');
+                parts.push(`<optgroup label="${escapeHtml(labelGrp)}">${opts}</optgroup>`);
+            });
+            return parts.join('');
+        }
+
+        function peuplerControleursWorkflow() {
+            const sel = document.getElementById('wf-controleur-affecte');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = buildOptionsControleursHTML(prev);
+            updateInterregionalIndicator();
+        }
+
+        function onWfControleurChange() {
+            updateInterregionalIndicator();
+        }
+
+        function updateInterregionalIndicator() {
+            const el = document.getElementById('wf-interreg-indicator');
+            if (!el) return;
+            const regCentre = normalizeRegionOption(document.getElementById('wf-region-auto')?.value || '');
+            const selCtrl = document.getElementById('wf-controleur-affecte');
+            const opt = selCtrl ? selCtrl.options[selCtrl.selectedIndex] : null;
+            const regCtrl = opt && opt.dataset ? normalizeRegionOption(opt.dataset.region || '') : '';
+            const ctrlId = selCtrl ? selCtrl.value : '';
+
+            if (!regCentre || !ctrlId) {
+                el.innerHTML = '<i class="fa-solid fa-circle-info"></i> L\'affectation d\'un contrôleur à un centre situé hors de sa région est autorisée.';
+                return;
+            }
+            if (regCtrl && regCtrl !== regCentre) {
+                el.innerHTML = `<span class="pill pill-interreg"><i class="fa-solid fa-right-left"></i> Affectation interrégionale autorisée : ${escapeHtml(ctrlId)} (${escapeHtml(regCtrl)}) → Centre région ${escapeHtml(regCentre)}</span>`;
+            } else {
+                el.innerHTML = `<span class="pill pill-realisee"><i class="fa-solid fa-check"></i> Affectation intra-régionale : ${escapeHtml(ctrlId)} (${escapeHtml(regCentre)})</span>`;
+            }
+        }
+
+        // =========================================================================
+        // PÉRIODES DE CONTRÔLE DISPONIBLES (LISTE DÉROULANTE)
+        // =========================================================================
+
+        function genererOptionsPeriodes() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const lastDay = (year, monthIndex) => {
+                const d = new Date(year, monthIndex + 1, 0);
+                return `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            };
+
+            const periodes = [];
+            // Mois de l'année en cours + premier semestre année suivante
+            [y, y + 1].forEach(yr => {
+                const maxM = yr === y ? 12 : 6;
+                for (let m = 0; m < maxM; m++) {
+                    const mm = String(m + 1).padStart(2, '0');
+                    periodes.push({
+                        code: `M-${yr}-${mm}`,
+                        label: `${moisNoms[m]} ${yr}`,
+                        dateDebut: `${yr}-${mm}-01`,
+                        dateFin: lastDay(yr, m),
+                        groupe: `Mois ${yr}`
+                    });
+                }
+            });
+            // Trimestres
+            [y, y + 1].forEach(yr => {
+                [
+                    { q: 1, m1: 0, m2: 2, lbl: `T1 ${yr} (Janv. - Mars)` },
+                    { q: 2, m1: 3, m2: 5, lbl: `T2 ${yr} (Avr. - Juin)` },
+                    { q: 3, m1: 6, m2: 8, lbl: `T3 ${yr} (Juil. - Sept.)` },
+                    { q: 4, m1: 9, m2: 11, lbl: `T4 ${yr} (Oct. - Déc.)` }
+                ].forEach(t => {
+                    periodes.push({
+                        code: `T${t.q}-${yr}`,
+                        label: t.lbl,
+                        dateDebut: `${yr}-${String(t.m1 + 1).padStart(2, '0')}-01`,
+                        dateFin: lastDay(yr, t.m2),
+                        groupe: `Trimestres ${yr}`
+                    });
+                });
+            });
+            // Semestres
+            periodes.push(
+                { code: `S1-${y}`, label: `S1 ${y} (1er Semestre)`, dateDebut: `${y}-01-01`, dateFin: `${y}-06-30`, groupe: `Semestres ${y}` },
+                { code: `S2-${y}`, label: `S2 ${y} (2e Semestre)`, dateDebut: `${y}-07-01`, dateFin: `${y}-12-31`, groupe: `Semestres ${y}` }
+            );
+            return periodes;
+        }
+
+        const PERIODES_DISPONIBLES = genererOptionsPeriodes();
+
+        function buildOptionsPeriodesHTML(selectedCode = '') {
+            const groupes = new Map();
+            PERIODES_DISPONIBLES.forEach(p => {
+                if (!groupes.has(p.groupe)) groupes.set(p.groupe, []);
+                groupes.get(p.groupe).push(p);
+            });
+
+            const parts = ['<option value="">-- Sélectionner une période --</option>'];
+            groupes.forEach((items, grpName) => {
+                const opts = items.map(p =>
+                    `<option value="${escapeHtml(p.code)}" data-debut="${p.dateDebut}" data-fin="${p.dateFin}" data-label="${escapeHtml(p.label)}" ${selectedCode === p.code ? 'selected' : ''}>${escapeHtml(p.label)}</option>`
+                ).join('');
+                parts.push(`<optgroup label="${escapeHtml(grpName)}">${opts}</optgroup>`);
+            });
+            parts.push(`<option value="PERSONNALISEE" ${selectedCode === 'PERSONNALISEE' ? 'selected' : ''}>Période personnalisée (choisir dates précises)...</option>`);
+            return parts.join('');
+        }
+
+        function peuplerPeriodesWorkflow() {
+            const sel = document.getElementById('wf-periode-controle');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = buildOptionsPeriodesHTML(prev);
+        }
+
+        function onWfPeriodeChange() {
+            const sel = document.getElementById('wf-periode-controle');
+            const customRow = document.getElementById('wf-custom-dates-row');
+            const dDebut = document.getElementById('wf-date-debut');
+            const dFin = document.getElementById('wf-date-fin');
+            if (!sel) return;
+
+            const code = sel.value;
+            if (code === 'PERSONNALISEE') {
+                if (customRow) customRow.style.display = 'grid';
+                const today = new Date().toISOString().split('T')[0];
+                if (dDebut && !dDebut.value) dDebut.value = today;
+                if (dFin && !dFin.value) dFin.value = today;
+                return;
+            }
+            if (customRow) customRow.style.display = 'none';
+            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
+            if (found) {
+                if (dDebut) dDebut.value = found.dateDebut;
+                if (dFin) dFin.value = found.dateFin;
+            }
+        }
+
+        function lirePeriodeWorkflowSelectionnee() {
+            const sel = document.getElementById('wf-periode-controle');
+            const code = sel ? sel.value : '';
+            if (!code) return null;
+            if (code === 'PERSONNALISEE') {
+                const dateDebut = document.getElementById('wf-date-debut')?.value || '';
+                const dateFin = document.getElementById('wf-date-fin')?.value || '';
+                if (!dateDebut || !dateFin) return null;
+                return {
+                    periodeCode: 'PERSONNALISEE',
+                    periodeLabel: `${formatDateFR(dateDebut)} → ${formatDateFR(dateFin)}`,
+                    dateDebut,
+                    dateFin
+                };
+            }
+            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
+            if (!found) return null;
+            return {
+                periodeCode: found.code,
+                periodeLabel: found.label,
+                dateDebut: found.dateDebut,
+                dateFin: found.dateFin
+            };
+        }
+
+        // =========================================================================
+        // NAVIGATION 2 ÉTAPES & GESTION DES AFFECTATIONS DE LA CAMPAGNE
+        // =========================================================================
+
+        function switcherEtapePlanifSiege(etape) {
+            etapeActiveSiege = etape === 2 ? 2 : 1;
+            const p1 = document.getElementById('siege-step1-panel');
+            const p2 = document.getElementById('siege-step2-panel');
+            const b1 = document.getElementById('btnStep1Prep');
+            const b2 = document.getElementById('btnStep2Diff');
+            if (p1) p1.style.display = etapeActiveSiege === 1 ? 'block' : 'none';
+            if (p2) p2.style.display = etapeActiveSiege === 2 ? 'block' : 'none';
+            if (b1) b1.classList.toggle('active', etapeActiveSiege === 1);
+            if (b2) b2.classList.toggle('active', etapeActiveSiege === 2);
+            if (etapeActiveSiege === 2) {
+                renderEtape2Diffusion();
+            }
+        }
+
+        function extraireAffectationEnCoursForm() {
+            const centre = document.getElementById('wf-centre-cible')?.value || '';
+            const region = normalizeRegionOption(document.getElementById('wf-region-auto')?.value || trouverRegionPourCentre(centre));
+            const selCtrl = document.getElementById('wf-controleur-affecte');
+            const controleurId = selCtrl ? selCtrl.value : '';
+            const optCtrl = selCtrl ? selCtrl.options[selCtrl.selectedIndex] : null;
+            const controleurFonction = (optCtrl && optCtrl.dataset && optCtrl.dataset.fonction) ? optCtrl.dataset.fonction : controleurId;
+            const controleurRegion = (optCtrl && optCtrl.dataset && optCtrl.dataset.region) ? normalizeRegionOption(optCtrl.dataset.region) : '';
+            const periode = lirePeriodeWorkflowSelectionnee();
+
+            return {
+                centre,
+                region,
+                controleurId,
+                controleurFonction,
+                controleurRegion,
+                periode
+            };
+        }
+
+        function ajouterAffectationCampagne() {
+            const cur = extraireAffectationEnCoursForm();
+            if (!cur.centre || !cur.region || !cur.controleurId || !cur.periode) {
+                alert("Veuillez renseigner le Centre ciblé, le Contrôleur affecté et la Période de contrôle avant d'ajouter l'affectation.");
+                return;
+            }
+            if (cur.periode.dateFin < cur.periode.dateDebut) {
+                alert("La date de fin de période doit être postérieure ou égale à la date de début.");
+                return;
+            }
+
+            lotAffectationsSiege.push({
+                idAffectation: 'AFF-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+                centre: cur.centre,
+                entite: cur.centre,
+                region: cur.region,
+                controleurId: cur.controleurId,
+                controleurFonction: cur.controleurFonction,
+                controleurRegion: cur.controleurRegion,
+                isInterregional: Boolean(cur.controleurRegion && cur.region && cur.controleurRegion !== cur.region),
+                periodeCode: cur.periode.periodeCode,
+                periodeLabel: cur.periode.periodeLabel,
+                dateDebut: cur.periode.dateDebut,
+                dateFin: cur.periode.dateFin
+            });
+
+            // Réinitialiser uniquement les champs d'affectation (les processus/PC de la campagne restent communs)
+            document.getElementById('wf-centre-cible').value = '';
+            document.getElementById('wf-region-auto').value = '';
+            document.getElementById('wf-controleur-affecte').value = '';
+            updateInterregionalIndicator();
+            renderLotAffectationsSiege();
+        }
+
+        function retirerAffectationLotSiege(index) {
+            if (index >= 0 && index < lotAffectationsSiege.length) {
+                lotAffectationsSiege.splice(index, 1);
+                renderLotAffectationsSiege();
+            }
+        }
+
+        function renderLotAffectationsSiege() {
+            const countEl = document.getElementById('countLotSiege');
+            const wrap = document.getElementById('lot-siege-table-wrap');
+            if (!wrap) return;
+            if (countEl) countEl.innerText = lotAffectationsSiege.length;
+
+            if (lotAffectationsSiege.length === 0) {
+                wrap.innerHTML = `<p style="font-size:0.78rem; color:#64748B;">Aucune affectation ajoutée pour l'instant. Renseignez une affectation ci-dessus puis cliquez sur <strong>« Ajouter une affectation »</strong> (vous pouvez affecter plusieurs contrôleurs à différents centres pour la même campagne).</p>`;
+                return;
+            }
+
+            wrap.innerHTML = `
+                <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px; background:#FFF;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Centre ciblé</th>
+                                <th>Région (auto)</th>
+                                <th>Contrôleur affecté</th>
+                                <th>Période de contrôle</th>
+                                <th style="text-align:center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${lotAffectationsSiege.map((item, idx) => `
+                                <tr>
+                                    <td><b>${idx + 1}</b></td>
+                                    <td><b>${escapeHtml(item.centre || item.entite)}</b></td>
+                                    <td><span class="pill pill-planifiee">${escapeHtml(item.region)}</span></td>
+                                    <td>
+                                        <span class="pill pill-ctrl"><i class="fa-solid fa-user"></i> ${escapeHtml(item.controleurId)}</span>
+                                        <small style="color:#64748B; display:block; margin-top:2px;">${escapeHtml(item.controleurFonction || '')}</small>
+                                        ${item.isInterregional ? `<span class="pill pill-interreg" style="margin-top:3px;"><i class="fa-solid fa-right-left"></i> Hors région (${escapeHtml(item.controleurRegion)})</span>` : ''}
+                                    </td>
+                                    <td>
+                                        <b>${escapeHtml(item.periodeLabel || '')}</b><br>
+                                        <small style="color:#64748B;">${formatDateFR(item.dateDebut)} → ${formatDateFR(item.dateFin)}</small>
+                                    </td>
+                                    <td style="text-align:center;">
+                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationLotSiege(${idx})" title="Retirer cette affectation">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // =========================================================================
+        // SOUMISSION AU DIRECTEUR (directeur-001)
+        // =========================================================================
+
+        async function soumettrePlanificationPourValidation() {
+            if (!estUtilisateurSiege()) return;
+
+            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
+            if (!activeItems || activeItems.length === 0) {
+                alert("Veuillez sélectionner au moins un Processus et ses Points de contrôle (PC) pour cette campagne.");
+                return;
+            }
+
+            const affectationsFinales = [...lotAffectationsSiege];
+            const cur = extraireAffectationEnCoursForm();
+            if (cur.centre || cur.controleurId) {
+                if (!cur.centre || !cur.region || !cur.controleurId || !cur.periode) {
+                    alert("Veuillez compléter la ligne d'affectation en cours (Centre, Contrôleur, Période) ou la vider avant de soumettre.");
+                    return;
+                }
+                affectationsFinales.push({
+                    idAffectation: 'AFF-' + Date.now() + '-CUR',
+                    centre: cur.centre,
+                    entite: cur.centre,
+                    region: cur.region,
+                    controleurId: cur.controleurId,
+                    controleurFonction: cur.controleurFonction,
+                    controleurRegion: cur.controleurRegion,
+                    isInterregional: Boolean(cur.controleurRegion && cur.region && cur.controleurRegion !== cur.region),
+                    periodeCode: cur.periode.periodeCode,
+                    periodeLabel: cur.periode.periodeLabel,
+                    dateDebut: cur.periode.dateDebut,
+                    dateFin: cur.periode.dateFin
+                });
+            }
+
+            if (affectationsFinales.length === 0) {
+                alert("Veuillez ajouter au moins une affectation (Centre ciblé, Contrôleur affecté, Période) avant de soumettre pour validation.");
+                return;
+            }
+
+            const btn = document.getElementById('btnSoumettreValidation');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Soumission au Directeur...';
+            }
+
+            try {
+                const currentUser = getCurrentAuthUser();
+                const typeControle = document.getElementById('wf-type-controle')?.value || 'Thématique';
+                const titreSaisi = (document.getElementById('wf-campagne-titre')?.value || '').trim();
+
+                const processusList = [...new Set(activeItems.map(i => getItemVal(i, ['Processus'])).filter(Boolean))];
+                const risquesList = [...new Set(activeItems.map(i => getItemVal(i, ['Intitulé du risque', 'Intitulé risque'])).filter(Boolean))];
+                const controlesList = [...new Set(activeItems.map(i => getItemVal(i, ['Intitulé Contrôle', 'Intitulé de contrôle'])).filter(Boolean))];
+
+                const nowIso = new Date().toISOString();
+                const idCampagne = 'CAMP-' + Date.now();
+                const titre = titreSaisi || `Campagne ${typeControle} — ${processusList.length} processus (${affectationsFinales.length} affectation(s))`;
+
+                const campagne = {
+                    idCampagne,
+                    titre,
+                    typeControle,
+                    statutWorkflow: 'SOUMISE',
+                    destinataireDirecteurId: 'directeur-001',
+                    soumisParId: currentUser ? currentUser.username : 'chef service-001',
+                    soumisParFonction: currentUser ? currentUser.fonction : 'Chef de service',
+                    soumisParRole: currentUser ? currentUser.role : 'CHEF_SERVICE',
+                    dateSoumission: nowIso,
+                    // Référentiel partagé (commun à tous les contrôleurs, non dupliqué)
+                    processusList,
+                    risquesList,
+                    controlesList,
+                    pointsControle: activeItems,
+                    nbPoints: activeItems.length,
+                    // Affectations individuelles
+                    affectations: affectationsFinales,
+                    affectationsInitiales: JSON.parse(JSON.stringify(affectationsFinales)),
+                    modifieeParDirecteur: false,
+                    notifieSiege: false,
+                    historique: [
+                        {
+                            date: nowIso,
+                            auteurId: currentUser ? currentUser.username : 'siege',
+                            auteurFonction: currentUser ? currentUser.fonction : 'Siège',
+                            action: 'SOUMISSION',
+                            details: `Proposition soumise au Directeur (directeur-001) : ${affectationsFinales.length} affectation(s), ${processusList.length} processus, ${activeItems.length} PC.`
+                        }
+                    ],
+                    createdAt: nowIso
+                };
+
+                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerCampagnePlanification === 'function') {
+                    await FCIDatabase.enregistrerCampagnePlanification(campagne);
+                }
+
+                // Réinitialiser le formulaire de préparation
+                lotAffectationsSiege = [];
+                if (document.getElementById('wf-campagne-titre')) document.getElementById('wf-campagne-titre').value = '';
+                if (document.getElementById('wf-centre-cible')) document.getElementById('wf-centre-cible').value = '';
+                if (document.getElementById('wf-region-auto')) document.getElementById('wf-region-auto').value = '';
+                if (document.getElementById('wf-controleur-affecte')) document.getElementById('wf-controleur-affecte').value = '';
+                if (document.getElementById('wf-periode-controle')) document.getElementById('wf-periode-controle').value = '';
+                onWfPeriodeChange();
+                renderLotAffectationsSiege();
+                viderPlanification();
+                renderAllWorkflowViews();
+
+                alert(`✅ Planification « ${titre} » soumise avec succès au compte directeur-001 pour examen et validation.`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                }
+            }
+        }
+
+        // =========================================================================
+        // HELPERS AFFICHAGE RÉFÉRENTIEL & HISTORIQUE D'UNE CAMPAGNE
+        // =========================================================================
+
+        function toggleCampagnePanel(panelKey) {
+            expandedPanelsState[panelKey] = !expandedPanelsState[panelKey];
+            renderAllWorkflowViews();
+        }
+
+        function buildRefPreviewHTML(campagne) {
+            const pts = Array.isArray(campagne.pointsControle) ? campagne.pointsControle : [];
+            if (pts.length === 0) return '<div class="ref-preview-box">Aucun point de contrôle associé.</div>';
+
+            const grouped = {};
+            pts.forEach(p => {
+                const proc = getItemVal(p, ['Processus']) || 'Non spécifié';
+                if (!grouped[proc]) grouped[proc] = [];
+                grouped[proc].push(p);
+            });
+
+            return `
+                <div class="ref-preview-box">
+                    <div style="font-weight:800; color:var(--primary-blue); margin-bottom:8px;">
+                        <i class="fa-solid fa-book-open"></i> Référentiel partagé de la campagne (${Object.keys(grouped).length} processus · ${pts.length} PC)
+                    </div>
+                    ${Object.entries(grouped).map(([proc, items]) => `
+                        <div style="margin-bottom:10px; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">
+                            <div style="background:#EFF6FF; padding:6px 10px; font-weight:800; color:var(--primary-blue); font-size:0.78rem;">
+                                <i class="fa-solid fa-gears"></i> ${escapeHtml(proc)} (${items.length} PC)
+                            </div>
+                            <table style="font-size:0.76rem;">
+                                <thead>
+                                    <tr>
+                                        <th style="width:28%;">Risque</th>
+                                        <th style="width:32%;">Contrôle</th>
+                                        <th style="width:40%;">Point de contrôle (PC)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.map(it => `
+                                        <tr>
+                                            <td>${escapeHtml(getItemVal(it, ['Intitulé du risque', 'Intitulé risque']))}</td>
+                                            <td>${escapeHtml(getItemVal(it, ['Intitulé Contrôle', 'Intitulé de contrôle']))}</td>
+                                            <td>${escapeHtml(getItemVal(it, ['Points de contrôle', 'Point de contrôle']))}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function buildHistoryHTML(campagne) {
+            const hist = Array.isArray(campagne.historique) ? campagne.historique : [];
+            if (hist.length === 0) return '<div class="history-box">Aucun événement enregistré.</div>';
+            return `
+                <div class="history-box">
+                    <div style="font-weight:800; color:var(--primary-blue); margin-bottom:6px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Historique complet des opérations
+                    </div>
+                    ${[...hist].reverse().map(h => `
+                        <div class="history-item">
+                            <span style="min-width:125px; font-weight:700; color:#475569;">${formatDateHeureFR(h.date)}</span>
+                            <span class="pill pill-planifiee" style="height:fit-content;">${escapeHtml(h.action || 'ACTION')}</span>
+                            <div style="flex:1;">
+                                <b>${escapeHtml(h.auteurId || '')}</b> (${escapeHtml(h.auteurFonction || '')}) — ${escapeHtml(h.details || '')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function buildAllCentresSelectHTML(selectedCentre = '') {
+            const parts = ['<option value="">-- Centre --</option>'];
+            Object.entries(CENTRES_PAR_REGION).forEach(([reg, centres]) => {
+                const opts = centres.map(c =>
+                    `<option value="${escapeHtml(c)}" data-region="${escapeHtml(reg)}" ${c === selectedCentre ? 'selected' : ''}>${escapeHtml(c)}</option>`
+                ).join('');
+                parts.push(`<optgroup label="${escapeHtml(reg)}">${opts}</optgroup>`);
+            });
+            return parts.join('');
+        }
+
+        // =========================================================================
+        // BANNIÈRE NOTIFICATIONS COLLABORATEURS SIÈGE
+        // =========================================================================
+
+        function renderSiegeNotificationsBanner() {
+            const container = document.getElementById('siege-notifications-banner');
+            if (!container) return;
+            if (!estUtilisateurSiege() || typeof FCIDatabase === 'undefined') {
+                container.innerHTML = '';
+                return;
+            }
+            const user = getCurrentAuthUser();
+            const uId = user ? user.username : '';
+            const db = FCIDatabase.getDB();
+            const notifs = (db.notifications || [])
+                .slice()
+                .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+
+            if (notifs.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const unread = notifs.filter(n => !(Array.isArray(n.lusPar) && n.lusPar.includes(uId)));
+            const toShow = showReadNotifications ? notifs : unread;
+
+            if (unread.length === 0 && !showReadNotifications) {
+                container.innerHTML = `
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleShowReadNotifs()">
+                            <i class="fa-regular fa-bell"></i> Voir les notifications Siège (${notifs.length})
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="notif-banner">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.9rem;">
+                            <i class="fa-solid fa-bell" style="color:#D97706;"></i> Notifications officielles du Directeur — Collaborateurs du Siège
+                            <span class="pill pill-soumise" style="margin-left:6px;">${unread.length} non lue(s)</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleShowReadNotifs()">
+                            ${showReadNotifications ? 'Masquer les lues' : `Tout afficher (${notifs.length})`}
+                        </button>
+                    </div>
+                    ${toShow.map(n => {
+                        const isRead = Array.isArray(n.lusPar) && n.lusPar.includes(uId);
+                        return `
+                            <div class="notif-item ${isRead ? '' : 'unread'}">
+                                <div style="flex:1; min-width:240px;">
+                                    <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">
+                                        <i class="fa-solid fa-bullhorn" style="color:#D97706;"></i> ${escapeHtml(n.titre || 'Nouvelle campagne de contrôle validée')}
+                                    </div>
+                                    <div style="font-size:0.8rem; color:#334155; margin-top:3px;">${escapeHtml(n.message || '')}</div>
+                                    <div style="font-size:0.72rem; color:#64748B; margin-top:3px;">
+                                        Émis par <b>${escapeHtml(n.emetteurFonction || 'Directeur')} (${escapeHtml(n.emetteurId || 'directeur-001')})</b> le ${formatDateHeureFR(n.createdAt)}
+                                    </div>
+                                </div>
+                                <div>
+                                    ${isRead
+                                        ? '<span class="pill pill-realisee"><i class="fa-solid fa-check"></i> Lue</span>'
+                                        : `<button type="button" class="btn btn-secondary btn-sm" onclick="marquerNotifSiegeLue('${escapeJsString(n.idNotification)}')"><i class="fa-solid fa-check"></i> Marquer comme lue</button>`
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function toggleShowReadNotifs() {
+            showReadNotifications = !showReadNotifications;
+            renderSiegeNotificationsBanner();
+        }
+
+        function marquerNotifSiegeLue(idNotification) {
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.marquerNotificationLue === 'function') {
+                FCIDatabase.marquerNotificationLue(idNotification);
+            }
+            renderSiegeNotificationsBanner();
+        }
+
+        // =========================================================================
+        // ESPACE DIRECTEUR (directeur-001) : CONSULTATION, MODIFICATION, VALIDATION & NOTIFICATION
+        // =========================================================================
+
+        function renderSectionDirecteur() {
+            const container = document.getElementById('directeur-validation-section');
+            if (!container) return;
+
+            if (!estDirecteurConnecte() && !estAdminConnecte()) {
+                container.innerHTML = '';
+                return;
+            }
+            if (typeof FCIDatabase === 'undefined') {
+                container.innerHTML = '';
+                return;
+            }
+
+            const db = FCIDatabase.getDB();
+            const campagnes = (db.campagnesPlanification || [])
+                .slice()
+                .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+
+            const soumises = campagnes.filter(c => c.statutWorkflow === 'SOUMISE');
+            const validees = campagnes.filter(c => c.statutWorkflow === 'VALIDEE');
+            const diffusees = campagnes.filter(c => c.statutWorkflow === 'DIFFUSEE');
+            const isDirecteur = estDirecteurConnecte();
+
+            // Pour l'admin, ne montrer le panneau directeur que s'il existe au moins une campagne
+            if (!isDirecteur && campagnes.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="directeur-card">
+                    <div class="card-title" style="border-bottom-color:#BBF7D0;">
+                        <span><i class="fa-solid fa-user-tie" style="color:#059669;"></i> Espace Directeur (directeur-001) — Validation &amp; Notification des Planifications</span>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <span class="pill pill-soumise">${soumises.length} en attente de validation</span>
+                            <span class="pill pill-validee">${validees.length} validée(s)</span>
+                            <span class="pill pill-diffusee">${diffusees.length} diffusée(s)</span>
+                        </div>
+                    </div>
+                    ${campagnes.length === 0 ? `
+                        <p style="font-size:0.84rem; color:#64748B;">Aucune proposition de planification transmise par les chefs de service pour le moment.</p>
+                    ` : campagnes.map(camp => {
+                        const st = camp.statutWorkflow || 'SOUMISE';
+                        const statusClass = st === 'SOUMISE' ? 'status-soumise' : (st === 'VALIDEE' ? 'status-validee' : 'status-diffusee');
+                        const statusPill = st === 'SOUMISE'
+                            ? '<span class="pill pill-soumise"><i class="fa-regular fa-clock"></i> En attente de validation Directeur</span>'
+                            : (st === 'VALIDEE'
+                                ? '<span class="pill pill-validee"><i class="fa-solid fa-circle-check"></i> Validée — Retournée au Chef de service</span>'
+                                : '<span class="pill pill-diffusee"><i class="fa-solid fa-paper-plane"></i> Diffusée aux contrôleurs</span>');
+
+                        const canEdit = isDirecteur && (st === 'SOUMISE' || st === 'VALIDEE');
+                        const refKey = 'dir_ref_' + camp.idCampagne;
+                        const histKey = 'dir_hist_' + camp.idCampagne;
+                        const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+
+                        return `
+                            <div class="campaign-card ${statusClass}" id="dir-camp-${escapeHtml(camp.idCampagne)}">
+                                <div class="campaign-header">
+                                    <div>
+                                        <div style="font-weight:800; color:var(--primary-blue); font-size:0.98rem;">
+                                            ${escapeHtml(camp.titre || camp.idCampagne)}
+                                        </div>
+                                        <div style="font-size:0.78rem; color:#475569; margin-top:4px;">
+                                            Proposée par <b>${escapeHtml(camp.soumisParFonction || '')} (${escapeHtml(camp.soumisParId || '')})</b> le ${formatDateHeureFR(camp.dateSoumission || camp.createdAt)}
+                                            · Type : <b>${escapeHtml(camp.typeControle || 'Thématique')}</b>
+                                            · <b>${(camp.processusList || []).length}</b> processus · <b>${(camp.pointsControle || []).length}</b> PC
+                                        </div>
+                                        <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;">
+                                            ${(camp.processusList || []).map(p => `<span class="pill pill-proc">${escapeHtml(p)}</span>`).join('')}
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                                        ${statusPill}
+                                        ${camp.notifieSiege
+                                            ? `<span class="pill pill-realisee"><i class="fa-solid fa-bell"></i> Collaborateurs Siège notifiés (${formatDateFR(camp.dateNotification)})</span>`
+                                            : (st === 'VALIDEE' ? '<span class="pill pill-soumise"><i class="fa-regular fa-bell"></i> Notification Siège non encore envoyée</span>' : '')
+                                        }
+                                        ${camp.modifieeParDirecteur ? '<span class="pill pill-interreg"><i class="fa-solid fa-pen"></i> Affectations ajustées par le Directeur</span>' : ''}
+                                    </div>
+                                </div>
+
+                                <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFF;">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="width:28%;">Centre ciblé</th>
+                                                <th style="width:13%;">Région (auto)</th>
+                                                <th style="width:28%;">Contrôleur affecté</th>
+                                                <th style="width:23%;">Période de contrôle</th>
+                                                ${canEdit ? '<th style="width:8%; text-align:center;">Action</th>' : ''}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${affs.map((aff, idx) => {
+                                                const isInter = Boolean(aff.controleurRegion && aff.region && aff.controleurRegion !== aff.region);
+                                                if (!canEdit) {
+                                                    return `
+                                                        <tr>
+                                                            <td><b>${escapeHtml(aff.centre || aff.entite)}</b></td>
+                                                            <td><span class="pill pill-planifiee">${escapeHtml(aff.region)}</span></td>
+                                                            <td>
+                                                                <span class="pill pill-ctrl">${escapeHtml(aff.controleurId)}</span>
+                                                                ${isInter ? `<span class="pill pill-interreg">Interrégional</span>` : ''}
+                                                            </td>
+                                                            <td><b>${escapeHtml(aff.periodeLabel || '')}</b> <small style="color:#64748B;">(${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)})</small></td>
+                                                        </tr>
+                                                    `;
+                                                }
+                                                return `
+                                                    <tr>
+                                                        <td>
+                                                            <select class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="centre" onchange="onDirCentreInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, this)">
+                                                                ${buildAllCentresSelectHTML(aff.centre || aff.entite)}
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" class="inline-control" id="dir-reg-${escapeHtml(camp.idCampagne)}-${idx}" value="${escapeHtml(aff.region)}" readonly style="background:#EEF2F6; font-weight:800; color:var(--primary-blue);">
+                                                        </td>
+                                                        <td>
+                                                            <select class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="controleurId" onchange="onDirFieldInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, 'controleurId', this)">
+                                                                ${buildOptionsControleursHTML(aff.controleurId)}
+                                                            </select>
+                                                            ${isInter ? `<span class="pill pill-interreg" style="margin-top:3px;"><i class="fa-solid fa-right-left"></i> Hors région (${escapeHtml(aff.controleurRegion)})</span>` : ''}
+                                                        </td>
+                                                        <td>
+                                                            <select class="inline-control" data-dir-camp="${escapeHtml(camp.idCampagne)}" data-aff-idx="${idx}" data-field="periodeCode" onchange="onDirPeriodeInlineChange('${escapeJsString(camp.idCampagne)}', ${idx}, this)">
+                                                                ${buildOptionsPeriodesHTML(aff.periodeCode || 'PERSONNALISEE')}
+                                                            </select>
+                                                            <div style="font-size:0.72rem; color:#64748B; margin-top:3px;">${formatDateFR(aff.dateDebut)} → ${formatDateFR(aff.dateFin)}</div>
+                                                        </td>
+                                                        <td style="text-align:center;">
+                                                            <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationDirecteur('${escapeJsString(camp.idCampagne)}', ${idx})" title="Retirer cette affectation">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+                                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCampagnePanel('${escapeJsString(refKey)}')">
+                                            <i class="fa-solid fa-list-check"></i> ${expandedPanelsState[refKey] ? 'Masquer le référentiel' : `Voir Référentiel (${(camp.pointsControle || []).length} PC)`}
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCampagnePanel('${escapeJsString(histKey)}')">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> ${expandedPanelsState[histKey] ? 'Masquer l\'historique' : `Historique (${(camp.historique || []).length})`}
+                                        </button>
+                                        ${canEdit ? `
+                                            <button type="button" class="btn btn-info-outline btn-sm" onclick="ajouterLigneAffectationDirecteur('${escapeJsString(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-plus"></i> Ajouter une affectation
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                        ${isDirecteur && st === 'SOUMISE' ? `
+                                            <button type="button" class="btn btn-success btn-sm" onclick="validerCampagneDirecteur('${escapeJsString(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-check-double"></i> Valider la planification
+                                            </button>
+                                        ` : ''}
+                                        ${isDirecteur && (st === 'VALIDEE' || st === 'DIFFUSEE') ? `
+                                            ${st === 'VALIDEE' ? `
+                                                <button type="button" class="btn btn-success btn-sm" onclick="validerCampagneDirecteur('${escapeJsString(camp.idCampagne)}')">
+                                                    <i class="fa-solid fa-floppy-disk"></i> Enregistrer &amp; revalider
+                                                </button>
+                                            ` : ''}
+                                            <button type="button" class="btn btn-notify btn-sm" onclick="notifierCollaborateursSiege('${escapeJsString(camp.idCampagne)}')">
+                                                <i class="fa-solid fa-bell"></i> ${camp.notifieSiege ? 'Renotifier les collaborateurs' : 'Notifier les collaborateurs'}
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+
+                                ${expandedPanelsState[refKey] ? buildRefPreviewHTML(camp) : ''}
+                                ${expandedPanelsState[histKey] ? buildHistoryHTML(camp) : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function getCampagneById(idCampagne) {
+            if (typeof FCIDatabase === 'undefined') return null;
+            const db = FCIDatabase.getDB();
+            return (db.campagnesPlanification || []).find(c => c.idCampagne === idCampagne) || null;
+        }
+
+        async function onDirCentreInlineChange(idCampagne, idx, selectEl) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp || !camp.affectations || !camp.affectations[idx]) return;
+            const newCentre = selectEl.value;
+            const opt = selectEl.options[selectEl.selectedIndex];
+            const newReg = (opt && opt.dataset && opt.dataset.region)
+                ? normalizeRegionOption(opt.dataset.region)
+                : normalizeRegionOption(trouverRegionPourCentre(newCentre));
+
+            const oldCentre = camp.affectations[idx].centre;
+            camp.affectations[idx].centre = newCentre;
+            camp.affectations[idx].entite = newCentre;
+            camp.affectations[idx].region = newReg;
+            camp.affectations[idx].isInterregional = Boolean(camp.affectations[idx].controleurRegion && newReg && camp.affectations[idx].controleurRegion !== newReg);
+            camp.modifieeParDirecteur = true;
+
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIFICATION_DIRECTEUR',
+                details: `Affectation #${idx + 1} — Centre modifié : "${oldCentre || '--'}" → "${newCentre}" (Région ${newReg}).`
+            });
+
+            await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+            renderAllWorkflowViews();
+        }
+
+        async function onDirFieldInlineChange(idCampagne, idx, field, selectEl) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp || !camp.affectations || !camp.affectations[idx]) return;
+            if (field === 'controleurId') {
+                const newCtrl = selectEl.value;
+                const opt = selectEl.options[selectEl.selectedIndex];
+                const newFunc = (opt && opt.dataset && opt.dataset.fonction) ? opt.dataset.fonction : newCtrl;
+                const newCtrlReg = (opt && opt.dataset && opt.dataset.region) ? normalizeRegionOption(opt.dataset.region) : '';
+                const oldCtrl = camp.affectations[idx].controleurId;
+
+                camp.affectations[idx].controleurId = newCtrl;
+                camp.affectations[idx].controleurFonction = newFunc;
+                camp.affectations[idx].controleurRegion = newCtrlReg;
+                camp.affectations[idx].isInterregional = Boolean(newCtrlReg && camp.affectations[idx].region && newCtrlReg !== camp.affectations[idx].region);
+                camp.modifieeParDirecteur = true;
+
+                const u = getCurrentAuthUser();
+                camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+                camp.historique.push({
+                    date: new Date().toISOString(),
+                    auteurId: u ? u.username : 'directeur-001',
+                    auteurFonction: u ? u.fonction : 'Directeur',
+                    action: 'MODIFICATION_DIRECTEUR',
+                    details: `Affectation #${idx + 1} (${camp.affectations[idx].centre}) — Contrôleur modifié : "${oldCtrl || '--'}" → "${newCtrl}".`
+                });
+
+                await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+                renderAllWorkflowViews();
+            }
+        }
+
+        async function onDirPeriodeInlineChange(idCampagne, idx, selectEl) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp || !camp.affectations || !camp.affectations[idx]) return;
+            const code = selectEl.value;
+            const found = PERIODES_DISPONIBLES.find(p => p.code === code);
+            if (!found) return;
+            const oldLbl = camp.affectations[idx].periodeLabel;
+            camp.affectations[idx].periodeCode = found.code;
+            camp.affectations[idx].periodeLabel = found.label;
+            camp.affectations[idx].dateDebut = found.dateDebut;
+            camp.affectations[idx].dateFin = found.dateFin;
+            camp.modifieeParDirecteur = true;
+
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIFICATION_DIRECTEUR',
+                details: `Affectation #${idx + 1} (${camp.affectations[idx].centre}) — Période modifiée : "${oldLbl || '--'}" → "${found.label}".`
+            });
+
+            await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+            renderAllWorkflowViews();
+        }
+
+        async function ajouterLigneAffectationDirecteur(idCampagne) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp) return;
+            const defP = PERIODES_DISPONIBLES[0] || { code: 'PERSONNALISEE', label: 'Période', dateDebut: new Date().toISOString().split('T')[0], dateFin: new Date().toISOString().split('T')[0] };
+            const lastAff = (camp.affectations && camp.affectations.length > 0) ? camp.affectations[camp.affectations.length - 1] : null;
+            camp.affectations = Array.isArray(camp.affectations) ? camp.affectations : [];
+            camp.affectations.push({
+                idAffectation: 'AFF-DIR-' + Date.now(),
+                centre: '',
+                entite: '',
+                region: '',
+                controleurId: '',
+                controleurFonction: '',
+                controleurRegion: '',
+                isInterregional: false,
+                periodeCode: lastAff ? lastAff.periodeCode : defP.code,
+                periodeLabel: lastAff ? lastAff.periodeLabel : defP.label,
+                dateDebut: lastAff ? lastAff.dateDebut : defP.dateDebut,
+                dateFin: lastAff ? lastAff.dateFin : defP.dateFin
+            });
+            camp.modifieeParDirecteur = true;
+            await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+            renderAllWorkflowViews();
+        }
+
+        async function retirerAffectationDirecteur(idCampagne, idx) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp || !Array.isArray(camp.affectations) || camp.affectations.length <= 1) {
+                alert("Une campagne doit conserver au moins une affectation.");
+                return;
+            }
+            const removed = camp.affectations.splice(idx, 1)[0];
+            camp.modifieeParDirecteur = true;
+            const u = getCurrentAuthUser();
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: new Date().toISOString(),
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'MODIFICATION_DIRECTEUR',
+                details: `Affectation retirée : ${removed.centre || '--'} (${removed.controleurId || '--'}).`
+            });
+            await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+            renderAllWorkflowViews();
+        }
+
+        async function validerCampagneDirecteur(idCampagne) {
+            if (!estDirecteurConnecte()) {
+                alert("Seul le compte directeur-001 est habilité à valider la planification.");
+                return;
+            }
+            const camp = getCampagneById(idCampagne);
+            if (!camp) return;
+
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            if (affs.length === 0 || affs.some(a => !a.centre || !a.region || !a.controleurId)) {
+                alert("Veuillez vérifier que chaque ligne d'affectation comporte un Centre ciblé, une Région et un Contrôleur affecté avant de valider.");
+                return;
+            }
+
+            const nowIso = new Date().toISOString();
+            const u = getCurrentAuthUser();
+            camp.statutWorkflow = 'VALIDEE';
+            camp.valideParId = u ? u.username : 'directeur-001';
+            camp.valideParFonction = u ? u.fonction : 'Directeur';
+            camp.dateValidation = nowIso;
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: nowIso,
+                auteurId: camp.valideParId,
+                auteurFonction: camp.valideParFonction,
+                action: 'VALIDATION_DIRECTEUR',
+                details: `Planification validée définitivement (${affs.length} affectation(s), ${(camp.processusList || []).length} processus) et retournée au chef de service ${camp.soumisParId || ''}.`
+            });
+
+            await FCIDatabase.enregistrerCampagnePlanification(camp, true);
+            renderAllWorkflowViews();
+            alert(`✅ Planification « ${camp.titre} » validée et retournée à ${camp.soumisParFonction || camp.soumisParId}.\n\nVous pouvez maintenant cliquer sur « Notifier les collaborateurs » pour informer l'ensemble des collaborateurs du Siège.`);
+        }
+
+        async function notifierCollaborateursSiege(idCampagne) {
+            if (!estDirecteurConnecte()) {
+                alert("Seul le compte directeur-001 est habilité à notifier les collaborateurs du Siège.");
+                return;
+            }
+            const camp = getCampagneById(idCampagne);
+            if (!camp) return;
+            if (camp.statutWorkflow !== 'VALIDEE' && camp.statutWorkflow !== 'DIFFUSEE') {
+                alert("Veuillez d'abord valider la planification avant de notifier les collaborateurs du Siège.");
+                return;
+            }
+
+            const nowIso = new Date().toISOString();
+            const u = getCurrentAuthUser();
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            const regionsConc = [...new Set(affs.map(a => a.region).filter(Boolean))].join(', ');
+            const procsText = (camp.processusList || []).join(', ');
+
+            const notif = {
+                idNotification: 'NOTIF-' + Date.now(),
+                idCampagne: camp.idCampagne,
+                titre: `Nouvelle campagne de contrôle validée et en cours : ${camp.titre}`,
+                message: `Campagne ${camp.typeControle || 'Thématique'} validée par le Directeur (${affs.length} centre(s) sur ${regionsConc || 'réseau'} — Processus : ${procsText || '--'}). Retournée à ${camp.soumisParFonction || camp.soumisParId} pour diffusion aux contrôleurs.`,
+                emetteurId: u ? u.username : 'directeur-001',
+                emetteurFonction: u ? u.fonction : 'Directeur',
+                destinataires: 'SIEGE',
+                lusPar: [u ? u.username : 'directeur-001'],
+                createdAt: nowIso
+            };
+
+            await FCIDatabase.ajouterNotification(notif, true);
+
+            camp.notifieSiege = true;
+            camp.dateNotification = nowIso;
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: nowIso,
+                auteurId: u ? u.username : 'directeur-001',
+                auteurFonction: u ? u.fonction : 'Directeur',
+                action: 'NOTIFICATION_SIEGE',
+                details: `Notification transmise à l'ensemble des collaborateurs du Siège (7 comptes) : campagne validée et en cours.`
+            });
+
+            await FCIDatabase.enregistrerCampagnePlanification(camp, true);
+            renderAllWorkflowViews();
+            alert(`🔔 Notification envoyée avec succès à l'ensemble des collaborateurs du Siège.`);
+        }
+
+        // =========================================================================
+        // VUES CHEF DE SERVICE / SIÈGE : PROPOSITIONS SOUMISES (ÉTAPE 1) & DIFFUSION (ÉTAPE 2)
+        // =========================================================================
+
+        function renderPropositionsSoumisesEtape1() {
+            const wrap = document.getElementById('siege-propositions-soumises-wrap');
+            if (!wrap || typeof FCIDatabase === 'undefined') return;
+
+            const db = FCIDatabase.getDB();
+            const soumises = (db.campagnesPlanification || [])
+                .filter(c => c.statutWorkflow === 'SOUMISE')
+                .sort((a, b) => String(b.dateSoumission || b.createdAt || '').localeCompare(String(a.dateSoumission || a.createdAt || '')));
+
+            if (soumises.length === 0) {
+                wrap.innerHTML = '';
+                return;
+            }
+
+            wrap.innerHTML = `
+                <div class="sub-panel" style="border-left:4px solid #D97706; background:#FFFDF5;">
+                    <div class="sub-panel-title" style="color:#92400E;">
+                        <span><i class="fa-regular fa-hourglass-half"></i> Propositions transmises au Directeur (en attente de validation)</span>
+                        <span class="pill pill-soumise">${soumises.length} proposition(s)</span>
+                    </div>
+                    ${soumises.map(c => {
+                        const histKey = 's1_hist_' + c.idCampagne;
+                        return `
+                            <div class="campaign-card status-soumise" style="margin-bottom:10px;">
+                                <div class="campaign-header">
+                                    <div>
+                                        <b style="color:var(--primary-blue);">${escapeHtml(c.titre)}</b>
+                                        <div style="font-size:0.76rem; color:#475569; margin-top:2px;">
+                                            Soumise par <b>${escapeHtml(c.soumisParId)}</b> le ${formatDateHeureFR(c.dateSoumission)}
+                                            · ${(c.affectations || []).length} affectation(s) · ${(c.processusList || []).length} processus · ${(c.pointsControle || []).length} PC
+                                        </div>
+                                    </div>
+                                    <div style="display:flex; gap:6px; align-items:center;">
+                                        <span class="pill pill-soumise">Chez directeur-001</span>
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCampagnePanel('${escapeJsString(histKey)}')">
+                                            <i class="fa-solid fa-clock-rotate-left"></i> Historique
+                                        </button>
+                                    </div>
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                                    ${(c.affectations || []).map(a => `<span class="pill pill-ctrl">${escapeHtml(a.controleurId)} → ${escapeHtml(a.centre)} (${escapeHtml(a.region)})</span>`).join('')}
+                                </div>
+                                ${expandedPanelsState[histKey] ? buildHistoryHTML(c) : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function renderEtape2Diffusion() {
+            const wrap = document.getElementById('siege-campagnes-validees-wrap');
+            const badgeStep2 = document.getElementById('badgeCountValideesStep2');
+            if (!wrap || typeof FCIDatabase === 'undefined') return;
+
+            const db = FCIDatabase.getDB();
+            const user = getCurrentAuthUser();
+            const campagnes = (db.campagnesPlanification || [])
+                .filter(c => c.statutWorkflow === 'VALIDEE' || c.statutWorkflow === 'DIFFUSEE')
+                .sort((a, b) => String(b.dateValidation || b.updatedAt || '').localeCompare(String(a.dateValidation || a.updatedAt || '')));
+
+            const pretesADiffuser = campagnes.filter(c => c.statutWorkflow === 'VALIDEE');
+            if (badgeStep2) {
+                badgeStep2.style.display = pretesADiffuser.length > 0 ? 'inline-flex' : 'none';
+                badgeStep2.textContent = `${pretesADiffuser.length} à diffuser`;
+            }
+
+            if (campagnes.length === 0) {
+                wrap.innerHTML = `
+                    <div class="sub-panel" style="text-align:center; padding:30px;">
+                        <i class="fa-solid fa-clipboard-check" style="font-size:2rem; color:#94A3B8; margin-bottom:10px;"></i>
+                        <h4 style="color:var(--primary-blue);">Aucune planification validée disponible pour diffusion</h4>
+                        <p style="font-size:0.82rem; color:#64748B; margin-top:4px;">Soumettez d'abord une proposition à l'Étape 1 ; dès que <b>directeur-001</b> l'aura validée, sa version officielle apparaîtra ici prête à être diffusée aux contrôleurs.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            wrap.innerHTML = campagnes.map(camp => {
+                const isValidee = camp.statutWorkflow === 'VALIDEE';
+                const estAuteurOuAdmin = Boolean(
+                    user && (
+                        estAdminConnecte() ||
+                        estDirecteurConnecte() ||
+                        String(user.username || '').toLowerCase() === String(camp.soumisParId || '').toLowerCase()
+                    )
+                );
+                const refKey = 's2_ref_' + camp.idCampagne;
+                const histKey = 's2_hist_' + camp.idCampagne;
+
+                return `
+                    <div class="campaign-card ${isValidee ? 'status-validee' : 'status-diffusee'}">
+                        <div class="campaign-header">
+                            <div>
+                                <div style="font-weight:800; color:var(--primary-blue); font-size:0.98rem;">
+                                    ${escapeHtml(camp.titre)}
+                                </div>
+                                <div style="font-size:0.78rem; color:#475569; margin-top:4px;">
+                                    Chef de service : <b>${escapeHtml(camp.soumisParFonction || camp.soumisParId)}</b>
+                                    · Validée par <b>${escapeHtml(camp.valideParId || 'directeur-001')}</b> le ${formatDateHeureFR(camp.dateValidation)}
+                                    ${camp.dateDiffusion ? ` · Diffusée le <b>${formatDateHeureFR(camp.dateDiffusion)}</b> par ${escapeHtml(camp.diffuseParId || '')}` : ''}
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:6px;">
+                                    <span class="pill pill-siege">${escapeHtml(camp.typeControle || 'Thématique')}</span>
+                                    ${(camp.processusList || []).map(p => `<span class="pill pill-proc">${escapeHtml(p)}</span>`).join('')}
+                                </div>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                                ${isValidee
+                                    ? '<span class="pill pill-validee"><i class="fa-solid fa-certificate"></i> Référence officielle validée — Prête à diffuser</span>'
+                                    : '<span class="pill pill-diffusee"><i class="fa-solid fa-check-double"></i> Missions diffusées aux contrôleurs</span>'
+                                }
+                                ${camp.modifieeParDirecteur ? '<span class="pill pill-interreg"><i class="fa-solid fa-pen"></i> Affectations mises à jour par le Directeur</span>' : ''}
+                                ${camp.notifieSiege ? '<span class="pill pill-realisee"><i class="fa-solid fa-bell"></i> Siège notifié</span>' : ''}
+                            </div>
+                        </div>
+
+                        <div style="overflow-x:auto; border:1px solid #CBD5E1; border-radius:6px; background:#FFF;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Centre ciblé</th>
+                                        <th>Région</th>
+                                        <th>Contrôleur affecté (version validée)</th>
+                                        <th>Période de contrôle</th>
+                                        <th style="text-align:center;">PC partagés</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(camp.affectations || []).map(a => `
+                                        <tr>
+                                            <td><b>${escapeHtml(a.centre || a.entite)}</b></td>
+                                            <td><span class="pill pill-planifiee">${escapeHtml(a.region)}</span></td>
+                                            <td>
+                                                <span class="pill pill-ctrl"><i class="fa-solid fa-user"></i> ${escapeHtml(a.controleurId)}</span>
+                                                <small style="color:#64748B;">${escapeHtml(a.controleurFonction || '')}</small>
+                                                ${a.isInterregional ? `<span class="pill pill-interreg">Interrégional</span>` : ''}
+                                            </td>
+                                            <td><b>${escapeHtml(a.periodeLabel || '')}</b> <small style="color:#64748B;">(${formatDateFR(a.dateDebut)} → ${formatDateFR(a.dateFin)})</small></td>
+                                            <td style="text-align:center;"><b>${(camp.pointsControle || []).length}</b></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-top:12px;">
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCampagnePanel('${escapeJsString(refKey)}')">
+                                    <i class="fa-solid fa-list-check"></i> ${expandedPanelsState[refKey] ? 'Masquer le référentiel' : `Voir Référentiel (${(camp.pointsControle || []).length} PC)`}
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="toggleCampagnePanel('${escapeJsString(histKey)}')">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> ${expandedPanelsState[histKey] ? 'Masquer l\'historique' : `Historique (${(camp.historique || []).length})`}
+                                </button>
+                            </div>
+                            <div>
+                                ${isValidee ? (
+                                    estAuteurOuAdmin
+                                        ? `<button type="button" class="btn btn-siege" style="padding:9px 18px; font-size:0.86rem;" id="btnDiffCamp-${escapeHtml(camp.idCampagne)}" onclick="diffuserCampagneValidee('${escapeJsString(camp.idCampagne)}')">
+                                            <i class="fa-solid fa-paper-plane"></i> Diffuser les missions
+                                           </button>`
+                                        : `<span style="font-size:0.78rem; color:#64748B; font-style:italic;">Diffusion réservée à ${escapeHtml(camp.soumisParId)}</span>`
+                                ) : `
+                                    <span class="pill pill-realisee"><i class="fa-solid fa-circle-check"></i> Transmise individuellement aux ${(camp.affectations || []).length} contrôleur(s)</span>
+                                `}
+                            </div>
+                        </div>
+
+                        ${expandedPanelsState[refKey] ? buildRefPreviewHTML(camp) : ''}
+                        ${expandedPanelsState[histKey] ? buildHistoryHTML(camp) : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function diffuserCampagneValidee(idCampagne) {
+            const camp = getCampagneById(idCampagne);
+            if (!camp) return;
+            if (camp.statutWorkflow !== 'VALIDEE') {
+                alert("Seule une planification validée par le Directeur peut être diffusée.");
+                return;
+            }
+
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            if (affs.length === 0) {
+                alert("Aucune affectation trouvée dans cette campagne.");
+                return;
+            }
+
+            const btn = document.getElementById('btnDiffCamp-' + idCampagne);
+            const origText = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Diffusion en cours...';
+            }
+
+            try {
+                const currentUser = getCurrentAuthUser();
+                const nowIso = new Date().toISOString();
+                const auteurNom = currentUser ? `${currentUser.fonction} (${currentUser.username})` : (camp.soumisParFonction || 'Siège');
+
+                for (let i = 0; i < affs.length; i++) {
+                    const aff = affs[i];
+                    const planId = `PLAN-SIEGE-${camp.idCampagne}-${i + 1}`;
+                    await FCIDatabase.enregistrerPlanification({
+                        idPlanification: planId,
+                        idCampagne: camp.idCampagne,
+                        campagneSiegeId: camp.idCampagne,
+                        titreCampagne: camp.titre,
+                        idAffectation: aff.idAffectation || `AFF-${i + 1}`,
+                        planifiePar: 'SIEGE',
+                        espaceSaisie: 'SIEGE',
+                        sourceFeuille: 'FC',
+                        statutWorkflow: 'DIFFUSEE',
+                        valideParDirecteur: true,
+                        valideParId: camp.valideParId || 'directeur-001',
+                        dateValidation: camp.dateValidation || nowIso,
+                        dateDiffusion: nowIso,
+                        diffuseParId: currentUser ? currentUser.username : camp.soumisParId,
+                        auteurSiege: auteurNom,
+                        auteurId: currentUser ? currentUser.username : camp.soumisParId,
+                        auteurFonction: currentUser ? currentUser.fonction : camp.soumisParFonction,
+                        auteurRole: currentUser ? currentUser.role : 'CHEF_SERVICE',
+                        auteurRegion: 'SIEGE',
+                        region: aff.region,
+                        entite: aff.centre || aff.entite,
+                        site: aff.centre || aff.entite,
+                        centre: aff.centre || aff.entite,
+                        typeControle: camp.typeControle || 'Thématique',
+                        periodeCode: aff.periodeCode || '',
+                        periodeLabel: aff.periodeLabel || '',
+                        datePrevue: aff.dateDebut || nowIso.slice(0, 10),
+                        dateDebut: aff.dateDebut || '',
+                        dateFin: aff.dateFin || '',
+                        controleurId: aff.controleurId,
+                        controleur: aff.controleurId,
+                        controleurFonction: aff.controleurFonction || aff.controleurId,
+                        controleurRegion: aff.controleurRegion || aff.region,
+                        controleursAssignes: [aff.controleurId],
+                        controleursLibelles: [`${aff.controleurId}${aff.controleurFonction ? ' (' + aff.controleurFonction + ')' : ''}`],
+                        processusList: camp.processusList || [],
+                        pointsControle: camp.pointsControle || [],
+                        nbPoints: (camp.pointsControle || []).length,
+                        statutExecution: 'PLANIFIEE',
+                        createdAt: nowIso
+                    });
+                }
+
+                camp.statutWorkflow = 'DIFFUSEE';
+                camp.dateDiffusion = nowIso;
+                camp.diffuseParId = currentUser ? currentUser.username : camp.soumisParId;
+                camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+                camp.historique.push({
+                    date: nowIso,
+                    auteurId: camp.diffuseParId,
+                    auteurFonction: currentUser ? currentUser.fonction : 'Chef de service',
+                    action: 'DIFFUSION_CONTROLEURS',
+                    details: `Missions diffusées individuellement selon la version validée par le Directeur à ${affs.length} affectation(s) : ${affs.map(a => `${a.controleurId} (${a.centre})`).join(', ')}.`
+                });
+
+                await FCIDatabase.enregistrerCampagnePlanification(camp, true);
+                renderAllWorkflowViews();
+                alert(`✅ Diffusion réussie ! Les ${affs.length} mission(s) validée(s) ont été transmises individuellement aux contrôleurs concernés.`);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origText;
+                }
+            }
+        }
+
+        function renderAllWorkflowViews() {
+            renderSiegeNotificationsBanner();
+            renderSectionDirecteur();
+            peuplerCentresEligiblesSiege();
+            renderPropositionsSoumisesEtape1();
+            renderEtape2Diffusion();
+            renderSectionPlanificationsSiege();
+            renderActiveProcessusPills();
+        }
+
         function applyUserScopePlanif(profile) {
             if (!profile) return;
             const regionSelect = document.getElementById('audit-region');
             const isSiege = estUtilisateurSiege();
 
             const badgeMode = document.getElementById('badgeModeSaisiePlanif');
-            const siegeAffectBox = document.getElementById('siege-affectation-box');
-            const grpCtrlLibres = document.getElementById('grp-controleurs-libres');
-            const btnDiffuserSiege = document.getElementById('btnDiffuserSiege');
+            const badgeModeSiege = document.getElementById('badgeModeSaisiePlanifSiege');
+            const siegeWfCard = document.getElementById('siege-workflow-card');
+            const regionalCard = document.getElementById('regional-mission-card');
 
             if (isSiege) {
-                if (badgeMode) {
-                    badgeMode.innerHTML = `<span class="pill pill-siege"><i class="fa-solid fa-landmark"></i> Mode Planification Siège (Diffusion ciblée FC)</span>`;
+                if (siegeWfCard) siegeWfCard.style.display = 'block';
+                if (regionalCard) regionalCard.style.display = 'none';
+                if (badgeModeSiege) {
+                    const roleLbl = estDirecteurConnecte()
+                        ? 'Directeur — Validation & Notification'
+                        : `${profile.fonction || profile.username} — Circuit Hiérarchique`;
+                    badgeModeSiege.innerHTML = `<span class="pill pill-siege"><i class="fa-solid fa-landmark"></i> ${escapeHtml(roleLbl)}</span>`;
                 }
-                if (siegeAffectBox) siegeAffectBox.style.display = 'block';
-                if (grpCtrlLibres) grpCtrlLibres.style.display = 'none';
-                if (btnDiffuserSiege) btnDiffuserSiege.style.display = 'inline-flex';
+                peuplerCentresEligiblesSiege();
+                peuplerControleursWorkflow();
+                peuplerPeriodesWorkflow();
             } else {
+                if (siegeWfCard) siegeWfCard.style.display = 'none';
+                if (regionalCard) regionalCard.style.display = 'block';
                 if (badgeMode) {
                     badgeMode.innerHTML = `<span class="pill pill-ctrl"><i class="fa-solid fa-user-shield"></i> Espace Régional · ${escapeHtml(profile.region)}</span>`;
                 }
-                if (siegeAffectBox) siegeAffectBox.style.display = 'none';
-                if (grpCtrlLibres) grpCtrlLibres.style.display = 'flex';
-                if (btnDiffuserSiege) btnDiffuserSiege.style.display = 'none';
             }
 
             if (regionSelect) {
@@ -599,19 +2540,19 @@
                 }
             }
 
-            renderControleursRegionCheckboxes(regionSelect ? normalizeRegionOption(regionSelect.value) : '');
-            renderSectionPlanificationsSiege();
             renderLotAffectationsSiege();
+            renderAllWorkflowViews();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             initFormDefaults();
+            chargerReferentielPlanif();
             loadPlanificationData();
             const cachedProfile = getCurrentAuthUser();
             if (cachedProfile) {
                 applyUserScopePlanif(cachedProfile);
             } else {
-                renderSectionPlanificationsSiege();
+                renderAllWorkflowViews();
             }
         });
 
@@ -620,14 +2561,14 @@
         });
 
         window.addEventListener('fci-db-synced', () => {
-            renderSectionPlanificationsSiege();
+            renderAllWorkflowViews();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === PLANIFICATION_PC_KEY) {
                 loadPlanificationData();
             } else if (e.key === 'fci_database') {
-                renderSectionPlanificationsSiege();
+                renderAllWorkflowViews();
             }
         });
 
@@ -648,7 +2589,7 @@
                         ]);
                     }
                 }
-                renderSectionPlanificationsSiege();
+                renderAllWorkflowViews();
                 loadPlanificationData();
             } catch (e) {
                 // Rechargement complet de secours
@@ -669,243 +2610,6 @@
                 entiteSelect.innerHTML = '<option value="">-- Sélectionner le centre --</option>' +
                     centres.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
                 entiteSelect.disabled = false;
-            }
-
-            renderControleursRegionCheckboxes(region);
-        }
-
-        const CHEFS_SERVICE_SIEGE_FALLBACK = [
-            { username: 'chef service-001', fonction: 'Chef de service 1', region: 'SIEGE', role: 'CHEF_SERVICE' },
-            { username: 'chef service-002', fonction: 'Chef de service 2', region: 'SIEGE', role: 'CHEF_SERVICE' },
-            { username: 'chef service-003', fonction: 'Chef de service 3', region: 'SIEGE', role: 'CHEF_SERVICE' },
-            { username: 'chef service-004', fonction: 'Chef de service 4', region: 'SIEGE', role: 'CHEF_SERVICE' },
-            { username: 'chef service-005', fonction: 'Chef de service 5', region: 'SIEGE', role: 'CHEF_SERVICE' }
-        ];
-
-        function getChefsDeServiceListe() {
-            if (window.FCIAuth && typeof window.FCIAuth.getChefsDeService === 'function') {
-                const list = window.FCIAuth.getChefsDeService();
-                if (Array.isArray(list) && list.length > 0) return list;
-            }
-            return CHEFS_SERVICE_SIEGE_FALLBACK;
-        }
-
-        function renderControleursRegionCheckboxes(region) {
-            const box = document.getElementById('siege-controleurs-list');
-            if (!box) return;
-
-            const regNorm = normalizeRegionOption(region);
-
-            const renderChip = (c, isChef = false) => `
-                <label class="ctrl-chip-label" ${isChef ? 'style="border-color:#F59E0B; background:#FFFBEB;"' : ''} onchange="this.classList.toggle('is-checked', this.querySelector('input').checked)">
-                    <input type="checkbox" name="siege_ctrl_assigne" value="${escapeHtml(c.username)}" data-fonction="${escapeHtml(c.fonction)}" data-role="${escapeHtml(c.role || (isChef ? 'CHEF_SERVICE' : 'CONTROLEUR'))}">
-                    <span><i class="fa-solid ${isChef ? 'fa-user-tie' : 'fa-user-tag'}" ${isChef ? 'style="color:#B45309;"' : ''}></i> ${escapeHtml(c.username)} <small style="font-weight:500; opacity:0.8;">(${escapeHtml(c.fonction)})</small></span>
-                </label>
-            `;
-
-            if (!regNorm) {
-                box.innerHTML = '<span style="font-size:0.8rem; color:#64748B;">Sélectionnez d\'abord une région pour afficher ses contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) ou SIÈGE pour les 5 Chefs de service.</span>';
-                return;
-            }
-
-            if (regNorm === 'SIEGE') {
-                const chefsService = getChefsDeServiceListe();
-                box.innerHTML = chefsService.map(c => renderChip(c, true)).join('');
-                return;
-            }
-
-            const ctrls = (window.FCIAuth && typeof window.FCIAuth.getControllersByRegion === 'function')
-                ? window.FCIAuth.getControllersByRegion(regNorm)
-                : [];
-
-            if (ctrls.length === 0) {
-                box.innerHTML = `<span style="font-size:0.8rem; color:#64748B;">Aucun compte contrôleur enregistré pour ${escapeHtml(regNorm)}.</span>`;
-                return;
-            }
-
-            box.innerHTML = ctrls.map(c => renderChip(c, false)).join('');
-        }
-
-        function getControleursCochesSiege() {
-            const checked = Array.from(document.querySelectorAll('input[name="siege_ctrl_assigne"]:checked'));
-            return checked.map(cb => ({
-                username: cb.value,
-                fonction: cb.getAttribute('data-fonction') || cb.value
-            }));
-        }
-
-        function ajouterAffectationLotSiege() {
-            const region = normalizeRegionOption(document.getElementById('audit-region').value);
-            const entite = document.getElementById('audit-entite').value;
-            const typeControle = document.getElementById('audit-type-controle').value;
-            const dateDebut = document.getElementById('audit-date-debut').value;
-            const dateFin = document.getElementById('audit-date-fin').value;
-            const ctrls = getControleursCochesSiege();
-
-            if (!region || !entite || !typeControle || !dateDebut || !dateFin || ctrls.length === 0) {
-                alert("Veuillez renseigner la Région, l'Entité/Centre, le Type de contrôle, les Dates et cocher au moins un Contrôleur concerné.");
-                return;
-            }
-
-            lotAffectationsSiege.push({
-                idTemp: 'TMP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-                region,
-                entite,
-                typeControle,
-                dateDebut,
-                dateFin,
-                controleursAssignes: ctrls.map(c => c.username),
-                controleursLibelles: ctrls.map(c => `${c.username} (${c.fonction})`)
-            });
-
-            document.getElementById('audit-region').value = "";
-            onRegionChangePlanif();
-            renderLotAffectationsSiege();
-        }
-
-        function retirerAffectationLotSiege(index) {
-            if (index >= 0 && index < lotAffectationsSiege.length) {
-                lotAffectationsSiege.splice(index, 1);
-                renderLotAffectationsSiege();
-            }
-        }
-
-        function renderLotAffectationsSiege() {
-            const countEl = document.getElementById('countLotSiege');
-            const wrap = document.getElementById('lot-siege-table-wrap');
-            if (!wrap) return;
-            if (countEl) countEl.innerText = lotAffectationsSiege.length;
-
-            if (lotAffectationsSiege.length === 0) {
-                wrap.innerHTML = `<p style="font-size:0.78rem; color:#64748B;">Aucune ligne supplémentaire en attente. Vous pouvez soit diffuser directement la sélection ci-dessus, soit ajouter plusieurs régions/contrôleurs (ex. MARRAKECH-001, AGADIR-003, SETTAT-002) avant de diffuser.</p>`;
-                return;
-            }
-
-            wrap.innerHTML = `
-                <div style="overflow-x:auto; border:1px solid var(--border-color); border-radius:6px;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Région</th>
-                                <th>Entité / Centre</th>
-                                <th>Contrôleur(s) assigné(s)</th>
-                                <th>Type</th>
-                                <th>Période</th>
-                                <th style="text-align:center;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${lotAffectationsSiege.map((item, idx) => `
-                                <tr>
-                                    <td><b>${escapeHtml(item.region)}</b></td>
-                                    <td>${escapeHtml(item.entite)}</td>
-                                    <td>${item.controleursAssignes.map(u => `<span class="pill pill-ctrl">${escapeHtml(u)}</span>`).join(' ')}</td>
-                                    <td>${escapeHtml(item.typeControle)}</td>
-                                    <td>${formatDateFR(item.dateDebut)} → ${formatDateFR(item.dateFin)}</td>
-                                    <td style="text-align:center;">
-                                        <button type="button" style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="retirerAffectationLotSiege(${idx})" title="Retirer">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        async function diffuserPlanificationSiege() {
-            if (!estUtilisateurSiege()) return;
-
-            const activeItems = selectedData.filter(item => checkedKeys.has(getPointKey(item)));
-            if (!activeItems || activeItems.length === 0) {
-                alert("Veuillez d'abord sélectionner et cocher au moins un point de contrôle (Fiche de Contrôle) dans le tableau ci-dessous.");
-                return;
-            }
-
-            const aDiffuser = [...lotAffectationsSiege];
-
-            const curReg = normalizeRegionOption(document.getElementById('audit-region').value);
-            const curEntite = document.getElementById('audit-entite').value;
-            const curType = document.getElementById('audit-type-controle').value;
-            const curDebut = document.getElementById('audit-date-debut').value;
-            const curFin = document.getElementById('audit-date-fin').value;
-            const curCtrls = getControleursCochesSiege();
-
-            if (curReg || curEntite || curCtrls.length > 0) {
-                if (!curReg || !curEntite || !curType || !curDebut || !curFin || curCtrls.length === 0) {
-                    alert("Veuillez compléter tous les champs de la ligne en cours (Région, Centre, Type, Dates et Contrôleur(s)) ou la vider avant de diffuser.");
-                    return;
-                }
-                aDiffuser.push({
-                    region: curReg,
-                    entite: curEntite,
-                    typeControle: curType,
-                    dateDebut: curDebut,
-                    dateFin: curFin,
-                    controleursAssignes: curCtrls.map(c => c.username),
-                    controleursLibelles: curCtrls.map(c => `${c.username} (${c.fonction})`)
-                });
-            }
-
-            if (aDiffuser.length === 0) {
-                alert("Veuillez renseigner au moins une région, un centre et un contrôleur concerné (ex. MARRAKECH-001).");
-                return;
-            }
-
-            const btn = document.getElementById('btnDiffuserSiege');
-            const texteOrig = btn ? btn.innerHTML : '';
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Diffusion en cours...';
-            }
-
-            try {
-                const currentUser = getCurrentAuthUser();
-                const campagneId = 'CAMP-SIEGE-' + Date.now();
-                const auteurNom = currentUser ? `${currentUser.fonction} (${currentUser.username})` : 'Siège';
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
-                    for (let i = 0; i < aDiffuser.length; i++) {
-                        const aff = aDiffuser[i];
-                        await FCIDatabase.enregistrerPlanification({
-                            idPlanification: `PLAN-SIEGE-${Date.now()}-${i + 1}`,
-                            campagneSiegeId: campagneId,
-                            planifiePar: 'SIEGE',
-                            espaceSaisie: 'SIEGE',
-                            sourceFeuille: 'FC',
-                            auteurSiege: auteurNom,
-                            auteurId: currentUser ? currentUser.username : 'admin-siege',
-                            auteurFonction: currentUser ? currentUser.fonction : 'Siège',
-                            auteurRole: currentUser ? currentUser.role : 'ADMIN',
-                            auteurRegion: 'SIEGE',
-                            controleurRegion: 'SIEGE',
-                            region: aff.region,
-                            entite: aff.entite,
-                            site: aff.entite,
-                            typeControle: aff.typeControle,
-                            dateDebut: aff.dateDebut,
-                            dateFin: aff.dateFin,
-                            controleursAssignes: aff.controleursAssignes,
-                            controleursLibelles: aff.controleursLibelles,
-                            pointsControle: activeItems,
-                            nbPoints: activeItems.length,
-                            statutExecution: 'PLANIFIEE',
-                            createdAt: new Date().toISOString()
-                        });
-                    }
-                }
-
-                lotAffectationsSiege = [];
-                renderLotAffectationsSiege();
-                viderPlanification();
-                renderSectionPlanificationsSiege();
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = texteOrig;
-                }
             }
         }
 
@@ -1115,6 +2819,10 @@
                 metadata: {
                     idMission,
                     idPlanificationSiege: plan.idPlanification,
+                    campagneSiegeId: plan.campagneSiegeId || plan.idCampagne || '',
+                    titreCampagne: plan.titreCampagne || '',
+                    valideParDirecteur: Boolean(plan.valideParDirecteur),
+                    periodeLabel: plan.periodeLabel || '',
                     planifiePar: 'SIEGE',
                     auteurSiege: plan.auteurSiege || '',
                     region: missionRegion,
@@ -1125,7 +2833,9 @@
                     controleurs: controleurLabel,
                     controleurId: currentUser ? currentUser.username : '',
                     controleursAssignes: plan.controleursAssignes || [],
-                    controleurRegion: missionRegion,
+                    controleurRegion: (currentUser && currentUser.region && currentUser.region !== 'SIEGE')
+                        ? normalizeRegionOption(currentUser.region)
+                        : missionRegion,
                     auteurRegion: missionRegion,
                     espaceSaisie: 'REGIONAL',
                     createdAt: new Date().toISOString()
@@ -1201,10 +2911,11 @@
                     <div class="empty-state">
                         <i class="fa-solid fa-folder-open" style="font-size: 3rem; color: #CBD5E1; margin-bottom: 15px;"></i>
                         <h3>Aucun point de contrôle dans la planification</h3>
-                        <p>Veuillez retourner sur la Feuille 1 (Référentiel) pour sélectionner les points de contrôle à intégrer.</p>
+                        <p>Sélectionnez un ou plusieurs processus dans l'espace de planification ci-dessus ou depuis la Feuille 1 (Référentiel).</p>
                     </div>
                 `;
                 updateKPIs(0, 0, 0, 0);
+                renderActiveProcessusPills();
                 return;
             }
 
@@ -1280,6 +2991,7 @@
             });
 
             recalculateKPIs();
+            renderActiveProcessusPills();
         }
 
         function recalculateKPIs() {
@@ -1361,26 +3073,38 @@
         }
 
         async function lancerFicheControle() {
-            const region = normalizeRegionOption(document.getElementById('audit-region').value);
-            const entite = document.getElementById('audit-entite').value;
-            const typeControle = document.getElementById('audit-type-controle').value;
-            const dateDebut = document.getElementById('audit-date-debut').value;
-            const dateFin = document.getElementById('audit-date-fin').value;
             const isSiege = estUtilisateurSiege();
+            let region = normalizeRegionOption(document.getElementById('audit-region')?.value || '');
+            let entite = document.getElementById('audit-entite')?.value || '';
+            let typeControle = document.getElementById('audit-type-controle')?.value || '';
+            let dateDebut = document.getElementById('audit-date-debut')?.value || '';
+            let dateFin = document.getElementById('audit-date-fin')?.value || '';
+            let controleurs = (document.getElementById('audit-controleurs')?.value || '').trim();
 
-            let controleurs = document.getElementById('audit-controleurs').value.trim();
-            if (isSiege && !controleurs) {
-                const ctrlsCoches = getControleursCochesSiege();
-                if (ctrlsCoches.length > 0) {
-                    controleurs = ctrlsCoches.map(c => c.username).join(' / ');
-                } else {
+            if (isSiege) {
+                const cur = extraireAffectationEnCoursForm();
+                const refAff = cur.centre ? cur : (lotAffectationsSiege[0] || null);
+                if (refAff) {
+                    region = normalizeRegionOption(refAff.region || region);
+                    entite = refAff.centre || refAff.entite || entite;
+                    controleurs = refAff.controleurId || controleurs;
+                    if (refAff.periode) {
+                        dateDebut = refAff.periode.dateDebut || dateDebut;
+                        dateFin = refAff.periode.dateFin || dateFin;
+                    } else if (refAff.dateDebut) {
+                        dateDebut = refAff.dateDebut;
+                        dateFin = refAff.dateFin || refAff.dateDebut;
+                    }
+                }
+                typeControle = document.getElementById('wf-type-controle')?.value || typeControle || 'Thématique';
+                if (!controleurs) {
                     const u = getCurrentAuthUser();
-                    controleurs = u ? u.fonction : '';
+                    controleurs = u ? (u.fonction || u.username) : '';
                 }
             }
 
             if (!region || !entite || !typeControle || !controleurs || !dateDebut || !dateFin) {
-                alert("Veuillez remplir l'ensemble des informations de la mission (Région, Centre, Type de contrôle, Dates et Contrôleurs) avant de continuer.");
+                alert("Veuillez remplir l'ensemble des informations de la mission (Centre, Région, Type de contrôle, Période et Contrôleur) avant de lancer la Fiche de Contrôle.");
                 return;
             }
 
