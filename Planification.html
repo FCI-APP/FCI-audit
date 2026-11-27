@@ -397,7 +397,12 @@
                 <div class="sub-panel">
                     <div class="sub-panel-title">
                         <span><i class="fa-solid fa-diagram-project" style="color:var(--accent-gold);"></i> 1. Processus &amp; Référentiel de la campagne (communs à tous les contrôleurs)</span>
-                        <span id="refLoadStatusPlanif" class="pill pill-planifiee">Chargement référentiel...</span>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <span id="refLoadStatusPlanif" class="pill pill-planifiee">Chargement référentiel...</span>
+                            <button type="button" id="btnCountPcProcessusSelectionne" class="btn btn-info-outline btn-sm" style="border-radius:16px; padding:4px 12px; font-size:0.75rem; font-weight:800;" onclick="onClickBoutonCountPcProcessus()" title="Nombre de points de contrôle du processus sélectionné">
+                                <i class="fa-solid fa-list-check"></i> Processus sélectionné : 0 PC
+                            </button>
+                        </div>
                     </div>
                     <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); align-items:end;">
                         <div class="form-group">
@@ -414,7 +419,7 @@
                         </div>
                         <div class="form-group">
                             <label for="wf-select-controle">Contrôle (Optionnel — tous par défaut)</label>
-                            <select id="wf-select-controle" disabled>
+                            <select id="wf-select-controle" onchange="onWfControleChange()" disabled>
                                 <option value="">-- Tous les contrôles --</option>
                             </select>
                         </div>
@@ -964,6 +969,43 @@
             const procs = [...new Set(referentielDataPlanif.map(d => getItemVal(d, ['Processus'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             sel.innerHTML = '<option value="">-- Sélectionner un processus --</option>' +
                 procs.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+            majBoutonCountPcProcessus();
+        }
+
+        function majBoutonCountPcProcessus() {
+            const btn = document.getElementById('btnCountPcProcessusSelectionne');
+            if (!btn) return;
+            const proc = document.getElementById('wf-select-processus')?.value || '';
+            const risque = document.getElementById('wf-select-risque')?.value || '';
+            const ctrl = document.getElementById('wf-select-controle')?.value || '';
+
+            if (!proc) {
+                btn.className = 'btn btn-info-outline btn-sm';
+                btn.innerHTML = `<i class="fa-solid fa-list-check"></i> Processus sélectionné : 0 PC`;
+                btn.title = 'Sélectionnez un processus pour voir son nombre de points de contrôle';
+                return;
+            }
+
+            const nbPc = referentielDataPlanif.filter(item => {
+                if (getItemVal(item, ['Processus']) !== proc) return false;
+                if (risque && getItemVal(item, ['Intitulé du risque', 'Intitulé risque']) !== risque) return false;
+                if (ctrl && getItemVal(item, ['Intitulé Contrôle', 'Intitulé de contrôle']) !== ctrl) return false;
+                return true;
+            }).length;
+
+            const suffixeFiltre = (risque || ctrl) ? ' (filtré)' : '';
+            btn.className = 'btn btn-primary btn-sm';
+            btn.innerHTML = `<i class="fa-solid fa-list-check"></i> ${escapeHtml(proc)}${suffixeFiltre} : ${nbPc} PC`;
+            btn.title = `${nbPc} point(s) de contrôle pour cette sélection — Cliquer pour ajouter à la campagne`;
+        }
+
+        function onClickBoutonCountPcProcessus() {
+            const selProc = document.getElementById('wf-select-processus');
+            if (!selProc || !selProc.value) {
+                if (selProc) selProc.focus();
+                return;
+            }
+            ajouterProcessusDepuisReferentiel();
         }
 
         function onWfProcessusChange() {
@@ -978,12 +1020,14 @@
 
             if (!proc) {
                 selRisque.disabled = true;
+                majBoutonCountPcProcessus();
                 return;
             }
             const itemsProc = referentielDataPlanif.filter(d => getItemVal(d, ['Processus']) === proc);
             const risques = [...new Set(itemsProc.map(d => getItemVal(d, ['Intitulé du risque', 'Intitulé risque'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             selRisque.innerHTML += risques.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
             selRisque.disabled = false;
+            majBoutonCountPcProcessus();
         }
 
         function onWfRisqueChange() {
@@ -995,6 +1039,7 @@
             selCtrl.innerHTML = '<option value="">-- Tous les contrôles --</option>';
             if (!risque) {
                 selCtrl.disabled = true;
+                majBoutonCountPcProcessus();
                 return;
             }
             const items = referentielDataPlanif.filter(d =>
@@ -1004,6 +1049,11 @@
             const ctrls = [...new Set(items.map(d => getItemVal(d, ['Intitulé Contrôle', 'Intitulé de contrôle'])).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
             selCtrl.innerHTML += ctrls.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
             selCtrl.disabled = false;
+            majBoutonCountPcProcessus();
+        }
+
+        function onWfControleChange() {
+            majBoutonCountPcProcessus();
         }
 
         function ajouterProcessusDepuisReferentiel() {

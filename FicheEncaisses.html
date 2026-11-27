@@ -3999,24 +3999,12 @@
                     }
                 }
 
-                pairs.forEach(({ constatRef, record }) => {
-                    constatRef._bddIdEncaisse = record.idEncaisse;
-                    constatRef._bddIdMission = record.idMission;
-                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
-                    constatRef._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-                });
-                point._bddIdMission = idMissionPoint;
-                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-
-                (point.constats || []).forEach((_, cIdx) => {
-                    rafraichirIndicateursConstatFV(pIndex, cIdx);
-                });
-                renderPlanificationsFVTable();
+                retirerPointEncaisseDeLaFiche(pIndex);
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} archivé dans la BDD ("${pcName}") — Les autres PC restent intacts${ghSuffixe}`;
+                    statusEl.innerText = `PC #${pIndex + 1} archivé et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts${ghSuffixe}`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnArchiverPCFV-${pIndex}`);
@@ -4224,16 +4212,12 @@
                     await FCIDatabase.enregistrerLotEncaisses(recordsMisAJour, site, idMissionPoint, true);
                 }
 
-                point._bddIdMission = idMissionPoint;
-                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
-                (point.constats || []).forEach((_, cIdx) => {
-                    rafraichirIndicateursConstatFV(pIndex, cIdx);
-                });
+                retirerPointEncaisseDeLaFiche(pIndex);
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${pIndex + 1} modifié dans la BDD ("${pcName}") — Les autres PC restent intacts`;
+                    statusEl.innerText = `PC #${pIndex + 1} modifié et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnModifierPCFV-${pIndex}`);
@@ -4308,20 +4292,12 @@
                     await FCIDatabase.enregistrerLotEncaisses(nouvellesLignesSuivi, site, idMissionSuivi, true);
                 }
 
-                pairs.forEach(({ constatRef }) => {
-                    constatRef._isSuivi = true;
-                    constatRef._initialSnapshot = getSnapshotConstat(constatRef);
-                    constatRef._lastActionFeedback = { type: 'SUIVI', text: 'Suivi ajouté en BDD' };
-                });
-                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi ajouté en BDD' };
-                (point.constats || []).forEach((_, cIdx) => {
-                    rafraichirIndicateursConstatFV(pIndex, cIdx);
-                });
+                retirerPointEncaisseDeLaFiche(pIndex);
                 remplirFiltresEncaissesBDD();
 
                 const statusEl = document.getElementById('searchEncaisseStatus');
                 if (statusEl) {
-                    statusEl.innerText = `Nouvelle ligne de suivi créée dans la BDD pour PC #${pIndex + 1} ("${pcName}") — Les autres PC restent intacts`;
+                    statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${pIndex + 1} ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnSuiviPCFV-${pIndex}`);
@@ -4396,8 +4372,7 @@
             }
 
             // Retirer UNIQUEMENT le PC concerné sans toucher aux autres PC affichés
-            addedPoints.splice(pIndex, 1);
-            renderPoints();
+            retirerPointEncaisseDeLaFiche(pIndex);
             remplirFiltresEncaissesBDD();
 
             const statusEl = document.getElementById('searchEncaisseStatus');
@@ -4406,6 +4381,13 @@
                     ? `Point de contrôle supprimé de la BDD et retiré de la fiche ("${pcName}") — Les autres PC restent intacts`
                     : `Point de contrôle retiré de la fiche ("${pcName}") — Les autres PC restent intacts`;
             }
+        }
+
+        function retirerPointEncaisseDeLaFiche(pIndex) {
+            if (!Array.isArray(addedPoints) || pIndex < 0 || pIndex >= addedPoints.length) return;
+            addedPoints.splice(pIndex, 1);
+            renderPoints();
+            renderPlanificationsFVTable();
         }
 
         function exportToExcel() {

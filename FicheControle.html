@@ -1940,22 +1940,12 @@
                     }
                 }
 
-                point._bddIdConstat = constatArchive.idConstat;
-                point._bddIdMission = idMissionPoint;
-                point._initialDate = dateCtrl;
-                point._bddDateControle = dateCtrl;
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'ARCHIVE', text: 'Archivé en BDD' };
-                sauvegarderLocalement();
-                rafraichirIndicateursPointEtSynthese(index);
+                retirerPointControleDeLaFiche(index);
                 remplirFiltresBDD();
-                if (!estUtilisateurSiegeFC()) {
-                    renderMissionsPlanifieesControleur();
-                }
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${index + 1} archivé dans la BDD ("${pcName}") — Les autres PC restent intacts${ghSuffixe}`;
+                    statusEl.innerText = `PC #${index + 1} archivé et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts${ghSuffixe}`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnArchiverPC-${index}`);
@@ -2136,18 +2126,12 @@
                     await FCIDatabase.enregistrerLotControle([enregistrementFinal], meta.entite || '', idMissionPoint);
                 }
 
-                point._bddIdConstat = enregistrementFinal.idConstat;
-                point._bddIdMission = enregistrementFinal.idMission;
-                point._isModifie = true;
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'MODIFIER', text: 'Modifié en BDD' };
-                sauvegarderLocalement();
-                rafraichirIndicateursPointEtSynthese(index);
+                retirerPointControleDeLaFiche(index);
                 remplirFiltresBDD();
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
-                    statusEl.innerText = `PC #${index + 1} modifié dans la BDD ("${pcName}") — Les autres PC restent intacts`;
+                    statusEl.innerText = `PC #${index + 1} modifié et déplacé dans la BDD ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnModifierPC-${index}`);
@@ -2217,16 +2201,12 @@
                     await FCIDatabase.enregistrerLotControle(nouvellesLignesSuivi, meta.entite || '', idMissionSuivi);
                 }
 
-                point._isSuivi = true;
-                point._initialSnapshot = getSnapshotPointFC(point);
-                point._lastActionFeedback = { type: 'SUIVI', text: 'Suivi ajouté en BDD' };
-                sauvegarderLocalement();
-                rafraichirIndicateursPointEtSynthese(index);
+                retirerPointControleDeLaFiche(index);
                 remplirFiltresBDD();
 
                 const statusEl = document.getElementById('searchStatus');
                 if (statusEl) {
-                    statusEl.innerText = `Nouvelle ligne de suivi créée dans la BDD pour PC #${index + 1} ("${pcName}") — Les autres PC restent intacts`;
+                    statusEl.innerText = `Nouvelle ligne de suivi déplacée dans la BDD pour PC #${index + 1} ("${pcName}") — PC vidé de la fiche, les autres PC restent intacts`;
                 }
             } finally {
                 const btnActuel = document.getElementById(`btnSuiviPC-${index}`);
@@ -2299,16 +2279,7 @@
             }
 
             // Retirer UNIQUEMENT le PC concerné sans toucher aux autres PC affichés
-            missionData.pointsControle.splice(index, 1);
-            if (missionData.pointsControle.length === 0) {
-                viderFormulaireFC();
-            } else {
-                sauvegarderLocalement();
-                renderPage();
-                if (!estUtilisateurSiegeFC()) {
-                    renderMissionsPlanifieesControleur();
-                }
-            }
+            retirerPointControleDeLaFiche(index);
             remplirFiltresBDD();
 
             const statusEl = document.getElementById('searchStatus');
@@ -2316,6 +2287,29 @@
                 statusEl.innerText = supprimeEnBDD
                     ? `Point de contrôle supprimé de la BDD et retiré de la fiche ("${pcName}") — Les autres PC restent intacts`
                     : `Point de contrôle retiré de la fiche ("${pcName}") — Les autres PC restent intacts`;
+            }
+        }
+
+        function retirerPointControleDeLaFiche(index) {
+            if (!missionData || !Array.isArray(missionData.pointsControle)) return;
+            missionData.pointsControle.splice(index, 1);
+            if (missionData.pointsControle.length === 0) {
+                viderFormulaireFC();
+            } else {
+                // Si l'onglet processus actif côté contrôleur n'a plus de PC, revenir sur TOUS
+                if (!estUtilisateurSiegeFC() && filtreProcessusControleur !== 'TOUS') {
+                    const encorePresent = missionData.pointsControle.some(
+                        pt => (getItemVal(pt, ['Processus']) || 'Général') === filtreProcessusControleur
+                    );
+                    if (!encorePresent) {
+                        filtreProcessusControleur = 'TOUS';
+                    }
+                }
+                sauvegarderLocalement();
+                renderPage();
+                if (!estUtilisateurSiegeFC()) {
+                    renderMissionsPlanifieesControleur();
+                }
             }
         }
 
