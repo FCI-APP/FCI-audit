@@ -1,0 +1,1543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI v1.0 - Feuille 7 : Guide d'utilisation</title>
+    <!-- Protection de session FCI (accès universel aux 41 comptes, sans restriction de licence) -->
+    <script src="fci-auth.js?v=20261127-vider"></script>
+    <!-- FontAwesome v6.4.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Données structurées du Guide (indépendantes de la BDD métier — consultation seule) -->
+    <script src="guide-data.js?v=20261128-guide"></script>
+
+    <style>
+        :root {
+            --primary: #003366;
+            --primary-dark: #002244;
+            --primary-light: #EFF6FF;
+            --accent: #EAAA00;
+            --accent-soft: #FEF3C7;
+            --bg-body: #F4F6F9;
+            --bg-card: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --border-color: #E2E8F0;
+            --success: #047857;
+            --success-bg: #ECFDF5;
+            --warning: #B45309;
+            --warning-bg: #FFFBEB;
+            --danger: #B91C1C;
+            --danger-bg: #FEF2F2;
+            --info: #0369A1;
+            --info-bg: #F0F9FF;
+            --purple: #6D28D9;
+            --purple-bg: #F5F3FF;
+            --sidebar-width: 250px;
+            --toc-width: 245px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { display: flex; background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; overflow-x: hidden; line-height: 1.55; }
+
+        /* SIDEBAR NAVIGATION (identique aux 6 feuilles existantes) */
+        .sidebar {
+            width: var(--sidebar-width); background-color: var(--primary); color: #FFF; position: fixed;
+            top: 0; left: 0; height: 100vh; display: flex; flex-direction: column; justify-content: space-between;
+            z-index: 200; box-shadow: 2px 0 10px rgba(0,0,0,0.15); overflow-y: auto; transition: transform 0.25s ease;
+        }
+        .sidebar-header { padding: 20px 15px; border-bottom: 2px solid var(--accent); background-color: var(--primary-dark); text-align: center; }
+        .sidebar-header h2 { font-size: 0.82rem; font-weight: 800; text-transform: uppercase; color: #FFF; line-height: 1.4; }
+        .sidebar-nav-title { padding: 15px 20px 5px; font-size: 0.75rem; text-transform: uppercase; color: rgba(255,255,255,0.5); font-weight: 700; }
+        .sidebar-menu { list-style: none; padding: 10px 0; flex-grow: 1; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; justify-content: space-between; padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.82); text-decoration: none; font-size: 0.86rem; font-weight: 600; transition: all 0.2s; gap: 6px;
+        }
+        .sidebar-menu li a:hover, .sidebar-menu li.active a {
+            background: rgba(234, 170, 0, 0.16); color: var(--accent); border-left: 4px solid var(--accent);
+        }
+        .badge-status { font-size: 0.64rem; padding: 3px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+        .badge-actif { background: var(--accent); color: var(--primary-dark); }
+        .sidebar-footer { padding: 15px; font-size: 0.75rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.65); line-height: 1.4; }
+
+        /* MOBILE TOP BAR & BACKDROP */
+        .mobile-nav-btn {
+            display: none; position: fixed; bottom: 20px; left: 20px; z-index: 250;
+            background: var(--primary); color: #FFF; border: 2px solid var(--accent); border-radius: 999px;
+            padding: 10px 16px; font-size: 0.84rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 20px rgba(0,34,68,0.35);
+            align-items: center; gap: 8px;
+        }
+        .sidebar-backdrop {
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 190;
+        }
+        .sidebar-backdrop.open { display: block; }
+
+        /* MAIN LAYOUT */
+        .main-content {
+            margin-left: var(--sidebar-width); flex-grow: 1; padding: 24px 28px 60px;
+            width: calc(100vw - var(--sidebar-width)); max-width: 100%;
+        }
+
+        /* HEADER */
+        .guide-header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 68%, #004A8F 100%);
+            color: #FFF; border-radius: 12px; padding: 22px 26px; margin-bottom: 18px;
+            border-bottom: 4px solid var(--accent); box-shadow: 0 6px 18px rgba(0, 34, 68, 0.16);
+        }
+        .guide-header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+        .guide-header h1 { font-size: 1.45rem; font-weight: 800; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .guide-header p { font-size: 0.86rem; color: rgba(255,255,255,0.85); margin-top: 6px; max-width: 820px; }
+        .header-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+        .h-pill {
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+            font-size: 0.74rem; font-weight: 700; background: rgba(255,255,255,0.14); color: #FFF; border: 1px solid rgba(255,255,255,0.22);
+        }
+        .h-pill-gold { background: var(--accent); color: var(--primary-dark); border-color: var(--accent); }
+        .h-pill-readonly { background: rgba(16, 185, 129, 0.22); color: #A7F3D0; border-color: rgba(167, 243, 208, 0.45); }
+
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn {
+            padding: 8px 14px; border-radius: 7px; border: none; font-weight: 700; font-size: 0.82rem;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-gold { background: var(--accent); color: var(--primary-dark); }
+        .btn-gold:hover { background: #D99B00; }
+        .btn-ghost-light { background: rgba(255,255,255,0.14); color: #FFF; border: 1px solid rgba(255,255,255,0.28); }
+        .btn-ghost-light:hover { background: rgba(255,255,255,0.24); }
+        .btn-outline { background: #FFF; color: var(--primary); border: 1px solid var(--border-color); }
+        .btn-outline:hover { background: var(--primary-light); border-color: var(--primary); }
+        .btn-primary { background: var(--primary); color: #FFF; }
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        /* SEARCH + PROFILE FILTER TOOLBAR (GU-03 & Adaptation profils) */
+        .control-strip {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 16px 18px; margin-bottom: 18px; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+        .search-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .search-input-wrap { position: relative; flex: 1; min-width: 240px; }
+        .search-input-wrap i.fa-magnifying-glass { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-input-wrap input {
+            width: 100%; padding: 10px 38px 10px 38px; border: 1.5px solid #CBD5E1; border-radius: 8px;
+            font-size: 0.88rem; font-weight: 500; color: var(--text-main); background: #F8FAFC; outline: none; transition: all 0.2s;
+        }
+        .search-input-wrap input:focus { border-color: var(--primary); background: #FFF; box-shadow: 0 0 0 3px rgba(0, 51, 102, 0.12); }
+        .search-clear-btn {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: #E2E8F0;
+            color: var(--text-main); width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: none;
+            align-items: center; justify-content: center; font-size: 0.72rem;
+        }
+        .search-clear-btn.visible { display: inline-flex; }
+        .search-meta { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+
+        .profile-filter-row {
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            margin-top: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9;
+        }
+        .profile-filter-label { font-size: 0.76rem; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-right: 4px; }
+        .profile-pill-btn {
+            padding: 5px 11px; border-radius: 999px; border: 1.5px solid var(--border-color); background: #F8FAFC;
+            color: var(--text-main); font-size: 0.77rem; font-weight: 700; cursor: pointer; display: inline-flex;
+            align-items: center; gap: 6px; transition: all 0.18s;
+        }
+        .profile-pill-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+        .profile-pill-btn.active { background: var(--primary); color: #FFF; border-color: var(--primary); }
+        .profile-hint { font-size: 0.76rem; color: var(--text-muted); margin-top: 8px; }
+
+        /* SEARCH RESULTS PANEL */
+        .search-results-panel {
+            display: none; background: #FFFBEB; border: 1.5px solid #FCD34D; border-radius: 10px;
+            padding: 16px 18px; margin-bottom: 18px;
+        }
+        .search-results-panel.visible { display: block; }
+        .search-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+        .search-results-header h3 { font-size: 0.92rem; color: #92400E; font-weight: 800; }
+        .search-results-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; }
+        .search-hit {
+            background: #FFF; border: 1px solid #FDE68A; border-radius: 8px; padding: 10px 12px; cursor: pointer;
+            text-align: left; transition: all 0.15s; display: block; width: 100%;
+        }
+        .search-hit:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.06); }
+        .search-hit-cat { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; color: var(--info); }
+        .search-hit-title { font-size: 0.83rem; font-weight: 700; color: var(--primary); margin: 2px 0; }
+        .search-hit-snippet { font-size: 0.75rem; color: var(--text-muted); }
+        mark.guide-hl { background: #FDE047; color: #1E293B; padding: 0 2px; border-radius: 3px; font-weight: 700; }
+
+        /* QUICK SHEET NAVIGATION BAR (GU-02) */
+        .sheet-nav-strip {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px;
+        }
+        .sheet-quick-card {
+            background: var(--bg-card); border: 1.5px solid var(--border-color); border-radius: 9px;
+            padding: 11px 12px; text-decoration: none; color: var(--text-main); display: flex; flex-direction: column;
+            gap: 4px; transition: all 0.18s; position: relative;
+        }
+        .sheet-quick-card:hover, .sheet-quick-card.active {
+            border-color: var(--primary); background: var(--primary-light); transform: translateY(-1px);
+        }
+        .sheet-quick-top { display: flex; align-items: center; justify-content: space-between; font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .sheet-quick-name { font-size: 0.82rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 6px; }
+        .sheet-quick-lock { font-size: 0.66rem; font-weight: 700; color: var(--danger); }
+
+        /* CONTENT + STICKY TOC GRID (GU-01) */
+        .guide-body-grid {
+            display: grid; grid-template-columns: var(--toc-width) minmax(0, 1fr); gap: 22px; align-items: start;
+        }
+        .toc-card {
+            position: sticky; top: 18px; background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 15px 14px; max-height: calc(100vh - 36px); overflow-y: auto;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+        }
+        .toc-title {
+            font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--primary);
+            padding-bottom: 9px; margin-bottom: 9px; border-bottom: 2px solid var(--accent); display: flex; align-items: center; gap: 7px;
+        }
+        .toc-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+        .toc-link {
+            display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 6px;
+            font-size: 0.79rem; font-weight: 600; color: var(--text-main); text-decoration: none; transition: all 0.15s;
+        }
+        .toc-link:hover { background: var(--primary-light); color: var(--primary); }
+        .toc-link.active { background: var(--primary); color: #FFF; font-weight: 700; }
+        .toc-sublist { list-style: none; margin: 2px 0 4px 14px; padding-left: 10px; border-left: 2px solid #E2E8F0; display: flex; flex-direction: column; gap: 2px; }
+        .toc-sublist .toc-link { font-size: 0.74rem; padding: 4px 8px; color: var(--text-muted); }
+        .toc-sublist .toc-link.active { color: #FFF; }
+
+        /* SECTIONS & CARDS */
+        .guide-sections { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+        .guide-section {
+            background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 24px 26px; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04); scroll-margin-top: 18px;
+        }
+        .section-head {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+            padding-bottom: 14px; margin-bottom: 18px; border-bottom: 2px solid #F1F5F9;
+        }
+        .section-title { font-size: 1.22rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .section-num {
+            display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+            border-radius: 8px; background: var(--primary); color: var(--accent); font-size: 0.85rem; font-weight: 800; flex-shrink: 0;
+        }
+        .sub-title { font-size: 0.96rem; font-weight: 800; color: var(--primary); margin: 18px 0 10px; display: flex; align-items: center; gap: 8px; }
+        .prose { font-size: 0.88rem; color: var(--text-main); margin-bottom: 12px; }
+
+        /* PROFILE & STATUS BADGES */
+        .prof-badge {
+            display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 800; white-space: nowrap;
+        }
+        .badge-prof-all { background: #E0F2FE; color: #075985; }
+        .badge-prof-ctrl { background: #DCFCE7; color: #166534; }
+        .badge-prof-chef { background: #EDE9FE; color: #5B21B6; }
+        .badge-prof-dir { background: #FEF3C7; color: #92400E; }
+        .badge-prof-admin { background: #FEE2E2; color: #991B1B; }
+
+        .pill-ok { background: #DCFCE7; color: #166534; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.74rem; }
+        .pill-warn { background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.74rem; }
+        .pill-err { background: #FEE2E2; color: #991B1B; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.74rem; }
+        .pill-info { background: #E0F2FE; color: #075985; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.74rem; }
+        .pill-purple { background: #EDE9FE; color: #5B21B6; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.74rem; }
+        .pill-gold { background: #EAAA00; color: #002244; padding: 2px 8px; border-radius: 6px; font-weight: 800; font-size: 0.74rem; }
+
+        /* CALLOUTS */
+        .callout {
+            border-radius: 9px; padding: 14px 16px; margin: 14px 0; border-left: 4px solid; font-size: 0.85rem;
+        }
+        .callout-warn { background: var(--warning-bg); border-color: #D97706; color: #78350F; }
+        .callout-danger { background: var(--danger-bg); border-color: var(--danger); color: #7F1D1D; }
+        .callout-info { background: var(--info-bg); border-color: var(--info); color: #0C4A6E; }
+        .callout-success { background: var(--success-bg); border-color: var(--success); color: #064E3B; }
+        .callout-title { font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 7px; }
+
+        /* GRIDS & TABLES */
+        .cards-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 12px 0; }
+        .mini-card {
+            background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 9px; padding: 14px 16px;
+        }
+        .mini-card h4 { font-size: 0.88rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .mini-card p, .mini-card li { font-size: 0.82rem; color: var(--text-main); }
+        .mini-card ul { padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+
+        .table-wrap { width: 100%; overflow-x: auto; margin: 10px 0 14px; border: 1px solid var(--border-color); border-radius: 8px; }
+        table.guide-table { width: 100%; border-collapse: collapse; font-size: 0.81rem; text-align: left; }
+        table.guide-table th { background: var(--primary); color: #FFF; padding: 10px 12px; font-weight: 700; white-space: nowrap; }
+        table.guide-table td { padding: 9px 12px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+        table.guide-table tr:nth-child(even) td { background: #F8FAFC; }
+        table.guide-table tr:last-child td { border-bottom: none; }
+
+        /* FIRST USE CHECKLIST */
+        .onboarding-box {
+            background: linear-gradient(135deg, #EFF6FF 0%, #F8FAFC 100%); border: 1.5px solid #BFDBFE;
+            border-radius: 10px; padding: 16px 18px; margin-top: 14px;
+        }
+        .step-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .step-item { display: flex; gap: 12px; align-items: flex-start; background: #FFF; border: 1px solid var(--border-color); border-radius: 8px; padding: 11px 14px; }
+        .step-circle {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: var(--accent);
+            font-size: 0.78rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+        }
+
+        /* SHEET MANUAL CARD (8 MANDATORY BLOCKS) */
+        .sheet-manual {
+            border: 1.5px solid #CBD5E1; border-radius: 12px; overflow: hidden; margin-bottom: 22px; background: #FFF;
+            scroll-margin-top: 18px;
+        }
+        .sheet-manual-head {
+            background: linear-gradient(90deg, var(--primary) 0%, #004785 100%); color: #FFF;
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+        }
+        .sheet-manual-head h3 { font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 9px; }
+        .sheet-manual-file { font-size: 0.75rem; background: rgba(255,255,255,0.16); padding: 3px 9px; border-radius: 5px; font-weight: 700; }
+        .sheet-manual-body { padding: 18px 20px; }
+        .sheet-block { margin-bottom: 18px; }
+        .sheet-block:last-child { margin-bottom: 0; }
+        .sheet-block-title {
+            font-size: 0.86rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px;
+            color: var(--primary); margin-bottom: 9px; display: flex; align-items: center; gap: 7px;
+            padding-bottom: 5px; border-bottom: 1.5px solid #E2E8F0;
+        }
+
+        /* ANNOTATED SCREENSHOT / FAITHFUL SCHEMATIC (GU-04) */
+        .annotated-box {
+            background: #F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 10px; padding: 14px; margin: 10px 0;
+        }
+        .annotated-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .annotated-head span { font-size: 0.8rem; font-weight: 800; color: var(--primary); }
+        .annotated-stage {
+            position: relative; width: 100%; border-radius: 8px; overflow: hidden;
+            border: 1px solid #CBD5E1; background: #FFF; min-height: 215px;
+        }
+        .annotated-stage img { display: block; width: 100%; height: auto; }
+        .schematic-canvas {
+            padding: 14px; background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
+            min-height: 230px; display: flex; flex-direction: column; gap: 9px; font-size: 0.72rem;
+        }
+        .sch-bar { background: var(--primary-dark); color: #FFF; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+        .sch-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+        .sch-box { background: #FFF; border: 1px solid #CBD5E1; border-radius: 6px; padding: 8px 10px; color: var(--text-main); font-weight: 600; }
+        .sch-box-accent { background: #FEFCE8; border-color: #FACC15; }
+        .sch-box-info { background: #EFF6FF; border-color: #93C5FD; }
+        .sch-box-green { background: #ECFDF5; border-color: #6EE7B7; }
+        .sch-tag { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #E2E8F0; color: #334155; font-size: 0.66rem; font-weight: 700; margin: 2px 3px 0 0; }
+
+        .marker-pin {
+            position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%;
+            background: #DC2626; color: #FFF; border: 2.5px solid #FFF; font-size: 0.78rem; font-weight: 800;
+            display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3); transition: transform 0.15s, background 0.15s; z-index: 5;
+        }
+        .marker-pin:hover, .marker-pin.active { transform: translate(-50%, -50%) scale(1.2); background: var(--accent); color: var(--primary-dark); }
+        .marker-legend {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; margin-top: 12px;
+        }
+        .legend-item {
+            background: #FFF; border: 1px solid var(--border-color); border-radius: 7px; padding: 8px 10px;
+            display: flex; gap: 9px; align-items: flex-start; cursor: pointer; transition: all 0.15s;
+        }
+        .legend-item:hover, .legend-item.active { border-color: #DC2626; background: #FEF2F2; }
+        .legend-num {
+            width: 22px; height: 22px; border-radius: 50%; background: #DC2626; color: #FFF;
+            font-size: 0.72rem; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+        }
+        .legend-item.active .legend-num { background: var(--accent); color: var(--primary-dark); }
+        .legend-text strong { display: block; font-size: 0.78rem; color: var(--primary); }
+        .legend-text span { font-size: 0.74rem; color: var(--text-muted); }
+
+        /* WORKFLOW TIMELINE (GU-05) */
+        .wf-card { border: 1px solid var(--border-color); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; background: #F8FAFC; }
+        .wf-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+        .wf-head h3 { font-size: 0.96rem; font-weight: 800; color: var(--primary); }
+        .wf-steps { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .wf-step {
+            background: #FFF; border: 1px solid var(--border-color); border-left: 4px solid var(--primary);
+            border-radius: 7px; padding: 10px 13px; display: grid; grid-template-columns: 32px 1fr; gap: 10px;
+        }
+        .wf-step-num {
+            width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: var(--accent);
+            font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; justify-content: center;
+        }
+        .wf-step-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; font-size: 0.72rem; }
+        .wf-step-action { font-size: 0.83rem; color: var(--text-main); font-weight: 600; }
+        .wf-step-result { font-size: 0.78rem; color: var(--success); margin-top: 4px; font-weight: 700; }
+
+        /* FAQ ACCORDION (GU-06) */
+        .faq-cats { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; }
+        .faq-cat-btn {
+            padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border-color); background: #F8FAFC;
+            font-size: 0.76rem; font-weight: 700; color: var(--text-main); cursor: pointer;
+        }
+        .faq-cat-btn.active { background: var(--primary); color: #FFF; border-color: var(--primary); }
+        .faq-item { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 8px; overflow: hidden; background: #FFF; }
+        .faq-q {
+            width: 100%; text-align: left; background: #F8FAFC; border: none; padding: 12px 15px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 0.86rem; font-weight: 700; color: var(--primary);
+        }
+        .faq-q:hover { background: var(--primary-light); }
+        .faq-q i.fa-chevron-down { transition: transform 0.2s; flex-shrink: 0; }
+        .faq-item.open .faq-q i.fa-chevron-down { transform: rotate(180deg); }
+        .faq-a { display: none; padding: 12px 15px; font-size: 0.84rem; color: var(--text-main); border-top: 1px solid var(--border-color); background: #FFF; }
+        .faq-item.open .faq-a { display: block; }
+
+        /* BACK TO TOP & LIGHTBOX */
+        .back-to-top {
+            position: fixed; bottom: 20px; right: 20px; z-index: 180; width: 42px; height: 42px; border-radius: 50%;
+            background: var(--primary); color: var(--accent); border: 2px solid var(--accent); cursor: pointer;
+            display: none; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,34,68,0.28);
+        }
+        .back-to-top.visible { display: inline-flex; }
+
+        .lightbox-modal {
+            display: none; position: fixed; inset: 0; z-index: 300; background: rgba(15, 23, 42, 0.82);
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .lightbox-modal.open { display: flex; }
+        .lightbox-card {
+            background: #FFF; border-radius: 12px; max-width: 980px; width: 100%; max-height: 92vh; overflow-y: auto;
+            padding: 18px 20px; position: relative;
+        }
+        .lightbox-close {
+            position: sticky; top: 0; float: right; background: var(--danger); color: #FFF; border: none;
+            border-radius: 6px; padding: 6px 12px; font-weight: 700; cursor: pointer; z-index: 10;
+        }
+
+        .hidden-by-profile { display: none !important; }
+
+        /* RESPONSIVE (GU-10) */
+        @media (max-width: 1180px) {
+            .guide-body-grid { grid-template-columns: 1fr; }
+            .toc-card { position: static; max-height: none; }
+        }
+        @media (max-width: 860px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .mobile-nav-btn { display: inline-flex; }
+            .main-content { margin-left: 0; width: 100vw; padding: 16px 14px 76px; }
+            .guide-section { padding: 16px; }
+            .sheet-manual-body { padding: 14px; }
+        }
+        @media print {
+            .sidebar, .mobile-nav-btn, .sidebar-backdrop, .control-strip, .search-results-panel,
+            .sheet-nav-strip, .toc-card, .header-actions, .back-to-top, .lightbox-modal { display: none !important; }
+            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+            .guide-body-grid { display: block !important; }
+            .guide-section, .sheet-manual { break-inside: avoid; box-shadow: none !important; }
+            .faq-a { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+    <button type="button" class="mobile-nav-btn" id="btnMobileMenu" aria-label="Ouvrir le menu">
+        <i class="fa-solid fa-bars"></i> Menu FCI
+    </button>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <aside class="sidebar" id="mainSidebar">
+        <div>
+            <div class="sidebar-header">
+                <h2>DIRECTION CONTRÔLE GÉNÉRALE<br>DIVISION CONTRÔLE PERMANENT<br>BARID AL-MAGHRIB</h2>
+            </div>
+            <div class="sidebar-nav-title">Navigation Feuilles</div>
+            <ul class="sidebar-menu">
+                <li><a href="index.html"><span>1. Référentiel de contrôle</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="Planification.html"><span>2. Planification</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheControle.html"><span>3. Fiche de Contrôle (FC)</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="FicheEncaisses.html"><span>4. Fiche Vérification Encaisses</span><span class="badge-status badge-actif">Actif</span></a></li>
+                <li><a href="BDD.html"><span>5. Base de Données (BDD)</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li><a href="TDB.html"><span>6. Analyse &amp; Pilotage</span><span class="badge-status badge-actif">Disponible</span></a></li>
+                <li class="active"><a href="GuideUtilisation.html"><span>7. Guide d'utilisation</span><span class="badge-status badge-actif">Actif</span></a></li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            Fiche de contrôle intelligente (FCI)<br><br>v1.0 © 2026 - 2027
+        </div>
+    </aside>
+
+    <main class="main-content" id="topGuide">
+        <!-- EN-TÊTE DU GUIDE -->
+        <header class="guide-header">
+            <div class="guide-header-top">
+                <div>
+                    <h1><i class="fa-solid fa-book-open-reader" style="color:var(--accent);"></i> Feuille 7 : Guide d'utilisation</h1>
+                    <p>Manuel pratique interactif de l'application Fiche de Contrôle Intelligente (FCI v1.0) — Barid Al-Maghrib. Basé sur le fonctionnement réel du code source pour les 41 comptes.</p>
+                    <div class="header-badges">
+                        <span class="h-pill h-pill-gold"><i class="fa-solid fa-users"></i> Commun aux 41 comptes (Accès universel)</span>
+                        <span class="h-pill h-pill-readonly"><i class="fa-solid fa-lock"></i> Consultation seule · Zéro modification BDD</span>
+                        <span class="h-pill" id="connectedProfilePill"><i class="fa-solid fa-user-check"></i> Chargement du profil...</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button type="button" class="btn btn-gold" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Imprimer / PDF
+                    </button>
+                    <button type="button" class="btn btn-ghost-light" id="btnToggleAllFaq">
+                        <i class="fa-solid fa-circle-question"></i> Tout déplier (FAQ)
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- BARRE DE RECHERCHE & FILTRE PROFIL (GU-03) -->
+        <section class="control-strip" aria-label="Recherche et filtre par profil">
+            <div class="search-row">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" id="guideSearchInput" placeholder="Rechercher un bouton, un champ, une feuille, un message d'erreur ou une procédure (ex. Archiver, Suivi, Vider, GitHub, TDB)..." autocomplete="off">
+                    <button type="button" class="search-clear-btn" id="btnClearSearch" title="Effacer la recherche" aria-label="Effacer la recherche">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="search-meta" id="searchCountMeta">Tapez un mot-clé pour filtrer instantanément</div>
+            </div>
+            <div class="profile-filter-row" id="profileFilterBar">
+                <span class="profile-filter-label"><i class="fa-solid fa-filter"></i> Adapter l'affichage au profil :</span>
+            </div>
+            <div class="profile-hint" id="profileFilterHint"></div>
+        </section>
+
+        <!-- RÉSULTATS DE RECHERCHE INSTANTANÉE -->
+        <section class="search-results-panel" id="searchResultsPanel" aria-live="polite">
+            <div class="search-results-header">
+                <h3 id="searchResultsTitle">Résultats de recherche</h3>
+                <button type="button" class="btn btn-outline" id="btnCloseSearchResults" style="padding:4px 10px;font-size:0.75rem;">
+                    <i class="fa-solid fa-xmark"></i> Fermer
+                </button>
+            </div>
+            <div class="search-results-list" id="searchResultsList"></div>
+        </section>
+
+        <!-- NAVIGATION RAPIDE PAR FEUILLE (GU-02) -->
+        <nav class="sheet-nav-strip" id="sheetQuickNav" aria-label="Navigation directe par feuille"></nav>
+
+        <!-- CORPS PRINCIPAL : SOMMAIRE INTERACTIF (GU-01) + CONTENU -->
+        <div class="guide-body-grid">
+            <aside class="toc-card" aria-label="Sommaire interactif">
+                <div class="toc-title"><i class="fa-solid fa-list-ul"></i> Sommaire interactif</div>
+                <ul class="toc-list" id="tocList">
+                    <li><a class="toc-link active" href="#rub-1"><i class="fa-solid fa-circle-info"></i> 1. Présentation générale</a></li>
+                    <li><a class="toc-link" href="#rub-2"><i class="fa-solid fa-rocket"></i> 2. Première utilisation</a></li>
+                    <li><a class="toc-link" href="#rub-3"><i class="fa-solid fa-compass"></i> 3. Découverte de l'interface</a></li>
+                    <li>
+                        <a class="toc-link" href="#rub-4"><i class="fa-solid fa-layer-group"></i> 4. Guide par feuille</a>
+                        <ul class="toc-sublist" id="tocSheetsSublist"></ul>
+                    </li>
+                    <li><a class="toc-link" href="#rub-5"><i class="fa-solid fa-diagram-project"></i> 5. Procédures de travail</a></li>
+                    <li><a class="toc-link" href="#rub-6"><i class="fa-solid fa-circle-question"></i> 6. Questions fréquentes</a></li>
+                    <li><a class="toc-link" href="#rub-7"><i class="fa-solid fa-wrench"></i> 7. Résolution des problèmes</a></li>
+                    <li><a class="toc-link" href="#rub-8"><i class="fa-solid fa-shield-heart"></i> 8. Bonnes pratiques</a></li>
+                </ul>
+            </aside>
+
+            <div class="guide-sections" id="guideContentRoot">
+                <!-- RUBRIQUE 1 -->
+                <section class="guide-section" id="rub-1"></section>
+                <!-- RUBRIQUE 2 -->
+                <section class="guide-section" id="rub-2"></section>
+                <!-- RUBRIQUE 3 -->
+                <section class="guide-section" id="rub-3"></section>
+                <!-- RUBRIQUE 4 -->
+                <section class="guide-section" id="rub-4"></section>
+                <!-- RUBRIQUE 5 -->
+                <section class="guide-section" id="rub-5"></section>
+                <!-- RUBRIQUE 6 -->
+                <section class="guide-section" id="rub-6"></section>
+                <!-- RUBRIQUE 7 -->
+                <section class="guide-section" id="rub-7"></section>
+                <!-- RUBRIQUE 8 -->
+                <section class="guide-section" id="rub-8"></section>
+            </div>
+        </div>
+    </main>
+
+    <button type="button" class="back-to-top" id="btnBackToTop" title="Retour en haut" aria-label="Retour en haut">
+        <i class="fa-solid fa-arrow-up"></i>
+    </button>
+
+    <!-- LIGHTBOX ZOOM ILLUSTRATION (GU-04) -->
+    <div class="lightbox-modal" id="lightboxModal" role="dialog" aria-modal="true" aria-label="Aperçu agrandi">
+        <div class="lightbox-card">
+            <button type="button" class="lightbox-close" id="btnCloseLightbox"><i class="fa-solid fa-xmark"></i> Fermer</button>
+            <div id="lightboxContent"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const DATA = window.FCIGuideData;
+            if (!DATA) return;
+
+            let activeProfileFilter = 'ALL';
+            let activeFaqCat = 'TOUTES';
+            let currentUser = null;
+            let searchIndex = [];
+
+            function esc(str) {
+                return String(str == null ? '' : str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function getProfileMeta(roleId) {
+                return DATA.profiles.find(p => p.id === roleId) || DATA.profiles[0];
+            }
+
+            function matchesProfile(allowedProfiles, selectedRole) {
+                if (!selectedRole || selectedRole === 'ALL') return true;
+                if (!Array.isArray(allowedProfiles) || allowedProfiles.length === 0) return true;
+                if (allowedProfiles.includes('ALL')) return true;
+                return allowedProfiles.includes(selectedRole);
+            }
+
+            function renderProfileBadges(allowedProfiles) {
+                if (!Array.isArray(allowedProfiles) || allowedProfiles.includes('ALL')) {
+                    return '<span class="prof-badge badge-prof-all"><i class="fa-solid fa-users"></i> Tous profils</span>';
+                }
+                return allowedProfiles.map(r => {
+                    const meta = getProfileMeta(r);
+                    return `<span class="prof-badge ${meta.badgeClass}"><i class="fa-solid ${meta.icon}"></i> ${esc(meta.short)}</span>`;
+                }).join(' ');
+            }
+
+            // =================================================================
+            // SCHÉMAS FIDÈLES (GU-04) QUAND LA CAPTURE PNG N'EST PAS ENCORE FOURNIE
+            // =================================================================
+            function buildSchematicHTML(layoutType) {
+                if (layoutType === 'login') {
+                    return `
+                        <div class="schematic-canvas" style="align-items:center;justify-content:center;">
+                            <div style="width:100%;max-width:340px;background:#FFF;border-radius:8px;border:1px solid #CBD5E1;overflow:hidden;">
+                                <div class="sch-bar" style="border-radius:0;justify-content:center;flex-direction:column;gap:2px;text-align:center;">
+                                    <span>DIRECTION CONTRÔLE GÉNÉRALE · BARID AL-MAGHRIB</span>
+                                    <span style="color:#EAAA00;">FCI v1.0 — Accès Sécurisé</span>
+                                </div>
+                                <div style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                                    <div class="sch-box">Nom d'utilisateur : [ Champ sécurisé anti-autofill ]</div>
+                                    <div class="sch-box" style="display:flex;justify-content:space-between;"><span>Mot de passe : [ •••••••• ]</span><span>👁️</span></div>
+                                    <div style="background:#003366;color:#FFF;text-align:center;padding:7px;border-radius:6px;font-weight:700;">Se connecter</div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                if (layoutType === 'referentiel') {
+                    return `
+                        <div class="schematic-canvas">
+                            <div class="sch-bar"><span>Feuille 1 : Référentiel de contrôle (Admin uniquement)</span><span>[BDD à jour (1605 PC)] [Actualiser] [Vider]</span></div>
+                            <div class="sch-box sch-box-info">
+                                <strong>Filtrage en cascade hiérarchique</strong>
+                                <div class="sch-row" style="margin-top:6px;">
+                                    <div class="sch-box">1. Processus (33)</div>
+                                    <div class="sch-box">2. Intitulé du risque</div>
+                                    <div class="sch-box">3. Intitulé contrôle</div>
+                                </div>
+                                <div style="margin-top:6px;text-align:right;"><span class="sch-tag">Vider filtres</span><span class="sch-tag" style="background:#003366;color:#FFF;">Afficher PC (N PC)</span></div>
+                            </div>
+                            <div class="sch-box">
+                                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
+                                    <span><span class="sch-tag">Sélectionner tout</span><span class="sch-tag">Désélectionner tout</span><span class="sch-tag" style="background:#FEF3C7;">N sélectionnés</span></span>
+                                    <span><span class="sch-tag">Imprimer PDF</span><span class="sch-tag">Excel</span><span class="sch-tag" style="background:#EAAA00;color:#002244;">Planification →</span></span>
+                                </div>
+                                <div class="sch-box" style="background:#F8FAFC;">Tableau : [✓] | PROCESSUS | INTITULÉ DU RISQUE | INTITULÉ CONTRÔLE | POINTS DE CONTRÔLE</div>
+                            </div>
+                        </div>`;
+                }
+                if (layoutType === 'planification') {
+                    return `
+                        <div class="schematic-canvas">
+                            <div class="sch-bar"><span>Feuille 2 : Planification des missions de contrôle (FC)</span><span>[Actualiser] [Vider]</span></div>
+                            <div class="sch-row">
+                                <div class="sch-box sch-box-accent">Bannière Notifications Siège (Siège)</div>
+                                <div class="sch-box sch-box-info">Espace Directeur : Édition / Validation / Notification</div>
+                            </div>
+                            <div class="sch-box">
+                                <div><span class="sch-tag" style="background:#003366;color:#FFF;">1 — Préparation &amp; Validation</span><span class="sch-tag">2 — Diffusion validée</span></div>
+                                <div class="sch-row" style="margin-top:6px;">
+                                    <div class="sch-box">1A. Multi-processus (referentiel.json)</div>
+                                    <div class="sch-box">1B. Lot affectations (Centres, Contrôleurs, Dates) + Soumettre</div>
+                                </div>
+                            </div>
+                            <div class="sch-box sch-box-green">Tableau Suivi des Contrôles Planifiés (Planifiée / En cours / Réalisée) + [Exécuter FC]</div>
+                            <div class="sch-box">4 KPI + Formulaire Direct (Contrôleur) + Blocs PC cochés + [Lancer la Fiche de Contrôle]</div>
+                        </div>`;
+                }
+                if (layoutType === 'fichecontrole') {
+                    return `
+                        <div class="schematic-canvas">
+                            <div class="sch-bar"><span>Feuille 3 : Fiche de Contrôle Terrain (FC)</span><span>[Actualiser] [Vider] [Imprimer / PDF]</span></div>
+                            <div class="sch-box sch-box-info">Mes Missions Planifiées &amp; Diffusées par le Siège (Contrôleur seul — auto-préchargement)</div>
+                            <div class="sch-box">Espace Saisie Mission : Région * | Centre * | Date contrôle * | Début | Fin | Contrôleur * | Type</div>
+                            <div class="sch-box sch-box-accent">Espace Modification / Suivi &amp; Suppression (BDD) : Date | Région | Site | Processus + [Charger depuis BDD]</div>
+                            <div class="sch-box">
+                                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+                                    <strong>Carte PC #1 (Processus / Risque / Contrôle)</strong>
+                                    <span><span class="sch-tag">Archiver</span><span class="sch-tag">Modifier</span><span class="sch-tag">Suivi</span><span class="sch-tag">Vider</span><span class="sch-tag">Supprimer</span></span>
+                                </div>
+                                <div class="sch-row" style="margin-top:6px;">
+                                    <div class="sch-box">Date · Statut · Pop · Ech · OK · KO · TC %</div>
+                                    <div class="sch-box">Constat * · Recommandation * · Avis (facultatif)</div>
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                if (layoutType === 'ficheencaisses') {
+                    return `
+                        <div class="schematic-canvas">
+                            <div class="sch-bar"><span>Feuille 4 : Fiche Vérification des Encaisses (FV)</span><span>[BDD (10 PC)] [Actualiser] [Imprimer / PDF]</span></div>
+                            <div class="sch-row">
+                                <div class="sch-box sch-box-accent">Bannière Notifications FV (« Ouvrir la vérification »)</div>
+                                <div class="sch-box sch-box-info">Espace Directeur FV + Workflow 2 étapes + [Exécuter la vérification] / [Diffuser]</div>
+                            </div>
+                            <div class="sch-box sch-box-green">Tableau Suivi temps réel FV : Contrôleur | Région | Centre | Période | État | [Ouvrir] [Clôturer]</div>
+                            <div class="sch-row">
+                                <div class="sch-box">Espace Saisie FV (8 champs)</div>
+                                <div class="sch-box">Espace Modification BDD (4 filtres)</div>
+                            </div>
+                            <div class="sch-box">Sélection Référence (Encaisses.json) → [Ajouter ce point] → Cartes PC (constats multiples) + 5 boutons</div>
+                        </div>`;
+                }
+                if (layoutType === 'bdd') {
+                    return `
+                        <div class="schematic-canvas">
+                            <div class="sch-bar">
+                                <span>Feuille 5 : Base de Données Centralisée (BDD) · Stockage IndexedDB / GitHub</span>
+                                <span>[Token] [Dépôt] [Archiver → GH] [Charger GH] [Excel] [PDF] [JSON]</span>
+                            </div>
+                            <div class="sch-box sch-box-info">8 Filtres croisés : Date début | Date fin | Région | Site | Processus | Statut | Type | Contrôleur</div>
+                            <div class="sch-box">
+                                <strong>Tableau unifié 16 colonnes (FC + FV en lecture seule)</strong>
+                                <div style="margin-top:6px;background:#F8FAFC;padding:8px;border-radius:4px;border:1px solid #E2E8F0;">
+                                    Date | Région (+ badges) | Centre | Contrôleur | Processus | Risque | Contrôle | PC | Pop/Ech/OK/KO/TC% | Constat | Statut | Type (+ Modifié/Suivi)
+                                </div>
+                            </div>
+                        </div>`;
+                }
+                return `
+                    <div class="schematic-canvas">
+                        <div class="sch-bar"><span>Feuille 6 : Analyse &amp; Pilotage (TDB)</span><span>[Excel 6-7 onglets] [PDF A4] [Actualiser] [JSON]</span></div>
+                        <div class="sch-box sch-box-info">Onglets : [Centre / Site] [Régional] [National (Siège)] + 10 Filtres globaux + [Réinitialiser]</div>
+                        <div class="sch-row">
+                            <div class="sch-box sch-box-green">5 KPI (Volume, TC Pondéré, Clôture, KO, Couverture)</div>
+                            <div class="sch-box sch-box-accent">Synthèse Planification FC/FV (5 filtres propres)</div>
+                        </div>
+                        <div class="sch-row">
+                            <div class="sch-box">Benchmark 3 niveaux + Alertes (&lt; 75 %)</div>
+                            <div class="sch-box">4 Graphiques Chart.js + Classements</div>
+                        </div>
+                        <div class="sch-box">Section Couverture (3 filtres année en cours) + Participation Contrôleurs + Table détaillée</div>
+                    </div>`;
+            }
+
+            function renderAnnotatedIllustration(ill, sheetId, inLightbox = false) {
+                const hasImg = Boolean(ill.imageSrc && ill.imageSrc.trim());
+                const pins = (ill.markers || []).map(m => `
+                    <button type="button" class="marker-pin" style="left:${m.x}%;top:${m.y}%;"
+                        data-sheet="${esc(sheetId)}" data-marker="${m.num}" title="${m.num}. ${esc(m.label)}">
+                        ${m.num}
+                    </button>`).join('');
+
+                const legend = (ill.markers || []).map(m => `
+                    <div class="legend-item" data-sheet="${esc(sheetId)}" data-marker="${m.num}">
+                        <span class="legend-num">${m.num}</span>
+                        <div class="legend-text">
+                            <strong>${esc(m.label)}</strong>
+                            <span>${esc(m.detail)}</span>
+                        </div>
+                    </div>`).join('');
+
+                const stageContent = hasImg
+                    ? `<img src="${esc(ill.imageSrc)}" alt="${esc(ill.titre)}">${pins}`
+                    : `${buildSchematicHTML(ill.layoutType)}${pins}`;
+
+                const badgeMode = hasImg
+                    ? '<span class="pill-ok"><i class="fa-solid fa-image"></i> Capture officielle</span>'
+                    : `<span class="pill-info"><i class="fa-solid fa-diagram-next"></i> Schéma fidèle (${esc(ill.code)} prêt pour capture)</span>`;
+
+                return `
+                    <div class="annotated-box" data-illustration="${esc(sheetId)}">
+                        <div class="annotated-head">
+                            <span><i class="fa-solid fa-crosshairs"></i> ${esc(ill.titre)} ${badgeMode}</span>
+                            ${inLightbox ? '' : `<button type="button" class="btn btn-outline btn-zoom-ill" data-sheet="${esc(sheetId)}" style="padding:4px 10px;font-size:0.75rem;"><i class="fa-solid fa-magnifying-glass-plus"></i> Agrandir</button>`}
+                        </div>
+                        <div class="annotated-stage">${stageContent}</div>
+                        <div class="marker-legend">${legend}</div>
+                    </div>`;
+            }
+
+            // =================================================================
+            // RENDU DES 8 RUBRIQUES
+            // =================================================================
+            function renderRubrique1() {
+                const p = DATA.presentation;
+                const el = document.getElementById('rub-1');
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">1</span> Présentation générale</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-users"></i> Commun aux 41 comptes</span>
+                    </div>
+                    <p class="prose">${esc(p.intro)}</p>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-cubes"></i> Périmètre fonctionnel de l'application</h3>
+                    <div class="cards-grid-2">
+                        ${p.perimetre.map(item => `
+                            <div class="mini-card" style="border-top:3px solid ${item.couleur};">
+                                <h4><i class="fa-solid ${item.icone}" style="color:${item.couleur};"></i> ${esc(item.titre)}</h4>
+                                <p>${esc(item.description)}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-users-gear"></i> Organisation des 41 comptes et des 2 espaces</h3>
+                    <div class="table-wrap">
+                        <table class="guide-table">
+                            <thead><tr><th>Espace</th><th>Rôle</th><th>Effectif</th><th>Identifiants</th><th>Page d'accueil</th></tr></thead>
+                            <tbody>
+                                ${p.comptesTableau.map(r => `
+                                    <tr>
+                                        <td><strong>${esc(r.espace)}</strong></td>
+                                        <td>${esc(r.role)}</td>
+                                        <td>${esc(r.nombre)}</td>
+                                        <td><code>${esc(r.identifiants)}</code></td>
+                                        <td>${esc(r.accueil)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-key"></i> Matrice des droits réels par profil</h3>
+                    <div class="table-wrap">
+                        <table class="guide-table">
+                            <thead><tr><th>Feuille / Fonctionnalité</th><th>Admin</th><th>Directeur</th><th>Chef de service</th><th>Contrôleur Régional</th></tr></thead>
+                            <tbody>
+                                ${p.matriceDroits.map(r => `
+                                    <tr>
+                                        <td><strong>${esc(r.fonction)}</strong></td>
+                                        <td>${esc(r.admin)}</td>
+                                        <td>${esc(r.directeur)}</td>
+                                        <td>${esc(r.chef)}</td>
+                                        <td>${esc(r.controleur)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-server"></i> Stockage local et synchronisation GitHub</h3>
+                    <div class="callout callout-info">
+                        <div class="callout-title"><i class="fa-solid fa-circle-info"></i> Architecture de persistance vérifiée</div>
+                        <ul style="padding-left:18px;display:flex;flex-direction:column;gap:5px;">
+                            ${p.stockagePoints.map(pt => `<li>${esc(pt)}</li>`).join('')}
+                        </ul>
+                    </div>`;
+            }
+
+            function renderRubrique2() {
+                const f = DATA.firstUse;
+                const roleKey = (activeProfileFilter !== 'ALL' && f.checklistsParProfil[activeProfileFilter])
+                    ? activeProfileFilter
+                    : (currentUser && f.checklistsParProfil[currentUser.role] ? currentUser.role : 'CONTROLEUR');
+                const cl = f.checklistsParProfil[roleKey];
+
+                const el = document.getElementById('rub-2');
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">2</span> Première utilisation</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-rocket"></i> Prise en main rapide</span>
+                    </div>
+                    <p class="prose">Suivez ces étapes simples lors de votre première connexion à l'application FCI v1.0.</p>
+
+                    <ol class="step-list">
+                        ${f.etapesConnexion.map(e => `
+                            <li class="step-item">
+                                <span class="step-circle">${e.num}</span>
+                                <div>
+                                    <strong style="color:var(--primary);font-size:0.88rem;">${esc(e.titre)}</strong>
+                                    <p style="font-size:0.83rem;margin-top:3px;">${esc(e.detail)}</p>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ol>
+
+                    <div class="onboarding-box">
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                            <h3 style="font-size:0.95rem;font-weight:800;color:var(--primary);"><i class="fa-solid fa-list-check"></i> ${esc(cl.titre)}</h3>
+                            ${renderProfileBadges([roleKey])}
+                        </div>
+                        <p style="font-size:0.84rem;margin:6px 0 10px;color:#1E3A8A;"><strong>Repère d'arrivée :</strong> ${esc(cl.accueil)}</p>
+                        <ol class="step-list">
+                            ${cl.actions.map((act, i) => `
+                                <li class="step-item">
+                                    <span class="step-circle">${i + 1}</span>
+                                    <div style="font-size:0.83rem;">${esc(act)}</div>
+                                </li>
+                            `).join('')}
+                        </ol>
+                    </div>`;
+            }
+
+            function renderRubrique3() {
+                const io = DATA.interfaceOverview;
+                const el = document.getElementById('rub-3');
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">3</span> Découverte de l'interface</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-compass"></i> Éléments communs</span>
+                    </div>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-bars"></i> Menu principal (barre latérale gauche)</h3>
+                    <div class="table-wrap">
+                        <table class="guide-table">
+                            <thead><tr><th>N°</th><th>Feuille</th><th>Accès</th><th>Rôle principal</th></tr></thead>
+                            <tbody>
+                                ${io.menuItems.map(m => `
+                                    <tr class="${matchesProfile(m.profils, activeProfileFilter) ? '' : 'hidden-by-profile'}">
+                                        <td><strong>${esc(m.num)}</strong></td>
+                                        <td><strong>${esc(m.nom)}</strong> <span style="color:var(--text-muted);font-size:0.74rem;">(${esc(m.fichier)})</span></td>
+                                        <td>${renderProfileBadges(m.profils)}</td>
+                                        <td>${esc(m.desc)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="sub-title"><i class="fa-solid fa-tags"></i> Légende des badges, statuts et codes couleur</h3>
+                    <div class="cards-grid-2">
+                        ${io.badgesLegende.map(g => `
+                            <div class="mini-card">
+                                <h4>${esc(g.groupe)}</h4>
+                                <div style="display:flex;flex-direction:column;gap:7px;margin-top:6px;">
+                                    ${g.items.map(it => `
+                                        <div style="display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;">
+                                            <span class="${it.style}" style="flex-shrink:0;">${esc(it.label)}</span>
+                                            <span>${esc(it.sens)}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="callout callout-danger">
+                        <div class="callout-title"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(io.regleVider.titre)}</div>
+                        <p style="margin-bottom:6px;"><strong>Mode Administrateur :</strong> ${esc(io.regleVider.admin)}</p>
+                        <p style="margin-bottom:6px;"><strong>Mode Directeur / Chef de service / Contrôleur :</strong> ${esc(io.regleVider.nonAdmin)}</p>
+                        <p><strong>Exception PC individuel :</strong> ${esc(io.regleVider.pcIndividuel)}</p>
+                    </div>`;
+            }
+
+            function renderRubrique4() {
+                const el = document.getElementById('rub-4');
+                const sheetsHTML = DATA.sheets.map(s => {
+                    const isHidden = !matchesProfile(s.profils, activeProfileFilter);
+                    const restrictedNotice = (activeProfileFilter !== 'ALL' && activeProfileFilter !== 'ADMIN' && s.id === 'index')
+                        ? '<div class="callout callout-warn"><div class="callout-title"><i class="fa-solid fa-lock"></i> Feuille réservée à l’Administrateur</div>Cette feuille n’est pas accessible à votre profil.</div>'
+                        : '';
+
+                    const visibleButtons = s.boutons.filter(b => matchesProfile(b.profils, activeProfileFilter));
+                    const visibleProcs = s.procedures.filter(pr => matchesProfile(pr.profils, activeProfileFilter));
+
+                    return `
+                        <article class="sheet-manual ${isHidden ? 'hidden-by-profile' : ''}" id="sheet-${esc(s.id)}">
+                            <div class="sheet-manual-head">
+                                <h3><i class="fa-solid ${s.icone}" style="color:var(--accent);"></i> ${esc(s.code)} : ${esc(s.nom)}</h3>
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <span class="prof-badge ${s.badgeClass}">${esc(s.badgeAcces)}</span>
+                                    <span class="sheet-manual-file">${esc(s.fichier)}</span>
+                                </div>
+                            </div>
+                            <div class="sheet-manual-body">
+                                ${restrictedNotice}
+
+                                <!-- 1. Présentation et objectif -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-bullseye"></i> 1. Présentation et objectif</div>
+                                    <p class="prose">${esc(s.objectif)}</p>
+                                </div>
+
+                                <!-- 2. Utilisateurs concernés -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-user-lock"></i> 2. Utilisateurs concernés et restrictions par profil</div>
+                                    <div class="cards-grid-2">
+                                        ${s.utilisateurs.map(u => `
+                                            <div class="mini-card">
+                                                <h4>${esc(u.profil)}</h4>
+                                                <p>${esc(u.droits)}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <!-- 3. Description de l'interface + Illustration annotée -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-desktop"></i> 3. Description de l'interface et repères visuels</div>
+                                    <ul style="padding-left:18px;font-size:0.84rem;display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+                                        ${s.interfaceZones.map(z => `<li><strong>${esc(z.zone)} :</strong> ${esc(z.desc)}</li>`).join('')}
+                                    </ul>
+                                    ${renderAnnotatedIllustration(s.illustration, s.id, false)}
+                                </div>
+
+                                <!-- 4. Description des boutons -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-hand-pointer"></i> 4. Description des boutons (${visibleButtons.length})</div>
+                                    <div class="table-wrap">
+                                        <table class="guide-table">
+                                            <thead><tr><th>Bouton</th><th>Zone</th><th>Profils</th><th>Conditions</th><th>Effet réel vérifié</th></tr></thead>
+                                            <tbody>
+                                                ${visibleButtons.map(b => `
+                                                    <tr>
+                                                        <td><strong>${esc(b.nom)}</strong></td>
+                                                        <td>${esc(b.zone)}</td>
+                                                        <td>${renderProfileBadges(b.profils)}</td>
+                                                        <td>${esc(b.conditions)}</td>
+                                                        <td>${esc(b.effet)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Description des champs -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-pen-to-square"></i> 5. Description des champs, filtres et formules</div>
+                                    <div class="table-wrap">
+                                        <table class="guide-table">
+                                            <thead><tr><th>Champ / Filtre</th><th>Type</th><th>Obligatoire</th><th>Valeurs / Options</th><th>Règles de validation &amp; calculs</th></tr></thead>
+                                            <tbody>
+                                                ${s.champs.map(c => `
+                                                    <tr>
+                                                        <td><strong>${esc(c.nom)}</strong></td>
+                                                        <td>${esc(c.type)}</td>
+                                                        <td>${esc(c.obligatoire)}</td>
+                                                        <td>${esc(c.valeurs)}</td>
+                                                        <td>${esc(c.regles)}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- 6 & 7. Procédures détaillées & Résultat attendu -->
+                                ${visibleProcs.length ? `
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-list-ol"></i> 6 &amp; 7. Procédures détaillées et résultats attendus</div>
+                                    ${visibleProcs.map(pr => `
+                                        <div class="mini-card" style="margin-bottom:10px;">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                                                <h4 style="margin:0;">${esc(pr.titre)}</h4>
+                                                ${renderProfileBadges(pr.profils)}
+                                            </div>
+                                            <ol style="padding-left:20px;font-size:0.83rem;display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+                                                ${pr.etapes.map(st => `<li>${esc(st)}</li>`).join('')}
+                                            </ol>
+                                            <div style="background:#ECFDF5;border-left:3px solid #047857;padding:7px 10px;border-radius:5px;font-size:0.8rem;color:#065F46;">
+                                                <strong><i class="fa-solid fa-circle-check"></i> Résultat attendu :</strong> ${esc(pr.resultat)}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>` : ''}
+
+                                <!-- 8. Erreurs et précautions -->
+                                <div class="sheet-block">
+                                    <div class="sheet-block-title"><i class="fa-solid fa-shield-exclamation"></i> 8. Erreurs possibles, limites et précautions</div>
+                                    ${s.erreursPrecautions.map(ep => {
+                                        const cls = ep.type === 'erreur' ? 'callout-danger' : (ep.type === 'limite' ? 'callout-info' : 'callout-warn');
+                                        const ico = ep.type === 'erreur' ? 'fa-circle-xmark' : (ep.type === 'limite' ? 'fa-circle-info' : 'fa-triangle-exclamation');
+                                        return `
+                                            <div class="callout ${cls}" style="margin:8px 0;">
+                                                <div class="callout-title"><i class="fa-solid ${ico}"></i> ${esc(ep.titre)}</div>
+                                                <p style="margin-bottom:4px;">${esc(ep.detail)}</p>
+                                                <p><strong>Solution / Précaution :</strong> ${esc(ep.solution)}</p>
+                                            </div>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </article>`;
+                }).join('');
+
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">4</span> Guide détaillé par feuille</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-layer-group"></i> Modèle homogène (8 sections / feuille)</span>
+                    </div>
+                    <p class="prose">Chaque écran de l'application est documenté selon une structure identique : objectif, droits par profil, interface annotée, boutons, champs, procédures, résultats attendus et précautions.</p>
+                    ${sheetsHTML}`;
+            }
+
+            function renderRubrique5() {
+                const el = document.getElementById('rub-5');
+                const visibleWfs = DATA.workflows.filter(w => matchesProfile(w.profils, activeProfileFilter));
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">5</span> Procédures de travail pas-à-pas</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-diagram-project"></i> ${visibleWfs.length} parcours complets</span>
+                    </div>
+                    <p class="prose">Parcours opérationnels complets décrivant l'enchaînement logique entre les feuilles, de la planification jusqu'à l'exploitation en Tableau de Bord.</p>
+                    ${visibleWfs.map(w => `
+                        <div class="wf-card" id="${esc(w.id)}">
+                            <div class="wf-head">
+                                <div>
+                                    <h3><span class="pill-gold" style="margin-right:6px;">${esc(w.code)}</span> ${esc(w.titre)}</h3>
+                                    <p style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">${esc(w.resume)}</p>
+                                </div>
+                                <div>${renderProfileBadges(w.profils)}</div>
+                            </div>
+                            <div class="wf-steps">
+                                ${w.etapes.map(st => `
+                                    <div class="wf-step">
+                                        <div class="wf-step-num">${st.num}</div>
+                                        <div>
+                                            <div class="wf-step-meta">
+                                                <span class="pill-info"><i class="fa-solid fa-file-lines"></i> ${esc(st.feuille)}</span>
+                                                <span class="pill-purple"><i class="fa-solid fa-user"></i> ${esc(st.acteur)}</span>
+                                            </div>
+                                            <div class="wf-step-action">${esc(st.action)}</div>
+                                            <div class="wf-step-result"><i class="fa-solid fa-check"></i> Résultat attendu : ${esc(st.resultat)}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}`;
+            }
+
+            function renderRubrique6() {
+                const el = document.getElementById('rub-6');
+                const visibleFaq = DATA.faq.filter(f => matchesProfile(f.profils, activeProfileFilter));
+                const cats = ['TOUTES', ...new Set(visibleFaq.map(f => f.cat))];
+                if (!cats.includes(activeFaqCat)) activeFaqCat = 'TOUTES';
+                const filteredFaq = activeFaqCat === 'TOUTES' ? visibleFaq : visibleFaq.filter(f => f.cat === activeFaqCat);
+
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">6</span> Questions fréquentes (FAQ)</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-circle-question"></i> ${filteredFaq.length} question(s)</span>
+                    </div>
+                    <div class="faq-cats">
+                        ${cats.map(c => `<button type="button" class="faq-cat-btn ${c === activeFaqCat ? 'active' : ''}" data-faq-cat="${esc(c)}">${c === 'TOUTES' ? 'Toutes les catégories' : esc(c)}</button>`).join('')}
+                    </div>
+                    <div id="faqList">
+                        ${filteredFaq.map((f, idx) => `
+                            <div class="faq-item" id="faq-${idx}">
+                                <button type="button" class="faq-q" aria-expanded="false">
+                                    <span><span class="pill-info" style="margin-right:7px;">${esc(f.cat)}</span>${esc(f.q)}</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </button>
+                                <div class="faq-a">${esc(f.r)}</div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+
+                el.querySelectorAll('.faq-cat-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        activeFaqCat = btn.getAttribute('data-faq-cat');
+                        renderRubrique6();
+                    });
+                });
+                el.querySelectorAll('.faq-q').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const item = btn.closest('.faq-item');
+                        const open = item.classList.toggle('open');
+                        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    });
+                });
+            }
+
+            function renderRubrique7() {
+                const el = document.getElementById('rub-7');
+                const rows = DATA.troubleshooting.filter(t => matchesProfile(t.profils, activeProfileFilter));
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">7</span> Résolution des problèmes &amp; Dépannage</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-wrench"></i> ${rows.length} cas vérifiés</span>
+                    </div>
+                    <p class="prose">Messages d'erreur réels issus du code source, causes identifiées et solutions confirmées.</p>
+                    <div class="table-wrap">
+                        <table class="guide-table">
+                            <thead><tr><th>Symptôme / Message affiché</th><th>Feuille</th><th>Cause identifiée</th><th>Solution confirmée</th></tr></thead>
+                            <tbody>
+                                ${rows.map((t, i) => `
+                                    <tr id="ts-${i}">
+                                        <td><strong style="color:var(--danger);">${esc(t.symptome)}</strong></td>
+                                        <td><span class="pill-info">${esc(t.feuille)}</span></td>
+                                        <td>${esc(t.cause)}</td>
+                                        <td><strong>${esc(t.solution)}</strong></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>`;
+            }
+
+            function renderRubrique8() {
+                const el = document.getElementById('rub-8');
+                el.innerHTML = `
+                    <div class="section-head">
+                        <h2 class="section-title"><span class="section-num">8</span> Bonnes pratiques d'utilisation</h2>
+                        <span class="prof-badge badge-prof-all"><i class="fa-solid fa-shield-heart"></i> Qualité &amp; Sécurité</span>
+                    </div>
+                    <div class="cards-grid-2">
+                        ${DATA.bestPractices.map(bp => `
+                            <div class="mini-card" style="border-top:3px solid ${bp.couleur};">
+                                <h4><i class="fa-solid ${bp.icone}" style="color:${bp.couleur};"></i> ${esc(bp.titre)}</h4>
+                                <ul>
+                                    ${bp.conseils.map(c => `<li>${esc(c)}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `).join('')}
+                    </div>`;
+            }
+
+            // =================================================================
+            // BARRES DE NAVIGATION, PROFILS & INTERACTIONS ANNOTATIONS (GU-01, GU-02, GU-04)
+            // =================================================================
+            function renderQuickNavAndToc() {
+                const nav = document.getElementById('sheetQuickNav');
+                const sub = document.getElementById('tocSheetsSublist');
+                nav.innerHTML = '';
+                sub.innerHTML = '';
+
+                DATA.sheets.forEach(s => {
+                    const visible = matchesProfile(s.profils, activeProfileFilter);
+                    const a = document.createElement('a');
+                    a.className = 'sheet-quick-card' + (visible ? '' : ' hidden-by-profile');
+                    a.href = '#sheet-' + s.id;
+                    a.innerHTML = `
+                        <div class="sheet-quick-top">
+                            <span>${esc(s.code)}</span>
+                            <i class="fa-solid ${s.icone}"></i>
+                        </div>
+                        <div class="sheet-quick-name">${esc(s.nom)}</div>
+                        ${s.id === 'index' ? '<span class="sheet-quick-lock"><i class="fa-solid fa-lock"></i> Admin seul</span>' : ''}
+                    `;
+                    nav.appendChild(a);
+
+                    const li = document.createElement('li');
+                    if (!visible) li.className = 'hidden-by-profile';
+                    li.innerHTML = `<a class="toc-link" href="#sheet-${esc(s.id)}">${esc(s.code)} · ${esc(s.nom)}</a>`;
+                    sub.appendChild(li);
+                });
+            }
+
+            function renderProfileFilterBar() {
+                const bar = document.getElementById('profileFilterBar');
+                bar.innerHTML = '<span class="profile-filter-label"><i class="fa-solid fa-filter"></i> Adapter l\'affichage au profil :</span>';
+                DATA.profiles.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'profile-pill-btn' + (p.id === activeProfileFilter ? ' active' : '');
+                    btn.setAttribute('data-role', p.id);
+                    const isMine = currentUser && currentUser.role === p.id;
+                    btn.innerHTML = `<i class="fa-solid ${p.icon}"></i> ${esc(p.label)}${isMine ? ' (Votre profil)' : ''}`;
+                    btn.addEventListener('click', () => {
+                        activeProfileFilter = p.id;
+                        renderAll();
+                    });
+                    bar.appendChild(btn);
+                });
+                const meta = getProfileMeta(activeProfileFilter);
+                document.getElementById('profileFilterHint').innerHTML =
+                    `<i class="fa-solid fa-circle-info"></i> <strong>${esc(meta.label)} :</strong> ${esc(meta.summary)}`;
+            }
+
+            function bindIllustrationInteractions(root = document) {
+                root.querySelectorAll('.annotated-box').forEach(box => {
+                    const pins = box.querySelectorAll('.marker-pin');
+                    const items = box.querySelectorAll('.legend-item');
+                    const activate = (num) => {
+                        pins.forEach(p => p.classList.toggle('active', p.getAttribute('data-marker') === String(num)));
+                        items.forEach(it => it.classList.toggle('active', it.getAttribute('data-marker') === String(num)));
+                    };
+                    pins.forEach(p => {
+                        p.addEventListener('mouseenter', () => activate(p.getAttribute('data-marker')));
+                        p.addEventListener('click', () => activate(p.getAttribute('data-marker')));
+                    });
+                    items.forEach(it => {
+                        it.addEventListener('mouseenter', () => activate(it.getAttribute('data-marker')));
+                        it.addEventListener('click', () => activate(it.getAttribute('data-marker')));
+                    });
+                });
+
+                root.querySelectorAll('.btn-zoom-ill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const sId = btn.getAttribute('data-sheet');
+                        const sheet = DATA.sheets.find(s => s.id === sId);
+                        if (!sheet) return;
+                        const modal = document.getElementById('lightboxModal');
+                        const content = document.getElementById('lightboxContent');
+                        content.innerHTML = renderAnnotatedIllustration(sheet.illustration, sId + '-zoom', true);
+                        bindIllustrationInteractions(content);
+                        modal.classList.add('open');
+                    });
+                });
+            }
+
+            // =================================================================
+            // MOTEUR DE RECHERCHE INSTANTANÉE (GU-03)
+            // =================================================================
+            function normalizeSearch(s) {
+                return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            }
+
+            function buildSearchIndex() {
+                searchIndex = [];
+                DATA.sheets.forEach(s => {
+                    if (!matchesProfile(s.profils, activeProfileFilter)) return;
+                    searchIndex.push({
+                        cat: `${s.code} — Vue générale`,
+                        title: `${s.nom} (${s.fichier})`,
+                        text: `${s.nom} ${s.fichier} ${s.objectif} ${s.interfaceZones.map(z => z.zone + ' ' + z.desc).join(' ')}`,
+                        target: '#sheet-' + s.id
+                    });
+                    s.boutons.filter(b => matchesProfile(b.profils, activeProfileFilter)).forEach(b => {
+                        searchIndex.push({
+                            cat: `${s.code} — Bouton`,
+                            title: b.nom,
+                            text: `${b.nom} ${b.zone} ${b.conditions} ${b.effet}`,
+                            target: '#sheet-' + s.id
+                        });
+                    });
+                    s.champs.forEach(c => {
+                        searchIndex.push({
+                            cat: `${s.code} — Champ / Filtre`,
+                            title: c.nom,
+                            text: `${c.nom} ${c.type} ${c.valeurs} ${c.regles}`,
+                            target: '#sheet-' + s.id
+                        });
+                    });
+                    s.procedures.filter(pr => matchesProfile(pr.profils, activeProfileFilter)).forEach(pr => {
+                        searchIndex.push({
+                            cat: `${s.code} — Procédure`,
+                            title: pr.titre,
+                            text: `${pr.titre} ${pr.etapes.join(' ')} ${pr.resultat}`,
+                            target: '#sheet-' + s.id
+                        });
+                    });
+                    s.erreursPrecautions.forEach(ep => {
+                        searchIndex.push({
+                            cat: `${s.code} — Précaution / Erreur`,
+                            title: ep.titre,
+                            text: `${ep.titre} ${ep.detail} ${ep.solution}`,
+                            target: '#sheet-' + s.id
+                        });
+                    });
+                });
+
+                DATA.workflows.filter(w => matchesProfile(w.profils, activeProfileFilter)).forEach(w => {
+                    searchIndex.push({
+                        cat: `Procédure complète (${w.code})`,
+                        title: w.titre,
+                        text: `${w.titre} ${w.resume} ${w.etapes.map(e => e.feuille + ' ' + e.action + ' ' + e.resultat).join(' ')}`,
+                        target: '#' + w.id
+                    });
+                });
+
+                DATA.faq.filter(f => matchesProfile(f.profils, activeProfileFilter)).forEach((f, i) => {
+                    searchIndex.push({
+                        cat: `FAQ — ${f.cat}`,
+                        title: f.q,
+                        text: `${f.q} ${f.r}`,
+                        target: '#rub-6',
+                        openFaqQuery: f.q
+                    });
+                });
+
+                DATA.troubleshooting.filter(t => matchesProfile(t.profils, activeProfileFilter)).forEach((t, i) => {
+                    searchIndex.push({
+                        cat: `Dépannage — ${t.feuille}`,
+                        title: t.symptome,
+                        text: `${t.symptome} ${t.cause} ${t.solution}`,
+                        target: '#ts-' + i
+                    });
+                });
+
+                DATA.bestPractices.forEach(bp => {
+                    searchIndex.push({
+                        cat: 'Bonnes pratiques',
+                        title: bp.titre,
+                        text: `${bp.titre} ${bp.conseils.join(' ')}`,
+                        target: '#rub-8'
+                    });
+                });
+            }
+
+            function highlightSnippet(text, query) {
+                const safe = esc(text.slice(0, 175)) + (text.length > 175 ? '…' : '');
+                const terms = query.trim().split(/\s+/).filter(t => t.length >= 2);
+                let out = safe;
+                terms.forEach(t => {
+                    const rx = new RegExp('(' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+                    out = out.replace(rx, '<mark class="guide-hl">$1</mark>');
+                });
+                return out;
+            }
+
+            function executeSearch() {
+                const input = document.getElementById('guideSearchInput');
+                const q = input.value.trim();
+                const panel = document.getElementById('searchResultsPanel');
+                const list = document.getElementById('searchResultsList');
+                const meta = document.getElementById('searchCountMeta');
+                const clearBtn = document.getElementById('btnClearSearch');
+
+                clearBtn.classList.toggle('visible', q.length > 0);
+                if (q.length < 2) {
+                    panel.classList.remove('visible');
+                    meta.textContent = 'Tapez au moins 2 caractères pour rechercher';
+                    return;
+                }
+
+                const normTerms = normalizeSearch(q).split(/\s+/).filter(Boolean);
+                const hits = searchIndex.filter(entry => {
+                    const hay = normalizeSearch(entry.title + ' ' + entry.text + ' ' + entry.cat);
+                    return normTerms.every(t => hay.includes(t));
+                });
+
+                meta.textContent = `${hits.length} résultat(s) trouvé(s)`;
+                document.getElementById('searchResultsTitle').textContent = `Résultats pour « ${q} » (${hits.length})`;
+                panel.classList.add('visible');
+
+                if (hits.length === 0) {
+                    list.innerHTML = `<div style="font-size:0.83rem;color:#92400E;">Aucune rubrique ne correspond à « ${esc(q)} » pour le filtre de profil actif. Essayez « Tous les profils » ou un autre mot-clé.</div>`;
+                    return;
+                }
+
+                list.innerHTML = hits.slice(0, 24).map((h, idx) => `
+                    <button type="button" class="search-hit" data-hit-idx="${idx}">
+                        <div class="search-hit-cat">${esc(h.cat)}</div>
+                        <div class="search-hit-title">${highlightSnippet(h.title, q)}</div>
+                        <div class="search-hit-snippet">${highlightSnippet(h.text, q)}</div>
+                    </button>
+                `).join('');
+
+                list.querySelectorAll('.search-hit').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const hit = hits[Number(btn.getAttribute('data-hit-idx'))];
+                        if (!hit) return;
+                        if (hit.openFaqQuery) {
+                            activeFaqCat = 'TOUTES';
+                            renderRubrique6();
+                            document.querySelectorAll('#faqList .faq-item').forEach(item => {
+                                if (item.textContent.includes(hit.openFaqQuery)) {
+                                    item.classList.add('open');
+                                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                            return;
+                        }
+                        const targetEl = document.querySelector(hit.target);
+                        if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                });
+            }
+
+            // =================================================================
+            // SCROLL SPY SOMMAIRE & INITIALISATION
+            // =================================================================
+            function setupScrollSpy() {
+                const links = Array.from(document.querySelectorAll('#tocList a.toc-link'));
+                window.addEventListener('scroll', () => {
+                    const topBtn = document.getElementById('btnBackToTop');
+                    topBtn.classList.toggle('visible', window.scrollY > 360);
+
+                    let currentId = 'rub-1';
+                    const targets = document.querySelectorAll('.guide-section, .sheet-manual');
+                    targets.forEach(sec => {
+                        if (sec.classList.contains('hidden-by-profile')) return;
+                        const rect = sec.getBoundingClientRect();
+                        if (rect.top <= 120) currentId = sec.id;
+                    });
+                    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + currentId));
+                }, { passive: true });
+            }
+
+            function renderAll() {
+                renderProfileFilterBar();
+                renderQuickNavAndToc();
+                renderRubrique1();
+                renderRubrique2();
+                renderRubrique3();
+                renderRubrique4();
+                renderRubrique5();
+                renderRubrique6();
+                renderRubrique7();
+                renderRubrique8();
+                bindIllustrationInteractions(document);
+                buildSearchIndex();
+                executeSearch();
+            }
+
+            function initGuide() {
+                currentUser = (window.FCIAuth && typeof window.FCIAuth.getCurrentUser === 'function')
+                    ? window.FCIAuth.getCurrentUser()
+                    : null;
+
+                const pill = document.getElementById('connectedProfilePill');
+                if (currentUser) {
+                    const roleMeta = getProfileMeta(currentUser.role);
+                    pill.innerHTML = `<i class="fa-solid ${roleMeta.icon}"></i> Connecté : ${esc(currentUser.username)} (${esc(currentUser.fonction)})`;
+                    // Pré-sélectionne automatiquement le profil de l'utilisateur connecté
+                    activeProfileFilter = DATA.profiles.some(p => p.id === currentUser.role) ? currentUser.role : 'ALL';
+                } else {
+                    pill.innerHTML = '<i class="fa-solid fa-users"></i> Mode consultation';
+                    activeProfileFilter = 'ALL';
+                }
+
+                renderAll();
+                setupScrollSpy();
+
+                const searchInput = document.getElementById('guideSearchInput');
+                searchInput.addEventListener('input', executeSearch);
+                document.getElementById('btnClearSearch').addEventListener('click', () => {
+                    searchInput.value = '';
+                    executeSearch();
+                    searchInput.focus();
+                });
+                document.getElementById('btnCloseSearchResults').addEventListener('click', () => {
+                    document.getElementById('searchResultsPanel').classList.remove('visible');
+                });
+
+                let faqAllOpen = false;
+                document.getElementById('btnToggleAllFaq').addEventListener('click', function () {
+                    faqAllOpen = !faqAllOpen;
+                    document.querySelectorAll('#faqList .faq-item').forEach(it => it.classList.toggle('open', faqAllOpen));
+                    this.innerHTML = faqAllOpen
+                        ? '<i class="fa-solid fa-compress"></i> Tout replier (FAQ)'
+                        : '<i class="fa-solid fa-circle-question"></i> Tout déplier (FAQ)';
+                });
+
+                document.getElementById('btnBackToTop').addEventListener('click', () => {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                // Lightbox
+                const modal = document.getElementById('lightboxModal');
+                document.getElementById('btnCloseLightbox').addEventListener('click', () => modal.classList.remove('open'));
+                modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') modal.classList.remove('open'); });
+
+                // Mobile sidebar drawer
+                const sidebar = document.getElementById('mainSidebar');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                const toggleDrawer = (open) => {
+                    sidebar.classList.toggle('mobile-open', open);
+                    backdrop.classList.toggle('open', open);
+                };
+                document.getElementById('btnMobileMenu').addEventListener('click', () => toggleDrawer(!sidebar.classList.contains('mobile-open')));
+                backdrop.addEventListener('click', () => toggleDrawer(false));
+            }
+
+            document.addEventListener('DOMContentLoaded', initGuide);
+        })();
+    </script>
+</body>
+</html>
