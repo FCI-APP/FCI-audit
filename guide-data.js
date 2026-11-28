@@ -94,6 +94,70 @@
                     description: 'La Feuille 6 (TDB) consolide les indicateurs de conformité pondérés, la clôture, la couverture territoriale (10 régions, 135 centres), la participation des contrôleurs et les alertes automatiques (< 75 %).'
                 }
             ],
+            avantagesValeurAjoutee: {
+                intro: "FCI v1.0 apporte une valeur ajoutée concrète et complémentaire aux deux niveaux de l'organisation (Siège et Directions Régionales), en remplaçant les suivis dispersés par un circuit intégré, tracé et pilotable en temps réel.",
+                siege: {
+                    titre: 'Avantages & Valeur ajoutée — Niveau Siège',
+                    sousTitre: 'Direction Contrôle Générale · Division Contrôle Permanent (Administrateur, Directeur, 5 Chefs de service)',
+                    icone: 'fa-building-columns',
+                    couleur: '#003366',
+                    points: [
+                        {
+                            cle: 'Gouvernance et circuit de validation tracé',
+                            texte: 'Encadre les campagnes FC et FV via un workflow en 2 étapes (préparation multi-processus → édition inline et validation par le Directeur → notification officielle aux 7 comptes Siège → diffusion nominative), avec historique complet de chaque décision.'
+                        },
+                        {
+                            cle: 'Ciblage intelligent et couverture nationale',
+                            texte: 'Filtre automatiquement les centres non encore contrôlés dans l’année en cours et offre une vue consolidée de la couverture des 10 régions et des 135 centres du réseau.'
+                        },
+                        {
+                            cle: 'Souplesse d’affectation et gestion interrégionale',
+                            texte: 'Permet d’affecter n’importe lequel des 34 contrôleurs régionaux ou 5 Chefs de service sur n’importe quelle région, avec suivi en temps réel de l’état d’avancement (Planifiée, En cours, Réalisée / Clôturée).'
+                        },
+                        {
+                            cle: 'Pilotage décisionnel et détection proactive',
+                            texte: 'Calcule automatiquement le Taux de Conformité pondéré (ΣOK / ΣÉchantillon × 100), déclenche jusqu’à 4 alertes prioritaires sous le seuil de 75 %, compare les 3 niveaux (Centre / Régional / National), mesure la participation des contrôleurs et génère un classeur Excel consolidé (6 à 7 onglets).'
+                        },
+                        {
+                            cle: 'Centralisation unifiée et archivage pérenne',
+                            texte: 'Regroupe tous les constats FC et FV (initiaux, modifiés et suivis) dans une BDD unique haute capacité (IndexedDB) adossée aux archives mensuelles GitHub (archives/AAAA/MM/).'
+                        }
+                    ]
+                },
+                regions: {
+                    titre: 'Avantages & Valeur ajoutée — Niveau Régions',
+                    sousTitre: '10 Directions Régionales (34 Contrôleurs régionaux)',
+                    icone: 'fa-map-location-dot',
+                    couleur: '#047857',
+                    points: [
+                        {
+                            cle: 'Réception directe des missions et gain de temps',
+                            texte: 'Les missions diffusées par le Siège sont directement accessibles dans le compte du contrôleur désigné (auto-préchargement en Feuille 3 FC et notifications « Ouvrir la vérification » en Feuille 4 FV), avec onglets de filtrage par processus.'
+                        },
+                        {
+                            cle: 'Autonomie terrain et fiabilité des calculs',
+                            texte: 'Permet de lancer des contrôles directs régionaux (Feuille 2) et d’évaluer chaque PC avec calcul instantané des KO, du Taux de Conformité %, des KPI et de l’avis global du centre, éliminant les erreurs manuelles de calcul.'
+                        },
+                        {
+                            cle: 'Historisation claire entre correction et suivi',
+                            texte: 'Offre un traitement PC par PC permettant de distinguer simplement une correction (« Modifier ») d’un contrôle de suivi ultérieur (« Suivi »), qui conserve intacte la ligne initiale.'
+                        },
+                        {
+                            cle: 'Cloisonnement sécurisé et visibilité interrégionale',
+                            texte: 'Garantit un espace régional dédié (séparé des données internes du Siège) tout en donnant accès aux contrôles réalisés dans sa région et à ses propres missions menées hors région.'
+                        },
+                        {
+                            cle: 'Suivi et pilotage local autonome',
+                            texte: 'Donne à chaque contrôleur sa Base de Données filtrable sur 8 axes (exports Excel et PDF) ainsi qu’un Tableau de Bord aux niveaux Régional et Centre / Site pour suivre la clôture des constats et la couverture des agences.'
+                        }
+                    ]
+                },
+                transversal: [
+                    'Référentiel unique et langage commun : 1 605 points de contrôle FC, 10 points de contrôle FV, statuts harmonisés (En cours / Clôturé / Non clôturé) et barème d’avis global identique sur l’ensemble du réseau.',
+                    'Continuité opérationnelle sans double saisie : les données saisies en Planification alimentent automatiquement les Fiches terrain, la BDD unifiée et le Tableau de Bord.',
+                    'Sécurité et autonomie des 41 utilisateurs : accès cloisonné par profil, sessions volatiles et Guide d’utilisation interactif consultable à tout moment sans risque sur les données métier.'
+                ]
+            },
             comptesTableau: [
                 { espace: 'Espace Siège (Visibilité globale)', role: 'Administrateur (ADMIN)', nombre: '1 compte', identifiants: 'admin-siege', accueil: 'Feuille 1 — Référentiel de contrôle' },
                 { espace: 'Espace Siège (Visibilité globale)', role: 'Directeur (DIRECTEUR)', nombre: '1 compte', identifiants: 'directeur-001', accueil: 'Feuille 2 — Planification' },

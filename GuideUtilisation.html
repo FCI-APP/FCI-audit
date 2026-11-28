@@ -11,7 +11,7 @@
     <!-- Google Fonts: Plus Jakarta Sans -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Données structurées du Guide (indépendantes de la BDD métier — consultation seule) -->
-    <script src="guide-data.js?v=20261128-guide"></script>
+    <script src="guide-data.js?v=20261128-guide2"></script>
 
     <style>
         :root {
@@ -793,6 +793,27 @@
                         `).join('')}
                     </div>
 
+                    ${p.avantagesValeurAjoutee ? `
+                    <h3 class="sub-title" id="rub-1-avantages"><i class="fa-solid fa-star"></i> Avantages et valeur ajoutée (Siège &amp; Régions)</h3>
+                    <p class="prose">${esc(p.avantagesValeurAjoutee.intro)}</p>
+                    <div class="cards-grid-2">
+                        ${[p.avantagesValeurAjoutee.siege, p.avantagesValeurAjoutee.regions].map(bloc => `
+                            <div class="mini-card" style="border-top:4px solid ${bloc.couleur};background:#FFFFFF;">
+                                <h4 style="color:${bloc.couleur};margin-bottom:3px;"><i class="fa-solid ${bloc.icone}"></i> ${esc(bloc.titre)}</h4>
+                                <p style="font-size:0.75rem;color:var(--text-muted);font-weight:700;margin-bottom:9px;">${esc(bloc.sousTitre)}</p>
+                                <ul style="padding-left:17px;display:flex;flex-direction:column;gap:7px;">
+                                    ${bloc.points.map(pt => `<li><strong>${esc(pt.cle)} :</strong> ${esc(pt.texte)}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="callout callout-success">
+                        <div class="callout-title"><i class="fa-solid fa-handshake"></i> Valeur ajoutée transversale (Siège &amp; Régions)</div>
+                        <ul style="padding-left:18px;display:flex;flex-direction:column;gap:5px;">
+                            ${p.avantagesValeurAjoutee.transversal.map(t => `<li>${esc(t)}</li>`).join('')}
+                        </ul>
+                    </div>` : ''}
+
                     <h3 class="sub-title"><i class="fa-solid fa-users-gear"></i> Organisation des 41 comptes et des 2 espaces</h3>
                     <div class="table-wrap">
                         <table class="guide-table">
@@ -1290,6 +1311,23 @@
 
             function buildSearchIndex() {
                 searchIndex = [];
+                if (DATA.presentation && DATA.presentation.avantagesValeurAjoutee) {
+                    const av = DATA.presentation.avantagesValeurAjoutee;
+                    [av.siege, av.regions].forEach(bloc => {
+                        searchIndex.push({
+                            cat: 'Présentation générale — Valeur ajoutée',
+                            title: bloc.titre,
+                            text: `${bloc.sousTitre} ${bloc.points.map(pt => pt.cle + ' ' + pt.texte).join(' ')}`,
+                            target: '#rub-1-avantages'
+                        });
+                    });
+                    searchIndex.push({
+                        cat: 'Présentation générale — Valeur ajoutée',
+                        title: 'Valeur ajoutée transversale (Siège & Régions)',
+                        text: av.transversal.join(' '),
+                        target: '#rub-1-avantages'
+                    });
+                }
                 DATA.sheets.forEach(s => {
                     if (!matchesProfile(s.profils, activeProfileFilter)) return;
                     searchIndex.push({
