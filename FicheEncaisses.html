@@ -222,6 +222,8 @@
         .btn-notify-fv:hover { background-color: #B45309; }
         .btn-validate-fv { background-color: #059669; color: #FFFFFF; border-color: #047857; }
         .btn-validate-fv:hover { background-color: #047857; }
+        .btn-exec-fv { background-color: var(--primary-blue); color: #FFFFFF; border: 1px solid #EAAA00; font-weight: 700; }
+        .btn-exec-fv:hover { background-color: #002244; color: #FFFFFF; }
         .plan-fv-table-wrap {
             margin-top: 12px;
             overflow-x: auto;
@@ -869,7 +871,7 @@
         </section>
     </main>
 
-    <script src="fci-db-manager.js?v=20261127-vider"></script>
+    <script src="fci-db-manager.js?v=20261128-execfv"></script>
     <script>
         const CENTRES_PAR_REGION = {
             "SIEGE": [
@@ -1354,9 +1356,7 @@
                 if (titleEl) titleEl.innerText = "Mes Vérifications Planifiées & Diffusées par le Siège";
                 if (creatorEl) creatorEl.style.display = 'none';
                 if (suiviHeading) suiviHeading.style.display = 'none';
-                const notifEl = document.getElementById('fv-siege-notifications-banner');
                 const dirEl = document.getElementById('fv-directeur-validation-section');
-                if (notifEl) notifEl.innerHTML = '';
                 if (dirEl) dirEl.innerHTML = '';
             }
 
@@ -1707,22 +1707,32 @@
             `;
         }
 
-        // --- NOTIFICATIONS SIÈGE FV (PARAGRAPHE + TABLEAU DE PLANIFICATION COMPLET) ---
+        // --- NOTIFICATIONS FV (SIÈGE : VALIDATION DIRECTEUR / CONTRÔLEURS : LANCEMENT DE VÉRIFICATION) ---
 
         function renderSiegeNotificationsBannerFV() {
             const container = document.getElementById('fv-siege-notifications-banner');
             if (!container) return;
 
-            if (!isCurrentUserSiege()) {
+            const u = getCurrentAuthUser();
+            if (!u) {
                 container.innerHTML = '';
                 return;
             }
-
-            const u = getCurrentAuthUser();
-            const myId = u ? String(u.username || '').toLowerCase() : '';
+            const siege = isCurrentUserSiege();
+            const myId = String(u.username || u.identifiant || '').toLowerCase().trim();
             const db = lireDBSecurisee();
             const allNotifs = (db.notifications || [])
-                .filter(estNotificationFV)
+                .filter(n => {
+                    if (!estNotificationFV(n)) return false;
+                    if (siege) return true;
+                    // Pour un contrôleur régional : uniquement ses notifications ciblées (ex. lancement de vérification)
+                    const dest = String(n.destinataires || 'SIEGE').toUpperCase().trim();
+                    if (dest === 'TOUS') return true;
+                    if (Array.isArray(n.destinatairesIds)) {
+                        return n.destinatairesIds.some(id => String(id || '').toLowerCase().trim() === myId);
+                    }
+                    return false;
+                })
                 .slice()
                 .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
 
@@ -1746,12 +1756,15 @@
             }
 
             const campagnes = db.campagnesPlanification || [];
+            const bannerHeading = siege
+                ? 'Notifications Siège — Planifications de Vérification validées'
+                : 'Lancement de Vérification des Encaisses — Mission(s) envoyée(s) par le Siège';
 
             container.innerHTML = `
                 <div class="fv-notif-banner">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div style="font-weight:800; color:var(--primary-blue); font-size:0.86rem;">
-                            <i class="fa-solid fa-bell" style="color:#D97706;"></i> Notifications Siège — Planifications de Vérification validées
+                            <i class="fa-solid fa-bell" style="color:#D97706;"></i> ${bannerHeading}
                             <span class="fv-pill fv-pill-soumise" style="margin-left:6px;">${unreadNotifs.length} non lue(s)</span>
                         </div>
                         <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
@@ -1765,6 +1778,7 @@
                     </div>
                     ${visibleNotifs.map(n => {
                         const isUnread = !(Array.isArray(n.lusPar) && n.lusPar.map(x => String(x).toLowerCase()).includes(myId));
+                        const isLaunchNotif = String(n.type || '').toUpperCase() === 'LANCEMENT_VERIFICATION_FV';
                         const campAssoc = campagnes.find(c => c.idCampagne === n.idCampagne) || null;
                         const affs = (Array.isArray(n.affectations) && n.affectations.length > 0)
                             ? n.affectations
@@ -1777,6 +1791,7 @@
                                     <div style="flex:1; min-width:240px;">
                                         <div style="font-weight:800; color:var(--primary-blue); font-size:0.84rem;">
                                             ${isUnread ? '<span class="fv-pill fv-pill-soumise" style="margin-right:6px;">Nouveau</span>' : ''}
+                                            ${isLaunchNotif ? '<span class="fv-pill fv-pill-diffusee" style="margin-right:6px;"><i class="fa-solid fa-play"></i> Lancement</span>' : ''}
                                             ${escapeHtml(n.titre || 'Planification de vérification validée')}
                                         </div>
                                         <p style="font-size:0.78rem; color:#334155; margin-top:4px; line-height:1.45;">
@@ -1787,7 +1802,13 @@
                                             ${soumisPar ? ` · Initiée par <b>${escapeHtml(soumisPar)}</b>` : ''}
                                         </div>
                                     </div>
-                                    <div>
+                                    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                        ${isLaunchNotif && n.idPlanification
+                                            ? `<button type="button" class="btn btn-sm btn-exec-fv" onclick="ouvrirVerificationDepuisNotificationFV('${escapeJsFV(n.idPlanification)}', '${escapeJsFV(n.idNotification)}')" title="Charger les informations de la vérification planifiée dans votre fiche">
+                                                <i class="fa-solid fa-play"></i> Ouvrir la vérification
+                                               </button>`
+                                            : ''
+                                        }
                                         ${isUnread
                                             ? `<button type="button" class="btn btn-sm btn-secondary" onclick="marquerNotifSiegeFVLue('${escapeJsFV(n.idNotification)}')"><i class="fa-solid fa-check"></i> Marquer comme lue</button>`
                                             : `<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-check-double"></i> Lue</span>`
@@ -1827,6 +1848,19 @@
                     }).join('')}
                 </div>
             `;
+        }
+
+        function ouvrirVerificationDepuisNotificationFV(idPlanification, idNotification) {
+            if (idNotification) {
+                marquerNotifSiegeFVLue(idNotification);
+            }
+            if (idPlanification) {
+                chargerPlanificationFVDansSaisie(idPlanification);
+                const saisieCard = document.querySelector('.saisie-line-card');
+                if (saisieCard && typeof saisieCard.scrollIntoView === 'function') {
+                    saisieCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         }
 
         function toggleShowReadNotifsFV() {
@@ -2308,6 +2342,12 @@
             }
 
             const u = getCurrentAuthUser();
+            const db = lireDBSecurisee();
+            const plansFV = (db.planifications || []).filter(p =>
+                String(p?.sourceFeuille || '').toUpperCase() === 'FV' ||
+                String(p?.natureMission || '').toUpperCase().includes('VERIF')
+            );
+
             wrap.innerHTML = campagnes.map(camp => {
                 const isValidee = camp.statutWorkflow === 'VALIDEE';
                 const estAuteurOuDir = Boolean(
@@ -2318,6 +2358,18 @@
                     )
                 );
                 const histKey = 'fv_s2_hist_' + camp.idCampagne;
+                const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+                const nbEnvoyees = affs.filter((a) => {
+                    if (a.envoyeeExecution) return true;
+                    const matchPlan = plansFV.find(p =>
+                        (a.idPlanification && p.idPlanification === a.idPlanification) ||
+                        (p.idCampagne === camp.idCampagne &&
+                         String(p.controleurId || '').toUpperCase() === String(a.controleurId || '').toUpperCase() &&
+                         String(p.site || p.centre || '').trim() === String(a.site || a.centre || '').trim() &&
+                         String(p.dateDebut || '') === String(a.dateDebut || ''))
+                    );
+                    return Boolean(matchPlan && matchPlan.lanceeExecution);
+                }).length;
 
                 return `
                     <div class="fv-campaign-card ${isValidee ? 'status-validee' : 'status-diffusee'}">
@@ -2335,6 +2387,10 @@
                                     ? '<span class="fv-pill fv-pill-validee"><i class="fa-solid fa-certificate"></i> Validée — Prête à diffuser</span>'
                                     : '<span class="fv-pill fv-pill-diffusee"><i class="fa-solid fa-check-double"></i> Diffusée aux contrôleurs</span>'
                                 }
+                                ${nbEnvoyees > 0 && nbEnvoyees < affs.length
+                                    ? `<span class="fv-pill fv-pill-diffusee"><i class="fa-solid fa-paper-plane"></i> ${nbEnvoyees}/${affs.length} lancée(s)</span>`
+                                    : ''
+                                }
                                 ${camp.modifieeParDirecteur ? '<span class="fv-pill fv-pill-interreg"><i class="fa-solid fa-pen"></i> Ajustée par le Directeur</span>' : ''}
                                 ${camp.notifieSiege ? '<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-bell"></i> Siège notifié</span>' : ''}
                             </div>
@@ -2348,21 +2404,54 @@
                                         <th>Région</th>
                                         <th>Contrôleur affecté (version validée)</th>
                                         <th>Période de vérification (Début → Fin)</th>
+                                        <th style="text-align:center;">Exécution / Envoi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${(camp.affectations || []).map(a => `
-                                        <tr>
-                                            <td><strong>${escapeHtml(a.site || a.centre)}</strong></td>
-                                            <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region)}</span></td>
-                                            <td>
-                                                <span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId)}</span>
-                                                <small style="color:var(--text-muted);">${escapeHtml(a.controleurFonction || '')}</small>
-                                                ${a.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
-                                            </td>
-                                            <td><strong>${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
-                                        </tr>
-                                    `).join('')}
+                                    ${affs.map((a, idx) => {
+                                        const planAssoc = plansFV.find(p =>
+                                            (a.idPlanification && p.idPlanification === a.idPlanification) ||
+                                            (p.idCampagne === camp.idCampagne &&
+                                             String(p.controleurId || '').toUpperCase() === String(a.controleurId || '').toUpperCase() &&
+                                             String(p.site || p.centre || '').trim() === String(a.site || a.centre || '').trim() &&
+                                             String(p.dateDebut || '') === String(a.dateDebut || ''))
+                                        );
+                                        const estEnvoyeeExec = Boolean(a.envoyeeExecution || (planAssoc && planAssoc.lanceeExecution));
+                                        const dateEnvoi = a.dateEnvoiExecution || (planAssoc && planAssoc.dateLancementExecution) || '';
+
+                                        return `
+                                            <tr>
+                                                <td><strong>${escapeHtml(a.site || a.centre)}</strong></td>
+                                                <td><span class="fv-pill fv-pill-reg">${escapeHtml(a.region)}</span></td>
+                                                <td>
+                                                    <span class="fv-pill fv-pill-ctrl">${escapeHtml(a.controleurId)}</span>
+                                                    <small style="color:var(--text-muted);">${escapeHtml(a.controleurFonction || '')}</small>
+                                                    ${a.isInterregional ? '<span class="fv-pill fv-pill-interreg">Interrégional</span>' : ''}
+                                                </td>
+                                                <td><strong>${formatDateToJJMMAAAA(a.dateDebut)} → ${formatDateToJJMMAAAA(a.dateFin)}</strong></td>
+                                                <td style="text-align:center;">
+                                                    ${estAuteurOuDir ? (
+                                                        estEnvoyeeExec
+                                                            ? `<div style="display:inline-flex; align-items:center; justify-content:center; gap:6px; flex-wrap:wrap;">
+                                                                <span class="fv-pill fv-pill-notif" title="${dateEnvoi ? 'Envoyée le ' + formatDateHeureFV(dateEnvoi) : 'Envoyée au contrôleur concerné'}">
+                                                                    <i class="fa-solid fa-circle-check"></i> Envoyée
+                                                                </span>
+                                                                <button type="button" class="btn btn-sm btn-secondary" id="btnExecVerifFV-${escapeHtml(camp.idCampagne)}-${idx}" onclick="executerVerificationPlanifieeFV('${escapeJsFV(camp.idCampagne)}', ${idx})" title="Informer à nouveau ${escapeHtml(a.controleurId)} du lancement de la vérification">
+                                                                    <i class="fa-solid fa-rotate-right"></i> Relancer
+                                                                </button>
+                                                               </div>`
+                                                            : `<button type="button" class="btn btn-sm btn-exec-fv" id="btnExecVerifFV-${escapeHtml(camp.idCampagne)}-${idx}" onclick="executerVerificationPlanifieeFV('${escapeJsFV(camp.idCampagne)}', ${idx})" title="Envoyer la vérification planifiée et informer le contrôleur concerné (${escapeHtml(a.controleurId)})">
+                                                                <i class="fa-solid fa-play"></i> Exécuter la vérification
+                                                               </button>`
+                                                    ) : (
+                                                        estEnvoyeeExec
+                                                            ? `<span class="fv-pill fv-pill-notif"><i class="fa-solid fa-circle-check"></i> Envoyée</span>`
+                                                            : `<span style="font-size:0.74rem; color:var(--text-muted); font-style:italic;">En attente</span>`
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -2379,7 +2468,7 @@
                                            </button>`
                                         : `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Diffusion réservée à ${escapeHtml(camp.soumisParId)}</span>`
                                 ) : `
-                                    <span class="fv-pill fv-pill-notif"><i class="fa-solid fa-circle-check"></i> Transmise aux ${(camp.affectations || []).length} contrôleur(s)</span>
+                                    <span class="fv-pill fv-pill-notif"><i class="fa-solid fa-circle-check"></i> Transmise aux ${affs.length} contrôleur(s)</span>
                                 `}
                             </div>
                         </div>
@@ -2388,6 +2477,190 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        async function envoyerAffectationVerificationAuControleurFV(camp, aff, affIdx, u, now) {
+            const siteVal = aff.site || aff.centre || aff.entite || '';
+            const regVal = normaliserRegion(aff.region || trouverRegionPourCentreFV(siteVal));
+            const periodeLabel = `${formatDateToJJMMAAAA(aff.dateDebut)} → ${formatDateToJJMMAAAA(aff.dateFin)}`;
+
+            // Réutiliser une planification existante pour cette affectation si déjà diffusée (évite tout doublon)
+            const db = lireDBSecurisee();
+            const existante = (db.planifications || []).find(p =>
+                p && (
+                    (aff.idPlanification && p.idPlanification === aff.idPlanification) ||
+                    (p.idCampagne === camp.idCampagne &&
+                     String(p.controleurId || '').toUpperCase() === String(aff.controleurId || '').toUpperCase() &&
+                     String(p.site || p.centre || '').trim() === String(siteVal).trim() &&
+                     String(p.dateDebut || '') === String(aff.dateDebut || ''))
+                )
+            );
+
+            const idPlanification = (existante && existante.idPlanification)
+                || aff.idPlanification
+                || `PLAN-FV-${camp.idCampagne}-${affIdx + 1}`;
+            const statutExistant = existante ? normaliserStatutPlanFV(existante) : 'EN_COURS';
+            const emetteurId = u ? u.username : (camp.soumisParId || 'siege');
+            const emetteurFonction = u ? (u.fonction || u.username) : (camp.soumisParFonction || 'Siège');
+
+            const planRecord = {
+                ...(existante || {}),
+                idPlanification,
+                idCampagne: camp.idCampagne,
+                idAffectation: aff.idAffectation || `AFF-FV-${affIdx + 1}`,
+                sourceFeuille: 'FV',
+                natureMission: 'Vérification',
+                planifiePar: 'SIEGE',
+                espaceSaisie: 'SIEGE',
+                statutWorkflow: 'DIFFUSEE',
+                valideParDirecteur: true,
+                valideParId: camp.valideParId || 'directeur-001',
+                dateValidation: camp.dateValidation || now,
+                diffuseParId: (existante && existante.diffuseParId) || emetteurId,
+                dateDiffusion: (existante && existante.dateDiffusion) || now,
+                lanceeExecution: true,
+                dateLancementExecution: now,
+                lanceeParId: emetteurId,
+                lanceeParFonction: emetteurFonction,
+                creeParId: camp.soumisParId || emetteurId,
+                creeParRole: camp.soumisParRole || 'CHEF_SERVICE',
+                auteurFonction: camp.soumisParFonction || 'Chef de service',
+                controleurId: aff.controleurId,
+                controleur: aff.controleurId,
+                controleurFonction: aff.controleurFonction || aff.controleurId,
+                controleurRegion: aff.controleurRegion || '',
+                controleursAssignes: [aff.controleurId],
+                region: regVal,
+                site: siteVal,
+                centre: siteVal,
+                entite: siteVal,
+                date: aff.dateDebut,
+                datePrevue: aff.dateDebut,
+                dateDebut: aff.dateDebut,
+                dateFin: aff.dateFin,
+                periodeCode: 'DATES_PRECISES',
+                periodeLabel,
+                referentiel: 'Sélection libre par le contrôleur (Encaisses)',
+                statutExecution: statutExistant === 'CLOTURE' ? 'CLOTURE' : 'EN_COURS',
+                statutAvancement: statutExistant === 'CLOTURE' ? 'Clôturé' : 'En cours',
+                createdAt: (existante && existante.createdAt) || now,
+                updatedAt: now
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
+                await FCIDatabase.enregistrerPlanification(planRecord, false);
+                if (typeof FCIDatabase.archiverSurGitHub === 'function' &&
+                    typeof FCIDatabase.getGitHubToken === 'function' && FCIDatabase.getGitHubToken()) {
+                    FCIDatabase.archiverSurGitHub('PLAN', siteVal || 'Planification', planRecord.idPlanification, { planifications: [planRecord] }).catch(() => {});
+                }
+            } else {
+                const localDb = lireDBSecurisee();
+                const list = Array.isArray(localDb.planifications) ? [...localDb.planifications] : [];
+                const idxP = list.findIndex(p => p && p.idPlanification === idPlanification);
+                if (idxP !== -1) list[idxP] = planRecord;
+                else list.push(planRecord);
+                localDb.planifications = list;
+                sauvegarderDBSecurisee(localDb);
+            }
+
+            // Notification ciblée au contrôleur concerné pour l'informer du lancement de la vérification
+            const notifCtrl = {
+                idNotification: `NOTIF-FV-EXEC-${idPlanification}-${Date.now()}`,
+                sourceFeuille: 'FV',
+                type: 'LANCEMENT_VERIFICATION_FV',
+                idCampagne: camp.idCampagne,
+                idPlanification,
+                titre: `Lancement de vérification des encaisses — ${siteVal} (${regVal})`,
+                message: `Le Siège (${emetteurFonction} · ${emetteurId}) vous informe du lancement d'une vérification des encaisses planifiée pour le centre « ${siteVal} » (Région ${regVal}, période du ${formatDateToJJMMAAAA(aff.dateDebut)} au ${formatDateToJJMMAAAA(aff.dateFin)}). Les autres données de vérification (Processus, Risques, Contrôles, PC) étant déjà disponibles dans votre compte, cliquez sur « Ouvrir la vérification » pour démarrer la saisie.`,
+                soumisParId: camp.soumisParId || '',
+                soumisParFonction: camp.soumisParFonction || '',
+                affectations: [{
+                    site: siteVal,
+                    centre: siteVal,
+                    entite: siteVal,
+                    region: regVal,
+                    controleurId: aff.controleurId,
+                    controleurFonction: aff.controleurFonction || aff.controleurId,
+                    isInterregional: Boolean(aff.isInterregional),
+                    dateDebut: aff.dateDebut,
+                    dateFin: aff.dateFin,
+                    periodeLabel
+                }],
+                emetteurId,
+                emetteurFonction,
+                destinataires: 'CONTROLEUR',
+                destinatairesIds: [aff.controleurId],
+                date: now,
+                lusPar: []
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.ajouterNotification === 'function') {
+                await FCIDatabase.ajouterNotification(notifCtrl, true);
+            } else {
+                const localDb = lireDBSecurisee();
+                localDb.notifications = Array.isArray(localDb.notifications) ? localDb.notifications : [];
+                localDb.notifications.push(notifCtrl);
+                sauvegarderDBSecurisee(localDb);
+            }
+
+            aff.idPlanification = idPlanification;
+            aff.envoyeeExecution = true;
+            aff.dateEnvoiExecution = now;
+            aff.envoyeeParId = emetteurId;
+
+            return { idPlanification, siteVal, regVal, periodeLabel };
+        }
+
+        async function executerVerificationPlanifieeFV(idCampagne, affIdx) {
+            if (!isCurrentUserSiege()) return;
+            const camp = getCampagneFVById(idCampagne);
+            if (!camp) return;
+            if (camp.statutWorkflow !== 'VALIDEE' && camp.statutWorkflow !== 'DIFFUSEE') {
+                alert("Seule une planification de vérification validée par le Directeur peut être envoyée pour exécution.");
+                return;
+            }
+            const affs = Array.isArray(camp.affectations) ? camp.affectations : [];
+            const aff = affs[affIdx];
+            if (!aff) return;
+            if (!aff.controleurId || !(aff.site || aff.centre)) {
+                alert("Les informations fondamentales de l'affectation (Centre, Contrôleur) sont incomplètes.");
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+            const emetteurId = u ? u.username : camp.soumisParId;
+            const emetteurFonction = u ? (u.fonction || u.username) : (camp.soumisParFonction || 'Chef de service');
+
+            const res = await envoyerAffectationVerificationAuControleurFV(camp, aff, affIdx, u, now);
+
+            camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+            camp.historique.push({
+                date: now,
+                auteurId: emetteurId,
+                auteurFonction: emetteurFonction,
+                action: 'EXECUTION_VERIFICATION_FV',
+                details: `Vérification lancée et envoyée au contrôleur ${aff.controleurId} pour le centre « ${res.siteVal} » (${res.regVal}, ${res.periodeLabel}).`
+            });
+
+            if (affs.every(a => Boolean(a.envoyeeExecution))) {
+                camp.statutWorkflow = 'DIFFUSEE';
+                camp.diffuseParId = camp.diffuseParId || emetteurId;
+                camp.dateDiffusion = camp.dateDiffusion || now;
+            }
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerCampagnePlanification === 'function') {
+                await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+                if (typeof FCIDatabase.archiverSurGitHub === 'function' &&
+                    typeof FCIDatabase.getGitHubToken === 'function' && FCIDatabase.getGitHubToken()) {
+                    FCIDatabase.archiverSurGitHub('PLAN', camp.titre || camp.idCampagne, camp.idCampagne, { campagnesPlanification: [camp] }).catch(() => {});
+                }
+            } else {
+                await sauvegarderCampagneFV(camp);
+            }
+
+            refreshPlanificationFVAll();
+            alert(`✅ Vérification envoyée pour exécution au contrôleur ${aff.controleurId} (${res.siteVal} — ${res.regVal}, ${res.periodeLabel}).\n\nLe contrôleur a été informé du lancement de la vérification dans son compte.`);
         }
 
         async function diffuserCampagneValideeFV(idCampagne) {
@@ -2405,52 +2678,10 @@
 
             for (let i = 0; i < affs.length; i++) {
                 const aff = affs[i];
-                const idPlanification = `PLAN-FV-${Date.now()}-${i + 1}`;
-                const periodeLabel = `${formatDateToJJMMAAAA(aff.dateDebut)} → ${formatDateToJJMMAAAA(aff.dateFin)}`;
-                const planRecord = {
-                    idPlanification,
-                    idCampagne: camp.idCampagne,
-                    sourceFeuille: 'FV',
-                    natureMission: 'Vérification',
-                    planifiePar: 'SIEGE',
-                    espaceSaisie: 'SIEGE',
-                    statutWorkflow: 'DIFFUSEE',
-                    valideParDirecteur: true,
-                    valideParId: camp.valideParId || 'directeur-001',
-                    dateValidation: camp.dateValidation || now,
-                    diffuseParId: u ? u.username : camp.soumisParId,
-                    dateDiffusion: now,
-                    creeParId: camp.soumisParId || (u ? u.username : 'siege'),
-                    creeParRole: camp.soumisParRole || 'CHEF_SERVICE',
-                    auteurFonction: camp.soumisParFonction || 'Chef de service',
-                    controleurId: aff.controleurId,
-                    controleur: aff.controleurId,
-                    controleurFonction: aff.controleurFonction || aff.controleurId,
-                    controleurRegion: aff.controleurRegion || '',
-                    controleursAssignes: [aff.controleurId],
-                    region: normaliserRegion(aff.region),
-                    site: aff.site || aff.centre,
-                    centre: aff.site || aff.centre,
-                    entite: aff.site || aff.centre,
-                    date: aff.dateDebut,
-                    datePrevue: aff.dateDebut,
-                    dateDebut: aff.dateDebut,
-                    dateFin: aff.dateFin,
-                    periodeCode: 'DATES_PRECISES',
-                    periodeLabel,
-                    referentiel: 'Sélection libre par le contrôleur (Encaisses)',
-                    statutExecution: 'EN_COURS',
-                    statutAvancement: 'En cours',
-                    createdAt: now
-                };
-
-                if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
-                    await FCIDatabase.enregistrerPlanification(planRecord);
-                } else {
-                    const db = lireDBSecurisee();
-                    db.planifications = [...(db.planifications || []), planRecord];
-                    sauvegarderDBSecurisee(db);
+                if (aff.envoyeeExecution && aff.idPlanification) {
+                    continue;
                 }
+                await envoyerAffectationVerificationAuControleurFV(camp, aff, i, u, now);
             }
 
             camp.statutWorkflow = 'DIFFUSEE';
@@ -2464,14 +2695,23 @@
                 action: 'DIFFUSION_FV',
                 details: `${affs.length} mission(s) de vérification diffusée(s) officiellement aux contrôleurs affectés.`
             });
-            await sauvegarderCampagneFV(camp);
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerCampagnePlanification === 'function') {
+                await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+                if (typeof FCIDatabase.archiverSurGitHub === 'function' &&
+                    typeof FCIDatabase.getGitHubToken === 'function' && FCIDatabase.getGitHubToken()) {
+                    FCIDatabase.archiverSurGitHub('PLAN', camp.titre || camp.idCampagne, camp.idCampagne, { campagnesPlanification: [camp] }).catch(() => {});
+                }
+            } else {
+                await sauvegarderCampagneFV(camp);
+            }
 
             refreshPlanificationFVAll();
+            alert(`✅ Diffusion réussie ! Les ${affs.length} vérification(s) validée(s) ont été envoyées individuellement aux contrôleurs concernés.`);
         }
 
         function refreshPlanificationFVAll() {
+            renderSiegeNotificationsBannerFV();
             if (isCurrentUserSiege()) {
-                renderSiegeNotificationsBannerFV();
                 renderDirecteurFVSection();
                 renderLotAffectationsFV();
                 renderStep1PendingFV();
@@ -2550,9 +2790,12 @@
 
             tbody.innerHTML = plans.map(p => {
                 const etat = normaliserStatutPlanFV(p);
-                const badgeEtat = etat === 'CLOTURE'
+                const badgeLancee = (p.lanceeExecution && etat !== 'CLOTURE')
+                    ? ` <span class="fv-pill fv-pill-diffusee" title="${p.dateLancementExecution ? 'Lancée le ' + formatDateHeureFV(p.dateLancementExecution) : 'Lancement notifié au contrôleur'}"><i class="fa-solid fa-bell"></i> Lancée</span>`
+                    : '';
+                const badgeEtat = (etat === 'CLOTURE'
                     ? `<span class="badge-etat-plan etat-plan-cloture">🟢 Clôturé</span>`
-                    : `<span class="badge-etat-plan etat-plan-encours">🟡 En cours</span>`;
+                    : `<span class="badge-etat-plan etat-plan-encours">🟡 En cours</span>`) + badgeLancee;
                 const isSelected = activePlanificationFVId === p.idPlanification;
                 const dDebAff = formatDateToJJMMAAAA(p.dateDebut || p.datePrevue || p.date || '');
                 const dFinAff = formatDateToJJMMAAAA(p.dateFin || '');
@@ -3025,7 +3268,7 @@
             if (!addedPoints || addedPoints.length === 0) {
                 reinitialiserChampsNomsVides();
             }
-            renderPlanificationsFVTable();
+            refreshPlanificationFVAll();
         });
 
         window.addEventListener('fci-auth-ready', () => {
@@ -3039,13 +3282,13 @@
         });
 
         window.addEventListener('fci-db-synced', () => {
-            renderPlanificationsFVTable();
+            refreshPlanificationFVAll();
             remplirFiltresEncaissesBDD();
         });
 
         window.addEventListener('storage', (e) => {
             if (e.key === 'fci_database') {
-                renderPlanificationsFVTable();
+                refreshPlanificationFVAll();
                 remplirFiltresEncaissesBDD();
             }
         });

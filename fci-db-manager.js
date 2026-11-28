@@ -357,6 +357,21 @@
         return false;
     }
 
+    function canAccessNotif(notif, user = getCurrentUser()) {
+        if (!notif || typeof notif !== 'object') return false;
+        if (!user) return true;
+        if (isHiddenForUser(notif, user)) return false;
+        const siege = isSiegeUser(user);
+        const dest = String(notif.destinataires || 'SIEGE').toUpperCase().trim();
+        if (dest === 'SIEGE') return siege;
+        if (dest === 'TOUS') return true;
+        if (Array.isArray(notif.destinatairesIds)) {
+            const uId = String(user.username || user.identifiant || '').toUpperCase().trim();
+            return Boolean(uId) && notif.destinatairesIds.some(id => String(id || '').toUpperCase().trim() === uId);
+        }
+        return siege;
+    }
+
     /**
      * Sauvegarde la base dans IndexedDB (+ miroir localStorage) tout en préservant
      * intactes les données hors périmètre (autres régions / données internes du Siège /
@@ -393,16 +408,24 @@
             }
         });
 
-        // Collections exclusives Siège (campagnesPlanification & notifications) :
-        // - Admin : maîtrise totale
-        // - Directeur / Chefs de service : préserve les éléments masqués pour ce compte
+        // Collections campagnesPlanification (Siège) & notifications (Siège + notifications ciblées contrôleurs) :
+        // - Admin : maîtrise totale sur campagnes ; préserve les notifications ciblées hors périmètre
+        // - Directeur / Chefs de service : préserve les éléments masqués et les notifications ciblées d'autres comptes
         // - Contrôleur régional : ne peut jamais écraser les campagnes/notifications du Siège
         if (!user || admin) {
             if (Array.isArray(incoming.campagnesPlanification)) {
                 mergedDb.campagnesPlanification = incoming.campagnesPlanification;
             }
             if (Array.isArray(incoming.notifications)) {
-                mergedDb.notifications = incoming.notifications;
+                if (!user) {
+                    mergedDb.notifications = incoming.notifications;
+                } else {
+                    const incomingIds = new Set(incoming.notifications.map(n => n && n.idNotification).filter(Boolean));
+                    const horsPerimetreNotifs = (fullRawDb.notifications || []).filter(existing =>
+                        existing && !incomingIds.has(existing.idNotification) && !canAccessNotif(existing, user)
+                    );
+                    mergedDb.notifications = [...horsPerimetreNotifs, ...incoming.notifications];
+                }
             }
         } else if (isSiegeUser(user)) {
             if (Array.isArray(incoming.campagnesPlanification)) {
@@ -410,8 +433,11 @@
                 mergedDb.campagnesPlanification = [...hiddenCamps, ...incoming.campagnesPlanification];
             }
             if (Array.isArray(incoming.notifications)) {
-                const hiddenNotifs = (fullRawDb.notifications || []).filter(existing => isHiddenForUser(existing, user));
-                mergedDb.notifications = [...hiddenNotifs, ...incoming.notifications];
+                const incomingIds = new Set(incoming.notifications.map(n => n && n.idNotification).filter(Boolean));
+                const horsPerimetreNotifs = (fullRawDb.notifications || []).filter(existing =>
+                    existing && !incomingIds.has(existing.idNotification) && !canAccessNotif(existing, user)
+                );
+                mergedDb.notifications = [...horsPerimetreNotifs, ...incoming.notifications];
             }
         } else {
             mergedDb.campagnesPlanification = Array.isArray(fullRawDb.campagnesPlanification) ? fullRawDb.campagnesPlanification : [];
@@ -557,8 +583,10 @@
                     let visiblePourCompte = false;
                     if (colName === 'planifications') {
                         visiblePourCompte = canAccessPlan(item, user);
-                    } else if (colName === 'campagnesPlanification' || colName === 'notifications') {
+                    } else if (colName === 'campagnesPlanification') {
                         visiblePourCompte = isSiegeUser(user) && !isHiddenForUser(item, user);
+                    } else if (colName === 'notifications') {
+                        visiblePourCompte = canAccessNotif(item, user);
                     } else {
                         visiblePourCompte = canAccess(item, user);
                     }
@@ -1599,12 +1627,13 @@
     }
 
     /**
-     * Ajoute une notification (ex. notification Directeur -> tous les collaborateurs du Siège).
+     * Ajoute une notification (ex. notification Directeur -> tous les collaborateurs du Siège,
+     * ou notification Siège -> contrôleur concerné pour lancement de vérification).
      */
     async function ajouterNotification(notif, syncGitHub = true) {
         if (!notif || typeof notif !== 'object') return getDB();
-        const db = getDB();
-        const list = Array.isArray(db.notifications) ? [...db.notifications] : [];
+        const fullRawDb = normalizeDbObject(readRawDatabase());
+        const list = Array.isArray(fullRawDb.notifications) ? [...fullRawDb.notifications] : [];
         const nowIso = new Date().toISOString();
 
         const item = {
@@ -1623,13 +1652,15 @@
             list.push(item);
         }
 
-        db.notifications = list;
-        const saved = saveDB(db);
+        fullRawDb.notifications = list;
+        fullRawDb.lastSync = nowIso;
+        persistRawDatabase(fullRawDb, true);
+        window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
 
         if (syncGitHub && getGitHubToken()) {
             archiverSurGitHub('PLAN', 'Notification', item.idNotification, { notifications: [item] }).catch(() => {});
         }
-        return saved;
+        return getDB();
     }
 
     function marquerNotificationLue(idNotification, username = '') {
@@ -1638,19 +1669,21 @@
         const uId = String(username || user?.username || '').trim();
         if (!uId) return getDB();
 
-        const db = getDB();
-        const list = Array.isArray(db.notifications) ? [...db.notifications] : [];
+        const fullRawDb = normalizeDbObject(readRawDatabase());
+        const list = Array.isArray(fullRawDb.notifications) ? [...fullRawDb.notifications] : [];
         const idx = list.findIndex(n => n.idNotification === idNotification);
         if (idx !== -1) {
             const lus = Array.isArray(list[idx].lusPar) ? [...list[idx].lusPar] : [];
-            if (!lus.includes(uId)) {
+            if (!lus.some(x => String(x || '').toLowerCase() === uId.toLowerCase())) {
                 lus.push(uId);
                 list[idx] = { ...list[idx], lusPar: lus, updatedAt: new Date().toISOString() };
-                db.notifications = list;
-                return saveDB(db);
+                fullRawDb.notifications = list;
+                fullRawDb.lastSync = new Date().toISOString();
+                persistRawDatabase(fullRawDb, true);
+                window.dispatchEvent(new CustomEvent('fci-db-synced', { detail: getDB() }));
             }
         }
-        return db;
+        return getDB();
     }
 
     function exporterBDD() {
