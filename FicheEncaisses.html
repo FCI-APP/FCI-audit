@@ -2819,6 +2819,11 @@
                         <td><span style="font-size:0.72rem; color:#475569; font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Sélection par le contrôleur</span></td>
                         <td>${badgeEtat}</td>
                         <td style="display:flex; gap:5px; flex-wrap:wrap;">
+                            ${siege && etat !== 'CLOTURE' ? `
+                                <button type="button" class="btn btn-sm ${p.lanceeExecution ? 'btn-secondary' : 'btn-exec-fv'}" onclick="executerVerificationDepuisSuiviFV('${escapeJsFV(p.idPlanification)}')" title="Envoyer la vérification planifiée et informer le contrôleur concerné (${escapeHtml(p.controleurId || p.controleur || '')})">
+                                    <i class="fa-solid ${p.lanceeExecution ? 'fa-rotate-right' : 'fa-play'}"></i> ${p.lanceeExecution ? 'Relancer' : 'Exécuter la vérification'}
+                                </button>
+                            ` : ''}
                             <button type="button" class="btn btn-sm btn-primary" onclick="chargerPlanificationFVDansSaisie('${escapeJsFV(p.idPlanification)}')" title="Alimenter les informations fondamentales de la mission (Centre, Région, Contrôleur, Période)">
                                 <i class="fa-solid fa-play"></i> Ouvrir
                             </button>
@@ -2830,6 +2835,124 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        async function executerVerificationDepuisSuiviFV(idPlanification) {
+            if (!isCurrentUserSiege() || !idPlanification) return;
+            const plans = getPlanificationsFVVisibles();
+            const plan = plans.find(p => p.idPlanification === idPlanification);
+            if (!plan) return;
+
+            const ctrlId = plan.controleurId || plan.controleur || (Array.isArray(plan.controleursAssignes) ? plan.controleursAssignes[0] : '');
+            const siteVal = plan.site || plan.centre || plan.entite || '';
+            const regVal = normaliserRegion(plan.region || trouverRegionPourCentreFV(siteVal));
+            if (!ctrlId || !siteVal) {
+                alert("Impossible d'envoyer la vérification : contrôleur ou centre manquant.");
+                return;
+            }
+
+            const u = getCurrentAuthUser();
+            const now = new Date().toISOString();
+            const emetteurId = u ? u.username : 'siege';
+            const emetteurFonction = u ? (u.fonction || u.username) : 'Siège';
+            const dDeb = plan.dateDebut || plan.datePrevue || plan.date || '';
+            const dFin = plan.dateFin || dDeb;
+            const periodeLabel = (dDeb && dFin)
+                ? `${formatDateToJJMMAAAA(dDeb)} → ${formatDateToJJMMAAAA(dFin)}`
+                : (plan.periodeLabel || '--');
+
+            const planMaj = {
+                ...plan,
+                statutWorkflow: 'DIFFUSEE',
+                lanceeExecution: true,
+                dateLancementExecution: now,
+                lanceeParId: emetteurId,
+                lanceeParFonction: emetteurFonction,
+                updatedAt: now
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerPlanification === 'function') {
+                await FCIDatabase.enregistrerPlanification(planMaj, false);
+                if (typeof FCIDatabase.archiverSurGitHub === 'function' &&
+                    typeof FCIDatabase.getGitHubToken === 'function' && FCIDatabase.getGitHubToken()) {
+                    FCIDatabase.archiverSurGitHub('PLAN', siteVal || 'Planification', planMaj.idPlanification, { planifications: [planMaj] }).catch(() => {});
+                }
+            } else {
+                const localDb = lireDBSecurisee();
+                const idx = (localDb.planifications || []).findIndex(p => p && p.idPlanification === idPlanification);
+                if (idx !== -1) {
+                    localDb.planifications[idx] = planMaj;
+                    sauvegarderDBSecurisee(localDb);
+                }
+            }
+
+            const notifCtrl = {
+                idNotification: `NOTIF-FV-EXEC-${idPlanification}-${Date.now()}`,
+                sourceFeuille: 'FV',
+                type: 'LANCEMENT_VERIFICATION_FV',
+                idCampagne: plan.idCampagne || '',
+                idPlanification,
+                titre: `Lancement de vérification des encaisses — ${siteVal} (${regVal})`,
+                message: `Le Siège (${emetteurFonction} · ${emetteurId}) vous informe du lancement d'une vérification des encaisses planifiée pour le centre « ${siteVal} » (Région ${regVal}, période ${periodeLabel}). Les autres données de vérification (Processus, Risques, Contrôles, PC) étant déjà disponibles dans votre compte, cliquez sur « Ouvrir la vérification » pour démarrer la saisie.`,
+                affectations: [{
+                    site: siteVal,
+                    centre: siteVal,
+                    entite: siteVal,
+                    region: regVal,
+                    controleurId: ctrlId,
+                    controleurFonction: plan.controleurFonction || ctrlId,
+                    dateDebut: dDeb,
+                    dateFin: dFin,
+                    periodeLabel
+                }],
+                emetteurId,
+                emetteurFonction,
+                destinataires: 'CONTROLEUR',
+                destinatairesIds: [ctrlId],
+                date: now,
+                lusPar: []
+            };
+
+            if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.ajouterNotification === 'function') {
+                await FCIDatabase.ajouterNotification(notifCtrl, true);
+            } else {
+                const localDb = lireDBSecurisee();
+                localDb.notifications = Array.isArray(localDb.notifications) ? localDb.notifications : [];
+                localDb.notifications.push(notifCtrl);
+                sauvegarderDBSecurisee(localDb);
+            }
+
+            // Mettre à jour la campagne associée si présente
+            if (plan.idCampagne) {
+                const camp = getCampagneFVById(plan.idCampagne);
+                if (camp && Array.isArray(camp.affectations)) {
+                    const aff = camp.affectations.find(a =>
+                        (a.idPlanification && a.idPlanification === idPlanification) ||
+                        (String(a.controleurId || '').toUpperCase() === String(ctrlId).toUpperCase() &&
+                         String(a.site || a.centre || '').trim() === String(siteVal).trim())
+                    );
+                    if (aff) {
+                        aff.idPlanification = idPlanification;
+                        aff.envoyeeExecution = true;
+                        aff.dateEnvoiExecution = now;
+                        aff.envoyeeParId = emetteurId;
+                        camp.historique = Array.isArray(camp.historique) ? camp.historique : [];
+                        camp.historique.push({
+                            date: now,
+                            auteurId: emetteurId,
+                            auteurFonction: emetteurFonction,
+                            action: 'EXECUTION_VERIFICATION_FV',
+                            details: `Vérification lancée et envoyée au contrôleur ${ctrlId} pour le centre « ${siteVal} » (${regVal}, ${periodeLabel}).`
+                        });
+                        if (typeof FCIDatabase !== 'undefined' && typeof FCIDatabase.enregistrerCampagnePlanification === 'function') {
+                            await FCIDatabase.enregistrerCampagnePlanification(camp, false);
+                        }
+                    }
+                }
+            }
+
+            refreshPlanificationFVAll();
+            alert(`✅ Vérification envoyée pour exécution au contrôleur ${ctrlId} (${siteVal} — ${regVal}, ${periodeLabel}).\n\nLe contrôleur a été informé du lancement de la vérification dans son compte.`);
         }
 
         function chargerPlanificationFVDansSaisie(idPlanification) {
